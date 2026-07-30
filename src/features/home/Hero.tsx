@@ -5,6 +5,7 @@ import Image from 'next/image';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '../shared/Button';
  
 const SLIDES = [
   {
@@ -22,12 +23,12 @@ const SLIDES = [
       'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=2000&auto=format&fit=crop',
     cta1: (
       <>
-        Shop<br />Express
+        Shop Express
       </>
     ),
     cta2: (
       <>
-        Bespoke<br />Orders
+        Bespoke Orders
       </>
     ),
   },
@@ -46,12 +47,12 @@ const SLIDES = [
       'https://images.unsplash.com/photo-1506784365847-bbad939e9335?q=80&w=2000&auto=format&fit=crop',
     cta1: (
       <>
-        Shop<br />All
+        Shop All
       </>
     ),
     cta2: (
       <>
-        Request a<br />Sample
+        Request a Sample
       </>
     ),
   },
@@ -134,12 +135,12 @@ export const Hero = () => {
                 </p>
  
                 <div className="flex gap-4">
-                  <button className="cursor-pointer bg-black text-white min-w-36 py-[10px] px-4 text-[16px] font-medium flex flex-col items-center justify-center leading-tight">
+                  <Button variant="primary" className="min-w-36 text-[16px]">
                     {slide.cta1}
-                  </button>
-                  <button className="cursor-pointer bg-transparent border border-[#333333] text-[#333333] min-w-36 py-[10px] px-4 text-[16px] font-medium flex flex-col items-center justify-center leading-tight">
+                  </Button>
+                  <Button variant="outline" className="min-w-36 text-[16px]">
                     {slide.cta2}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

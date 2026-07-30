@@ -39,7 +39,7 @@ export const TrustIndicators = () => {
                     alt={feature.title} 
                     width={56} 
                     height={56} 
-                    className="object-contain" 
+                    className="object-contain h-auto w-auto" 
                   />
                 </div>
                 <h3 className="font-bold text-lg tracking-wide text-black">

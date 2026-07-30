@@ -20,7 +20,7 @@ export const Button = ({
   const variants = {
     primary: "bg-black text-white hover:bg-neutral-800",
     secondary: "bg-gray-100 text-black hover:bg-gray-200",
-    outline: "border-2 border-black text-black hover:bg-black hover:text-white",
+    outline: "border-2 border-black text-black",
     white: "bg-white text-black hover:bg-gray-100",
   };
 

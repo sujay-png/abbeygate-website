@@ -1,4 +1,4 @@
-import { Hero, FeaturedProducts, Categories, TrustIndicators, FeaturedCollections, ResourceCarousel, FAQ, LatestBlog } from "@/features/home";
+import { Hero, FeaturedProducts, Categories, TrustIndicators, FeaturedCollections, ResourceCarousel, FAQ, LatestBlog ,CustomisationCTA} from "@/features/home";
 
 export default function Home() {
   return (
@@ -11,6 +11,7 @@ export default function Home() {
       <ResourceCarousel />
       <FAQ />
       <LatestBlog />
+      <CustomisationCTA/>
       {/* Other home components will go here */}
     </div>
   );

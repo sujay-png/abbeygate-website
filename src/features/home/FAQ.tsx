@@ -36,7 +36,7 @@ export const FAQ = () => {
   };
 
   return (
-    <section className="py-16 md:py-24 bg-[#F2F7F7]">
+    <section className="py-16 md:py-24 bg-brand-light">
       <Container>
         <h2 className="text-3xl md:text-4xl font-extrabold text-black font-sans tracking-tight text-center mb-12">
           Frequently Asked Questions
