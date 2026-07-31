@@ -33,7 +33,7 @@ const BLOG_POSTS = [
 
 export const LatestBlog = () => {
   return (
-    <section className="py-16 md:py-24 bg-[#FCFDFC]">
+    <section className="py-16 md:py-24 bg-white">
       <Container>
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12 gap-6">

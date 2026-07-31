@@ -1,0 +1,13 @@
+export const heritageData = {
+  breadcrumb: "Abbeygate: Leather Craftsmanship",
+  title: "Abbeygate: A Legacy of Craftsmanship in Walsall",
+  intro: "Nestled in the heart of Walsall, a town steeped in the rich heritage of <strong>leather craftsmanship</strong>, Abbeygate continues a proud tradition that dates back to the Middle Ages. Renowned for its meticulously <strong>crafted diaries, notebooks, and leather goods</strong>, Abbeygate embodies the skill and dedication that has defined Walsall's leather industry for centuries.",
+  copyright: "© Walsall Leather Museum",
+  content: [
+    "Nestled in the heart of Walsall, a town steeped in the rich heritage of leather craftsmanship, Abbeygate continues a proud tradition that dates back to the Middle Ages. Renowned for its meticulously crafted diaries, notebooks, and leather goods, Abbeygate embodies the skill and dedication that has defined Walsall's leather industry for centuries.",
+    "Walsall's legacy in leather began with medieval craftsmen, who specialised in making bridle bits and stirrups. The Industrial Revolution saw these small workshops flourish into a thriving industry, and by the 21st century, the town was home to around 90 leather companies exporting luxury goods worldwide. Despite the pressures of overseas competition, Walsall's leather industry has evolved, focusing on high-end, handcrafted products for prestigious brands and discerning customers.",
+    "At Abbeygate, we honour this heritage by blending traditional techniques with contemporary design. Many of our skilled workers have spent decades perfecting their craft, passing down their expertise to new generations. Hand-finishing techniques remain at the heart of our production process, ensuring that every Abbeygate product reflects the highest standards of British craftsmanship.",
+    "Our location on Portland Street connects us to a legacy of excellence. In 1793, a thirteen-year-old apprentice named George Cliff began his journey in bridle-making. His son, Jabez Cliff, went on to establish the renowned Cliff Barnsby company, which became a global leader in equestrian leather goods. Today, Barnsby products remain sought after worldwide, and we at Abbeygate take pride in sharing this historic street with such an esteemed name.",
+    "As we look to the future, Abbeygate remains committed to preserving the artistry of British leatherwork. By upholding time-honoured techniques and embracing innovation, we ensure that Walsall's reputation for excellence endures. Whether it's a finely bound diary, a classic notebook, or a bespoke leather accessory, every Abbeygate creation tells a story of heritage, craftsmanship, and quality."
+  ]
+};

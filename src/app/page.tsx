@@ -1,4 +1,6 @@
-import { Hero, FeaturedProducts, Categories, TrustIndicators, FeaturedCollections, ResourceCarousel, FAQ, LatestBlog ,CustomisationCTA} from "@/components/home";
+import { Hero, FeaturedProducts, Categories, TrustIndicators, FeaturedCollections, ResourceCarousel, FAQ } from "@/components/home";
+import { CustomisationCTA } from "@/components/shared/CustomisationCTA";
+import { LatestBlog } from "@/components/shared/LatestBlog";
 
 export default function Home() {
   return (
