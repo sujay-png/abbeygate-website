@@ -22,13 +22,13 @@ export const Categories = () => {
   return (
     <section className="bg-white py-16">
       <Container>
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+        {/* Header — stacks on mobile, row on larger screens */}
+        <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <h2 className="font-josefin text-[26px] font-bold tracking-tight text-black lg:text-[32px]">
             Crafted Collections, Designed to Impress
           </h2>
 
-          <Button href="/collections" variant="primary">
+          <Button href="/collections" variant="primary" className="self-start sm:self-auto">
             Shop All
           </Button>
         </div>

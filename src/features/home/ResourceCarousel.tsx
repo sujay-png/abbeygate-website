@@ -31,9 +31,8 @@ const SLIDES = [
   },
 ];
 
-
 const EMBLA_OPTIONS = { loop: true, duration: 50 };
-const EMBLA_PLUGINS = [Autoplay({ delay: 6000, stopOnInteraction: false })];
+const EMBLA_PLUGINS = [Autoplay({ delay: 4000, stopOnInteraction: false })];
 
 export const ResourceCarousel = () => {
   const [emblaRef, emblaApi] = useEmblaCarousel(EMBLA_OPTIONS, EMBLA_PLUGINS);
@@ -105,18 +104,21 @@ export const ResourceCarousel = () => {
       </div>
 
       {/* Navigation & Pagination */}
-      <div className="absolute bottom-4 right-8 md:bottom-8 md:right-12 z-30 flex items-center gap-12">
-        <div className="flex items-center gap-2">
+
+      <div className="absolute bottom-4 left-0 right-0 md:left-auto md:right-8 md:bottom-8 md:right-12 z-30 flex flex-col items-center gap-3 md:flex-row md:gap-12 px-6 md:px-0">
+        <div className="flex items-center gap-2 order-1 md:order-2">
           {scrollSnaps.map((_, index) => (
             <button
               key={index}
               onClick={() => scrollTo(index)}
-              className={`resource-bullet ${index === selectedIndex ? 'resource-bullet-active' : ''}`}
               aria-label={`Go to slide ${index + 1}`}
+              className={`inline-block h-2 w-2 rounded-full border-0 p-0 cursor-pointer transition-all duration-300 ${
+                index === selectedIndex ? 'bg-black scale-125' : 'bg-black/40'
+              }`}
             />
           ))}
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between w-full md:w-auto md:justify-start gap-4 order-2 md:order-1">
           <button onClick={scrollPrev} className="text-black hover:text-gray-600 transition-colors" aria-label="Previous slide">
             <ChevronLeft className="w-8 h-8" strokeWidth={2} />
           </button>
@@ -125,24 +127,6 @@ export const ResourceCarousel = () => {
           </button>
         </div>
       </div>
-
-      <style jsx global>{`
-        .resource-bullet {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background-color: rgba(0, 0, 0, 0.4);
-          cursor: pointer;
-          transition: all 0.3s ease;
-          display: inline-block;
-          padding: 0;
-          border: none;
-        }
-        .resource-bullet-active {
-          background-color: #000;
-          transform: scale(1.2);
-        }
-      `}</style>
     </section>
   );
 };

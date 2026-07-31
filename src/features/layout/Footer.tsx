@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { Container } from "../shared/Container";
 
 const FOOTER_LINKS = {
@@ -25,53 +28,66 @@ const FOOTER_LINKS = {
   ],
 };
 
-// New section — matches the "View our trade brochure" banner above the footer
 const TradeBrochure = () => {
   return (
-    <section className="bg-brand-light border-t border-black border-b border-[#D0DADA] pt-18 pb-18">
+    <section className="bg-brand-light border-t border-black border-b border-[#D0DADA] pt-8 pb-8 overflow-hidden">
       <Container>
-        <div className="flex flex-col md:flex-row items-center justify-between gap-10">
-          {/* Left: Text + Button */}
-          <div className="flex flex-col gap-4 max-w-lg py-4">
-            <h3 className="text-black font-bold text-2xl font-sans">
-              View our trade brochure
-            </h3>
-            <p className="text-[#1F2124] text-[14px] font-work leading-relaxed">
-              Click the link below to view or download a PDF of our complete
-              diary and notebook range.
-            </p>
-            <a
-              href="/downloads/abbeygate-trade-brochure.pdf"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block mt-2 w-fit bg-[#C8DCDC] border border-black text-black text-[14px] font-work font-medium px-6 py-3 rounded-md hover:bg-[#b8cfcf] transition-colors"
-            >
-              Abbeygate Manufacturing Trade Brochure
-            </a>
-          </div>
+        <div className="flex flex-col md:flex-row items-center md:items-start justify-center gap-10 md:gap-16 lg:gap-20">
+          {/* Left: Text + Button — self-center so it sits mid-height against the taller image */}
+          <div className="flex flex-col md:flex-row items-center justify-between gap-16 xl:gap-24">
+            {/* Left Content */}
+            <div className="flex-1 max-w-[720px]">
+              <h3 className="text-black text-[30px] font-bold mb-2 font-sans">
+                View our trade brochure
+              </h3>
 
-          {/* Right: Brochure Cover Image - Negative Margins for Overlap */}
-          <div className="w-full md:w-auto flex justify-center md:justify-end shrink-0 z-20">
-            {/* Desktop: overlapping image */}
-            <div className="hidden md:block w-[320px] -mt-24 -mb-24 drop-shadow-2xl hover:-translate-y-2 transition-transform duration-500">
-              <Image 
-                src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/Abbeygate-Manufacturing-Trade-Brochure-2027_Page_01-285x400-1.jpg"
-                alt="Abbeygate 2027 Collection Trade Brochure"
-                width={320}
-                height={450}
-                className="w-[180px] h-auto object-contain"
-              />
+              <p className="text-[#1F2124] text-[15px] leading-8 mb-8 font-work lg:whitespace-nowrap">
+                Click the link below to view or download a PDF of our complete diary and
+                notebook range.
+              </p>
+
+              <a
+                href="/downloads/abbeygate-trade-brochure.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block w-full sm:w-fit text-center bg-[#C8DCDC] border border-black text-black text-[14px] sm:text-[15px] font-work font-medium px-6 sm:px-10 py-4 rounded-md hover:bg-[#C8DCDC] shadow-[0_6px_16px_rgba(0,0,0,0.12)] hover:shadow-[0_10px_24px_rgba(0,0,0,0.22)] transition-shadow duration-500 ease-out"
+              >
+                Abbeygate Manufacturing Trade Brochure
+              </a>
             </div>
-            
-            {/* Mobile fallback (non-overlapping) */}
-            <div className="md:hidden w-[220px] drop-shadow-2xl">
-              <Image 
-                src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/Abbeygate-Manufacturing-Trade-Brochure-2027_Page_01-285x400-1.jpg"
-                alt="Abbeygate 2027 Collection Trade Brochure"
-                width={220}
-                height={310}
-                className="w-full h-auto object-contain"
-              />
+
+            {/* Right Brochure */}
+            <div className="flex justify-center md:justify-end flex-shrink-0">
+              <motion.div
+                initial={{
+                  opacity: 0,
+                  y: 120,
+                  scale: 0.97,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  y: 0,
+                  scale: 1,
+                }}
+                viewport={{
+                  once: true,
+                  amount: 0.45,
+                }}
+                transition={{
+                  duration: 1.5,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+                className="w-[220px] md:w-[240px] md:ml-12 lg:ml-20 xl:ml-28"
+              >
+                <Image
+                  src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/Abbeygate-Manufacturing-Trade-Brochure-2027_Page_01-285x400-1.jpg"
+                  alt="Abbeygate 2027 Collection Trade Brochure"
+                  width={400}
+                  height={565}
+                  sizes="(max-width:768px) 220px, 240px"
+                  className="w-full h-auto object-contain shadow-[0_18px_45px_rgba(0,0,0,0.18)]"
+                />
+              </motion.div>
             </div>
           </div>
         </div>
@@ -84,40 +100,37 @@ export const Footer = () => {
   return (
     <>
       <TradeBrochure />
-      <footer className="bg-brand-light pt-16 pb-8">
+      <footer className="bg-brand-light pt-20 pb-8 overflow-x-hidden">
         <Container>
           {/* Top Grid Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-12 xl:gap-8 mb-16">
-            
-            {/* Logo & Accreditations Column */}
-            <div className="xl:col-span-1 flex flex-col gap-6">
-              <Link href="/" className="inline-block max-w-[200px]">
-                <Image 
-                  src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/full-colour.png" 
-                  alt="Abbeygate England" 
-                  width={200} 
-                  height={70} 
-                  className="w-[180px] h-auto object-contain"
-                />
-              </Link>
-              <p className="text-[#666666] text-[13px] font-work leading-relaxed">
-                The Home of Quality Diaries,<br />Notebooks and Leather Gifts
-              </p>
-              <div className="flex items-center gap-4 mt-6 flex-wrap">
-                <Image src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/Union_Jack.webp" alt="UK Flag" width={60} height={40} className="h-8 w-auto object-contain" />
-                <Image src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/bpma_logo-1.webp" alt="BPMA" width={80} height={40} className="h-8 w-auto object-contain" />
-                <Image src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/accredited_member_logo.webp" alt="Accredited Member" width={100} height={40} className="h-8 w-auto object-contain" />
-                <Image src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/sedex_seeklogo.webp" alt="Sedex" width={80} height={40} className="h-8 w-auto object-contain" />
-              </div>
+          <div className="flex flex-col lg:flex-row lg:flex-wrap gap-y-12 gap-x-14 mb-14">            <div className="xl:col-span-2 flex flex-col gap-5">
+            <Link href="/" className="inline-block max-w-[200px]">
+              <Image
+                src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/full-colour.png"
+                alt="Abbeygate England"
+                width={220}
+                height={78}
+                className="w-[180px] h-auto object-contain"
+              />
+            </Link>
+            <p className="text-[#666666] text-[15px] font-work leading-7">
+              The Home of Quality Diaries,<br />Notebooks and Leather Gifts
+            </p>
+            <div className="flex flex-wrap items-center gap-4 mt-2">
+              <Image src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/Union_Jack.webp" alt="UK Flag" width={50} height={40} className="h-7 sm:h-8 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity duration-300" />
+              <Image src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/bpma_logo-1.webp" alt="BPMA" width={70} height={40} className="h-7 sm:h-8 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity duration-300" />
+              <Image src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/accredited_member_logo.webp" alt="Accredited Member" width={90} height={40} className="h-7 sm:h-8 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity duration-300" />
+              <Image src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/sedex_seeklogo.webp" alt="Sedex" width={70} height={30} className="h-5 sm:h-6 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity duration-300" />
             </div>
+          </div>
 
             {/* Company Links */}
             <div className="xl:col-span-1">
-              <h4 className="font-bold text-black font-sans text-sm tracking-wide mb-6 uppercase">Company</h4>
-              <ul className="flex flex-col gap-3">
+              <h4 className="font-bold text-black font-sans text-sm tracking-wide mb-3 uppercase">Company</h4>
+              <ul className="flex flex-col gap-2">
                 {FOOTER_LINKS.company.map((link) => (
                   <li key={link.label}>
-                    <Link href={link.href} className="text-[#1F2124] text-[14px] hover:text-gray-500 transition-colors font-work">
+                    <Link href={link.href} className="text-[#1F2124] text-[15px] hover:text-gray-500 transition-colors font-work">
                       {link.label}
                     </Link>
                   </li>
@@ -127,11 +140,11 @@ export const Footer = () => {
 
             {/* Help Links */}
             <div className="xl:col-span-1">
-              <h4 className="font-bold text-black font-sans text-sm tracking-wide mb-6 uppercase">Help</h4>
-              <ul className="flex flex-col gap-3">
+              <h4 className="font-bold text-black font-sans text-sm tracking-wide mb-3 uppercase">Help</h4>
+              <ul className="flex flex-col gap-2">
                 {FOOTER_LINKS.help.map((link) => (
                   <li key={link.label}>
-                    <Link href={link.href} className="text-[#1F2124] text-[14px] hover:text-gray-500 transition-colors font-work">
+                    <Link href={link.href} className="text-[#1F2124] text-[15px] hover:text-gray-500 transition-colors font-work">
                       {link.label}
                     </Link>
                   </li>
@@ -141,11 +154,11 @@ export const Footer = () => {
 
             {/* Information Links */}
             <div className="xl:col-span-1">
-              <h4 className="font-bold text-black font-sans text-sm tracking-wide mb-6 uppercase">Information</h4>
-              <ul className="flex flex-col gap-3">
+              <h4 className="font-bold text-black font-sans text-sm tracking-wide mb-3 uppercase">Information</h4>
+              <ul className="flex flex-col gap-2">
                 {FOOTER_LINKS.information.map((link) => (
                   <li key={link.label}>
-                    <Link href={link.href} className="text-[#1F2124] text-[14px] hover:text-gray-500 transition-colors font-work">
+                    <Link href={link.href} className="text-[#1F2124] text-[15px] hover:text-gray-500 transition-colors font-work">
                       {link.label}
                     </Link>
                   </li>
@@ -155,8 +168,8 @@ export const Footer = () => {
 
             {/* Address */}
             <div className="xl:col-span-1">
-              <h4 className="font-bold text-black font-sans text-sm tracking-wide mb-6 uppercase">Address</h4>
-              <address className="not-italic text-[#1F2124] text-[14px] leading-relaxed font-work">
+              <h4 className="font-bold text-black font-sans text-sm tracking-wide mb-3 uppercase">Address</h4>
+              <address className="not-italic text-[#1F2124] text-[15px] leading-relaxed font-work">
                 Abbeygate<br />
                 Graphic House<br />
                 Portland Street<br />
@@ -167,26 +180,29 @@ export const Footer = () => {
           </div>
 
           {/* Divider */}
-          <div className="border-t border-[#D0DADA] w-full mb-8" />
+          <div className="border-t border-[#D0DADA] w-full" />
 
           {/* Bottom Section */}
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
-            <p className="text-[12px] text-gray-500 font-work">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-6 pt-8">
+            <p className="text-[14px] text-black font-work">
               Abbeygate England © 2026
             </p>
 
-            <div className="flex items-center gap-4">
-              <span className="text-[12px] text-gray-500 font-work mr-2">We accept</span>
-              <Image src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/Visa.png" alt="Visa" width={32} height={20} className="h-5 w-auto object-contain" />
-              <Image src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/MasterCard.png" alt="MasterCard" width={32} height={20} className="h-5 w-auto object-contain" />
-              <Image src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/JCB.png" alt="JCB" width={32} height={20} className="h-5 w-auto object-contain" />
-              <Image src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/Paypal.png" alt="Paypal" width={45} height={20} className="h-5 w-auto object-contain" />
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-[14px] text-black font-work">We accept</span>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Image src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/Visa.png" alt="Visa" width={44} height={26} className="h-7 w-auto object-contain" />
+                <Image src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/MasterCard.png" alt="MasterCard" width={44} height={26} className="h-7 w-auto object-contain" />
+                <Image src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/JCB.png" alt="JCB" width={44} height={26} className="h-7 w-auto object-contain" />
+                <Image src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/American-Express.png" alt="American Express" width={44} height={26} className="h-7 w-auto object-contain" />
+                <Image src="https://corporate.abbeygate-england.com/wp-content/uploads/2025/11/Paypal.png" alt="Paypal" width={64} height={26} className="h-7 w-auto object-contain" />
+              </div>
             </div>
 
-            <div className="flex items-center gap-6">
-              <Link href="/privacy" className="text-[12px] text-black hover:text-gray-600 transition-colors font-work underline underline-offset-4">Privacy Policy</Link>
-              <Link href="/terms" className="text-[12px] text-black hover:text-gray-600 transition-colors font-work underline underline-offset-4">Terms & Conditions</Link>
-              <Link href="/cookies" className="text-[12px] text-black hover:text-gray-600 transition-colors font-work underline underline-offset-4">Cookies Policy</Link>
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+              <Link href="/privacy" className="text-[14px] text-black hover:text-gray-600 transition-colors font-work underline underline-offset-4">Privacy Policy</Link>
+              <Link href="/terms" className="text-[14px] text-black hover:text-gray-600 transition-colors font-work underline underline-offset-4">Terms & Conditions</Link>
+              <Link href="/cookies" className="text-[14px] text-black hover:text-gray-600 transition-colors font-work underline underline-offset-4">Cookies Policy</Link>
             </div>
           </div>
         </Container>

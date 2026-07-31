@@ -6,7 +6,7 @@ export const CustomisationCTA = () => {
   return (
     <section className="py-16 md:py-24 bg-white">
       <Container>
-        <div className="bg-brand-light relative flex flex-col md:flex-row items-center justify-between rounded-sm">
+        <div className="bg-brand-light relative flex flex-col md:flex-row items-center justify-between rounded-md">
           {/* Left Text Content */}
           <div className="p-10 md:p-16 lg:p-20 flex-1 max-w-2xl z-10">
             <h2 className="text-3xl md:text-[40px] font-extrabold text-black font-sans tracking-tight mb-6">
