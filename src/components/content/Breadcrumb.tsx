@@ -14,7 +14,7 @@ interface BreadcrumbProps {
 export function Breadcrumb({ paths }: BreadcrumbProps) {
   return (
     <div className="py-4 bg-white">
-      <Container maxWidthClass="max-w-[1400px]">
+      <Container maxWidthClass="max-w-[1500px]">
         <nav aria-label="Breadcrumb" className="flex items-center text-sm">
           {paths.map((path, index) => {
             const isLast = index === paths.length - 1;

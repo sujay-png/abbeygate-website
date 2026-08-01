@@ -30,7 +30,7 @@ export default function HeritagePage() {
       
       <section className="py-12 md:py-20">
         <Container maxWidthClass="max-w-[1400px]">
-          <div className="max-w-4xl mx-auto flex flex-col items-center">
+          <div className="max-w-5xl mx-auto flex flex-col items-center">
             
             {/* Title */}
             <h1 className="text-4xl md:text-5xl lg:text-[54px] font-extrabold text-black font-sans tracking-tight text-center mb-8 leading-tight">
@@ -39,7 +39,7 @@ export default function HeritagePage() {
             
             {/* Intro */}
             <p 
-              className="text-[15px] text-[#1F2124]/90 font-work text-center mb-10 leading-relaxed max-w-3xl"
+              className="text-[15px] text-[#1F2124]/90 font-work text-center mb-10 leading-relaxed max-w-5xl"
               dangerouslySetInnerHTML={{ __html: heritageData.intro }}
             />
             

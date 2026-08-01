@@ -10,7 +10,7 @@ import { useCart } from '@/features/cart/context/CartContext';
 const CLOSE_DELAY = 200;
 
 const OPEN_TRANSITION: Transition = { duration: 0.65, ease: [0.16, 1, 0.3, 1] };
-const CLOSE_TRANSITION: Transition = { duration: 0.20, ease: [0.7, 0, 0.84, 0] };
+const CLOSE_TRANSITION: Transition = { duration: 0.15, ease: [0.7, 0, 0.84, 0] };
 
 const MOBILE_OPEN_TRANSITION: Transition = { duration: 0.35, ease: [0.16, 1, 0.3, 1] };
 const MOBILE_CLOSE_TRANSITION: Transition = { duration: 0.28, ease: [0.7, 0, 0.84, 0] };

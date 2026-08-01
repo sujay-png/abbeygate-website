@@ -21,7 +21,7 @@ export function ImageTextSection({
   
   return (
     <section className={`py-16 md:py-24 ${className}`}>
-      <Container maxWidthClass="max-w-[1400px]">
+      <Container maxWidthClass="max-w-[1500px]">
         <div className={`flex flex-col gap-12 lg:gap-16 items-center ${isLeft ? 'lg:flex-row' : 'lg:flex-row-reverse'}`}>
           {/* Image Side */}
           <div className="w-full lg:w-1/2 relative aspect-[4/3] rounded-lg overflow-hidden shadow-sm">

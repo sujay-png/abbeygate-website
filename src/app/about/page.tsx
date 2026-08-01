@@ -42,7 +42,7 @@ export default function AboutPage() {
         imageAlignment={aboutData.newEra.imageAlignment}
       />
 
-      <Container><div className="border-b border-gray-200" /></Container>
+      <Container maxWidthClass="max-w-[1400px]"><div className="border-b border-gray-200" /></Container>
       
       <TextWithImageGrid 
         title={aboutData.future.title}

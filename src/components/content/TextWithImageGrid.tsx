@@ -17,7 +17,7 @@ export function TextWithImageGrid({
 }: TextWithImageGridProps) {
   return (
     <section className={`py-16 md:py-24 ${className}`}>
-      <Container maxWidthClass="max-w-[1400px]">
+      <Container maxWidthClass="max-w-[1500px]">
         {/* Top Text Section */}
         <div className="flex flex-col md:flex-row gap-8 lg:gap-16 mb-10">
           <div className="md:w-1/3">
