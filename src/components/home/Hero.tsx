@@ -20,7 +20,7 @@ const SLIDES = [
     description:
       'Elevate your corporate gifting and bespoke and merchandise with our expertly customised leather goods',
     bgImage:
-      'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=2000&auto=format&fit=crop',
+      '/images/banners/hero-banner.png',
     cta1: <>Shop Express</>,
     cta2: <>Bespoke Orders</>,
   },
@@ -36,13 +36,13 @@ const SLIDES = [
     description:
       'Explore our beautifully crafted diaries tailored to keep you organized while making a statement.',
     bgImage:
-      'https://images.unsplash.com/photo-1506784365847-bbad939e9335?q=80&w=2000&auto=format&fit=crop',
+      '/images/banners/hero-banner-2.png',
     cta1: <>Shop All</>,
     cta2: <>Request a Sample</>,
   },
 ];
 
-const EMBLA_OPTIONS = { loop: true, watchDrag: true };
+const EMBLA_OPTIONS = { loop: true, watchDrag: true, duration: 60 };
 const EMBLA_PLUGINS = [Autoplay({ delay: 6000, stopOnInteraction: false })];
 
 interface NavControlsProps {
@@ -106,12 +106,11 @@ export const Hero = () => {
   return (
     <section className="relative w-full h-screen overflow-hidden bg-[#F5F5F3]">
       <div className="overflow-hidden w-full h-full touch-pan-y" ref={emblaRef}>
-  
+
         <div
           className="flex w-full h-full"
           style={{
             willChange: 'transform',
-            transform: 'translateZ(0)',
             backfaceVisibility: 'hidden',
           }}
         >
@@ -121,15 +120,13 @@ export const Hero = () => {
                 src={slide.bgImage}
                 alt=""
                 fill
-                priority={index === 0}
-                loading={index === 0 ? undefined : 'lazy'}
-                sizes="(max-width: 768px) 100vw, 100vw"
-                quality={index === 0 ? 65 : 50}
+                priority
+                quality={95}
+                sizes="100vw"
                 className="object-cover object-center"
               />
 
-
-              <div className="absolute top-0 left-0 h-full w-full md:w-[40%] lg:w-[35%] xl:w-[30%] bg-white/85 flex flex-col justify-center px-8 md:px-12 z-10 border-r border-white/20 pointer-events-none">
+              <div className="absolute top-0 left-0 h-full w-full md:w-[50%] lg:w-[45%] xl:w-[40%] bg-gradient-to-r from-white/95 via-white/80 to-transparent flex flex-col justify-center px-8 md:px-12 z-10 pointer-events-none">
                 <p className="text-[21px] font-didact font-normal text-black mb-6">
                   {slide.category}
                 </p>

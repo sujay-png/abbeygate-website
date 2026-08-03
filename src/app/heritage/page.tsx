@@ -3,7 +3,7 @@ import { Container } from '@/components/ui/Container';
 import { CustomisationCTA } from '@/components/shared/CustomisationCTA';
 import { LatestBlog } from '@/components/shared/LatestBlog';
 import { heritageData } from '@/data/heritage';
-import { Facebook, Twitter, Link2 } from 'lucide-react';
+import { Link2 } from 'lucide-react';
 
 const SocialIcons = ({ className = '' }: { className?: string }) => (
   <div className={`flex items-center gap-4 text-black ${className}`}>

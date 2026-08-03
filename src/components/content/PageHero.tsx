@@ -6,25 +6,26 @@ interface PageHeroProps {
   overline?: string;
   subtitle?: string;
   backgroundImage?: string;
+  maxWidthClass?: string;
 }
 
-export function PageHero({ title, overline, subtitle, backgroundImage }: PageHeroProps) {
+export function PageHero({ title, overline, subtitle, backgroundImage, maxWidthClass = "max-w-[1500px]" }: PageHeroProps) {
   return (
     <section className="w-full py-6 md:py-10">
-      <Container maxWidthClass="max-w-[1500px]">
-        <div className="relative w-full h-[400px] md:h-[400px] flex items-center justify-center overflow-hidden bg-neutral-100 rounded-xl md:rounded-2xl">
+      <Container maxWidthClass={maxWidthClass}>
+        <div className="relative w-full h-[250px] md:h-[400px] flex items-center justify-center overflow-hidden bg-neutral-100 rounded-xl md:rounded-2xl">
           {backgroundImage && (
-            <Image 
+            <Image
               src={backgroundImage}
               alt={title}
               fill
               priority
-              unoptimized={backgroundImage?.includes('unsplash.com')}
+              unoptimized={true}
               className="object-cover"
               sizes="(max-width: 1400px) 100vw, 1400px"
             />
           )}
-          
+
           {/* Overlay to ensure text readability */}
           {backgroundImage && (
             <div className="absolute inset-0 bg-black/60" />
@@ -40,7 +41,7 @@ export function PageHero({ title, overline, subtitle, backgroundImage }: PageHer
               {title}
             </h1>
             {subtitle && (
-              <p className="text-sm md:text-base font-bold text-white max-w-5xl mx-auto drop-shadow-md leading-relaxed">
+              <p className="text-sm md:text-base font-regular text-white max-w-5xl mx-auto drop-shadow-md leading-relaxed">
                 {subtitle}
               </p>
             )}

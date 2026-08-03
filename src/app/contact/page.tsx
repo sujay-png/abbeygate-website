@@ -19,6 +19,7 @@ export default function ContactPage() {
         title={contactData.hero.title}
         overline={contactData.hero.overline}
         backgroundImage={contactData.hero.backgroundImage}
+        maxWidthClass="max-w-6xl"
       />
       
       <Container maxWidthClass="max-w-[1500px]" className="py-12 md:py-16">

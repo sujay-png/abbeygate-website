@@ -28,7 +28,12 @@ const FAQ_DATA = [
   }
 ];
 
-export const FAQ = () => {
+interface FAQProps {
+  hideTitle?: boolean;
+  className?: string;
+}
+
+export const FAQ = ({ hideTitle = false, className = "bg-brand-light" }: FAQProps) => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const toggleFAQ = (index: number) => {
@@ -36,15 +41,17 @@ export const FAQ = () => {
   };
 
   return (
-    <section className="py-16 md:py-24 bg-brand-light">
+    <section className={`py-16 md:py-24 ${className}`}>
       <Container>
-        <h2 className="text-3xl md:text-4xl font-extrabold text-black font-sans tracking-tight text-center mb-12">
-          Frequently Asked Questions
-        </h2>
-        
+        {!hideTitle && (
+          <h2 className="text-3xl md:text-4xl font-extrabold text-black font-sans tracking-tight text-center mb-12">
+            Frequently Asked Questions
+          </h2>
+        )}
+
         <div className="max-w-4xl mx-auto flex flex-col border border-gray-300 rounded-sm">
           {FAQ_DATA.map((faq, index) => (
-            <div 
+            <div
               key={index}
               className="border-b border-gray-300 last:border-b-0"
             >
@@ -63,7 +70,7 @@ export const FAQ = () => {
                   <ChevronDown className="w-5 h-5 text-black" />
                 </motion.div>
               </button>
-              
+
               <AnimatePresence initial={false}>
                 {openIndex === index && (
                   <motion.div

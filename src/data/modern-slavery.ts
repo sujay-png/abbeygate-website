@@ -3,11 +3,11 @@ export const modernSlaveryData = {
     title: "Abbeygate Manufacturing Company Ltd",
     overline: "CORPORATE SOCIAL RESPONSIBILITY POLICY",
     subtitle: "The home of quality diaries, notebooks and leather gifts",
-    backgroundImage: "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=1200&auto=format&fit=crop",
+    backgroundImage: "/images/banners/modern-slavery-banner.webp",
   },
   images: [
-    "https://images.unsplash.com/photo-1517842645767-c639042777db?q=80&w=600&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1531545514256-b1400bc00f31?q=80&w=600&auto=format&fit=crop"
+    "/images/banners/modern-slavery-grid1.jpg",
+    "/images/banners/modern-slavery-grid2.webp",
   ],
   contentPart1: `
     <h3 class="font-bold text-black mb-4 uppercase text-sm tracking-wider font-sans">MODERN SLAVERY ACT</h3>

@@ -13,21 +13,21 @@ const SLIDES = [
     title: 'Artwork Setup',
     description: 'Artwork submission guidelines to ease your diary and notebook specifications. Learn more about our accepted formats, Pantone colours, paper types, trim mark, bleeds and lead times',
     buttonText: 'Learn More',
-    bgImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000&auto=format&fit=crop',
+    bgImage: '/images/resources/rs-carousel-1.webp',
   },
   {
     id: 2,
     title: 'About Us',
     description: 'Abbeygate develops high-quality stationery that celebrates the joy of note taking and handwriting. As publishers, printers and manufacturers of diaries, notebooks, journals and leather goods we pride ourselves on our time-tested craftsmanship helping our customers tell their stories and plan for the future.',
     buttonText: 'LEARN MORE',
-    bgImage: 'https://images.unsplash.com/photo-1583324113626-70df0f4deaab?q=80&w=2000&auto=format&fit=crop',
+    bgImage: '/images/resources/rs-carousel-2.webp',
   },
   {
     id: 3,
     title: 'Resource Guide',
     description: 'This guide covers key aspects of book production, from terminology and binding types to layout design and printing processes. Understanding these elements is essential for creating high-quality books. For those looking to explore more, we\'ve provided further resources to deepen your knowledge of book production.',
     buttonText: 'Learn More',
-    bgImage: 'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=2000&auto=format&fit=crop',
+    bgImage: '/images/resources/rs-carousel-3.webp',
   },
 ];
 
