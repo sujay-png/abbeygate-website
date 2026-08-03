@@ -4,3 +4,4 @@ export * from './ImageTextSection';
 
 export * from './TextWithImageGrid';
 export * from './FeatureCallout';
+export * from './FeatureCards';

@@ -23,8 +23,8 @@ const FOOTER_LINKS = {
   ],
   information: [
     { label: "Resource Guide", href: "/resource-guide" },
-    { label: "Artwork Specification", href: "/artwork" },
-    { label: "Internal Page Layouts", href: "/layouts" },
+    { label: "Artwork Specification", href: "/artwork-specification" },
+    { label: "Internal Page Layouts", href: "/internal-page-layouts" },
   ],
 };
 

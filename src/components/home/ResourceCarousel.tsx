@@ -14,6 +14,7 @@ const SLIDES = [
     description: 'Artwork submission guidelines to ease your diary and notebook specifications. Learn more about our accepted formats, Pantone colours, paper types, trim mark, bleeds and lead times',
     buttonText: 'Learn More',
     bgImage: '/images/resources/rs-carousel-1.webp',
+    href: '/artwork-specification',
   },
   {
     id: 2,
@@ -21,6 +22,7 @@ const SLIDES = [
     description: 'Abbeygate develops high-quality stationery that celebrates the joy of note taking and handwriting. As publishers, printers and manufacturers of diaries, notebooks, journals and leather goods we pride ourselves on our time-tested craftsmanship helping our customers tell their stories and plan for the future.',
     buttonText: 'LEARN MORE',
     bgImage: '/images/resources/rs-carousel-2.webp',
+    href: '/about',
   },
   {
     id: 3,
@@ -28,6 +30,7 @@ const SLIDES = [
     description: 'This guide covers key aspects of book production, from terminology and binding types to layout design and printing processes. Understanding these elements is essential for creating high-quality books. For those looking to explore more, we\'ve provided further resources to deepen your knowledge of book production.',
     buttonText: 'Learn More',
     bgImage: '/images/resources/rs-carousel-3.webp',
+    href: '/resource-guide',
   },
 ];
 
@@ -93,7 +96,7 @@ export const ResourceCarousel = () => {
                   {slide.description}
                 </p>
                 <div>
-                  <Button variant="white" className="uppercase tracking-wide min-w-36">
+                  <Button variant="white" className="uppercase tracking-wide min-w-36" href={slide.href}>
                     {slide.buttonText}
                   </Button>
                 </div>

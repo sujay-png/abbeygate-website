@@ -22,14 +22,14 @@ export function ImageTextSection({
   return (
     <section className={`py-16 md:py-24 ${className}`}>
       <Container maxWidthClass="max-w-[1500px]">
-        <div className={`flex flex-col gap-12 lg:gap-16 items-center ${isLeft ? 'lg:flex-row' : 'lg:flex-row-reverse'}`}>
+        <div className={`flex flex-col gap-12 lg:gap-16 items-center lg:items-stretch ${isLeft ? 'lg:flex-row' : 'lg:flex-row-reverse'}`}>
           {/* Image Side */}
-          <div className="w-full lg:w-1/2 relative aspect-[4/3] rounded-lg overflow-hidden shadow-sm">
+          <div className="w-full lg:w-1/2 relative aspect-[4/3] lg:aspect-auto rounded-lg overflow-hidden shadow-sm lg:my-[30px]">
             <Image 
               src={image}
               alt={title}
               fill
-              unoptimized={image.includes('unsplash.com')}
+              quality = {95}
               className="object-cover"
               sizes="(max-width: 1024px) 100vw, 50vw"
             />
