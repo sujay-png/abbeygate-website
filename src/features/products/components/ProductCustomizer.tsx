@@ -47,7 +47,7 @@ export const ProductCustomizer = ({
 }: ProductCustomizerProps) => {
   const isGifts = isGiftsProduct(product);
   const isFoil = isFoilBlockedProduct(product);
-  const productImage = product.images[0]?.src ?? '';
+  const productImage = product.images[0]?.thumbnail || product.images[0]?.src || '';
 
   const [customization, setCustomization] = useState<CustomizationState>({
     enabled: !isGifts,

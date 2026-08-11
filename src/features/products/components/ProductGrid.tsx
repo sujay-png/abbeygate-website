@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import type { StoreProduct } from '../types/store-product';
 import { getProductDisplayPrice, stripHtml } from '../utils/product-helpers';
 
@@ -35,14 +36,12 @@ export const ProductGrid = ({ products }: ProductGridProps) => {
               </div>
 
               {imageSrc ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Image
                   src={imageSrc}
                   alt={image?.alt || product.name}
-                  loading="lazy"
-                  decoding="async"
-                  referrerPolicy="no-referrer"
-                  className="absolute inset-0 w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-gray-300 text-sm">

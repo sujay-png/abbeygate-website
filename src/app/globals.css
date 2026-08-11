@@ -3,7 +3,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  color-scheme: light;
+  color-scheme: light only;
 }
 
 @theme inline {
@@ -17,10 +17,19 @@
   --font-josefin: var(--font-josefin-sans);
 }
 
+html {
+  background-color: #ffffff !important;
+  color-scheme: light only;
+}
+
 body {
-  background: #ffffff;
-  color: #171717;
+  background-color: #ffffff !important;
+  color: #171717 !important;
   font-family: var(--font-work-sans), sans-serif;
+}
+
+main {
+  background-color: #ffffff;
 }
 
 h1, h2, h3, h4, h5, h6 {

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { storeFetch, storeFetchWithHeaders } from "@/lib/woocommerce/store-api";
 import type {
   StoreProduct,
@@ -30,21 +31,24 @@ export async function getStoreProducts(
 
   const { data, total, totalPages } = await storeFetchWithHeaders<StoreProduct[]>(
     "/products",
-    { params },
+    { params, revalidate: 120 },
   );
 
   return { products: data, total, totalPages };
 }
 
+/** Fetch category products (capped pages for speed). */
 export async function getAllStoreProductsByCategory(
   categoryId: number,
+  options: { maxPages?: number; perPage?: number } = {},
 ): Promise<StoreProduct[]> {
+  const { maxPages = 3, perPage = 50 } = options;
   const allProducts: StoreProduct[] = [];
   let page = 1;
   let totalPages = 1;
 
-  while (page <= totalPages) {
-    const result = await getStoreProducts({ categoryId, page, perPage: 100 });
+  while (page <= totalPages && page <= maxPages) {
+    const result = await getStoreProducts({ categoryId, page, perPage });
     allProducts.push(...result.products);
     totalPages = result.totalPages;
     page++;
@@ -53,29 +57,33 @@ export async function getAllStoreProductsByCategory(
   return allProducts;
 }
 
-export async function getStoreProductBySlug(
+export const getStoreProductBySlug = cache(async (
   slug: string,
-): Promise<StoreProduct | null> {
+): Promise<StoreProduct | null> => {
   const products = await storeFetch<StoreProduct[]>("/products", {
     params: { slug },
+    revalidate: 120,
   });
   return products[0] ?? null;
-}
+});
 
-export async function getStoreProductById(
+export const getStoreProductById = cache(async (
   id: number,
-): Promise<StoreProduct> {
-  return storeFetch<StoreProduct>(`/products/${id}`);
-}
+): Promise<StoreProduct> => {
+  return storeFetch<StoreProduct>(`/products/${id}`, { revalidate: 120 });
+});
 
 export async function getStoreCategories(): Promise<StoreCategory[]> {
   return storeFetch<StoreCategory[]>("/products/categories", {
     params: { per_page: 100 },
+    revalidate: 300,
   });
 }
 
 export async function getStoreAttributes(): Promise<StoreAttribute[]> {
-  return storeFetch<StoreAttribute[]>("/products/attributes");
+  return storeFetch<StoreAttribute[]>("/products/attributes", {
+    revalidate: 300,
+  });
 }
 
 export async function getStoreAttributeTerms(
@@ -83,7 +91,7 @@ export async function getStoreAttributeTerms(
 ): Promise<StoreAttributeTerm[]> {
   return storeFetch<StoreAttributeTerm[]>(
     `/products/attributes/${attributeId}/terms`,
-    { params: { per_page: 100 } },
+    { params: { per_page: 100 }, revalidate: 300 },
   );
 }
 
@@ -92,4 +100,15 @@ export async function getFeaturedStoreProducts(
 ): Promise<StoreProduct[]> {
   const { products } = await getStoreProducts({ perPage: limit });
   return products.slice(0, limit);
+}
+
+/** Prefer WooCommerce-generated thumbnails over full-size PNGs. */
+export function getProductImageUrl(
+  product: StoreProduct,
+  size: "thumb" | "full" = "thumb",
+): string {
+  const image = product.images[0];
+  if (!image) return "";
+  if (size === "full") return image.src;
+  return image.thumbnail || image.src;
 }

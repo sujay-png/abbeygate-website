@@ -39,7 +39,7 @@ export const FeaturedProducts = async () => {
                   title={product.name}
                   description={stripHtml(product.short_description)}
                   price={getProductDisplayPrice(product)}
-                  imageUrl={product.images[0]?.src}
+                  imageUrl={product.images[0]?.thumbnail || product.images[0]?.src}
                   href={`/product/${product.slug}`}
                 />
               ))
