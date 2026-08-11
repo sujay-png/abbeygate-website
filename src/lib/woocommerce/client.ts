@@ -1,8 +1,8 @@
 /**
- * WooCommerce REST API client.
+ * WooCommerce REST API client (wc/v3).
  *
- * Server-side only — never import this in client components.
- * Credentials are read from environment variables.
+ * Server-side only — never import this into client components.
+ * Keys come from .env.local (WOOCOMMERCE_*). Do not hardcode secrets.
  */
 
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
@@ -91,3 +91,40 @@ export async function woocommerceFetch<T>(
 
   return response.json() as Promise<T>;
 }
+
+/** Convenience API matching the usual WooCommerce client shape. */
+export const woocommerceApi = {
+  request<T>(endpoint: string, options: Omit<WooCommerceRequestOptions, "path"> = {}) {
+    return woocommerceFetch<T>({
+      path: endpoint,
+      ...options,
+    });
+  },
+
+  getProducts(
+    params: Record<string, string | number | boolean | undefined> = {},
+  ) {
+    return woocommerceFetch<unknown[]>({
+      path: "/products",
+      params: {
+        page: 1,
+        per_page: 10,
+        status: "publish",
+        ...params,
+      },
+    });
+  },
+
+  getProductById(id: number | string) {
+    return woocommerceFetch<unknown>({
+      path: `/products/${id}`,
+    });
+  },
+
+  getProductBySlug(slug: string) {
+    return woocommerceFetch<unknown[]>({
+      path: "/products",
+      params: { slug, status: "publish" },
+    }).then((products) => products[0] ?? null);
+  },
+};

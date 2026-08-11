@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { StoreProduct, PriceTier } from '../types/store-product';
 import { ProductCustomizer, type CustomizationState } from './ProductCustomizer';
 import { useCart } from '@/features/cart/context/CartContext';
@@ -27,6 +27,14 @@ export const ProductDetailClient = ({
     position: 'top-center',
   });
   const [isAdding, setIsAdding] = useState(false);
+
+  const handlePriceChange = useCallback((unit: number) => {
+    setUnitPrice(unit);
+  }, []);
+
+  const handleCustomizationChange = useCallback((state: CustomizationState) => {
+    setCustomization(state);
+  }, []);
 
   const handleAddToCart = async () => {
     if (
@@ -125,8 +133,8 @@ export const ProductDetailClient = ({
             basePrice={basePrice}
             quantity={quantity}
             onQuantityChange={setQuantity}
-            onCustomizationChange={setCustomization}
-            onPriceChange={(unit, _total) => setUnitPrice(unit)}
+            onCustomizationChange={handleCustomizationChange}
+            onPriceChange={handlePriceChange}
           />
         ) : (
           <div className="mb-6">
