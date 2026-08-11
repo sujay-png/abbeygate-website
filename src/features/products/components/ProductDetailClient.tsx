@@ -71,7 +71,7 @@ export const ProductDetailClient = ({
         productId: String(product.id),
         slug: product.slug,
         name: product.name,
-        image: product.images[0]?.src ?? '',
+        image: product.images[0]?.thumbnail || product.images[0]?.src || '',
         price: unitPrice,
         quantity,
         attributes,
@@ -81,7 +81,6 @@ export const ProductDetailClient = ({
               choice: customization.blockingType,
               position: customization.position,
               fileName: customization.logoFile?.name,
-              logoPreviewUrl: customization.logoPreviewUrl,
             }
           : undefined,
         categorySlugs: product.categories.map((c) => c.slug),
@@ -94,13 +93,14 @@ export const ProductDetailClient = ({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
       <div className="space-y-4">
-        <div className="aspect-square bg-gray-50 rounded-2xl overflow-hidden flex items-center justify-center p-8">
+        <div className="aspect-square bg-[#f5f5f5] rounded-2xl overflow-hidden flex items-center justify-center p-6 relative">
           {product.images[0] ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={product.images[0].src}
+              src={product.images[0].thumbnail || product.images[0].src}
               alt={product.name}
               referrerPolicy="no-referrer"
+              fetchPriority="high"
               className="w-full h-full object-contain"
             />
           ) : (
@@ -116,7 +116,9 @@ export const ProductDetailClient = ({
                 key={img.id}
                 src={img.thumbnail || img.src}
                 alt={img.alt || product.name}
-                className="w-20 h-20 object-cover rounded-lg border border-gray-200 shrink-0"
+                referrerPolicy="no-referrer"
+                loading="lazy"
+                className="w-20 h-20 object-cover rounded-lg border border-gray-200 shrink-0 bg-[#f5f5f5]"
               />
             ))}
           </div>

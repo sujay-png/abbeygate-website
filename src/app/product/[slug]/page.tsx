@@ -3,8 +3,7 @@ import { Container } from '@/components/ui/Container';
 import { Breadcrumb } from '@/components/content/Breadcrumb';
 import { ProductDetailClient } from '@/features/products/components/ProductDetailClient';
 import { getStoreProductBySlug } from '@/features/products/services/store-products';
-import { getProductPricingData } from '@/features/products/services/pricing';
-import { parseStorePrice } from '@/features/products/utils/pricing';
+import { getProductPricingFromProduct } from '@/features/products/services/pricing';
 import type { Metadata } from 'next';
 
 type PageProps = {
@@ -30,6 +29,7 @@ export default async function ProductPage({ params }: PageProps) {
 
   let product;
   try {
+    // React cache() dedupes this with generateMetadata in the same request
     product = await getStoreProductBySlug(slug);
   } catch (error) {
     console.error(`Failed to load product "${slug}":`, error);
@@ -38,13 +38,10 @@ export default async function ProductPage({ params }: PageProps) {
 
   if (!product) notFound();
 
-  const pricing = await getProductPricingData(slug);
-  const basePrice =
-    pricing?.basePrice ??
-    parseStorePrice(product.prices.price, product.prices.currency_minor_unit);
+  const pricing = await getProductPricingFromProduct(product);
 
   return (
-    <div className="py-10">
+    <div className="bg-white py-10 min-h-screen">
       <Container>
         <Breadcrumb
           paths={[
@@ -56,8 +53,8 @@ export default async function ProductPage({ params }: PageProps) {
         <div className="mt-8">
           <ProductDetailClient
             product={product}
-            tiers={pricing?.tiers ?? []}
-            basePrice={basePrice}
+            tiers={pricing.tiers}
+            basePrice={pricing.basePrice}
           />
         </div>
       </Container>

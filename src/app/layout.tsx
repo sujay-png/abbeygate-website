@@ -45,13 +45,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${didactGothic.variable} ${workSans.variable} ${josefinSans.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${didactGothic.variable} ${workSans.variable} ${josefinSans.variable} h-full antialiased bg-white`}
+      style={{ colorScheme: "light" }}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+      <body className="min-h-full flex flex-col bg-white text-[#171717]" suppressHydrationWarning>
         <CartProvider>
           <Navbar />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 bg-white">{children}</main>
           <Footer />
           <CartDrawer />
         </CartProvider>

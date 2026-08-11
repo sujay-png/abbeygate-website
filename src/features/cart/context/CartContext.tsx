@@ -40,13 +40,60 @@ const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 const CART_STORAGE_KEY = 'abbeygate-cart';
 
+/** Strip heavy/base64 fields before writing to localStorage. */
+function toPersistentCartItem(item: CartItem): CartItem {
+  const { customization, ...rest } = item;
+
+  if (!customization) return rest;
+
+  return {
+    ...rest,
+    customization: {
+      enabled: customization.enabled,
+      choice: customization.choice,
+      position: customization.position,
+      fileName: customization.fileName,
+      fileUrl: customization.fileUrl?.startsWith('data:')
+        ? undefined
+        : customization.fileUrl,
+      // Never persist data-URI logo previews — they blow the 5MB quota
+      logoPreviewUrl: undefined,
+    },
+  };
+}
+
 function loadCartFromStorage(): CartItem[] {
   if (typeof window === 'undefined') return [];
   try {
     const stored = localStorage.getItem(CART_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
+    if (!stored) return [];
+    const parsed = JSON.parse(stored) as CartItem[];
+    return Array.isArray(parsed) ? parsed.map(toPersistentCartItem) : [];
   } catch {
+    try {
+      localStorage.removeItem(CART_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
     return [];
+  }
+}
+
+function saveCartToStorage(items: CartItem[]) {
+  if (typeof window === 'undefined') return;
+
+  const payload = JSON.stringify(items.map(toPersistentCartItem));
+
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, payload);
+  } catch {
+    // Quota exceeded — clear old cart and retry once with slim payload
+    try {
+      localStorage.removeItem(CART_STORAGE_KEY);
+      localStorage.setItem(CART_STORAGE_KEY, payload);
+    } catch (retryError) {
+      console.warn('Unable to persist cart to localStorage:', retryError);
+    }
   }
 }
 
@@ -63,32 +110,30 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (hydrated) {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+      saveCartToStorage(items);
     }
   }, [items, hydrated]);
 
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);
 
-  // FUTURE: replace the body of this function with a call to
-  // POST /wp-json/wc/store/v1/cart/add-item, then setItems(response.items).
-  // Keep the signature and the `openCart()` call — everything downstream
-  // (drawer UI, badge count) reads from `items`/`isLoading` and won't need
-  // to change.
   const addItem = useCallback(async (item: Omit<CartItem, 'key'> & { key?: string }) => {
     setIsLoading(true);
     try {
       const customKey = item.customization?.enabled ? '-custom' : '';
-      const key = item.key ?? `${item.productId}${item.variationId ? `-${item.variationId}` : ''}${customKey}-${Date.now()}`;
+      const key =
+        item.key ??
+        `${item.productId}${item.variationId ? `-${item.variationId}` : ''}${customKey}-${Date.now()}`;
 
-      setItems((prev) => [...prev, { ...item, key }]);
+      // Drop base64 preview before it ever enters cart state
+      const safeItem = toPersistentCartItem({ ...item, key });
+      setItems((prev) => [...prev, safeItem]);
       openCart();
     } finally {
       setIsLoading(false);
     }
   }, [openCart]);
 
-  // FUTURE: POST /wp-json/wc/store/v1/cart/remove-item { key }
   const removeItem = useCallback(async (key: string) => {
     setIsLoading(true);
     try {
@@ -98,7 +143,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // FUTURE: POST /wp-json/wc/store/v1/cart/update-item { key, quantity }
   const updateQuantity = useCallback(async (key: string, quantity: number) => {
     if (quantity < 1) return removeItem(key);
     setIsLoading(true);
