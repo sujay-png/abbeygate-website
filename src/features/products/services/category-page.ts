@@ -1,7 +1,7 @@
 import { getCategoryRoute, getFilterConfigForPath } from '@/data/category-routes';
 import { getAllStoreProductsByCategory, getStoreAttributes, getStoreAttributeTerms } from '../services/store-products';
 import { parseFiltersFromSearchParams } from '../utils/product-helpers';
-import type { StoreAttributeTerm } from '../types/store-product';
+import type { StoreAttribute, StoreAttributeTerm, StoreProduct } from '../types/store-product';
 
 export async function loadCategoryPageData(path: string, searchParams: Record<string, string | string[] | undefined>) {
   const route = getCategoryRoute(path);
@@ -10,10 +10,23 @@ export async function loadCategoryPageData(path: string, searchParams: Record<st
     return null;
   }
 
-  const [allProducts, attributes] = await Promise.all([
-    getAllStoreProductsByCategory(route.categoryId),
-    getStoreAttributes(),
-  ]);
+  let allProducts: StoreProduct[] = [];
+  let attributes: StoreAttribute[] = [];
+
+  try {
+    allProducts = await getAllStoreProductsByCategory(route.categoryId);
+  } catch (error) {
+    console.error(`Failed to load products for category ${route.categoryId}:`, error);
+    throw error;
+  }
+
+  try {
+    attributes = await getStoreAttributes();
+  } catch (error) {
+    // Filters are optional — still show the product grid if attributes 404
+    console.warn('Failed to load product attributes for filters:', error);
+    attributes = [];
+  }
 
   const filterAttributes = attributes.filter((a) =>
     ['pa_collection', 'pa_colour', 'pa_layout', 'pa_size'].includes(a.taxonomy),
@@ -22,7 +35,12 @@ export async function loadCategoryPageData(path: string, searchParams: Record<st
   const attributeTerms: Record<number, StoreAttributeTerm[]> = {};
   await Promise.all(
     filterAttributes.map(async (attr) => {
-      attributeTerms[attr.id] = await getStoreAttributeTerms(attr.id);
+      try {
+        attributeTerms[attr.id] = await getStoreAttributeTerms(attr.id);
+      } catch (error) {
+        console.warn(`Failed to load terms for attribute ${attr.id}:`, error);
+        attributeTerms[attr.id] = [];
+      }
     }),
   );
 
