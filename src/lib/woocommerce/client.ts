@@ -5,6 +5,8 @@
  * Keys come from .env.local (WOOCOMMERCE_*). Do not hardcode secrets.
  */
 
+import { getWooStoreUrl } from "./config";
+
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
 
 export type WooCommerceRequestOptions = {
@@ -23,18 +25,18 @@ type WooCommerceConfig = {
 };
 
 function getConfig(): WooCommerceConfig {
-  const storeUrl = process.env.WOOCOMMERCE_STORE_URL;
+  const storeUrl = getWooStoreUrl();
   const consumerKey = process.env.WOOCOMMERCE_CONSUMER_KEY;
   const consumerSecret = process.env.WOOCOMMERCE_CONSUMER_SECRET;
 
-  if (!storeUrl || !consumerKey || !consumerSecret) {
+  if (!consumerKey || !consumerSecret) {
     throw new Error(
-      "Missing WooCommerce configuration. Set WOOCOMMERCE_STORE_URL, WOOCOMMERCE_CONSUMER_KEY, and WOOCOMMERCE_CONSUMER_SECRET in your .env.local file.",
+      "Missing WooCommerce configuration. Set WOOCOMMERCE_CONSUMER_KEY and WOOCOMMERCE_CONSUMER_SECRET in your .env.local file.",
     );
   }
 
   return {
-    storeUrl: storeUrl.replace(/\/$/, ""),
+    storeUrl,
     consumerKey,
     consumerSecret,
   };
