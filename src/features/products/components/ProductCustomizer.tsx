@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { StoreProduct, PriceTier } from '../types/store-product';
 import {
   calculateProductPrice,
@@ -55,7 +55,7 @@ export const ProductCustomizer = ({
     position: 'top-center',
   });
   const [collapseOpen, setCollapseOpen] = useState(true);
-  const [priceResult, setPriceResult] = useState(
+  const [priceResult, setPriceResult] = useState(() =>
     calculateProductPrice({
       quantity,
       basePrice,
@@ -68,44 +68,40 @@ export const ProductCustomizer = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const updatePricing = useCallback(
-    (qty: number, custom: CustomizationState) => {
-      const effectiveEnabled =
-        !isGifts && qty >= CUSTOMIZATION_MIN_QTY && custom.enabled;
-
-      const result = calculateProductPrice({
-        quantity: qty,
-        basePrice,
-        tiers,
-        customizationEnabled: effectiveEnabled,
-        blockingType: custom.blockingType,
-        isGifts,
-      });
-
-      setPriceResult(result);
+  const syncToParent = useEffectEvent(
+    (result: ReturnType<typeof calculateProductPrice>, custom: CustomizationState) => {
       onPriceChange(result.unitPrice, result.totalPrice);
-      onCustomizationChange({ ...custom, enabled: effectiveEnabled });
+      onCustomizationChange(custom);
     },
-    [basePrice, tiers, isGifts, onPriceChange, onCustomizationChange],
   );
 
   useEffect(() => {
-    updatePricing(quantity, customization);
-  }, [quantity, customization, updatePricing]);
+    const effectiveEnabled =
+      !isGifts && quantity >= CUSTOMIZATION_MIN_QTY && customization.enabled;
+
+    const result = calculateProductPrice({
+      quantity,
+      basePrice,
+      tiers,
+      customizationEnabled: effectiveEnabled,
+      blockingType: customization.blockingType,
+      isGifts,
+    });
+
+    setPriceResult(result);
+    syncToParent(result, { ...customization, enabled: effectiveEnabled });
+  }, [quantity, customization, basePrice, tiers, isGifts]);
 
   const handleCustomizationToggle = (enabled: boolean) => {
-    const updated = { ...customization, enabled };
-    setCustomization(updated);
+    setCustomization((prev) => ({ ...prev, enabled }));
   };
 
   const handleBlockingTypeChange = (type: string) => {
-    const updated = { ...customization, blockingType: type };
-    setCustomization(updated);
+    setCustomization((prev) => ({ ...prev, blockingType: type }));
   };
 
   const handlePositionChange = (position: string) => {
-    const updated = { ...customization, position };
-    setCustomization(updated);
+    setCustomization((prev) => ({ ...prev, position }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,12 +110,11 @@ export const ProductCustomizer = ({
 
     const reader = new FileReader();
     reader.onload = (ev) => {
-      const updated = {
-        ...customization,
+      setCustomization((prev) => ({
+        ...prev,
         logoFile: file,
         logoPreviewUrl: ev.target?.result as string,
-      };
-      setCustomization(updated);
+      }));
     };
     reader.readAsDataURL(file);
   };

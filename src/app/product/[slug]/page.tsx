@@ -4,6 +4,7 @@ import { Breadcrumb } from '@/components/content/Breadcrumb';
 import { ProductDetailClient } from '@/features/products/components/ProductDetailClient';
 import { getStoreProductBySlug } from '@/features/products/services/store-products';
 import { getProductPricingData } from '@/features/products/services/pricing';
+import { parseStorePrice } from '@/features/products/utils/pricing';
 import type { Metadata } from 'next';
 
 type PageProps = {
@@ -12,20 +13,35 @@ type PageProps = {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getStoreProductBySlug(slug);
-  return {
-    title: product ? `${product.name} | Abbeygate England` : 'Product',
-    description: product?.short_description?.replace(/<[^>]*>/g, '').slice(0, 160),
-  };
+
+  try {
+    const product = await getStoreProductBySlug(slug);
+    return {
+      title: product ? `${product.name} | Abbeygate England` : 'Product',
+      description: product?.short_description?.replace(/<[^>]*>/g, '').slice(0, 160),
+    };
+  } catch {
+    return { title: 'Product | Abbeygate England' };
+  }
 }
 
 export default async function ProductPage({ params }: PageProps) {
   const { slug } = await params;
-  const product = await getStoreProductBySlug(slug);
+
+  let product;
+  try {
+    product = await getStoreProductBySlug(slug);
+  } catch (error) {
+    console.error(`Failed to load product "${slug}":`, error);
+    notFound();
+  }
 
   if (!product) notFound();
 
   const pricing = await getProductPricingData(slug);
+  const basePrice =
+    pricing?.basePrice ??
+    parseStorePrice(product.prices.price, product.prices.currency_minor_unit);
 
   return (
     <div className="py-10">
@@ -41,7 +57,7 @@ export default async function ProductPage({ params }: PageProps) {
           <ProductDetailClient
             product={product}
             tiers={pricing?.tiers ?? []}
-            basePrice={pricing?.basePrice ?? 0}
+            basePrice={basePrice}
           />
         </div>
       </Container>
