@@ -100,6 +100,7 @@ export const ProductDetailClient = ({
             <img
               src={product.images[0].src}
               alt={product.name}
+              referrerPolicy="no-referrer"
               className="w-full h-full object-contain"
             />
           ) : (
