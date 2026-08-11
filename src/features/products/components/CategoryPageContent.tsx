@@ -29,16 +29,21 @@ export const CategoryPageContent = ({
   const filteredProducts = allProducts.filter((p) => productMatchesFilters(p, filters));
 
   return (
-    <div className="py-10">
-      <Container>
-        <Breadcrumb paths={breadcrumbItems} />
-        <h1 className="text-3xl font-extrabold text-black mt-6 mb-8">{title}</h1>
+    <div className="bg-white min-h-screen">
+      <Breadcrumb paths={[{ label: 'Home', href: '/' }, ...breadcrumbItems]} />
+
+      <Container className="py-8">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-[#1F2124] mb-2">{title}</h1>
+        <p className="text-sm text-gray-500 mb-8">
+          Showing {filteredProducts.length} of {allProducts.length} products
+        </p>
 
         <ProductFilters
           products={allProducts}
           attributes={attributes}
           attributeTerms={attributeTerms}
           filterConfig={filterConfig}
+          resultCount={filteredProducts.length}
         />
 
         <ProductGrid products={filteredProducts} />
