@@ -21,6 +21,7 @@ export const ProductDetailClient = ({
   const isGifts = isGiftsProduct(product);
   const [quantity, setQuantity] = useState(isGifts ? 1 : CUSTOMIZATION_MIN_QTY);
   const [unitPrice, setUnitPrice] = useState(basePrice);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [customization, setCustomization] = useState<CustomizationState>({
     enabled: !isGifts,
     blockingType: 'Embossed',
@@ -35,6 +36,9 @@ export const ProductDetailClient = ({
   const handleCustomizationChange = useCallback((state: CustomizationState) => {
     setCustomization(state);
   }, []);
+
+  const activeImage = product.images[activeImageIndex] ?? product.images[0];
+  const activeSrc = activeImage?.src || activeImage?.thumbnail || '';
 
   const handleAddToCart = async () => {
     if (
@@ -59,7 +63,9 @@ export const ProductDetailClient = ({
         if (customization.position) {
           attributes.push({
             name: 'Logo Position',
-            value: customization.position.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+            value: customization.position
+              .replace(/-/g, ' ')
+              .replace(/\b\w/g, (c) => c.toUpperCase()),
           });
         }
         if (customization.logoFile) {
@@ -75,14 +81,15 @@ export const ProductDetailClient = ({
         price: unitPrice,
         quantity,
         attributes,
-        customization: customization.enabled && !isGifts
-          ? {
-              enabled: true,
-              choice: customization.blockingType,
-              position: customization.position,
-              fileName: customization.logoFile?.name,
-            }
-          : undefined,
+        customization:
+          customization.enabled && !isGifts
+            ? {
+                enabled: true,
+                choice: customization.blockingType,
+                position: customization.position,
+                fileName: customization.logoFile?.name,
+              }
+            : undefined,
         categorySlugs: product.categories.map((c) => c.slug),
       });
     } finally {
@@ -91,43 +98,85 @@ export const ProductDetailClient = ({
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-      <div className="space-y-4">
-        <div className="aspect-square bg-[#f5f5f5] rounded-2xl overflow-hidden flex items-center justify-center p-6 relative">
-          {product.images[0] ? (
+    <div
+      className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16"
+      style={{ backgroundColor: '#ffffff', color: '#1F2124' }}
+    >
+      {/* Left: gallery — match WP product image column */}
+      <div>
+        <div
+          className="relative w-full overflow-hidden rounded-lg"
+          style={{ aspectRatio: '1 / 1', backgroundColor: '#f7f7f7' }}
+        >
+          {activeSrc ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={product.images[0].thumbnail || product.images[0].src}
-              alt={product.name}
+              src={activeSrc}
+              alt={activeImage?.alt || product.name}
               referrerPolicy="no-referrer"
               fetchPriority="high"
-              className="w-full h-full object-contain"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                padding: 16,
+              }}
             />
           ) : (
-            <div className="w-48 h-64 bg-gray-200 rounded" />
+            <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+              No image
+            </div>
           )}
         </div>
 
         {product.images.length > 1 && (
-          <div className="flex gap-3 overflow-x-auto">
-            {product.images.map((img) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={img.id}
-                src={img.thumbnail || img.src}
-                alt={img.alt || product.name}
-                referrerPolicy="no-referrer"
-                loading="lazy"
-                className="w-20 h-20 object-cover rounded-lg border border-gray-200 shrink-0 bg-[#f5f5f5]"
-              />
-            ))}
+          <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+            {product.images.map((img, index) => {
+              const thumb = img.thumbnail || img.src;
+              return (
+                <button
+                  key={img.id}
+                  type="button"
+                  onClick={() => setActiveImageIndex(index)}
+                  className="relative h-20 w-20 shrink-0 overflow-hidden rounded border"
+                  style={{
+                    borderColor: index === activeImageIndex ? '#1F2124' : '#e5e5e5',
+                    backgroundColor: '#f7f7f7',
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={thumb}
+                    alt={img.alt || product.name}
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      padding: 4,
+                    }}
+                  />
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
 
-      <div>
-        <p className="text-sm text-gray-500 mb-2">SKU: {product.sku}</p>
-        <h1 className="text-2xl lg:text-3xl font-extrabold text-gray-900 mb-4">{product.name}</h1>
+      {/* Right: details — match WP Abbey PDP column */}
+      <div style={{ backgroundColor: '#ffffff' }}>
+        <h1
+          className="text-2xl lg:text-[32px] font-bold leading-tight mb-2"
+          style={{ color: '#1F2124' }}
+        >
+          {product.name}
+        </h1>
+        <p className="text-sm mb-6" style={{ color: '#666666' }}>
+          SKU: {product.sku}
+        </p>
 
         {!isGifts ? (
           <ProductCustomizer
@@ -141,44 +190,68 @@ export const ProductDetailClient = ({
           />
         ) : (
           <div className="mb-6">
-            <p className="text-3xl font-bold mb-4">{formatGBP(basePrice)}</p>
+            <p className="text-3xl font-bold mb-4" style={{ color: '#1F2124' }}>
+              {formatGBP(basePrice)}
+            </p>
             <input
               type="number"
               min={1}
               value={quantity}
-              onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
+              onChange={(e) =>
+                setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))
+              }
               className="w-20 h-[50px] text-lg border rounded-lg text-center mr-4"
             />
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={handleAddToCart}
-          disabled={isAdding}
-          className="w-full sm:w-auto h-[52px] px-9 text-lg font-bold rounded-xl bg-[#7b5bc6] text-white hover:bg-[#684ab1] hover:-translate-y-0.5 transition-all disabled:opacity-50 mt-4"
-        >
-          {isAdding ? 'Adding...' : 'Add to Basket'}
-        </button>
+        <div className="flex flex-wrap items-center gap-4 mt-6">
+          {!isGifts && (
+            <input
+              type="number"
+              min={1}
+              value={quantity}
+              onChange={(e) => {
+                const val = parseInt(e.target.value, 10);
+                if (val >= 1) setQuantity(val);
+              }}
+              className="w-[80px] h-[52px] text-lg border border-gray-300 rounded-[10px] text-center"
+              style={{ color: '#1F2124', backgroundColor: '#ffffff' }}
+            />
+          )}
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            disabled={isAdding}
+            className="h-[52px] px-9 text-lg font-bold rounded-xl text-white transition-all disabled:opacity-50"
+            style={{ backgroundColor: '#7b5bc6' }}
+          >
+            {isAdding ? 'Adding...' : 'Add to Basket'}
+          </button>
+        </div>
 
         {!isGifts && tiers.length > 0 && (
           <div className="mt-8 overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 font-semibold">Product Quantity</th>
-                  <th className="text-left py-3 font-semibold">Price per Unit</th>
+                <tr style={{ borderBottom: '1px solid #e5e5e5' }}>
+                  <th className="text-left py-3 font-semibold" style={{ color: '#1F2124' }}>
+                    Product Quantity
+                  </th>
+                  <th className="text-left py-3 font-semibold" style={{ color: '#1F2124' }}>
+                    Price per Unit
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {tiers.map((tier) => (
-                  <tr key={tier.min} className="border-b border-gray-100">
-                    <td className="py-2.5">
-                      {tier.max
-                        ? `${tier.min} - ${tier.max}`
-                        : `${tier.min}+`}
+                  <tr key={tier.min} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                    <td className="py-2.5" style={{ color: '#444' }}>
+                      {tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}
                     </td>
-                    <td className="py-2.5 font-medium">{formatGBP(tier.price)}</td>
+                    <td className="py-2.5 font-medium" style={{ color: '#1F2124' }}>
+                      {formatGBP(tier.price)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -188,20 +261,25 @@ export const ProductDetailClient = ({
 
         {product.short_description && (
           <div
-            className="mt-8 text-gray-600 leading-relaxed prose prose-sm max-w-none"
+            className="mt-8 leading-relaxed prose prose-sm max-w-none"
+            style={{ color: '#555555' }}
             dangerouslySetInnerHTML={{ __html: product.short_description }}
           />
         )}
 
         {product.attributes.length > 0 && (
           <div className="mt-8">
-            <h3 className="text-lg font-bold mb-3">Additional information</h3>
+            <h3 className="text-lg font-bold mb-3" style={{ color: '#1F2124' }}>
+              Additional information
+            </h3>
             <table className="w-full text-sm">
               <tbody>
                 {product.attributes.map((attr) => (
-                  <tr key={attr.id} className="border-b border-gray-100">
-                    <td className="py-2 font-medium text-gray-700">{attr.name}</td>
-                    <td className="py-2 text-gray-600">
+                  <tr key={attr.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                    <td className="py-2 font-medium" style={{ color: '#444' }}>
+                      {attr.name}
+                    </td>
+                    <td className="py-2" style={{ color: '#666' }}>
                       {attr.terms.map((t) => t.name).join(', ')}
                     </td>
                   </tr>
@@ -213,9 +291,12 @@ export const ProductDetailClient = ({
 
         {product.description && (
           <div className="mt-8">
-            <h3 className="text-lg font-bold mb-3">Description</h3>
+            <h3 className="text-lg font-bold mb-3" style={{ color: '#1F2124' }}>
+              Description
+            </h3>
             <div
-              className="text-gray-600 leading-relaxed prose prose-sm max-w-none"
+              className="leading-relaxed prose prose-sm max-w-none"
+              style={{ color: '#555555' }}
               dangerouslySetInnerHTML={{ __html: product.description }}
             />
           </div>

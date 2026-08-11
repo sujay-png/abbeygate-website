@@ -29,7 +29,6 @@ export default async function ProductPage({ params }: PageProps) {
 
   let product;
   try {
-    // React cache() dedupes this with generateMetadata in the same request
     product = await getStoreProductBySlug(slug);
   } catch (error) {
     console.error(`Failed to load product "${slug}":`, error);
@@ -41,22 +40,20 @@ export default async function ProductPage({ params }: PageProps) {
   const pricing = await getProductPricingFromProduct(product);
 
   return (
-    <div className="bg-white py-10 min-h-screen">
-      <Container>
-        <Breadcrumb
-          paths={[
-            { label: 'Home', href: '/' },
-            { label: 'Products', href: '/notebooks' },
-            { label: product.name },
-          ]}
+    <div style={{ backgroundColor: '#ffffff', minHeight: '100vh' }}>
+      <Breadcrumb
+        paths={[
+          { label: 'Home', href: '/' },
+          { label: 'Products', href: '/notebooks' },
+          { label: product.name },
+        ]}
+      />
+      <Container className="py-8 md:py-10">
+        <ProductDetailClient
+          product={product}
+          tiers={pricing.tiers}
+          basePrice={pricing.basePrice}
         />
-        <div className="mt-8">
-          <ProductDetailClient
-            product={product}
-            tiers={pricing.tiers}
-            basePrice={pricing.basePrice}
-          />
-        </div>
       </Container>
     </div>
   );

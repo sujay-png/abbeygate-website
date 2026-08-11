@@ -3,12 +3,12 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  color-scheme: light only;
+  color-scheme: light;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: #ffffff;
+  --color-foreground: #171717;
   --color-brand-light: #ECF5F5;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -17,21 +17,18 @@
   --font-josefin: var(--font-josefin-sans);
 }
 
-html {
-  background-color: #ffffff !important;
-  color-scheme: light only;
+html,
+body {
+  background: #ffffff;
+  color: #171717;
+  color-scheme: light;
 }
 
 body {
-  background-color: #ffffff !important;
-  color: #171717 !important;
   font-family: var(--font-work-sans), sans-serif;
-}
-
-main {
-  background-color: #ffffff;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-josefin-sans), sans-serif;
+  color: #1f2124;
 }
