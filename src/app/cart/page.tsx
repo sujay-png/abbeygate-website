@@ -40,7 +40,7 @@ export default function CartPage() {
                         </Link>
                         {item.attributes?.map((attr) => (
                           <p key={attr.name} className="text-sm text-gray-500 mt-1">
-                            {attr.name}: {attr.value}
+                            {attr.name}{attr.value ? `: ${attr.value}` : ''}
                           </p>
                         ))}
                       </div>

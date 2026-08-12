@@ -16,6 +16,8 @@ export type WooCommerceRequestOptions = {
   body?: unknown;
   /** Next.js fetch cache revalidation in seconds. Defaults to 60. */
   revalidate?: number | false;
+  /** Request timeout in ms. */
+  timeoutMs?: number;
 };
 
 type WooCommerceConfig = {
@@ -72,9 +74,9 @@ export async function woocommerceFetch<T>(
   options: WooCommerceRequestOptions,
 ): Promise<T> {
   const { storeUrl, consumerKey, consumerSecret } = getConfig();
-  const { path, method = "GET", params, body, revalidate = 60 } = options;
+  const { path, method = "GET", params, body, revalidate = 60, timeoutMs } = options;
 
-  const response = await fetch(buildUrl(storeUrl, path, params), {
+  const fetchOptions: RequestInit = {
     method,
     headers: {
       Authorization: getAuthHeader(consumerKey, consumerSecret),
@@ -82,7 +84,13 @@ export async function woocommerceFetch<T>(
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
     next: revalidate === false ? { revalidate: 0 } : { revalidate },
-  });
+  };
+
+  if (timeoutMs) {
+    fetchOptions.signal = AbortSignal.timeout(timeoutMs);
+  }
+
+  const response = await fetch(buildUrl(storeUrl, path, params), fetchOptions);
 
   if (!response.ok) {
     const errorText = await response.text();

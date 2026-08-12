@@ -129,6 +129,7 @@ export const getProductCustomTabs = cache(async (
   try {
     const product = await woocommerceApi.request<{ meta_data: { key: string; value: any }[] }>(`/products/${productId}`, {
       revalidate: 120,
+      timeoutMs: 1500, // Fail fast so we don't block the entire page render
     });
     const tabsMeta = product.meta_data.find(meta => meta.key === 'yikes_woo_products_tabs');
     

@@ -113,6 +113,7 @@ export type LogoCustomization = {
   choice: string;
   fileUrl?: string;
   fileName?: string;
+  logoFile?: File;
   position: string;
   logoPreviewUrl?: string;
 };
