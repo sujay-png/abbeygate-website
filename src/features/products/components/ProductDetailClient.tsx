@@ -42,7 +42,8 @@ export const ProductDetailClient = ({
   const [customization, setCustomization] = useState<CustomizationState>({
     enabled: !isGifts,
     blockingType: 'Embossed',
-    position: 'top-center',
+    logoScale: 1,
+    logoPosition: { x: 0, y: 0 },
   });
   const [isAdding, setIsAdding] = useState(false);
 
@@ -101,19 +102,23 @@ export const ProductDetailClient = ({
       const attributes: { name: string; value: string }[] = [];
 
       if (customization.enabled && !isGifts) {
+        attributes.push({ name: 'Custom Logo', value: '' });
+        
         if (customization.blockingType) {
-          attributes.push({ name: 'Custom Logo Blocking', value: customization.blockingType });
+          attributes.push({ name: 'Blocking', value: customization.blockingType.replace(' blocked', '') });
         }
-        if (customization.position) {
+        if (customization.blockingType === 'Foil blocked' && customization.foilColor) {
+          attributes.push({ name: 'Foil Colour', value: customization.foilColor });
+        }
+        if (customization.logoScale) {
+          const scale = Math.round((customization.logoScale || 1) * 100);
           attributes.push({
-            name: 'Logo Position',
-            value: customization.position
-              .replace(/-/g, ' ')
-              .replace(/\b\w/g, (c) => c.toUpperCase()),
+            name: 'Logo Scale',
+            value: `${scale}%`,
           });
         }
         if (customization.logoFile) {
-          attributes.push({ name: 'Uploaded Logo', value: customization.logoFile.name });
+          attributes.push({ name: 'Logo', value: customization.logoFile.name });
         }
       }
 
@@ -130,8 +135,10 @@ export const ProductDetailClient = ({
             ? {
                 enabled: true,
                 choice: customization.blockingType,
-                position: customization.position,
+                position: `X: ${Math.round(customization.logoPosition?.x || 0)}, Y: ${Math.round(customization.logoPosition?.y || 0)}, Scale: ${Math.round((customization.logoScale || 1) * 100)}%`,
                 fileName: customization.logoFile?.name,
+                logoFile: customization.logoFile,
+                logoPreviewUrl: customization.logoPreviewUrl,
               }
             : undefined,
         categorySlugs: product.categories.map((c) => c.slug),

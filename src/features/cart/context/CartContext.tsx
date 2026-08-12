@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useCallback, useMemo, useEffect, R
 import type { LogoCustomization } from '@/features/products/types/store-product';
 import type { StoreProduct } from '@/features/products/types/store-product';
 import { calculateShipping } from '@/features/products/utils/shipping';
+import * as idb from '@/lib/idb';
 
 export interface CartItem {
   key: string;
@@ -40,61 +41,15 @@ const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 const CART_STORAGE_KEY = 'abbeygate-cart';
 
-/** Strip heavy/base64 fields before writing to localStorage. */
-function toPersistentCartItem(item: CartItem): CartItem {
-  const { customization, ...rest } = item;
-
-  if (!customization) return rest;
-
-  return {
-    ...rest,
-    customization: {
-      enabled: customization.enabled,
-      choice: customization.choice,
-      position: customization.position,
-      fileName: customization.fileName,
-      fileUrl: customization.fileUrl?.startsWith('data:')
-        ? undefined
-        : customization.fileUrl,
-      // Never persist data-URI logo previews — they blow the 5MB quota
-      logoPreviewUrl: undefined,
-    },
-  };
-}
-
-function loadCartFromStorage(): CartItem[] {
+async function loadCartFromStorage(): Promise<CartItem[]> {
   if (typeof window === 'undefined') return [];
-  try {
-    const stored = localStorage.getItem(CART_STORAGE_KEY);
-    if (!stored) return [];
-    const parsed = JSON.parse(stored) as CartItem[];
-    return Array.isArray(parsed) ? parsed.map(toPersistentCartItem) : [];
-  } catch {
-    try {
-      localStorage.removeItem(CART_STORAGE_KEY);
-    } catch {
-      // ignore
-    }
-    return [];
-  }
+  const stored = await idb.get<CartItem[]>(CART_STORAGE_KEY);
+  return stored || [];
 }
 
 function saveCartToStorage(items: CartItem[]) {
   if (typeof window === 'undefined') return;
-
-  const payload = JSON.stringify(items.map(toPersistentCartItem));
-
-  try {
-    localStorage.setItem(CART_STORAGE_KEY, payload);
-  } catch {
-    // Quota exceeded — clear old cart and retry once with slim payload
-    try {
-      localStorage.removeItem(CART_STORAGE_KEY);
-      localStorage.setItem(CART_STORAGE_KEY, payload);
-    } catch (retryError) {
-      console.warn('Unable to persist cart to localStorage:', retryError);
-    }
-  }
+  idb.set(CART_STORAGE_KEY, items);
 }
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
@@ -104,8 +59,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setItems(loadCartFromStorage());
-    setHydrated(true);
+    loadCartFromStorage().then(storedItems => {
+      setItems(storedItems);
+      setHydrated(true);
+    });
   }, []);
 
   useEffect(() => {
@@ -125,8 +82,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         item.key ??
         `${item.productId}${item.variationId ? `-${item.variationId}` : ''}${customKey}-${Date.now()}`;
 
-      // Drop base64 preview before it ever enters cart state
-      const safeItem = toPersistentCartItem({ ...item, key });
+      const safeItem = { ...item, key };
       setItems((prev) => [...prev, safeItem]);
       openCart();
     } finally {

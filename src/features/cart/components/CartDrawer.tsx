@@ -86,9 +86,13 @@ export const CartDrawer = () => {
                         </div>
 
                         {item.attributes && item.attributes.length > 0 && (
-                          <p className="text-[13px] text-gray-500 mt-1">
-                            {item.attributes.map((a) => `${a.name}: ${a.value}`).join(' / ')}
-                          </p>
+                          <div className="text-[13px] text-gray-500 mt-1.5 space-y-0.5">
+                            {item.attributes.map((a, i) => (
+                              <p key={i}>
+                                {a.name}{a.value ? `: ${a.value}` : ''}
+                              </p>
+                            ))}
+                          </div>
                         )}
 
                         <div className="flex items-center justify-between mt-3">

@@ -1,6 +1,27 @@
 import type { StoreProduct, ProductFilters, FilterParamKey } from "../types/store-product";
 import { FILTER_TAXONOMY_MAP } from "../types/store-product";
 
+export function getProductPhysicalDimensionsMm(product: StoreProduct): { width: number; height: number } {
+  const sizeAttribute = product.attributes.find((attr) => attr.taxonomy === 'pa_size');
+  const sizeTerms = sizeAttribute?.terms.map(t => t.slug.toLowerCase()) || [];
+  const nameLower = product.name.toLowerCase();
+  
+  if (sizeTerms.includes('a4') || nameLower.includes('a4')) {
+    return { width: 210, height: 297 };
+  }
+  if (sizeTerms.includes('quarto') || nameLower.includes('quarto')) {
+    return { width: 210, height: 260 };
+  }
+  if (sizeTerms.includes('pocket') || nameLower.includes('pocket')) {
+    return { width: 90, height: 140 };
+  }
+  if (sizeTerms.includes('slim') || nameLower.includes('slim')) {
+    return { width: 80, height: 170 };
+  }
+  
+  // Default fallback (e.g. A5)
+  return { width: 148, height: 210 };
+}
 export function productMatchesFilters(
   product: StoreProduct,
   filters: ProductFilters,
