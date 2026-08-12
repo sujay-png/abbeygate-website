@@ -28,9 +28,13 @@ export const ProductCard = ({
         </div>
 
         {imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={imageUrl}
             alt={title}
+            loading="lazy"
+            decoding="async"
+            referrerPolicy="no-referrer"
             className="w-full h-full object-contain scale-110 transition-transform duration-500 group-hover:scale-125"
           />
         ) : (

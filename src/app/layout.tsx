@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Didact_Gothic, Work_Sans, Josefin_Sans } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
@@ -37,6 +37,11 @@ export const metadata: Metadata = {
   description: "Your Brand, Our Craftsmanship",
 };
 
+export const viewport: Viewport = {
+  colorScheme: "light",
+  themeColor: "#ffffff",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -46,12 +51,19 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${didactGothic.variable} ${workSans.variable} ${josefinSans.variable} h-full antialiased`}
+      style={{ backgroundColor: "#ffffff", colorScheme: "light" }}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">
+      <body
+        className="min-h-full flex flex-col"
+        style={{ backgroundColor: "#ffffff", color: "#171717" }}
+        suppressHydrationWarning
+      >
         <CartProvider>
           <Navbar />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1" style={{ backgroundColor: "#ffffff" }}>
+            {children}
+          </main>
           <Footer />
           <CartDrawer />
         </CartProvider>
