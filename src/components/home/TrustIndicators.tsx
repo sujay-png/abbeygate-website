@@ -20,34 +20,43 @@ const features = [
   }
 ];
 
-export const TrustIndicators = () => {
+interface TrustIndicatorsProps {
+  compact?: boolean;
+}
+
+export const TrustIndicators = ({ compact = false }: TrustIndicatorsProps = {}) => {
+  const innerContent = (
+    <div className={`flex flex-col md:flex-row md:items-center md:justify-between divide-y divide-gray-200 md:divide-y-0 gap-0 md:gap-4 lg:gap-8 ${compact ? 'py-6 mt-8 border-t border-b border-gray-200' : ''}`}>
+      {features.map((feature, idx) => (
+        <div
+          key={idx}
+          className={`flex items-center gap-3 flex-1 justify-start md:justify-center py-4 md:py-0 ${
+            idx !== 0 ? 'md:border-l md:border-gray-200 pl-0 md:pl-4 lg:pl-8' : ''
+          }`}
+        >
+          <div className={`flex-shrink-0 flex items-center justify-center ${compact ? 'w-10 h-10' : 'w-12 h-12 md:w-14 md:h-14'}`}>
+            <Image
+              src={feature.imageUrl}
+              alt={feature.title}
+              width={56}
+              height={56}
+              className="object-contain max-w-full max-h-full w-auto h-auto"
+            />
+          </div>
+          <h3 className={`font-bold tracking-wide text-black ${compact ? 'text-sm' : 'text-base md:text-lg'}`}>
+            {feature.title}
+          </h3>
+        </div>
+      ))}
+    </div>
+  );
+
+  if (compact) return innerContent;
   return (
     <section className="py-12 bg-white">
       <Container>
         <div className="border-t border-b border-gray-200 py-2 md:py-12">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between divide-y divide-gray-200 md:divide-y-0 gap-0 md:gap-6 lg:gap-12">
-            {features.map((feature, idx) => (
-              <div
-                key={idx}
-                className={`flex items-center gap-5 flex-1 justify-start md:justify-center py-6 md:py-0 ${
-                  idx !== 0 ? 'md:border-l md:border-gray-200' : ''
-                }`}
-              >
-                <div className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 flex items-center justify-center">
-                  <Image
-                    src={feature.imageUrl}
-                    alt={feature.title}
-                    width={56}
-                    height={56}
-                    className="object-contain max-w-full max-h-full w-auto h-auto"
-                  />
-                </div>
-                <h3 className="font-bold text-base md:text-lg tracking-wide text-black">
-                  {feature.title}
-                </h3>
-              </div>
-            ))}
-          </div>
+          {innerContent}
         </div>
       </Container>
     </section>
