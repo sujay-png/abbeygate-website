@@ -17,18 +17,21 @@
   --font-josefin: var(--font-josefin-sans);
 }
 
-html,
-body {
-  background: #ffffff;
-  color: #171717;
-  color-scheme: light;
-}
+@layer base {
+  html,
+  body {
+    background: #ffffff;
+    color: #171717;
+    color-scheme: light;
+  }
 
-body {
-  font-family: var(--font-work-sans), sans-serif;
-}
+  body {
+    font-family: var(--font-work-sans), sans-serif;
+  }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-josefin-sans), sans-serif;
-  color: #1f2124;
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-josefin-sans), sans-serif;
+    color: #1f2124;
+  }
 }
+ 

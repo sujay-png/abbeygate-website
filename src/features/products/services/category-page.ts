@@ -61,6 +61,7 @@ export async function loadCategoryPageData(path: string, searchParams: Record<st
 
   return {
     title: route.title,
+    description: route.description || '',
     breadcrumbItems,
     allProducts,
     filters,

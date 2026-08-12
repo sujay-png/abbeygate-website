@@ -15,6 +15,14 @@ export type StoreProductCategory = {
   link: string;
 };
 
+export type StoreProductTag = {
+  id: number;
+  name: string;
+  slug: string;
+  link: string;
+};
+
+
 export type StoreProductAttribute = {
   id: number;
   name: string;
@@ -45,6 +53,7 @@ export type StoreProduct = {
   price_html: string;
   images: StoreProductImage[];
   categories: StoreProductCategory[];
+  tags: StoreProductTag[];
   attributes: StoreProductAttribute[];
   is_purchasable: boolean;
   is_in_stock: boolean;

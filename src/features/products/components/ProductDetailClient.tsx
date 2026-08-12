@@ -1,27 +1,44 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import type { StoreProduct, PriceTier } from '../types/store-product';
 import { ProductCustomizer, type CustomizationState } from './ProductCustomizer';
 import { useCart } from '@/features/cart/context/CartContext';
 import { CUSTOMIZATION_MIN_QTY, formatGBP, isGiftsProduct } from '../utils/pricing';
+import { TrustIndicators } from '@/components/home/TrustIndicators';
+import { Send, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
+
+import type { CustomTab } from '@/features/products/services/store-products';
+
+export type ColorVariant = {
+  name: string;
+  slug: string;
+  hex: string;
+};
 
 type ProductDetailClientProps = {
   product: StoreProduct;
   tiers: PriceTier[];
   basePrice: number;
+  colorVariants?: ColorVariant[];
+  customTabs?: CustomTab[];
 };
 
 export const ProductDetailClient = ({
   product,
   tiers,
   basePrice,
+  colorVariants = [],
+  customTabs = [],
 }: ProductDetailClientProps) => {
   const { addItem } = useCart();
   const isGifts = isGiftsProduct(product);
   const [quantity, setQuantity] = useState(isGifts ? 1 : CUSTOMIZATION_MIN_QTY);
   const [unitPrice, setUnitPrice] = useState(basePrice);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('Additional information');
   const [customization, setCustomization] = useState<CustomizationState>({
     enabled: !isGifts,
     blockingType: 'Embossed',
@@ -39,6 +56,33 @@ export const ProductDetailClient = ({
 
   const activeImage = product.images[activeImageIndex] ?? product.images[0];
   const activeSrc = activeImage?.src || activeImage?.thumbnail || '';
+
+  const handlePrevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveImageIndex((prev) => (prev === 0 ? product.images.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveImageIndex((prev) => (prev === product.images.length - 1 ? 0 : prev + 1));
+  };
+
+  // Close preview on escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsPreviewOpen(false);
+    };
+    if (isPreviewOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'auto';
+    };
+  }, [isPreviewOpen]);
 
   const handleAddToCart = async () => {
     if (
@@ -102,11 +146,12 @@ export const ProductDetailClient = ({
       className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16"
       style={{ backgroundColor: '#ffffff', color: '#1F2124' }}
     >
-      {/* Left: gallery — match WP product image column */}
+      {/* Left: gallery */}
       <div>
         <div
-          className="relative w-full overflow-hidden rounded-lg"
-          style={{ aspectRatio: '1 / 1', backgroundColor: '#f7f7f7' }}
+          className="relative w-full overflow-hidden rounded-xl border border-gray-100 group cursor-zoom-in"
+          style={{ aspectRatio: '1 / 1', backgroundColor: '#ffffff' }}
+          onClick={() => setIsPreviewOpen(true)}
         >
           {activeSrc ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -115,6 +160,7 @@ export const ProductDetailClient = ({
               alt={activeImage?.alt || product.name}
               referrerPolicy="no-referrer"
               fetchPriority="high"
+              className="transition-transform duration-300 group-hover:scale-105"
               style={{
                 position: 'absolute',
                 inset: 0,
@@ -132,7 +178,7 @@ export const ProductDetailClient = ({
         </div>
 
         {product.images.length > 1 && (
-          <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+          <div className="mt-6 flex gap-4 overflow-x-auto pb-2">
             {product.images.map((img, index) => {
               const thumb = img.thumbnail || img.src;
               return (
@@ -140,11 +186,10 @@ export const ProductDetailClient = ({
                   key={img.id}
                   type="button"
                   onClick={() => setActiveImageIndex(index)}
-                  className="relative h-20 w-20 shrink-0 overflow-hidden rounded border"
-                  style={{
-                    borderColor: index === activeImageIndex ? '#1F2124' : '#e5e5e5',
-                    backgroundColor: '#f7f7f7',
-                  }}
+                  className={`relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+                    index === activeImageIndex ? 'border-black' : 'border-transparent hover:border-gray-200'
+                  }`}
+                  style={{ backgroundColor: '#f9f9f9' }}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -164,9 +209,69 @@ export const ProductDetailClient = ({
             })}
           </div>
         )}
+        {/* Available Colours Section */}
+        {colorVariants.length > 0 && (
+          <div className="mt-8 flex items-center gap-4">
+            <span className="text-sm font-semibold text-[#1F2124]">Available Colours</span>
+            <div className="flex items-center gap-3">
+              {colorVariants.map((color) => {
+                const isActive = product.slug === color.slug;
+                return (
+                  <Link
+                    key={color.slug}
+                    href={`/product/${color.slug}`}
+                    title={color.name}
+                    className={`w-8 h-8 rounded-full shadow-sm transition-transform hover:scale-110 ${
+                      isActive ? 'border-2 border-black scale-110' : 'border border-gray-300'
+                    }`}
+                    style={{ backgroundColor: color.hex }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Right: details — match WP Abbey PDP column */}
+      {/* Image Preview Modal */}
+      {isPreviewOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/95 backdrop-blur-sm">
+          <button 
+            onClick={() => setIsPreviewOpen(false)}
+            className="absolute top-6 right-6 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-50"
+          >
+            <X className="w-6 h-6 text-black" />
+          </button>
+          
+          {product.images.length > 1 && (
+            <>
+              <button 
+                onClick={handlePrevImage}
+                className="absolute left-6 p-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-50"
+              >
+                <ChevronLeft className="w-6 h-6 text-black" />
+              </button>
+              <button 
+                onClick={handleNextImage}
+                className="absolute right-6 p-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-50"
+              >
+                <ChevronRight className="w-6 h-6 text-black" />
+              </button>
+            </>
+          )}
+
+          <div className="relative w-[90vw] h-[90vh]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={activeImage?.src || activeSrc}
+              alt={activeImage?.alt || product.name}
+              className="w-full h-full object-contain"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Right: details */}
       <div style={{ backgroundColor: '#ffffff' }}>
         <h1
           className="text-2xl lg:text-[32px] font-bold leading-tight mb-2"
@@ -261,46 +366,119 @@ export const ProductDetailClient = ({
 
         {product.short_description && (
           <div
-            className="mt-8 leading-relaxed prose prose-sm max-w-none"
-            style={{ color: '#555555' }}
+            className="mt-8 leading-relaxed prose prose-sm max-w-none text-[#555555]"
             dangerouslySetInnerHTML={{ __html: product.short_description }}
           />
         )}
 
-        {product.attributes.length > 0 && (
-          <div className="mt-8">
-            <h3 className="text-lg font-bold mb-3" style={{ color: '#1F2124' }}>
-              Additional information
-            </h3>
-            <table className="w-full text-sm">
-              <tbody>
-                {product.attributes.map((attr) => (
-                  <tr key={attr.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                    <td className="py-2 font-medium" style={{ color: '#444' }}>
-                      {attr.name}
-                    </td>
-                    <td className="py-2" style={{ color: '#666' }}>
-                      {attr.terms.map((t) => t.name).join(', ')}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        {/* Bespoke Enquiry Section */}
+        <div className="mt-8">
+          <p className="text-[#1F2124] mb-4 text-[15px] font-medium">
+            If you'd like a more bespoke look to your product, get in touch with our Team, we can advise, inspire or just give you a quote.
+          </p>
+          <Link href="/contact" className="inline-flex items-center justify-center gap-2 bg-[#d2e0de] hover:bg-[#b8d1ce] transition-colors border border-black rounded-md px-8 py-3 font-semibold text-black tracking-wide text-[15px] shadow-[0px_4px_15px_rgba(0,0,0,0.08)]">
+            <Send className="w-4 h-4" />
+            BESPOKE ORDER ENQUIRY
+          </Link>
+        </div>
 
-        {product.description && (
-          <div className="mt-8">
-            <h3 className="text-lg font-bold mb-3" style={{ color: '#1F2124' }}>
-              Description
-            </h3>
-            <div
-              className="leading-relaxed prose prose-sm max-w-none"
-              style={{ color: '#555555' }}
-              dangerouslySetInnerHTML={{ __html: product.description }}
-            />
+        {/* Tabs Section */}
+        <div className="mt-12">
+          {(() => {
+            const allTabs = ['Additional information'];
+            
+            // Add native description if it exists and there isn't a custom tab for it
+            const hasCustomDescription = customTabs.some(t => t.title.trim().toLowerCase() === 'description');
+            if (product.description && !hasCustomDescription) {
+              allTabs.push('Description');
+            }
+            
+            // Add all custom tabs
+            customTabs.forEach(t => {
+              const title = t.title.trim();
+              if (!allTabs.includes(title)) {
+                allTabs.push(title);
+              }
+            });
+            
+            allTabs.push('Reviews (0)');
+            
+            const activeCustomTab = customTabs.find(t => t.title.trim() === activeTab);
+
+            return (
+              <>
+                <div className="flex overflow-x-auto border-b border-gray-200 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] gap-6">
+                  {allTabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`pb-3 text-[15px] font-semibold whitespace-nowrap transition-all duration-300 relative ${
+                  activeTab === tab
+                    ? 'text-black'
+                    : 'text-gray-400 hover:text-gray-700'
+                }`}
+              >
+                {tab}
+                {activeTab === tab && (
+                  <span className="absolute bottom-0 left-0 w-full h-[2px] bg-black rounded-t-md"></span>
+                )}
+              </button>
+            ))}
           </div>
-        )}
+          
+          <div className="py-8 min-h-[200px] animate-in fade-in duration-500">
+            {activeTab === 'Additional information' && (
+              product.attributes.length > 0 ? (
+                <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                  <table className="w-full text-[15px] text-left">
+                    <tbody className="divide-y divide-gray-100">
+                      {product.attributes.map((attr) => (
+                        <tr key={attr.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="py-4 px-6 font-semibold text-gray-900 w-1/3">
+                            {attr.name}
+                          </td>
+                          <td className="py-4 px-6 text-gray-600">
+                            {attr.terms.map((t) => t.name).join(', ')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-gray-500 italic">No additional information available.</p>
+              )
+            )}
+
+            {activeTab === 'Description' && !activeCustomTab && (
+              product.description ? (
+                <div
+                  className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-black hover:prose-a:text-gray-600"
+                  dangerouslySetInnerHTML={{ __html: product.description }}
+                />
+              ) : (
+                <p className="text-gray-500 italic">No description available.</p>
+              )
+            )}
+
+            {activeCustomTab && (
+              <div
+                className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-black hover:prose-a:text-gray-600"
+                dangerouslySetInnerHTML={{ __html: activeCustomTab.content }}
+              />
+            )}
+
+            {activeTab === 'Reviews (0)' && (
+              <p className="text-gray-500 italic">Information for {activeTab} is not available.</p>
+            )}
+          </div>
+              </>
+            );
+          })()}
+        </div>
+
+        {/* Icons Row */}
+        <TrustIndicators compact={true} />
       </div>
     </div>
   );

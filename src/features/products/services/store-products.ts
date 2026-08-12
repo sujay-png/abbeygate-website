@@ -6,9 +6,11 @@ import type {
   StoreAttribute,
   StoreAttributeTerm,
 } from "../types/store-product";
+import { woocommerceApi } from "@/lib/woocommerce/client";
 
 export type ProductListOptions = {
   categoryId?: number;
+  tagId?: number;
   page?: number;
   perPage?: number;
   search?: string;
@@ -18,7 +20,7 @@ export type ProductListOptions = {
 export async function getStoreProducts(
   options: ProductListOptions = {},
 ): Promise<{ products: StoreProduct[]; total: number; totalPages: number }> {
-  const { categoryId, page = 1, perPage = 100, search, slug } = options;
+  const { categoryId, tagId, page = 1, perPage = 100, search, slug } = options;
 
   const params: Record<string, string | number> = {
     page,
@@ -26,6 +28,7 @@ export async function getStoreProducts(
   };
 
   if (categoryId) params.category = categoryId;
+  if (tagId) params.tag = tagId;
   if (search) params.search = search;
   if (slug) params.slug = slug;
 
@@ -112,3 +115,28 @@ export function getProductImageUrl(
   if (size === "full") return image.src;
   return image.thumbnail || image.src;
 }
+
+export type CustomTab = {
+  title: string;
+  id: string;
+  content: string;
+};
+
+/** Fetch custom product tabs (e.g., YIKES Custom Product Tabs) via the authenticated v3 API. */
+export const getProductCustomTabs = cache(async (
+  productId: number,
+): Promise<CustomTab[]> => {
+  try {
+    const product = await woocommerceApi.request<{ meta_data: { key: string; value: any }[] }>(`/products/${productId}`, {
+      revalidate: 120,
+    });
+    const tabsMeta = product.meta_data.find(meta => meta.key === 'yikes_woo_products_tabs');
+    
+    if (tabsMeta && Array.isArray(tabsMeta.value)) {
+      return tabsMeta.value;
+    }
+  } catch (error) {
+    console.error(`Failed to fetch custom tabs for product ${productId}:`, error);
+  }
+  return [];
+});

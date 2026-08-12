@@ -9,6 +9,7 @@ import type { ProductFilters as ProductFiltersType } from '../types/store-produc
 
 type CategoryPageContentProps = {
   title: string;
+  description?: string;
   breadcrumbItems: { label: string; href?: string }[];
   allProducts: StoreProduct[];
   filters: ProductFiltersType;
@@ -19,6 +20,7 @@ type CategoryPageContentProps = {
 
 export const CategoryPageContent = ({
   title,
+  description,
   breadcrumbItems,
   allProducts,
   filters,
@@ -33,11 +35,6 @@ export const CategoryPageContent = ({
       <Breadcrumb paths={[{ label: 'Home', href: '/' }, ...breadcrumbItems]} />
 
       <Container className="py-8">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-[#1F2124] mb-2">{title}</h1>
-        <p className="text-sm text-gray-500 mb-8">
-          Showing {filteredProducts.length} of {allProducts.length} products
-        </p>
-
         <ProductFilters
           products={allProducts}
           attributes={attributes}
@@ -46,7 +43,24 @@ export const CategoryPageContent = ({
           resultCount={filteredProducts.length}
         />
 
-        <ProductGrid products={filteredProducts} />
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 mt-8">
+          <div className="lg:w-1/3 flex-shrink-0">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-[#1F2124] mb-4">
+              {title}
+            </h1>
+            
+            {description && (
+              <div 
+                className="prose prose-sm md:prose-base text-gray-700" 
+                dangerouslySetInnerHTML={{ __html: description }} 
+              />
+            )}
+          </div>
+          
+          <div className="lg:w-2/3">
+            <ProductGrid products={filteredProducts} />
+          </div>
+        </div>
       </Container>
     </div>
   );
