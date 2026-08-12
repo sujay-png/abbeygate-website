@@ -1,44 +1,20 @@
 import { Container } from "../ui/Container";
 import { ProductCard } from "../ui/ProductCard";
 import { Button } from "../ui/Button";
-
 import { ArrowIcon } from "../ui/ArrowIcon";
-const bestSellers = [
-  {
-    id: 1,
-    title: "Ocean Clean A5 Eco Notebook, Grey",
-    description:
-      "The Ocean Clean A5 Eco Notebook combines sustainability with practicality, featuring feint ruled white FSC-certified...",
-    price: "£19.50",
-    imageUrl: "/images/products/featured-notebook-grey.jpg",
-  },
-  {
-    id: 2,
-    title: "Lewes SmoothGrain A5 Notebook, Feint Ruled, Red",
-    description:
-      "With its luxurious Harrogate cover and practical features, the Harrogate Faux Leather A5 Notebook offers...",
-    price: "£7.50",
-    imageUrl: "/images/products/featured-notebook-red.webp",
-  },
-  {
-    id: 3,
-    title: "Apple Peel Eco, vegan / peel A5 Notebook, Feint Ruled, Green",
-    description:
-      "Eco-friendly and stylish, the Apple Peel Eco, vegan / peel A5 Eco Notebook features a...",
-    price: "£18.50",
-    imageUrl: "/images/products/featured-notebook-green.webp",
-  },
-  {
-    id: 4,
-    title: "Chelsea Leather Quarto Diary, Week To View, Black",
-    description:
-      "Chelsea Leather range, luxury soft grained real leather?week to view layout.?Smyth sewn sections for strength...",
-    price: "£26.99",
-    imageUrl: "/images/products/featured-notebook-black.png",
-  },
-];
+import { getStoreProducts } from "@/features/products/services/store-products";
+import { getProductDisplayPrice, stripHtml } from "@/features/products/utils/product-helpers";
 
-export const FeaturedProducts = () => {
+export const FeaturedProducts = async () => {
+  let products: Awaited<ReturnType<typeof getStoreProducts>>["products"] = [];
+
+  try {
+    const result = await getStoreProducts({ perPage: 4 });
+    products = result.products;
+  } catch {
+    // Fallback to empty if API unavailable
+  }
+
   return (
     <section className="py-16 bg-white">
       <Container>
@@ -50,21 +26,28 @@ export const FeaturedProducts = () => {
             <ArrowIcon className="absolute -right-22 -top-1 hidden md:block" />
           </div>
 
-          <Button href="/collections" variant="primary" className="md:w-auto w-full max-w-[200px]">
+          <Button href="/notebooks" variant="primary" className="md:w-auto w-full max-w-[200px]">
             Shop All
           </Button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-2 lg:px-12 xl:px-20">
-          {bestSellers.map((product) => (
-            <ProductCard
-              key={product.id}
-              title={product.title}
-              description={product.description}
-              price={product.price}
-              imageUrl={product.imageUrl}
-            />
-          ))}
+          {products.length > 0
+            ? products.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  title={product.name}
+                  description={stripHtml(product.short_description)}
+                  price={getProductDisplayPrice(product)}
+                  imageUrl={product.images[0]?.thumbnail || product.images[0]?.src}
+                  href={`/product/${product.slug}`}
+                />
+              ))
+            : (
+              <p className="col-span-full text-center text-gray-500 py-8">
+                Products will appear here once WooCommerce is connected.
+              </p>
+            )}
         </div>
       </Container>
     </section>
