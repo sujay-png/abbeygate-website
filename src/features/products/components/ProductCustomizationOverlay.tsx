@@ -9,7 +9,7 @@ import type { CustomizationState } from './ProductCustomizer';
 type ProductCustomizationOverlayProps = {
   product: StoreProduct;
   customization: CustomizationState;
-  onPositionChange: (position: { x: number; y: number }) => void;
+  onPositionChange: (position: { x: number; y: number; label: string }) => void;
 };
 
 export const ProductCustomizationOverlay = ({
@@ -80,9 +80,25 @@ export const ProductCustomizationOverlay = ({
           dragElastic={0}
           dragMomentum={false}
           onDragEnd={() => {
+            let label = 'Center';
+            if (constraintsRef.current) {
+              const width = constraintsRef.current.offsetWidth;
+              const height = constraintsRef.current.offsetHeight;
+              const nx = logoX.get() / (width / 2);
+              const ny = logoY.get() / (height / 2);
+
+              if (ny < -0.33) {
+                label = nx > 0.33 ? 'Top Right' : 'Top Center';
+              } else if (ny > 0.33) {
+                label = nx > 0.33 ? 'Bottom Right' : 'Bottom Center';
+              } else {
+                label = 'Center';
+              }
+            }
             onPositionChange({ 
               x: logoX.get(), 
-              y: logoY.get() 
+              y: logoY.get(),
+              label
             });
           }}
           style={{

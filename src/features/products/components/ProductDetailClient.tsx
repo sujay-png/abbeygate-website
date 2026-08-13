@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { StoreProduct, PriceTier } from '../types/store-product';
 import { ProductCustomizer, type CustomizationState } from './ProductCustomizer';
 import { ProductCustomizationOverlay } from './ProductCustomizationOverlay';
@@ -36,6 +36,7 @@ export const ProductDetailClient = ({
   const { addItem } = useCart();
   const isGifts = isGiftsProduct(product);
   
+  const previewContainerRef = useRef<HTMLDivElement>(null);
   const [quantity, setQuantity] = useState(isGifts ? 1 : CUSTOMIZATION_MIN_QTY);
   const [priceDetails, setPriceDetails] = useState({
     unitPrice: basePrice,
@@ -53,7 +54,7 @@ export const ProductDetailClient = ({
     enabled: !isGifts,
     blockingType: 'Embossed',
     logoScale: 1,
-    logoPosition: { x: 0, y: 0 },
+    logoPosition: { x: 0, y: 0, label: 'Center' },
   });
   const [isAdding, setIsAdding] = useState(false);
 
@@ -72,7 +73,7 @@ export const ProductDetailClient = ({
     setCustomization(state);
   }, []);
 
-  const handlePositionChange = useCallback((position: { x: number; y: number }) => {
+  const handlePositionChange = useCallback((position: { x: number; y: number; label: string }) => {
     setCustomization(prev => ({ ...prev, logoPosition: position }));
   }, []);
 
@@ -121,6 +122,10 @@ export const ProductDetailClient = ({
     setIsAdding(true);
     try {
       const attributes: { name: string; value: string }[] = [];
+      let leftPercent = 50;
+      let topPercent = 50;
+      let widthPercent = 20;
+      let fullPreviewUrl: string | undefined = undefined;
 
       if (customization.enabled && !isGifts) {
         attributes.push({ name: 'Custom Logo', value: '' });
@@ -141,6 +146,98 @@ export const ProductDetailClient = ({
         if (customization.logoFile) {
           attributes.push({ name: 'Logo', value: customization.logoFile.name });
         }
+        
+        // Calculate responsive percentages for the CartItemPreview
+        if (previewContainerRef.current) {
+          const rect = previewContainerRef.current.getBoundingClientRect();
+          const cx = customization.logoPosition?.x || 0;
+          const cy = customization.logoPosition?.y || 0;
+          
+          leftPercent = 50 + (cx / rect.width) * 100;
+          topPercent = 50 + (cy / rect.height) * 100;
+          widthPercent = ((120 * (customization.logoScale || 1)) / rect.width) * 100;
+          // 1. Generate image using native canvas to avoid html2canvas CSS/CORS bugs
+          try {
+            const canvas = document.createElement('canvas');
+            const CANVAS_SIZE = 800;
+            canvas.width = CANVAS_SIZE;
+            canvas.height = CANVAS_SIZE;
+            const ctx = canvas.getContext('2d');
+            
+            if (ctx && activeSrc) {
+              // Fill white background
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+              // Get product image via proxy
+              const res = await fetch(`/api/proxy-image?url=${encodeURIComponent(activeSrc)}`);
+              const data = await res.json();
+              
+              if (data.dataUrl) {
+                const productImg = new Image();
+                productImg.src = data.dataUrl;
+                await new Promise((resolve) => {
+                  productImg.onload = resolve;
+                  productImg.onerror = resolve;
+                });
+                
+                // Draw product image
+                const imgAspect = productImg.width / productImg.height;
+                let drawW = CANVAS_SIZE;
+                let drawH = CANVAS_SIZE;
+                let drawX = 0;
+                let drawY = 0;
+                if (imgAspect > 1) {
+                  drawH = CANVAS_SIZE / imgAspect;
+                  drawY = (CANVAS_SIZE - drawH) / 2;
+                } else {
+                  drawW = CANVAS_SIZE * imgAspect;
+                  drawX = (CANVAS_SIZE - drawW) / 2;
+                }
+                ctx.drawImage(productImg, drawX, drawY, drawW, drawH);
+
+                // Draw logo if exists
+                if (customization.logoPreviewUrl) {
+                  const logoImg = new Image();
+                  logoImg.src = customization.logoPreviewUrl;
+                  await new Promise((resolve) => {
+                    logoImg.onload = resolve;
+                    logoImg.onerror = resolve;
+                  });
+
+                  const logoW = CANVAS_SIZE * (widthPercent / 100);
+                  const logoH = logoW; // aspect 1:1
+                  const logoX = CANVAS_SIZE * (leftPercent / 100) - (logoW / 2);
+                  const logoY = CANVAS_SIZE * (topPercent / 100) - (logoH / 2);
+                  
+                  // Tint if foil
+                  if (customization.blockingType === 'Foil blocked') {
+                    const tintCanvas = document.createElement('canvas');
+                    tintCanvas.width = logoW;
+                    tintCanvas.height = logoH;
+                    const tCtx = tintCanvas.getContext('2d');
+                    if (tCtx) {
+                      tCtx.drawImage(logoImg, 0, 0, logoW, logoH);
+                      tCtx.globalCompositeOperation = 'source-in';
+                      tCtx.fillStyle = customization.foilColor === 'Gold' ? '#D4AF37' : '#C0C0C0';
+                      tCtx.fillRect(0, 0, logoW, logoH);
+                      ctx.drawImage(tintCanvas, logoX, logoY, logoW, logoH);
+                    }
+                  } else {
+                    // Embossed fallback
+                    ctx.globalAlpha = 0.5;
+                    ctx.drawImage(logoImg, logoX, logoY, logoW, logoH);
+                    ctx.globalAlpha = 1.0;
+                  }
+                }
+                
+                fullPreviewUrl = canvas.toDataURL('image/png', 0.9);
+              }
+            }
+          } catch (e) {
+            console.error('Native canvas composition failed', e);
+          }
+        }
       }
 
       await addItem({
@@ -156,10 +253,15 @@ export const ProductDetailClient = ({
             ? {
                 enabled: true,
                 choice: customization.blockingType,
-                position: `X: ${Math.round(customization.logoPosition?.x || 0)}, Y: ${Math.round(customization.logoPosition?.y || 0)}, Scale: ${Math.round((customization.logoScale || 1) * 100)}%`,
+                foilColor: customization.blockingType === 'Foil blocked' ? customization.foilColor : undefined,
+                position: customization.logoPosition?.label || 'Center',
                 fileName: customization.logoFile?.name,
                 logoFile: customization.logoFile,
                 logoPreviewUrl: customization.logoPreviewUrl,
+                fullPreviewUrl: fullPreviewUrl,
+                leftPercent,
+                topPercent,
+                widthPercent,
               }
             : undefined,
         categorySlugs: product.categories.map((c) => c.slug),
@@ -195,7 +297,7 @@ export const ProductDetailClient = ({
             </button>
 
             {activeSrc ? (
-              <div className="relative w-full h-full">
+              <div className="relative w-full h-full" ref={previewContainerRef}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={activeSrc}
