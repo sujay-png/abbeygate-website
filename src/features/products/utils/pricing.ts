@@ -38,17 +38,39 @@ export function parsePriceTiersFromMeta(
 ): PriceTier[] {
   if (!metaData?.length) return [];
 
+  // Find any B2BKing pricetiers meta that has an actual value
   const tierMeta = metaData.find(
     (m) =>
-      m.key === "b2bking_product_pricetiers" ||
-      m.key === "_b2bking_product_pricetiers" ||
-      m.key === "b2bking_tiered_price_rules",
+      (m.key.includes("b2bking_product_pricetiers") ||
+       m.key === "b2bking_tiered_price_rules") &&
+      m.value
   );
 
   if (!tierMeta?.value) return [];
 
   try {
     const raw = tierMeta.value;
+    
+    // Handle semicolon-separated string format (e.g. "1:25.00;50:3.32;100:2.83;")
+    if (typeof raw === "string" && raw.includes(":")) {
+      const parts = raw.split(";").map(s => s.trim()).filter(Boolean);
+      const tiers: PriceTier[] = parts.map(part => {
+        const [qtyStr, priceStr] = part.split(":");
+        return {
+          min: parseInt(qtyStr, 10) || 1,
+          max: null as number | null,
+          price: parseFloat(priceStr) || basePrice
+        };
+      }).filter(t => t.price > 0).sort((a, b) => a.min - b.min);
+      
+      if (tiers.length > 0) {
+        for (let i = 0; i < tiers.length - 1; i++) {
+          tiers[i].max = tiers[i + 1].min - 1;
+        }
+        return tiers;
+      }
+    }
+
     const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
 
     if (!Array.isArray(parsed)) return [];

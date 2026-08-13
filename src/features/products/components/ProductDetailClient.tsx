@@ -3,10 +3,11 @@
 import { useCallback, useState, useEffect } from 'react';
 import type { StoreProduct, PriceTier } from '../types/store-product';
 import { ProductCustomizer, type CustomizationState } from './ProductCustomizer';
+import { ProductCustomizationOverlay } from './ProductCustomizationOverlay';
 import { useCart } from '@/features/cart/context/CartContext';
 import { CUSTOMIZATION_MIN_QTY, formatGBP, isGiftsProduct } from '../utils/pricing';
 import { TrustIndicators } from '@/components/home/TrustIndicators';
-import { Send, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Send, X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
 import Link from 'next/link';
 
 import type { CustomTab } from '@/features/products/services/store-products';
@@ -34,11 +35,20 @@ export const ProductDetailClient = ({
 }: ProductDetailClientProps) => {
   const { addItem } = useCart();
   const isGifts = isGiftsProduct(product);
+  
   const [quantity, setQuantity] = useState(isGifts ? 1 : CUSTOMIZATION_MIN_QTY);
-  const [unitPrice, setUnitPrice] = useState(basePrice);
+  const [priceDetails, setPriceDetails] = useState({
+    unitPrice: basePrice,
+    totalPrice: basePrice * (isGifts ? 1 : CUSTOMIZATION_MIN_QTY),
+    statusText: '',
+    statusColor: '',
+    discountRate: 0,
+    discountLabel: ''
+  });
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('Additional information');
+  const [activeTab, setActiveTab] = useState('Description');
+  const isCustomizationSurface = activeImageIndex === 0;
   const [customization, setCustomization] = useState<CustomizationState>({
     enabled: !isGifts,
     blockingType: 'Embossed',
@@ -47,12 +57,23 @@ export const ProductDetailClient = ({
   });
   const [isAdding, setIsAdding] = useState(false);
 
-  const handlePriceChange = useCallback((unit: number) => {
-    setUnitPrice(unit);
+  const handlePriceChange = useCallback((result: any) => {
+    setPriceDetails({
+      unitPrice: result.unitPrice,
+      totalPrice: result.totalPrice,
+      statusText: result.statusText || '',
+      statusColor: result.statusColor || '',
+      discountRate: result.discountRate || 0,
+      discountLabel: result.discountLabel || ''
+    });
   }, []);
 
   const handleCustomizationChange = useCallback((state: CustomizationState) => {
     setCustomization(state);
+  }, []);
+
+  const handlePositionChange = useCallback((position: { x: number; y: number }) => {
+    setCustomization(prev => ({ ...prev, logoPosition: position }));
   }, []);
 
   const activeImage = product.images[activeImageIndex] ?? product.images[0];
@@ -92,7 +113,7 @@ export const ProductDetailClient = ({
       !isGifts
     ) {
       alert(
-        `Minimum order quantity for customisable products with logos is ${CUSTOMIZATION_MIN_QTY}. Please increase your quantity or remove the customisation.`,
+        `Minimum order quantity for customisable products with logos is ${CUSTOMIZATION_MIN_QTY}. Please increase your quantity or remove the customisation.`
       );
       return;
     }
@@ -127,7 +148,7 @@ export const ProductDetailClient = ({
         slug: product.slug,
         name: product.name,
         image: product.images[0]?.thumbnail || product.images[0]?.src || '',
-        price: unitPrice,
+        price: priceDetails.unitPrice,
         quantity,
         attributes,
         customization:
@@ -149,343 +170,398 @@ export const ProductDetailClient = ({
   };
 
   return (
-    <div
-      className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16"
-      style={{ backgroundColor: '#ffffff', color: '#1F2124' }}
-    >
-      {/* Left: gallery */}
-      <div>
-        <div
-          className="relative w-full overflow-hidden rounded-xl border border-gray-100 group cursor-zoom-in"
-          style={{ aspectRatio: '1 / 1', backgroundColor: '#ffffff' }}
-          onClick={() => setIsPreviewOpen(true)}
-        >
-          {activeSrc ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={activeSrc}
-              alt={activeImage?.alt || product.name}
-              referrerPolicy="no-referrer"
-              fetchPriority="high"
-              className="transition-transform duration-300 group-hover:scale-105"
-              style={{
-                position: 'absolute',
-                inset: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                padding: 16,
+    <div className="flex flex-col gap-12 lg:gap-16">
+      <div
+        className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 lg:items-start"
+        style={{ backgroundColor: '#ffffff', color: '#1F2124' }}
+      >
+        {/* Left: gallery */}
+        <div className="relative z-10 lg:sticky lg:top-32 self-start">
+          <div
+            className="relative w-full overflow-hidden rounded-xl border border-gray-100 flex items-center justify-center p-4 group"
+            style={{ aspectRatio: '1 / 1', backgroundColor: '#ffffff' }}
+          >
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsPreviewOpen(true);
               }}
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-              No image
-            </div>
-          )}
-        </div>
+              className="absolute top-4 right-4 z-[30] p-2.5 rounded-full bg-white/90 backdrop-blur shadow-sm text-gray-600 hover:text-black hover:bg-white transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 border border-gray-200"
+              title="Fullscreen Preview"
+            >
+              <ZoomIn className="w-5 h-5" />
+            </button>
 
-        {product.images.length > 1 && (
-          <div className="mt-6 flex gap-4 overflow-x-auto pb-2">
-            {product.images.map((img, index) => {
-              const thumb = img.thumbnail || img.src;
-              return (
-                <button
-                  key={img.id}
-                  type="button"
-                  onClick={() => setActiveImageIndex(index)}
-                  className={`relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
-                    index === activeImageIndex ? 'border-black' : 'border-transparent hover:border-gray-200'
-                  }`}
-                  style={{ backgroundColor: '#f9f9f9' }}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={thumb}
-                    alt={img.alt || product.name}
-                    referrerPolicy="no-referrer"
-                    loading="lazy"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                      padding: 4,
-                    }}
+            {activeSrc ? (
+              <div className="relative w-full h-full">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={activeSrc}
+                  alt={activeImage?.alt || product.name}
+                  referrerPolicy="no-referrer"
+                  fetchPriority="high"
+                  className="transition-transform duration-300 group-hover:scale-105"
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                  }}
+                />
+                {isCustomizationSurface && (
+                  <ProductCustomizationOverlay 
+                    product={product} 
+                    customization={customization} 
+                    onPositionChange={handlePositionChange} 
                   />
-                </button>
-              );
-            })}
+                )}
+              </div>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                No image
+              </div>
+            )}
           </div>
-        )}
-        {/* Available Colours Section */}
-        {colorVariants.length > 0 && (
-          <div className="mt-8 flex items-center gap-4">
-            <span className="text-sm font-semibold text-[#1F2124]">Available Colours</span>
-            <div className="flex items-center gap-3">
-              {colorVariants.map((color) => {
-                const isActive = product.slug === color.slug;
+
+          {product.images.length > 1 && (
+            <div className="mt-6 flex gap-4 overflow-x-auto pb-2">
+              {product.images.map((img, index) => {
+                const thumb = img.thumbnail || img.src;
                 return (
-                  <Link
-                    key={color.slug}
-                    href={`/product/${color.slug}`}
-                    title={color.name}
-                    className={`w-8 h-8 rounded-full shadow-sm transition-transform hover:scale-110 ${
-                      isActive ? 'border-2 border-black scale-110' : 'border border-gray-300'
+                  <button
+                    key={img.id}
+                    type="button"
+                    onClick={() => setActiveImageIndex(index)}
+                    className={`relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+                      index === activeImageIndex ? 'border-black' : 'border-transparent hover:border-gray-200'
                     }`}
-                    style={{ backgroundColor: color.hex }}
-                  />
+                    style={{ backgroundColor: '#f9f9f9' }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={thumb}
+                      alt={img.alt || product.name}
+                      referrerPolicy="no-referrer"
+                      loading="lazy"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                        padding: 4,
+                      }}
+                    />
+                  </button>
                 );
               })}
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* Image Preview Modal */}
-      {isPreviewOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/95 backdrop-blur-sm">
-          <button 
-            onClick={() => setIsPreviewOpen(false)}
-            className="absolute top-6 right-6 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-50"
-          >
-            <X className="w-6 h-6 text-black" />
-          </button>
-          
-          {product.images.length > 1 && (
-            <>
-              <button 
-                onClick={handlePrevImage}
-                className="absolute left-6 p-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-50"
-              >
-                <ChevronLeft className="w-6 h-6 text-black" />
-              </button>
-              <button 
-                onClick={handleNextImage}
-                className="absolute right-6 p-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-50"
-              >
-                <ChevronRight className="w-6 h-6 text-black" />
-              </button>
-            </>
           )}
-
-          <div className="relative w-[90vw] h-[90vh]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={activeImage?.src || activeSrc}
-              alt={activeImage?.alt || product.name}
-              className="w-full h-full object-contain"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Right: details */}
-      <div style={{ backgroundColor: '#ffffff' }}>
-        <h1
-          className="text-2xl lg:text-[32px] font-bold leading-tight mb-2"
-          style={{ color: '#1F2124' }}
-        >
-          {product.name}
-        </h1>
-        <p className="text-sm mb-6" style={{ color: '#666666' }}>
-          SKU: {product.sku}
-        </p>
-
-        {!isGifts ? (
-          <ProductCustomizer
-            product={product}
-            tiers={tiers}
-            basePrice={basePrice}
-            quantity={quantity}
-            onQuantityChange={setQuantity}
-            onCustomizationChange={handleCustomizationChange}
-            onPriceChange={handlePriceChange}
-          />
-        ) : (
-          <div className="mb-6">
-            <p className="text-3xl font-bold mb-4" style={{ color: '#1F2124' }}>
-              {formatGBP(basePrice)}
-            </p>
-            <input
-              type="number"
-              min={1}
-              value={quantity}
-              onChange={(e) =>
-                setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))
-              }
-              className="w-20 h-[50px] text-lg border rounded-lg text-center mr-4"
-            />
-          </div>
-        )}
-
-        <div className="flex flex-wrap items-center gap-4 mt-6">
-          {!isGifts && (
-            <input
-              type="number"
-              min={1}
-              value={quantity}
-              onChange={(e) => {
-                const val = parseInt(e.target.value, 10);
-                if (val >= 1) setQuantity(val);
-              }}
-              className="w-[80px] h-[52px] text-lg border border-gray-300 rounded-[10px] text-center"
-              style={{ color: '#1F2124', backgroundColor: '#ffffff' }}
-            />
+          {/* Available Colours Section */}
+          {colorVariants.length > 0 && (
+            <div className="mt-8 flex items-center gap-4">
+              <span className="text-sm font-semibold text-[#1F2124]">Available Colours</span>
+              <div className="flex items-center gap-3">
+                {colorVariants.map((color) => {
+                  const isActive = product.slug === color.slug;
+                  return (
+                    <Link
+                      key={color.slug}
+                      href={`/product/${color.slug}`}
+                      title={color.name}
+                      className={`w-8 h-8 rounded-full shadow-sm transition-transform hover:scale-110 ${
+                        isActive ? 'border-2 border-black scale-110' : 'border border-gray-300'
+                      }`}
+                      style={{ backgroundColor: color.hex }}
+                    />
+                  );
+                })}
+              </div>
+            </div>
           )}
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            disabled={isAdding}
-            className="h-[52px] px-9 text-lg font-bold rounded-xl text-white transition-all disabled:opacity-50"
-            style={{ backgroundColor: '#7b5bc6' }}
-          >
-            {isAdding ? 'Adding...' : 'Add to Basket'}
-          </button>
         </div>
 
-        {!isGifts && tiers.length > 0 && (
-          <div className="mt-8 overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr style={{ borderBottom: '1px solid #e5e5e5' }}>
-                  <th className="text-left py-3 font-semibold" style={{ color: '#1F2124' }}>
-                    Product Quantity
-                  </th>
-                  <th className="text-left py-3 font-semibold" style={{ color: '#1F2124' }}>
-                    Price per Unit
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {tiers.map((tier) => (
-                  <tr key={tier.min} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                    <td className="py-2.5" style={{ color: '#444' }}>
-                      {tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}
-                    </td>
-                    <td className="py-2.5 font-medium" style={{ color: '#1F2124' }}>
-                      {formatGBP(tier.price)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {product.short_description && (
-          <div
-            className="mt-8 leading-relaxed prose prose-sm max-w-none text-[#555555]"
-            dangerouslySetInnerHTML={{ __html: product.short_description }}
-          />
-        )}
-
-        {/* Bespoke Enquiry Section */}
-        <div className="mt-8">
-          <p className="text-[#1F2124] mb-4 text-[15px] font-medium">
-            If you'd like a more bespoke look to your product, get in touch with our Team, we can advise, inspire or just give you a quote.
-          </p>
-          <Link href="/contact" className="inline-flex items-center justify-center gap-2 bg-[#d2e0de] hover:bg-[#b8d1ce] transition-colors border border-black rounded-md px-8 py-3 font-semibold text-black tracking-wide text-[15px] shadow-[0px_4px_15px_rgba(0,0,0,0.08)]">
-            <Send className="w-4 h-4" />
-            BESPOKE ORDER ENQUIRY
-          </Link>
-        </div>
-
-        {/* Tabs Section */}
-        <div className="mt-12">
-          {(() => {
-            const allTabs = ['Additional information'];
+        {/* Image Preview Modal */}
+        {isPreviewOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/95 backdrop-blur-sm">
+            <button 
+              onClick={() => setIsPreviewOpen(false)}
+              className="absolute top-6 right-6 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-[110]"
+            >
+              <X className="w-6 h-6 text-black" />
+            </button>
             
-            // Add native description if it exists and there isn't a custom tab for it
-            const hasCustomDescription = customTabs.some(t => t.title.trim().toLowerCase() === 'description');
-            if (product.description && !hasCustomDescription) {
-              allTabs.push('Description');
-            }
-            
-            // Add all custom tabs
-            customTabs.forEach(t => {
-              const title = t.title.trim();
-              if (!allTabs.includes(title)) {
-                allTabs.push(title);
-              }
-            });
-            
-            allTabs.push('Reviews (0)');
-            
-            const activeCustomTab = customTabs.find(t => t.title.trim() === activeTab);
-
-            return (
+            {product.images.length > 1 && (
               <>
-                <div className="flex overflow-x-auto border-b border-gray-200 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] gap-6">
-                  {allTabs.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`pb-3 text-[15px] font-semibold whitespace-nowrap transition-all duration-300 relative ${
-                  activeTab === tab
-                    ? 'text-black'
-                    : 'text-gray-400 hover:text-gray-700'
-                }`}
-              >
-                {tab}
-                {activeTab === tab && (
-                  <span className="absolute bottom-0 left-0 w-full h-[2px] bg-black rounded-t-md"></span>
-                )}
-              </button>
-            ))}
-          </div>
-          
-          <div className="py-8 min-h-[200px] animate-in fade-in duration-500">
-            {activeTab === 'Additional information' && (
-              product.attributes.length > 0 ? (
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                  <table className="w-full text-[15px] text-left">
-                    <tbody className="divide-y divide-gray-100">
-                      {product.attributes.map((attr) => (
-                        <tr key={attr.id} className="hover:bg-gray-50/50 transition-colors">
-                          <td className="py-4 px-6 font-semibold text-gray-900 w-1/3">
-                            {attr.name}
-                          </td>
-                          <td className="py-4 px-6 text-gray-600">
-                            {attr.terms.map((t) => t.name).join(', ')}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <p className="text-gray-500 italic">No additional information available.</p>
-              )
-            )}
-
-            {activeTab === 'Description' && !activeCustomTab && (
-              product.description ? (
-                <div
-                  className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-black hover:prose-a:text-gray-600"
-                  dangerouslySetInnerHTML={{ __html: product.description }}
-                />
-              ) : (
-                <p className="text-gray-500 italic">No description available.</p>
-              )
-            )}
-
-            {activeCustomTab && (
-              <div
-                className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-black hover:prose-a:text-gray-600"
-                dangerouslySetInnerHTML={{ __html: activeCustomTab.content }}
-              />
-            )}
-
-            {activeTab === 'Reviews (0)' && (
-              <p className="text-gray-500 italic">Information for {activeTab} is not available.</p>
-            )}
-          </div>
+                <button 
+                  onClick={handlePrevImage}
+                  className="absolute left-6 p-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-[110]"
+                >
+                  <ChevronLeft className="w-6 h-6 text-black" />
+                </button>
+                <button 
+                  onClick={handleNextImage}
+                  className="absolute right-6 p-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-[110]"
+                >
+                  <ChevronRight className="w-6 h-6 text-black" />
+                </button>
               </>
-            );
-          })()}
-        </div>
+            )}
 
-        {/* Icons Row */}
-        <TrustIndicators compact={true} />
+            <div className="relative w-[90vw] h-[90vh] flex items-center justify-center p-4">
+              <div className="relative max-h-full max-w-full aspect-square h-full">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={activeImage?.src || activeSrc}
+                  alt={activeImage?.alt || product.name}
+                  className="absolute inset-0 w-full h-full object-contain"
+                />
+                {isCustomizationSurface && (
+                  <ProductCustomizationOverlay 
+                    product={product} 
+                    customization={customization} 
+                    onPositionChange={handlePositionChange} 
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Right: details */}
+        <div className="relative z-20" style={{ backgroundColor: '#ffffff' }}>
+          <h1
+            className="text-2xl lg:text-[32px] font-bold leading-tight mb-2"
+            style={{ color: '#1F2124' }}
+          >
+            {product.name}
+          </h1>
+          <p className="text-sm mb-8" style={{ color: '#666666' }}>
+            SKU: {product.sku}
+          </p>
+
+          {/* PRICE BLOCK */}
+          <div className="mb-8">
+            <div className="text-[26px] font-bold text-[#1F2124]">
+               {formatGBP(priceDetails.unitPrice)} <span className="text-[14px] font-normal text-gray-500">/ unit</span>
+            </div>
+            
+            {priceDetails.statusText ? (
+              <p
+                className="text-[16px] font-semibold mt-2"
+                style={{ color: priceDetails.statusColor }}
+              >
+                {priceDetails.statusText}
+              </p>
+            ) : (
+              <div className="text-[14px] text-gray-500 mt-1">
+                 {isGifts ? 'Excluding VAT' : 'Including logo customisation · Excluding VAT'}
+              </div>
+            )}
+
+            {priceDetails.discountRate > 0 && (
+              <div
+                className="mt-3 inline-block px-4 py-2 rounded-full font-bold text-[14px]"
+                style={{
+                  background: 'linear-gradient(135deg,#e6f7df,#d4f2c6)',
+                  color: '#1c6d14',
+                }}
+              >
+                {priceDetails.discountLabel}
+              </div>
+            )}
+          </div>
+
+          {!isGifts && (
+            <ProductCustomizer
+              product={product}
+              tiers={tiers}
+              basePrice={basePrice}
+              quantity={quantity}
+              customization={customization}
+              onQuantityChange={setQuantity}
+              onCustomizationChange={handleCustomizationChange}
+              onPriceChange={handlePriceChange}
+            />
+          )}
+
+          {/* PURCHASE CONTROLS */}
+          <div className="flex flex-col gap-6 pt-6 border-t border-gray-100">
+             <div className="flex justify-between items-end">
+                <div>
+                   <label className="block text-[14px] font-semibold text-[#1F2124] mb-2">Quantity</label>
+                   <input
+                      type="number"
+                      min={isGifts ? 1 : CUSTOMIZATION_MIN_QTY}
+                      value={quantity}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (val >= 1) setQuantity(val);
+                      }}
+                      className="w-[100px] h-[48px] text-[16px] border border-gray-300 rounded-lg text-center bg-white text-[#1F2124] focus:ring-1 focus:ring-black focus:border-black"
+                   />
+                </div>
+                <div className="text-right">
+                   <div className="text-[14px] text-gray-500 mb-1">Total</div>
+                   <div className="text-[22px] font-bold text-[#1F2124]">{formatGBP(priceDetails.totalPrice)}</div>
+                </div>
+             </div>
+
+             <button
+              type="button"
+              onClick={handleAddToCart}
+              disabled={isAdding}
+              className="w-full h-[54px] text-[16px] font-bold rounded-xl text-white transition-all disabled:opacity-50 flex items-center justify-center bg-black hover:bg-gray-900"
+              style={{ backgroundColor: '#7b5bc6' }}
+            >
+              {isAdding ? 'Adding...' : 'Add to Basket'}
+            </button>
+          </div>
+
+          {/* VOLUME PRICING */}
+          {!isGifts && tiers.length > 0 && (
+            <div className="mt-8 pt-6 border-t border-gray-100">
+               <h3 className="text-[14px] font-semibold text-[#1F2124] mb-4">Volume Pricing</h3>
+               <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+                 <table className="w-full text-left text-[14px]">
+                   <thead>
+                     <tr className="border-b border-gray-200 text-[#1F2124]">
+                       <th className="py-3 px-4 font-bold w-1/2">Product Quantity</th>
+                       <th className="py-3 px-4 font-bold border-l border-gray-200 w-1/2">Price per Unit</th>
+                     </tr>
+                   </thead>
+                   <tbody>
+                     {tiers.map((tier) => {
+                       const isActive = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
+                       return (
+                         <tr 
+                           key={tier.min} 
+                           onClick={() => setQuantity(tier.min)}
+                           className={`border-b last:border-b-0 border-gray-200 cursor-pointer transition-colors ${
+                             isActive ? 'bg-[#7b5bc6] text-white' : 'hover:bg-gray-50 text-[#666666]'
+                           }`}
+                         >
+                           <td className="py-3 px-4 font-medium">
+                             {tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}
+                           </td>
+                           <td className={`py-3 px-4 border-l ${isActive ? 'border-[#8e74d1]' : 'border-gray-200'}`}>
+                             {formatGBP(tier.price)}
+                           </td>
+                         </tr>
+                       );
+                     })}
+                   </tbody>
+                 </table>
+               </div>
+            </div>
+          )}
+
+          {/* Bespoke Enquiry Section */}
+          <div className="mt-8">
+            <p className="text-[#1F2124] mb-4 text-[15px] font-medium">
+              If you'd like a more bespoke look to your product, get in touch with our Team, we can advise, inspire or just give you a quote.
+            </p>
+            <Link href="/contact" className="inline-flex items-center justify-center gap-2 bg-[#d2e0de] hover:bg-[#b8d1ce] transition-colors border border-black rounded-md px-8 py-3 font-semibold text-black tracking-wide text-[15px] shadow-[0px_4px_15px_rgba(0,0,0,0.08)]">
+              <Send className="w-4 h-4" />
+              BESPOKE ORDER ENQUIRY
+            </Link>
+          </div>
+
+          {/* Icons Row */}
+          <div className="mt-8">
+            <TrustIndicators compact={true} />
+          </div>
+
+          {/* Tabs Section */}
+          <div className="mt-12 w-full">
+            {(() => {
+              const allTabs: string[] = [];
+              
+              const hasCustomDescription = customTabs.some(t => t.title.trim().toLowerCase() === 'description');
+              if (product.description && !hasCustomDescription) {
+                allTabs.push('Description');
+              }
+              
+              allTabs.push('Additional information');
+              
+              customTabs.forEach(t => {
+                const title = t.title.trim();
+                if (!allTabs.includes(title)) {
+                  allTabs.push(title);
+                }
+              });
+              
+              const activeCustomTab = customTabs.find(t => t.title.trim() === activeTab);
+
+              return (
+                <>
+                  <div className="flex overflow-x-auto border-b border-gray-200 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] gap-6">
+                    {allTabs.map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`pb-3 text-[15px] font-semibold whitespace-nowrap transition-all duration-300 relative ${
+                          activeTab === tab
+                            ? 'text-black'
+                            : 'text-gray-400 hover:text-gray-700'
+                        }`}
+                      >
+                        {tab}
+                        {activeTab === tab && (
+                          <span className="absolute bottom-0 left-0 w-full h-[2px] bg-black rounded-t-md"></span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <div className="py-8 min-h-[200px] animate-in fade-in duration-500">
+                    {activeTab === 'Description' && !activeCustomTab && (
+                      product.description ? (
+                        <div
+                          className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-black hover:prose-a:text-gray-600"
+                          dangerouslySetInnerHTML={{ __html: product.description }}
+                        />
+                      ) : (
+                        <p className="text-gray-500 italic">No description available.</p>
+                      )
+                    )}
+
+                    {activeTab === 'Additional information' && (
+                      product.attributes.length > 0 ? (
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                          <table className="w-full text-[15px] text-left">
+                            <tbody className="divide-y divide-gray-100">
+                              {product.attributes.map((attr) => (
+                                <tr key={attr.id} className="hover:bg-gray-50/50 transition-colors">
+                                  <td className="py-4 px-6 font-semibold text-gray-900 w-1/3">
+                                    {attr.name}
+                                  </td>
+                                  <td className="py-4 px-6 text-gray-600">
+                                    {attr.terms.map((t) => t.name).join(', ')}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 italic">No additional information available.</p>
+                      )
+                    )}
+
+                    {activeCustomTab && (
+                      <div
+                        className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-black hover:prose-a:text-gray-600"
+                        dangerouslySetInnerHTML={{ __html: activeCustomTab.content }}
+                      />
+                    )}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
       </div>
     </div>
   );
