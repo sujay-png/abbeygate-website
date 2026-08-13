@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  allowedDevOrigins: ['local.abbeygate-england.com'],
 };
 
 export default nextConfig;

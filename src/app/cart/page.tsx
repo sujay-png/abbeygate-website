@@ -1,16 +1,45 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Container } from '@/components/ui/Container';
 import { Breadcrumb } from '@/components/content/Breadcrumb';
 import { useCart } from '@/features/cart/context/CartContext';
-import { Minus, Plus, X } from 'lucide-react';
+import { Minus, Plus, X, Loader2 } from 'lucide-react';
 
 const formatPrice = (value: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
 
 export default function CartPage() {
   const { items, subtotal, shippingCost, shippingLabel, total, removeItem, updateQuantity } = useCart();
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleCheckout = async () => {
+    try {
+      setIsSyncing(true);
+      
+      const payload = items.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity
+      }));
+
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: payload })
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to sync cart');
+      }
+
+      window.location.href = 'https://corporate.abbeygate-england.com/checkout/';
+    } catch (error) {
+      console.error(error);
+      alert('There was a problem syncing your cart. Please try again.');
+      setIsSyncing(false);
+    }
+  };
 
   return (
     <div className="py-10">
@@ -81,9 +110,20 @@ export default function CartPage() {
                   <span>{formatPrice(total)}</span>
                 </div>
               </div>
-              <Link href="/checkout" className="block w-full text-center bg-black text-white py-4 rounded-md font-medium mt-6 hover:bg-gray-800 transition-colors">
-                Proceed to Checkout
-              </Link>
+              <button
+                onClick={handleCheckout}
+                disabled={isSyncing}
+                className="w-full flex items-center justify-center gap-2 bg-black text-white py-4 rounded-md font-medium mt-6 hover:bg-gray-800 transition-colors disabled:bg-gray-400"
+              >
+                {isSyncing ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Syncing Cart...
+                  </>
+                ) : (
+                  'Proceed to Checkout'
+                )}
+              </button>
             </div>
           </div>
         )}
