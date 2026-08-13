@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { X, Minus, Plus, ShoppingBag } from 'lucide-react';
 import { AnimatePresence, motion, Transition } from 'framer-motion';
 import { useCart } from '@/features/cart/context/CartContext';
+import { useState } from 'react';
+import { ImagePreviewModal } from '@/components/ui/ImagePreviewModal';
 
 const OPEN_TRANSITION: Transition = { duration: 0.5, ease: [0.16, 1, 0.3, 1] };
 const CLOSE_TRANSITION: Transition = { duration: 0.35, ease: [0.7, 0, 0.84, 0] };
@@ -13,8 +15,10 @@ const formatPrice = (value: number) =>
 
 export const CartDrawer = () => {
   const { items, isOpen, isLoading, subtotal, shippingCost, shippingLabel, total, closeCart, removeItem, updateQuantity } = useCart();
+  const [previewItem, setPreviewItem] = useState<any | null>(null);
 
   return (
+    <>
     <AnimatePresence>
       {isOpen && (
         <>
@@ -87,11 +91,34 @@ export const CartDrawer = () => {
 
                         {item.attributes && item.attributes.length > 0 && (
                           <div className="text-[13px] text-gray-500 mt-1.5 space-y-0.5">
-                            {item.attributes.map((a, i) => (
+                            {item.attributes.filter(attr => !['Custom Logo', 'Blocking', 'Foil Colour', 'Logo Scale', 'Logo'].includes(attr.name)).map((a, i) => (
                               <p key={i}>
                                 {a.name}{a.value ? `: ${a.value}` : ''}
                               </p>
                             ))}
+                          </div>
+                        )}
+                        
+                        {item.customization?.enabled && (
+                          <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                            <p className="text-[13px] font-semibold text-gray-900 mb-1">Custom Logo</p>
+                            <p className="text-[12px] text-gray-600"><span className="font-medium">Blocking:</span> {item.customization.choice.replace(' blocked', '')}</p>
+                            {item.customization.foilColor && (
+                              <p className="text-[12px] text-gray-600"><span className="font-medium">Foil Colour:</span> {item.customization.foilColor}</p>
+                            )}
+                            {item.customization.fileName && (
+                              <p className="text-[12px] text-gray-600">
+                                <span className="font-medium">Logo:</span> {item.customization.fileName} —{' '}
+                                <a href={item.customization.logoFile ? URL.createObjectURL(item.customization.logoFile) : '#'} target="_blank" rel="noopener noreferrer" className="text-black underline hover:text-gray-600">View file</a>
+                              </p>
+                            )}
+                            {item.customization.logoPreviewUrl && (
+                              <p className="text-[12px] text-gray-600">
+                                <span className="font-medium">Preview:</span>{' '}
+                                <button type="button" onClick={() => setPreviewItem(item)} className="text-black underline hover:text-gray-600">View preview</button>
+                              </p>
+                            )}
+                            <p className="text-[12px] text-gray-600"><span className="font-medium">Position:</span> {item.customization.position}</p>
                           </div>
                         )}
 
@@ -161,5 +188,12 @@ export const CartDrawer = () => {
         </>
       )}
     </AnimatePresence>
+    <ImagePreviewModal 
+      isOpen={!!previewItem} 
+      onClose={() => setPreviewItem(null)} 
+      item={previewItem} 
+      title="Customization Preview" 
+    />
+    </>
   );
 };

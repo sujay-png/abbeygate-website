@@ -4,10 +4,16 @@ const WOOCOMMERCE_STORE_URL = process.env.WOOCOMMERCE_STORE_URL || 'https://corp
 
 export async function POST(request: NextRequest) {
   try {
-    const { items } = await request.json();
+    const formData = await request.formData();
+    const cartData = formData.get('cart') as string;
     
-    if (!items || !Array.isArray(items) || items.length === 0) {
+    if (!cartData) {
       return NextResponse.json({ error: 'No items provided' }, { status: 400 });
+    }
+    
+    const { items } = JSON.parse(cartData);
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return NextResponse.json({ error: 'No items in cart' }, { status: 400 });
     }
 
     // 1. Find existing session cookie
@@ -58,14 +64,38 @@ export async function POST(request: NextRequest) {
     // Accumulate all cookies received from WooCommerce during the sync
     const accumulatedCookies = new Map<string, string>();
 
-    for (const item of items) {
-      const formData = new URLSearchParams();
-      formData.append('product_id', item.productId);
-      formData.append('quantity', item.quantity.toString());
+    for (let index = 0; index < items.length; index++) {
+      const item = items[index];
+      
+      const payload = new FormData();
+      payload.append('product_id', item.productId);
+      payload.append('quantity', item.quantity.toString());
 
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      };
+      if (item.customization) {
+        payload.append('custom_logo_blocking', '1');
+        payload.append('custom_logo_blocking_type', item.customization.blockingType);
+        payload.append('abbey_logo_position', item.customization.position);
+        
+        if (item.customization.foilColor) {
+           payload.append('custom_foil_colour', item.customization.foilColor);
+        }
+
+        if (item.customization.hasLogo) {
+          const logoFile = formData.get(`logo_${index}`);
+          if (logoFile instanceof Blob) {
+            payload.append('custom_logo_file', logoFile, (logoFile as any).name || 'logo.png');
+          }
+        }
+        
+        if (item.customization.hasPreview) {
+          const previewFile = formData.get(`preview_${index}`);
+          if (previewFile instanceof Blob) {
+            payload.append('abbey_preview_image', previewFile, (previewFile as any).name || 'preview.png');
+          }
+        }
+      }
+
+      const headers: Record<string, string> = {};
       
       if (finalSessionCookieStr) {
         headers['Cookie'] = finalSessionCookieStr;
@@ -74,7 +104,7 @@ export async function POST(request: NextRequest) {
       const addRes = await fetch(`${WOOCOMMERCE_STORE_URL}/?wc-ajax=add_to_cart`, {
         method: 'POST',
         headers,
-        body: formData.toString()
+        body: payload
       });
 
       // WooCommerce returns Set-Cookie headers for items_in_cart and cart_hash on EVERY successful add.

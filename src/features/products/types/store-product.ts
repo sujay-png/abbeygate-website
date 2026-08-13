@@ -111,9 +111,14 @@ export type PriceTier = {
 export type LogoCustomization = {
   enabled: boolean;
   choice: string;
+  foilColor?: string;
   fileUrl?: string;
   fileName?: string;
   logoFile?: File;
   position: string;
   logoPreviewUrl?: string;
+  fullPreviewUrl?: string;
+  leftPercent?: number;
+  topPercent?: number;
+  widthPercent?: number;
 };

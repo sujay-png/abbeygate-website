@@ -6,6 +6,7 @@ import { Container } from '@/components/ui/Container';
 import { Breadcrumb } from '@/components/content/Breadcrumb';
 import { useCart } from '@/features/cart/context/CartContext';
 import { Minus, Plus, X, Loader2 } from 'lucide-react';
+import { ImagePreviewModal } from '@/components/ui/ImagePreviewModal';
 
 const formatPrice = (value: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
@@ -13,20 +14,56 @@ const formatPrice = (value: number) =>
 export default function CartPage() {
   const { items, subtotal, shippingCost, shippingLabel, total, removeItem, updateQuantity } = useCart();
   const [isSyncing, setIsSyncing] = useState(false);
+  const [previewItem, setPreviewItem] = useState<any | null>(null);
 
   const handleCheckout = async () => {
     try {
       setIsSyncing(true);
       
-      const payload = items.map(item => ({
-        productId: item.productId,
-        quantity: item.quantity
-      }));
+      const formData = new FormData();
+      
+      const payload = items.map((item, index) => {
+        const outItem: any = {
+          productId: item.productId,
+          quantity: item.quantity
+        };
+
+        if (item.customization?.enabled) {
+          outItem.customization = {
+            blockingType: item.customization.choice,
+            position: item.customization.position,
+            foilColor: item.customization.foilColor,
+          };
+          if (item.customization.logoFile) {
+            formData.append(`logo_${index}`, item.customization.logoFile);
+            outItem.customization.hasLogo = true;
+          }
+          if (item.customization.fullPreviewUrl || item.customization.logoPreviewUrl) {
+            try {
+              const previewDataUrl = item.customization.fullPreviewUrl || item.customization.logoPreviewUrl!;
+              const byteString = atob(previewDataUrl.split(',')[1]);
+              const mimeString = previewDataUrl.split(',')[0].split(':')[1].split(';')[0];
+              const ab = new ArrayBuffer(byteString.length);
+              const ia = new Uint8Array(ab);
+              for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+              }
+              const blob = new Blob([ab], { type: mimeString });
+              formData.append(`preview_${index}`, blob, 'preview.png');
+              outItem.customization.hasPreview = true;
+            } catch (e) {
+              console.error('Failed to convert preview to blob', e);
+            }
+          }
+        }
+        return outItem;
+      });
+
+      formData.append('cart', JSON.stringify({ items: payload }));
 
       const res = await fetch('/api/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: payload })
+        body: formData
       });
 
       if (!res.ok) {
@@ -67,11 +104,33 @@ export default function CartPage() {
                         <Link href={item.slug ? `/product/${item.slug}` : '#'} className="font-medium text-gray-900 hover:underline">
                           {item.name}
                         </Link>
-                        {item.attributes?.map((attr) => (
+                        {item.attributes?.filter(attr => !['Custom Logo', 'Blocking', 'Foil Colour', 'Logo Scale', 'Logo'].includes(attr.name)).map((attr) => (
                           <p key={attr.name} className="text-sm text-gray-500 mt-1">
                             {attr.name}{attr.value ? `: ${attr.value}` : ''}
                           </p>
                         ))}
+                        {item.customization?.enabled && (
+                          <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                            <p className="text-sm font-semibold text-gray-900 mb-2">Custom Logo</p>
+                            <p className="text-sm text-gray-600"><span className="font-medium">Blocking:</span> {item.customization.choice.replace(' blocked', '')}</p>
+                            {item.customization.foilColor && (
+                              <p className="text-sm text-gray-600"><span className="font-medium">Foil Colour:</span> {item.customization.foilColor}</p>
+                            )}
+                            {item.customization.fileName && (
+                              <p className="text-sm text-gray-600">
+                                <span className="font-medium">Logo:</span> {item.customization.fileName} —{' '}
+                                <a href={item.customization.logoFile ? URL.createObjectURL(item.customization.logoFile) : '#'} target="_blank" rel="noopener noreferrer" className="text-black underline hover:text-gray-600">View file</a>
+                              </p>
+                            )}
+                            {item.customization.logoPreviewUrl && (
+                              <p className="text-sm text-gray-600">
+                                <span className="font-medium">Preview:</span>{' '}
+                                <button type="button" onClick={() => setPreviewItem(item)} className="text-black underline hover:text-gray-600">View preview</button>
+                              </p>
+                            )}
+                            <p className="text-sm text-gray-600"><span className="font-medium">Position:</span> {item.customization.position}</p>
+                          </div>
+                        )}
                       </div>
                       <button type="button" onClick={() => removeItem(item.key)} className="text-gray-400 hover:text-gray-600 shrink-0">
                         <X className="w-5 h-5" />
@@ -128,6 +187,12 @@ export default function CartPage() {
           </div>
         )}
       </Container>
+      <ImagePreviewModal 
+        isOpen={!!previewItem} 
+        onClose={() => setPreviewItem(null)} 
+        item={previewItem} 
+        title="Customization Preview" 
+      />
     </div>
   );
 }
