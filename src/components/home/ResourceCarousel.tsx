@@ -27,24 +27,40 @@ const SLIDES = [
   {
     id: 3,
     title: 'Resource Guide',
-    description: 'This guide covers key aspects of book production, from terminology and binding types to layout design and printing processes. Understanding these elements is essential for creating high-quality books. For those looking to explore more, we\'ve provided further resources to deepen your knowledge of book production.',
+    description: "This guide covers key aspects of book production, from terminology and binding types to layout design and printing processes. Understanding these elements is essential for creating high-quality books. For those looking to explore more, we've provided further resources to deepen your knowledge of book production.",
     buttonText: 'Learn More',
     bgImage: '/images/resources/rs-carousel-3.webp',
     href: '/resource-guide',
   },
 ];
 
-const EMBLA_OPTIONS = { loop: true, duration: 50 };
-const EMBLA_PLUGINS = [Autoplay({ delay: 4000, stopOnInteraction: false })];
+// A duration of 60 matches the smooth transition style used in the Hero carousel.
+const EMBLA_OPTIONS = { loop: true, watchDrag: true, duration: 60 };
+
+// A static style object is fine here (module scope, never recreated).
+// Only the track needs the GPU-layer hint — hinting every single slide
+// forces 3 separate composited layers for no benefit.
+const TRACK_STYLE: React.CSSProperties = {
+  willChange: 'transform',
+  backfaceVisibility: 'hidden',
+};
 
 export const ResourceCarousel = () => {
-  const [emblaRef, emblaApi] = useEmblaCarousel(EMBLA_OPTIONS, EMBLA_PLUGINS);
+  // IMPORTANT: plugins must be instantiated inside the component (once per
+  // mount), not at module scope. Autoplay is stateful — sharing a single
+  // instance across mounts (multiple carousels on a page, Strict Mode
+  // double-invoke in dev, Fast Refresh) causes exactly the kind of janky,
+  // stuttering behavior you were seeing.
+  const [plugins] = useState(() => [
+    Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: false })
+  ]);
+  const [emblaRef, emblaApi] = useEmblaCarousel(EMBLA_OPTIONS, plugins);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);
 
-  const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
-  const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
-  const scrollTo = useCallback((index: number) => emblaApi && emblaApi.scrollTo(index), [emblaApi]);
+  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
+  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+  const scrollTo = useCallback((index: number) => emblaApi?.scrollTo(index), [emblaApi]);
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
@@ -66,21 +82,17 @@ export const ResourceCarousel = () => {
 
   return (
     <section className="relative w-full h-[500px] md:h-[600px] overflow-hidden bg-gray-100">
-      <div className="overflow-hidden w-full h-full" ref={emblaRef}>
-        <div className="flex w-full h-full" style={{ willChange: 'transform', backfaceVisibility: 'hidden' }}>
+      <div className="overflow-hidden w-full h-full touch-pan-y" ref={emblaRef}>
+        <div className="flex w-full h-full" style={TRACK_STYLE}>
           {SLIDES.map((slide, index) => (
-            <div
-              key={slide.id}
-              className="relative flex-[0_0_100%] min-w-0 h-full"
-              style={{ transform: 'translateZ(0)' }}
-            >
+            <div key={slide.id} className="relative flex-[0_0_100%] min-w-0 h-full">
               <Image
                 src={slide.bgImage}
                 alt={slide.title}
                 fill
                 sizes="100vw"
-                quality={80}
-                priority={index === 0}
+                quality={75}
+                priority
                 className="object-cover object-center"
               />
 
@@ -88,7 +100,7 @@ export const ResourceCarousel = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10" />
 
               {/* Text Content */}
-              <div className="absolute top-0 left-0 h-full w-full md:w-[80%] lg:w-[68%] xl:w-[58%] flex flex-col justify-center pt-16 md:pt-24 px-8 md:px-12 lg:px-24 z-20">
+              <div className="absolute top-0 left-0 h-full w-full md:w-[80%] lg:w-[68%] xl:w-[58%] flex flex-col justify-center pt-12 pb-24 md:pt-24 md:pb-0 px-8 md:px-12 lg:px-24 z-20">
                 <h2 className="font-josefin text-4xl md:text-5xl font-bold text-white mb-6">
                   {slide.title}
                 </h2>
@@ -107,9 +119,8 @@ export const ResourceCarousel = () => {
       </div>
 
       {/* Navigation & Pagination */}
-
-      <div className="absolute bottom-4 left-0 right-0 md:left-auto md:right-8 md:bottom-8 md:right-12 z-30 flex flex-col items-center gap-3 md:flex-row md:gap-12 px-6 md:px-0">
-        <div className="flex items-center gap-2 order-1 md:order-2">
+      <div className="absolute bottom-6 left-0 right-0 md:left-auto md:right-12 md:bottom-12 z-30 flex flex-col items-center gap-4 md:flex-row md:gap-8 px-6 md:px-0">
+        <div className="hidden md:flex items-center gap-3 order-1 md:order-2">
           {scrollSnaps.map((_, index) => (
             <button
               key={index}
@@ -121,7 +132,7 @@ export const ResourceCarousel = () => {
             />
           ))}
         </div>
-        <div className="flex items-center justify-between w-full md:w-auto md:justify-start gap-4 order-2 md:order-1">
+        <div className="flex items-center justify-center gap-6 order-2 md:order-1">
           <button onClick={scrollPrev} className="text-black hover:text-gray-600 transition-colors" aria-label="Previous slide">
             <ChevronLeft className="w-8 h-8" strokeWidth={2} />
           </button>

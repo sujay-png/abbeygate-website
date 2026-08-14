@@ -74,7 +74,7 @@ export const FeaturedCollections = () => {
     <section className="py-16 bg-white">
       <Container>
         <div className="relative inline-block mb-20">
-          <h2 className="text-3xl font-extrabold text-black font-sans tracking-tight">
+          <h2 className="font-josefin text-[26px] font-bold tracking-tight text-black lg:text-[32px]">
             Our Collections
           </h2>
           <ArrowIcon className="absolute -right-22 -top-1 hidden md:block" />
@@ -137,7 +137,7 @@ export const FeaturedCollections = () => {
                   <div key={t.id} className="flex-[0_0_100%] min-w-0 pr-4">
                     <StarRating rating={t.rating} />
                     <p className="text-[15px] leading-relaxed mb-6 font-josefin font-medium">
-                      "{t.quote}"
+                      {t.quote}
                     </p>
                     <p className="text-sm font-sans font-semibold">
                       {t.collection} <span className="font-normal text-gray-600">by {t.author}</span>

@@ -44,7 +44,7 @@ export const FAQ = ({ hideTitle = false, className = "bg-brand-light" }: FAQProp
     <section className={`py-16 md:py-24 ${className}`}>
       <Container>
         {!hideTitle && (
-          <h2 className="text-3xl md:text-4xl font-extrabold text-black font-sans tracking-tight text-center mb-12">
+          <h2 className="font-josefin text-[26px] font-bold tracking-tight text-black lg:text-[37px] text-center mb-12">
             Frequently Asked Questions
           </h2>
         )}
