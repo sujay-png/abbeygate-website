@@ -1,11 +1,19 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { enquiryRateLimit } from '@/lib/rate-limit';
 
 // Use a placeholder if no key is provided so build doesn't fail, but it will fail at runtime.
 const resend = new Resend(process.env.RESEND_API_KEY || 're_placeholder');
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
+    const { success } = await enquiryRateLimit.limit(ip);
+    
+    if (!success) {
+      return NextResponse.json({ error: 'Too many enquiry attempts, please try again later.' }, { status: 429 });
+    }
+
     const formData = await req.formData();
     
     const name = formData.get('name') as string;

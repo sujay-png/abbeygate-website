@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { X, Minus, Plus, ShoppingBag } from 'lucide-react';
+import { X, Minus, Plus, ShoppingBag, Loader2 } from 'lucide-react';
 import { AnimatePresence, motion, Transition } from 'framer-motion';
 import { useCart } from '@/features/cart/context/CartContext';
 import { useState } from 'react';
@@ -16,6 +16,69 @@ const formatPrice = (value: number) =>
 export const CartDrawer = () => {
   const { items, isOpen, isLoading, subtotal, shippingCost, shippingLabel, total, closeCart, removeItem, updateQuantity } = useCart();
   const [previewItem, setPreviewItem] = useState<any | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleCheckout = async () => {
+    try {
+      setIsSyncing(true);
+      
+      const formData = new FormData();
+      
+      const payload = items.map((item, index) => {
+        const outItem: any = {
+          productId: item.productId,
+          quantity: item.quantity
+        };
+
+        if (item.customization?.enabled) {
+          outItem.customization = {
+            blockingType: item.customization.choice,
+            position: item.customization.position,
+            foilColor: item.customization.foilColor,
+          };
+          if (item.customization.logoFile) {
+            formData.append(`logo_${index}`, item.customization.logoFile);
+            outItem.customization.hasLogo = true;
+          }
+          if (item.customization.fullPreviewUrl || item.customization.logoPreviewUrl) {
+            try {
+              const previewDataUrl = item.customization.fullPreviewUrl || item.customization.logoPreviewUrl!;
+              const byteString = atob(previewDataUrl.split(',')[1]);
+              const mimeString = previewDataUrl.split(',')[0].split(':')[1].split(';')[0];
+              const ab = new ArrayBuffer(byteString.length);
+              const ia = new Uint8Array(ab);
+              for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+              }
+              const blob = new Blob([ab], { type: mimeString });
+              formData.append(`preview_${index}`, blob, 'preview.png');
+              outItem.customization.hasPreview = true;
+            } catch (e) {
+              console.error('Failed to convert preview to blob', e);
+            }
+          }
+        }
+        return outItem;
+      });
+
+      formData.append('cart', JSON.stringify({ items: payload }));
+
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to sync cart');
+      }
+
+      window.location.href = 'https://corporate.abbeygate-england.com/checkout/';
+    } catch (error) {
+      console.error(error);
+      alert('There was a problem syncing your cart. Please try again.');
+      setIsSyncing(false);
+    }
+  };
 
   return (
     <>
@@ -168,13 +231,20 @@ export const CartDrawer = () => {
                   <span className="text-[15px] text-[#1F2124] font-bold">Total</span>
                   <span className="text-[17px] text-[#1F2124] font-bold">{formatPrice(total)}</span>
                 </div>
-                <Link
-                  href="/checkout"
-                  onClick={closeCart}
-                  className="block w-full text-center bg-black text-white text-[15px] font-medium py-4 rounded-md hover:bg-gray-800 transition-colors"
+                <button
+                  onClick={handleCheckout}
+                  disabled={isSyncing}
+                  className="flex items-center justify-center gap-2 w-full text-center bg-black text-white text-[15px] font-medium py-4 rounded-md hover:bg-gray-800 transition-colors disabled:bg-gray-400"
                 >
-                  Checkout
-                </Link>
+                  {isSyncing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Syncing Cart...
+                    </>
+                  ) : (
+                    'Checkout'
+                  )}
+                </button>
                 <Link
                   href="/cart"
                   onClick={closeCart}
