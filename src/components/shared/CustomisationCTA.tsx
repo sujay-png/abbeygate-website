@@ -9,7 +9,7 @@ export const CustomisationCTA = () => {
         <div className="bg-brand-light relative flex flex-col md:flex-row items-center justify-between rounded-md">
           {/* Left Text Content */}
           <div className="p-10 md:p-16 lg:p-20 flex-1 max-w-2xl z-10">
-            <h2 className="text-3xl md:text-[40px] font-extrabold text-black font-sans tracking-tight mb-6">
+            <h2 className="font-josefin text-[26px] font-bold tracking-tight text-black lg:text-[39px] mb-6">
               Tailored to Perfection
             </h2>
             <p className="text-gray-700 text-[15px] font-work leading-relaxed mb-10">

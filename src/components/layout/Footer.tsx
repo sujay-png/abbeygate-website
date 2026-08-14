@@ -37,7 +37,7 @@ const TradeBrochure = () => {
         <div className="flex flex-col md:flex-row items-center md:items-start justify-center gap-10 md:gap-16 lg:gap-20">
           <div className="flex flex-col md:flex-row items-center justify-between gap-16 xl:gap-24">
             <div className="flex-1 max-w-[720px]">
-              <h3 className="text-black text-[30px] font-bold mb-2 font-sans">
+              <h3 className="text-black text-[30px] font-bold mb-2 font-josefin">
                 View our trade brochure
               </h3>
 
@@ -136,7 +136,7 @@ export const Footer = () => {
 
             {/* Company Links */}
             <div className="lg:col-span-1">
-              <h4 className="font-bold text-black font-sans text-sm tracking-wide mb-3 uppercase">Company</h4>
+              <h4 className="font-bold text-black font-josefin text-sm tracking-wide mb-3 uppercase">Company</h4>
               <ul className="flex flex-col gap-2">
                 {FOOTER_LINKS.company.map((link) => (
                   <li key={link.label}>
@@ -150,7 +150,7 @@ export const Footer = () => {
 
             {/* Help Links */}
             <div className="lg:col-span-1">
-              <h4 className="font-bold text-black font-sans text-sm tracking-wide mb-3 uppercase">Help</h4>
+              <h4 className="font-bold text-black font-josefin text-sm tracking-wide mb-3 uppercase">Help</h4>
               <ul className="flex flex-col gap-2">
                 {FOOTER_LINKS.help.map((link) => (
                   <li key={link.label}>
@@ -164,7 +164,7 @@ export const Footer = () => {
 
             {/* Information Links */}
             <div className="lg:col-span-1">
-              <h4 className="font-bold text-black font-sans text-sm tracking-wide mb-3 uppercase">Information</h4>
+              <h4 className="font-bold text-black font-josefin text-sm tracking-wide mb-3 uppercase">Information</h4>
               <ul className="flex flex-col gap-2">
                 {FOOTER_LINKS.information.map((link) => (
                   <li key={link.label}>
@@ -178,7 +178,7 @@ export const Footer = () => {
 
             {/* Address */}
             <div className="lg:col-span-1">
-              <h4 className="font-bold text-black font-sans text-sm tracking-wide mb-3 uppercase">Address</h4>
+              <h4 className="font-bold text-black font-josefin text-sm tracking-wide mb-3 uppercase">Address</h4>
               <address className="not-italic text-[#1F2124] text-[15px] leading-relaxed font-work">
                 Abbeygate<br />
                 Graphic House<br />

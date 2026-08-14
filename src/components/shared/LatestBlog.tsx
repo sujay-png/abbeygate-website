@@ -38,7 +38,7 @@ export const LatestBlog = () => {
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12 gap-6">
           <div className="relative inline-block">
-            <h2 className="text-3xl font-extrabold text-black font-sans tracking-tight">
+            <h2 className="font-josefin text-[26px] font-bold tracking-tight text-black lg:text-[37px]">
               Latest From Our Blog
             </h2>
             <ArrowIcon className="absolute -right-22 -top-1 hidden md:block" />
