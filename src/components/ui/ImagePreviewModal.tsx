@@ -2,6 +2,7 @@
 
 import { X } from 'lucide-react';
 import { useEffect } from 'react';
+import Image from 'next/image';
 import type { CartItem } from '@/features/cart/context/CartContext';
 
 type ImagePreviewModalProps = {
@@ -48,11 +49,11 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, title = 'Customizatio
         </div>
         <div className="p-8 overflow-auto flex items-center justify-center bg-[#f9f9f9]">
           <div className="relative w-full aspect-square bg-white shadow-sm border border-gray-100 flex items-center justify-center p-4">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
+            <Image 
               src={item.image} 
               alt={title}
-              className="absolute inset-0 w-full h-full object-contain" 
+              fill
+              className="object-contain" 
             />
             {item.customization?.logoPreviewUrl && item.customization?.enabled && (
               <div 

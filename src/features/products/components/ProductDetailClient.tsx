@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import type { StoreProduct, PriceTier } from '../types/store-product';
 import { ProductCustomizer, type CustomizationState } from './ProductCustomizer';
 import { ProductCustomizationOverlay } from './ProductCustomizationOverlay';
@@ -296,23 +297,24 @@ export const ProductDetailClient = ({
               <ZoomIn className="w-5 h-5" />
             </button>
 
-            {activeSrc ? (
-              <div className="relative w-full h-full" ref={previewContainerRef}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={activeSrc}
-                  alt={activeImage?.alt || product.name}
-                  referrerPolicy="no-referrer"
-                  fetchPriority="high"
-                  className="transition-transform duration-300 group-hover:scale-105"
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                  }}
-                />
+            {product.images && product.images.length > 0 ? (
+              <div className="absolute inset-0 bg-gray-50" ref={previewContainerRef}>
+                {product.images.map((img, idx) => {
+                  const isActive = img.src === activeSrc;
+                  return (
+                    <Image
+                      key={img.id || idx}
+                      src={img.src}
+                      alt={img.alt || product.name}
+                      fill
+                      priority={true}
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className={`transition-all duration-500 object-contain p-4 group-hover:scale-105 ${
+                        isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                      }`}
+                    />
+                  );
+                })}
                 {isCustomizationSurface && (
                   <ProductCustomizationOverlay 
                     product={product} 
@@ -342,18 +344,12 @@ export const ProductDetailClient = ({
                     }`}
                     style={{ backgroundColor: '#f9f9f9' }}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={thumb}
                       alt={img.alt || product.name}
-                      referrerPolicy="no-referrer"
-                      loading="lazy"
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'contain',
-                        padding: 4,
-                      }}
+                      fill
+                      sizes="96px"
+                      className="object-contain p-1"
                     />
                   </button>
                 );
@@ -413,11 +409,12 @@ export const ProductDetailClient = ({
 
             <div className="relative w-[90vw] h-[90vh] flex items-center justify-center p-4">
               <div className="relative max-h-full max-w-full aspect-square h-full">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={activeImage?.src || activeSrc}
                   alt={activeImage?.alt || product.name}
-                  className="absolute inset-0 w-full h-full object-contain"
+                  fill
+                  sizes="90vw"
+                  className="object-contain"
                 />
                 {isCustomizationSurface && (
                   <ProductCustomizationOverlay 

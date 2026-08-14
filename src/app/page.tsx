@@ -15,6 +15,18 @@ export default function Home() {
       <LatestBlog />
       <CustomisationCTA/>
       {/* Other home components will go here */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "Abbeygate England",
+            "url": "https://corporate.abbeygate-england.com",
+            "logo": "https://corporate.abbeygate-england.com/favicon.ico",
+          }),
+        }}
+      />
     </div>
   );
 }

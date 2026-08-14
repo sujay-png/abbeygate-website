@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Didact_Gothic, Work_Sans, Josefin_Sans } from "next/font/google";
+import { Didact_Gothic, Work_Sans, Josefin_Sans } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -7,15 +7,7 @@ import { CartProvider } from '@/features/cart/context/CartContext';
 import { CartDrawer } from '@/features/cart/components/CartDrawer';
 import { Toaster } from 'react-hot-toast';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 const didactGothic = Didact_Gothic({
   weight: "400",
@@ -34,8 +26,34 @@ const josefinSans = Josefin_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Abbeygate England",
-  description: "Your Brand, Our Craftsmanship",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://corporate.abbeygate-england.com'),
+  title: {
+    template: "%s | Abbeygate England",
+    default: "Abbeygate England | Your Brand, Our Craftsmanship",
+  },
+  description: "Elevate your corporate gifting and bespoke merchandise with our expertly customised leather goods.",
+  openGraph: {
+    title: "Abbeygate England",
+    description: "Your Brand, Our Craftsmanship",
+    url: "/",
+    siteName: "Abbeygate England",
+    images: [
+      {
+        url: "/images/banners/hero-banner.png",
+        width: 1200,
+        height: 630,
+        alt: "Abbeygate England Hero Image",
+      },
+    ],
+    locale: "en_GB",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Abbeygate England",
+    description: "Your Brand, Our Craftsmanship",
+    images: ["/images/banners/hero-banner.png"],
+  },
 };
 
 export const viewport: Viewport = {
@@ -51,7 +69,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${didactGothic.variable} ${workSans.variable} ${josefinSans.variable} h-full antialiased`}
+      className={`${didactGothic.variable} ${workSans.variable} ${josefinSans.variable} h-full antialiased`}
       style={{ backgroundColor: "#ffffff", colorScheme: "light" }}
       suppressHydrationWarning
     >

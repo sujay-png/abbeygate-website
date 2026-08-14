@@ -22,7 +22,9 @@ const SLIDES = [
     bgImage:
       '/images/banners/hero-banner.png',
     cta1: <>Shop Express</>,
+    cta1Link: '/collection',
     cta2: <>Bespoke Orders</>,
+    cta2Link: '/quote',
   },
   {
     id: 2,
@@ -38,7 +40,9 @@ const SLIDES = [
     bgImage:
       '/images/banners/hero-banner-2.png',
     cta1: <>Shop All</>,
+    cta1Link: '/collection',
     cta2: <>Request a Sample</>,
+    cta2Link: '/contact',
   },
 ];
 
@@ -140,10 +144,10 @@ export const Hero = () => {
                 </p>
 
                 <div className="flex flex-row flex-wrap gap-3 sm:gap-4 pointer-events-auto">
-                  <Button variant="primary" className="text-[14px] sm:text-[16px] px-5 sm:px-6">
+                  <Button href={slide.cta1Link} variant="primary" className="text-[14px] sm:text-[16px] px-5 sm:px-6">
                     {slide.cta1}
                   </Button>
-                  <Button variant="outline" className="text-[14px] sm:text-[16px] px-5 sm:px-6">
+                  <Button href={slide.cta2Link} variant="outline" className="text-[14px] sm:text-[16px] px-5 sm:px-6">
                     {slide.cta2}
                   </Button>
                 </div>

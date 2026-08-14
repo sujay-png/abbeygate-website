@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Container } from '@/components/ui/Container';
 import { Breadcrumb } from '@/components/content/Breadcrumb';
 import { useCart } from '@/features/cart/context/CartContext';
@@ -97,7 +98,9 @@ export default function CartPage() {
               {items.map((item) => (
                 <div key={item.key} className="flex gap-4 border-b border-gray-100 pb-6">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={item.image} alt={item.name} className="w-24 h-24 object-cover rounded bg-gray-50 shrink-0" />
+                  <div className="w-24 h-24 relative bg-gray-50 shrink-0 rounded">
+                    <Image src={item.image} alt={item.name} fill sizes="96px" className="object-cover rounded" />
+                  </div>
                   <div className="flex-1">
                     <div className="flex justify-between gap-4">
                       <div>
