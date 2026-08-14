@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Search, Menu, X, ChevronDown } from 'lucide-react';
 import { AnimatePresence, motion, Variants, Transition } from 'framer-motion';
@@ -172,11 +173,13 @@ export const Navbar = () => {
 
           <div className="flex items-center justify-center px-6 xl:px-10 mx-auto lg:mx-0">
             <Link href="/" className="block">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src="/images/logo/abbeygate-logo.png"
                 alt="Abbeygate England"
+                width={200}
+                height={48}
                 className="h-12 w-auto object-contain"
+                priority
               />
             </Link>
           </div>
@@ -312,11 +315,13 @@ export const Navbar = () => {
 
               <div className="flex-1 flex items-center justify-center">
                 <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src="/images/logo/abbeygate-logo.png"
                     alt="Abbeygate England"
+                    width={160}
+                    height={40}
                     className="h-10 w-auto object-contain"
+                    priority
                   />
                 </Link>
               </div>

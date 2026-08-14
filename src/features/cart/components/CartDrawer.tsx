@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { X, Minus, Plus, ShoppingBag, Loader2 } from 'lucide-react';
 import { AnimatePresence, motion, Transition } from 'framer-motion';
 import { useCart } from '@/features/cart/context/CartContext';
@@ -133,12 +134,15 @@ export const CartDrawer = () => {
                 <ul className="flex flex-col gap-6">
                   {items.map((item) => (
                     <li key={item.key} className="flex gap-4">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-20 h-20 object-cover rounded shrink-0 bg-gray-50"
-                      />
+                      <div className="w-20 h-20 relative shrink-0 bg-gray-50 rounded">
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          fill
+                          sizes="80px"
+                          className="object-cover rounded"
+                        />
+                      </div>
 
                       <div className="flex-1 flex flex-col min-w-0">
                         <div className="flex items-start justify-between gap-2">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 interface ProductCardProps {
   title: string;
@@ -28,14 +29,12 @@ export const ProductCard = ({
         </div>
 
         {imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={imageUrl}
             alt={title}
-            loading="lazy"
-            decoding="async"
-            referrerPolicy="no-referrer"
-            className="w-full h-full object-contain scale-110 transition-transform duration-500 group-hover:scale-125"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-contain scale-110 transition-transform duration-500 group-hover:scale-125"
           />
         ) : (
           <div

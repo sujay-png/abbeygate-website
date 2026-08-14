@@ -21,7 +21,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const product = await getStoreProductBySlug(slug);
     return {
       title: product ? `${product.name} | Abbeygate England` : 'Product',
-      description: product?.short_description?.replace(/<[^>]*>/g, '').slice(0, 160),
+      description: product?.short_description?.replace(/<[^>]*>/g, '').slice(0, 160) || 'Bespoke corporate gifting by Abbeygate England.',
+      alternates: {
+        canonical: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://corporate.abbeygate-england.com'}/product/${slug}`,
+      }
     };
   } catch {
     return { title: 'Product | Abbeygate England' };
@@ -133,6 +136,35 @@ export default async function ProductPage({ params }: PageProps) {
       <RelatedProducts categoryId={product.categories[0]?.id} />
       <FAQ />
       <CustomisationCTA />
+      
+      {/* Product JSON-LD Schema */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org/",
+            "@type": "Product",
+            "name": product.name,
+            "image": [
+              product.images?.[0]?.src
+            ].filter(Boolean),
+            "description": product.short_description?.replace(/<[^>]*>/g, '') || product.name,
+            "sku": product.sku || undefined,
+            "brand": {
+              "@type": "Brand",
+              "name": "Abbeygate England"
+            },
+            "offers": {
+              "@type": "Offer",
+              "url": `https://corporate.abbeygate-england.com/product/${product.slug}`,
+              "priceCurrency": "GBP",
+              "price": pricing.basePrice,
+              "itemCondition": "https://schema.org/NewCondition",
+              "availability": product.is_in_stock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+            }
+          })
+        }}
+      />
     </div>
   );
 }
