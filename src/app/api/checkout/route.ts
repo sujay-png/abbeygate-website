@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkoutRateLimit } from '@/lib/rate-limit';
 
 const WOOCOMMERCE_STORE_URL = process.env.WOOCOMMERCE_STORE_URL || 'https://corporate.abbeygate-england.com';
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
+    const { success } = await checkoutRateLimit.limit(ip);
+    
+    if (!success) {
+      return NextResponse.json({ error: 'Too many checkout attempts, please try again later.' }, { status: 429 });
+    }
+
     const formData = await request.formData();
     const cartData = formData.get('cart') as string;
     

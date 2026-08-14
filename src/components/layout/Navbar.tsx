@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Search, Menu, X, ChevronDown } from 'lucide-react';
 import { AnimatePresence, motion, Variants, Transition } from 'framer-motion';
 import { NAV_ITEMS } from '@/data/navigation';
@@ -21,7 +22,11 @@ const COLUMN_VARIANT: Variants = {
 };
 
 export const Navbar = () => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const urlSearchParams = useSearchParams();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mobileExpandedId, setMobileExpandedId] = useState<string | null>(null);
@@ -30,6 +35,16 @@ export const Navbar = () => {
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollPositionRef = useRef(0);
+
+  useEffect(() => {
+    if (pathname === '/search') {
+      const q = urlSearchParams.get('q');
+      if (q) setSearchQuery(q);
+    } else {
+      setSearchQuery('');
+      setIsSearchOpen(false);
+    }
+  }, [pathname, urlSearchParams]);
 
   useEffect(() => {
     const handleClickOutside = (event: Event) => {
@@ -78,11 +93,26 @@ export const Navbar = () => {
   }, [isMobileMenuOpen]);
 
   const handleSearchToggle = () => {
-    if (!isSearchOpen) {
-      setIsSearchOpen(true);
-      setTimeout(() => inputRef.current?.focus(), 100);
+    if (isSearchOpen && searchQuery.trim()) {
+      handleSearch();
     } else {
-      inputRef.current?.focus();
+      setIsSearchOpen(!isSearchOpen);
+      if (!isSearchOpen) {
+        setTimeout(() => inputRef.current?.focus(), 100);
+      }
+    }
+  };
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setIsSearchOpen(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
     }
   };
 
@@ -173,10 +203,13 @@ export const Navbar = () => {
                 <input
                   ref={inputRef}
                   type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   className={`w-48 shrink-0 bg-transparent outline-none pl-3 py-1 text-sm text-gray-800 transition-opacity duration-700 ${
                     isSearchOpen ? 'opacity-100 cursor-text delay-100' : 'opacity-0 cursor-default'
                   }`}
-                  placeholder=""
+                  placeholder="Search products..."
                   onFocus={() => setIsSearchOpen(true)}
                 />
                 <button

@@ -5,6 +5,7 @@ import type { LogoCustomization } from '@/features/products/types/store-product'
 import type { StoreProduct } from '@/features/products/types/store-product';
 import { calculateShipping } from '@/features/products/utils/shipping';
 import * as idb from '@/lib/idb';
+import toast from 'react-hot-toast';
 
 export interface CartItem {
   key: string;
@@ -84,6 +85,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
       const safeItem = { ...item, key };
       setItems((prev) => [...prev, safeItem]);
+      toast.success(`${item.quantity}x ${item.name} added to basket`);
       openCart();
     } finally {
       setIsLoading(false);
@@ -93,11 +95,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const removeItem = useCallback(async (key: string) => {
     setIsLoading(true);
     try {
+      const itemToRemove = items.find((i) => i.key === key);
+      if (itemToRemove) {
+        toast.success(`${itemToRemove.name} removed from basket`, {
+          style: { background: '#333', color: '#fff' }
+        });
+      }
       setItems((prev) => prev.filter((i) => i.key !== key));
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [items]);
 
   const updateQuantity = useCallback(async (key: string, quantity: number) => {
     if (quantity < 1) return removeItem(key);
