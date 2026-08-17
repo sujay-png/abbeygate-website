@@ -175,7 +175,7 @@ export const ProductDetailClient = ({
               const data = await res.json();
               
               if (data.dataUrl) {
-                const productImg = new Image();
+                const productImg = new window.Image();
                 productImg.src = data.dataUrl;
                 await new Promise((resolve) => {
                   productImg.onload = resolve;
@@ -199,7 +199,7 @@ export const ProductDetailClient = ({
 
                 // Draw logo if exists
                 if (customization.logoPreviewUrl) {
-                  const logoImg = new Image();
+                  const logoImg = new window.Image();
                   logoImg.src = customization.logoPreviewUrl;
                   await new Promise((resolve) => {
                     logoImg.onload = resolve;
@@ -211,25 +211,57 @@ export const ProductDetailClient = ({
                   const logoX = CANVAS_SIZE * (leftPercent / 100) - (logoW / 2);
                   const logoY = CANVAS_SIZE * (topPercent / 100) - (logoH / 2);
                   
-                  // Tint if foil
-                  if (customization.blockingType === 'Foil blocked') {
-                    const tintCanvas = document.createElement('canvas');
-                    tintCanvas.width = logoW;
-                    tintCanvas.height = logoH;
-                    const tCtx = tintCanvas.getContext('2d');
-                    if (tCtx) {
-                      tCtx.drawImage(logoImg, 0, 0, logoW, logoH);
-                      tCtx.globalCompositeOperation = 'source-in';
-                      tCtx.fillStyle = customization.foilColor === 'Gold' ? '#D4AF37' : '#C0C0C0';
-                      tCtx.fillRect(0, 0, logoW, logoH);
-                      ctx.drawImage(tintCanvas, logoX, logoY, logoW, logoH);
+                                      // Tint if foil
+                    if (customization.blockingType === 'Foil blocked') {
+                      const tintCanvas = document.createElement('canvas');
+                      tintCanvas.width = logoW;
+                      tintCanvas.height = logoH;
+                      const tCtx = tintCanvas.getContext('2d');
+                      if (tCtx) {
+                        tCtx.drawImage(logoImg, 0, 0, logoW, logoH);
+                        tCtx.globalCompositeOperation = 'source-in';
+                        tCtx.fillStyle = customization.foilColor === 'Gold' ? '#D4AF37' : '#C0C0C0';
+                        tCtx.fillRect(0, 0, logoW, logoH);
+                        ctx.drawImage(tintCanvas, logoX, logoY, logoW, logoH);
+                      }
+                    } else {
+                                                                                                              // Embossed fallback - replicate edge highlights
+                      const darkEdge = document.createElement('canvas');
+                      darkEdge.width = logoW; darkEdge.height = logoH;
+                      const dCtx = darkEdge.getContext('2d');
+                      if (dCtx) {
+                        dCtx.drawImage(logoImg, 0, 0, logoW, logoH);
+                        dCtx.globalCompositeOperation = 'source-in';
+                        dCtx.fillStyle = 'rgba(0,0,0,0.5)';
+                        dCtx.fillRect(0, 0, logoW, logoH);
+                        dCtx.globalCompositeOperation = 'destination-out';
+                        dCtx.drawImage(logoImg, 1, 1, logoW, logoH);
+                        
+                        ctx.save();
+                        ctx.filter = 'blur(0.5px)';
+                        ctx.globalCompositeOperation = 'multiply';
+                        ctx.drawImage(darkEdge, logoX, logoY, logoW, logoH);
+                        ctx.restore();
+                      }
+                      
+                      const lightEdge = document.createElement('canvas');
+                      lightEdge.width = logoW; lightEdge.height = logoH;
+                      const lCtx = lightEdge.getContext('2d');
+                      if (lCtx) {
+                        lCtx.drawImage(logoImg, 0, 0, logoW, logoH);
+                        lCtx.globalCompositeOperation = 'source-in';
+                        lCtx.fillStyle = 'rgba(255,255,255,0.3)';
+                        lCtx.fillRect(0, 0, logoW, logoH);
+                        lCtx.globalCompositeOperation = 'destination-out';
+                        lCtx.drawImage(logoImg, -1, -1, logoW, logoH);
+                        
+                        ctx.save();
+                        ctx.filter = 'blur(0.5px)';
+                        ctx.globalCompositeOperation = 'screen';
+                        ctx.drawImage(lightEdge, logoX, logoY, logoW, logoH);
+                        ctx.restore();
+                      }
                     }
-                  } else {
-                    // Embossed fallback
-                    ctx.globalAlpha = 0.5;
-                    ctx.drawImage(logoImg, logoX, logoY, logoW, logoH);
-                    ctx.globalAlpha = 1.0;
-                  }
                 }
                 
                 fullPreviewUrl = canvas.toDataURL('image/png', 0.9);

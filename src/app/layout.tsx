@@ -2,10 +2,12 @@ import type { Metadata, Viewport } from "next";
 import { Didact_Gothic, Work_Sans, Josefin_Sans } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
+import { Suspense } from "react";
 import { Footer } from "@/components/layout/Footer";
 import { CartProvider } from '@/features/cart/context/CartContext';
 import { CartDrawer } from '@/features/cart/components/CartDrawer';
 import { Toaster } from 'react-hot-toast';
+import { LenisProvider } from '@/components/layout/LenisProvider';
 
 
 
@@ -78,15 +80,17 @@ export default function RootLayout({
         style={{ backgroundColor: "#ffffff", color: "#171717" }}
         suppressHydrationWarning
       >
-        <CartProvider>
-          <Navbar />
-          <main className="flex-1" style={{ backgroundColor: "#ffffff" }}>
-            {children}
-          </main>
-          <Footer />
-          <CartDrawer />
-          <Toaster position="bottom-left" toastOptions={{ duration: 4000, style: { background: '#333', color: '#fff' } }} />
-        </CartProvider>
+        <LenisProvider>
+          <CartProvider>
+            <Suspense fallback={null}><Navbar /></Suspense>
+            <main className="flex-1" style={{ backgroundColor: "#ffffff" }}>
+              {children}
+            </main>
+            <Footer />
+            <CartDrawer />
+            <Toaster position="bottom-left" toastOptions={{ duration: 4000, style: { background: '#333', color: '#fff' } }} />
+          </CartProvider>
+        </LenisProvider>
       </body>
     </html>
   );
