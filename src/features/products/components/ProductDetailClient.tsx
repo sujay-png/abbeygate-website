@@ -489,11 +489,19 @@ export const ProductDetailClient = ({
               <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
             </summary>
             <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
-              {product.description ? (
-                <div dangerouslySetInnerHTML={{ __html: product.description }} />
-              ) : (
-                <p className="italic">No description available.</p>
-              )}
+              {(() => {
+                  const customDesc = customTabs.find(t => t.title.trim().toLowerCase() === 'description');
+                  const descHtml = customDesc ? customDesc.content : product.description;
+                  if (descHtml) {
+                    return (
+                      <div 
+                        className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-black hover:prose-a:text-gray-600"
+                        dangerouslySetInnerHTML={{ __html: descHtml }} 
+                      />
+                    );
+                  }
+                  return <p className="italic">No description available.</p>;
+                })()}
             </div>
           </details>
 
@@ -656,16 +664,49 @@ export const ProductDetailClient = ({
             </div>
           </details>
 
-          {/* Delivery Accordion */}
-          <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden">
-            <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-[#1F2124] hover:bg-gray-50">
-              <span>Delivery</span>
-              <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
-            </summary>
-            <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
-              Standard delivery takes 3-5 working days. For customized products, please allow an additional 5-7 working days.
-            </div>
-          </details>
+                      {/* Delivery Accordion */}
+            {(() => {
+              const deliveryTab = customTabs.find(t => 
+                t.title.trim().toLowerCase() === 'shipping' || 
+                t.title.trim().toLowerCase() === 'delivery'
+              );
+              
+              if (!deliveryTab) return null;
+
+              return (
+                <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
+                  <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-[#1F2124] hover:bg-gray-50">
+                    <span>Delivery</span>
+                    <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
+                  </summary>
+                  <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
+                    <div 
+                      className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-black hover:prose-a:text-gray-600"
+                      dangerouslySetInnerHTML={{ __html: deliveryTab.content }} 
+                    />
+                  </div>
+                </details>
+              );
+            })()}
+
+            {/* Other Custom Tabs Accordions */}
+            {customTabs.filter(t => {
+              const title = t.title.trim().toLowerCase();
+              return title !== 'description' && title !== 'shipping' && title !== 'delivery';
+            }).map((tab, idx) => (
+              <details key={idx} className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
+                <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-[#1F2124] hover:bg-gray-50">
+                  <span>{tab.title}</span>
+                  <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
+                </summary>
+                <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
+                  <div 
+                    className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-black hover:prose-a:text-gray-600"
+                    dangerouslySetInnerHTML={{ __html: tab.content }} 
+                  />
+                </div>
+              </details>
+            ))}
 
         </div>
       </div>
