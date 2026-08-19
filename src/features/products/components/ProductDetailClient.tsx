@@ -55,7 +55,7 @@ export const ProductDetailClient = ({
     enabled: !isGifts,
     blockingType: 'Embossed',
     logoScale: 1,
-    logoPosition: { top: 37.5, left: 37.5, label: 'Center' },
+    logoPosition: { x: 0, y: 0 },
   });
   const [isAdding, setIsAdding] = useState(false);
 
@@ -74,7 +74,7 @@ export const ProductDetailClient = ({
     setCustomization(state);
   }, []);
 
-  const handlePositionChange = useCallback((position: { x: number; y: number; label: string }) => {
+  const handlePositionChange = useCallback((position: { x: number; y: number }) => {
     setCustomization(prev => ({ ...prev, logoPosition: position }));
   }, []);
 
@@ -154,8 +154,8 @@ export const ProductDetailClient = ({
           const cx = customization.logoPosition?.x || 0;
           const cy = customization.logoPosition?.y || 0;
 
-          leftPercent = customization.logoPosition?.leftPercent || (50 + (cx / rect.width) * 100);
-          topPercent = customization.logoPosition?.topPercent || (50 + (cy / rect.height) * 100);
+          leftPercent = 50 + (cx / rect.width) * 100;
+          topPercent = 50 + (cy / rect.height) * 100;
           widthPercent = 25 * (customization.logoScale || 1);
           // 1. Generate image using native canvas to avoid html2canvas CSS/CORS bugs
           try {
@@ -287,7 +287,7 @@ export const ProductDetailClient = ({
               enabled: true,
               choice: customization.blockingType,
               foilColor: customization.blockingType === 'Foil blocked' ? customization.foilColor : undefined,
-              position: customization.logoPosition?.label || 'Center',
+              position: `X: ${Math.round(customization.logoPosition?.x || 0)}, Y: ${Math.round(customization.logoPosition?.y || 0)}, Scale: ${Math.round((customization.logoScale || 1) * 100)}%`,
               fileName: customization.logoFile?.name,
               logoFile: customization.logoFile,
               logoPreviewUrl: customization.logoPreviewUrl,
@@ -340,7 +340,7 @@ export const ProductDetailClient = ({
 
           <div
             className="relative w-full flex-1 overflow-hidden rounded-xl border border-gray-100 flex items-center justify-center p-4 group order-1 md:order-2"
-            style={{ aspectRatio: '4 / 5', backgroundColor: '#ffffff', maxHeight: '600px' }}
+            style={{ aspectRatio: '1 / 1', backgroundColor: '#ffffff' }}
           >
             <button
               type="button"
@@ -367,8 +367,7 @@ export const ProductDetailClient = ({
                       fill
                       priority={true}
                       sizes="(max-width: 768px) 100vw, 50vw"
-                      className={`transition-all duration-500 object-contain p-4  ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                        }`}
+                      className={`transition-all duration-500 object-contain p-4 scale-105 ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
                     />
                   );
                 })}
