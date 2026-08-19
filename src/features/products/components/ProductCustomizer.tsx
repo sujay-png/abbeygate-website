@@ -18,7 +18,7 @@ export type CustomizationState = {
   logoFile?: File;
   logoPreviewUrl?: string;
   logoScale: number;
-  logoPosition: { top: number; left: number; label: string };
+  logoPosition: { x: number; y: number; label?: string; leftPercent?: number; topPercent?: number };
 };
 
 function useEvent<T extends (...args: any[]) => any>(handler: T) {
@@ -271,9 +271,7 @@ export const ProductCustomizer = ({
                     <span className="text-[13px] text-gray-500 font-medium w-8 text-right">200%</span>
                   </div>
                   <p className="text-[13px] text-gray-500 italic mt-3">
-                    Drag and position the logo directly on the main product image.
-                    <br />
-                    <span className="font-semibold text-gray-700 not-italic">Current Position Zone: {customization.logoPosition.label}</span>
+                    Drag and position the logo directly on the main product image. It will remain within the safe printing area.
                   </p>
                 </div>
               )}
