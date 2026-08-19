@@ -36,7 +36,7 @@ export const ProductDetailClient = ({
 }: ProductDetailClientProps) => {
   const { addItem } = useCart();
   const isGifts = isGiftsProduct(product);
-  
+
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const [quantity, setQuantity] = useState(isGifts ? 1 : CUSTOMIZATION_MIN_QTY);
   const [priceDetails, setPriceDetails] = useState({
@@ -55,7 +55,7 @@ export const ProductDetailClient = ({
     enabled: !isGifts,
     blockingType: 'Embossed',
     logoScale: 1,
-    logoPosition: { x: 0, y: 0, label: 'Center' },
+    logoPosition: { top: 37.5, left: 37.5, label: 'Center' },
   });
   const [isAdding, setIsAdding] = useState(false);
 
@@ -130,7 +130,7 @@ export const ProductDetailClient = ({
 
       if (customization.enabled && !isGifts) {
         attributes.push({ name: 'Custom Logo', value: '' });
-        
+
         if (customization.blockingType) {
           attributes.push({ name: 'Blocking', value: customization.blockingType.replace(' blocked', '') });
         }
@@ -147,16 +147,16 @@ export const ProductDetailClient = ({
         if (customization.logoFile) {
           attributes.push({ name: 'Logo', value: customization.logoFile.name });
         }
-        
+
         // Calculate responsive percentages for the CartItemPreview
         if (previewContainerRef.current) {
           const rect = previewContainerRef.current.getBoundingClientRect();
           const cx = customization.logoPosition?.x || 0;
           const cy = customization.logoPosition?.y || 0;
-          
-          leftPercent = 50 + (cx / rect.width) * 100;
-          topPercent = 50 + (cy / rect.height) * 100;
-          widthPercent = ((120 * (customization.logoScale || 1)) / rect.width) * 100;
+
+          leftPercent = customization.logoPosition?.leftPercent || (50 + (cx / rect.width) * 100);
+          topPercent = customization.logoPosition?.topPercent || (50 + (cy / rect.height) * 100);
+          widthPercent = 25 * (customization.logoScale || 1);
           // 1. Generate image using native canvas to avoid html2canvas CSS/CORS bugs
           try {
             const canvas = document.createElement('canvas');
@@ -164,7 +164,7 @@ export const ProductDetailClient = ({
             canvas.width = CANVAS_SIZE;
             canvas.height = CANVAS_SIZE;
             const ctx = canvas.getContext('2d');
-            
+
             if (ctx && activeSrc) {
               // Fill white background
               ctx.fillStyle = '#ffffff';
@@ -173,7 +173,7 @@ export const ProductDetailClient = ({
               // Get product image via proxy
               const res = await fetch(`/api/proxy-image?url=${encodeURIComponent(activeSrc)}`);
               const data = await res.json();
-              
+
               if (data.dataUrl) {
                 const productImg = new window.Image();
                 productImg.src = data.dataUrl;
@@ -181,7 +181,7 @@ export const ProductDetailClient = ({
                   productImg.onload = resolve;
                   productImg.onerror = resolve;
                 });
-                
+
                 // Draw product image
                 const imgAspect = productImg.width / productImg.height;
                 let drawW = CANVAS_SIZE;
@@ -210,60 +210,60 @@ export const ProductDetailClient = ({
                   const logoH = logoW; // aspect 1:1
                   const logoX = CANVAS_SIZE * (leftPercent / 100) - (logoW / 2);
                   const logoY = CANVAS_SIZE * (topPercent / 100) - (logoH / 2);
-                  
-                                      // Tint if foil
-                    if (customization.blockingType === 'Foil blocked') {
-                      const tintCanvas = document.createElement('canvas');
-                      tintCanvas.width = logoW;
-                      tintCanvas.height = logoH;
-                      const tCtx = tintCanvas.getContext('2d');
-                      if (tCtx) {
-                        tCtx.drawImage(logoImg, 0, 0, logoW, logoH);
-                        tCtx.globalCompositeOperation = 'source-in';
-                        tCtx.fillStyle = customization.foilColor === 'Gold' ? '#D4AF37' : '#C0C0C0';
-                        tCtx.fillRect(0, 0, logoW, logoH);
-                        ctx.drawImage(tintCanvas, logoX, logoY, logoW, logoH);
-                      }
-                    } else {
-                                                                                                              // Embossed fallback - replicate edge highlights
-                      const darkEdge = document.createElement('canvas');
-                      darkEdge.width = logoW; darkEdge.height = logoH;
-                      const dCtx = darkEdge.getContext('2d');
-                      if (dCtx) {
-                        dCtx.drawImage(logoImg, 0, 0, logoW, logoH);
-                        dCtx.globalCompositeOperation = 'source-in';
-                        dCtx.fillStyle = 'rgba(0,0,0,0.5)';
-                        dCtx.fillRect(0, 0, logoW, logoH);
-                        dCtx.globalCompositeOperation = 'destination-out';
-                        dCtx.drawImage(logoImg, 1, 1, logoW, logoH);
-                        
-                        ctx.save();
-                        ctx.filter = 'blur(0.5px)';
-                        ctx.globalCompositeOperation = 'multiply';
-                        ctx.drawImage(darkEdge, logoX, logoY, logoW, logoH);
-                        ctx.restore();
-                      }
-                      
-                      const lightEdge = document.createElement('canvas');
-                      lightEdge.width = logoW; lightEdge.height = logoH;
-                      const lCtx = lightEdge.getContext('2d');
-                      if (lCtx) {
-                        lCtx.drawImage(logoImg, 0, 0, logoW, logoH);
-                        lCtx.globalCompositeOperation = 'source-in';
-                        lCtx.fillStyle = 'rgba(255,255,255,0.3)';
-                        lCtx.fillRect(0, 0, logoW, logoH);
-                        lCtx.globalCompositeOperation = 'destination-out';
-                        lCtx.drawImage(logoImg, -1, -1, logoW, logoH);
-                        
-                        ctx.save();
-                        ctx.filter = 'blur(0.5px)';
-                        ctx.globalCompositeOperation = 'screen';
-                        ctx.drawImage(lightEdge, logoX, logoY, logoW, logoH);
-                        ctx.restore();
-                      }
+
+                  // Tint if foil
+                  if (customization.blockingType === 'Foil blocked') {
+                    const tintCanvas = document.createElement('canvas');
+                    tintCanvas.width = logoW;
+                    tintCanvas.height = logoH;
+                    const tCtx = tintCanvas.getContext('2d');
+                    if (tCtx) {
+                      tCtx.drawImage(logoImg, 0, 0, logoW, logoH);
+                      tCtx.globalCompositeOperation = 'source-in';
+                      tCtx.fillStyle = customization.foilColor === 'Gold' ? '#D4AF37' : '#C0C0C0';
+                      tCtx.fillRect(0, 0, logoW, logoH);
+                      ctx.drawImage(tintCanvas, logoX, logoY, logoW, logoH);
                     }
+                  } else {
+                    // Embossed fallback - replicate edge highlights
+                    const darkEdge = document.createElement('canvas');
+                    darkEdge.width = logoW; darkEdge.height = logoH;
+                    const dCtx = darkEdge.getContext('2d');
+                    if (dCtx) {
+                      dCtx.drawImage(logoImg, 0, 0, logoW, logoH);
+                      dCtx.globalCompositeOperation = 'source-in';
+                      dCtx.fillStyle = 'rgba(0,0,0,0.5)';
+                      dCtx.fillRect(0, 0, logoW, logoH);
+                      dCtx.globalCompositeOperation = 'destination-out';
+                      dCtx.drawImage(logoImg, 1, 1, logoW, logoH);
+
+                      ctx.save();
+                      ctx.filter = 'blur(0.5px)';
+                      ctx.globalCompositeOperation = 'multiply';
+                      ctx.drawImage(darkEdge, logoX, logoY, logoW, logoH);
+                      ctx.restore();
+                    }
+
+                    const lightEdge = document.createElement('canvas');
+                    lightEdge.width = logoW; lightEdge.height = logoH;
+                    const lCtx = lightEdge.getContext('2d');
+                    if (lCtx) {
+                      lCtx.drawImage(logoImg, 0, 0, logoW, logoH);
+                      lCtx.globalCompositeOperation = 'source-in';
+                      lCtx.fillStyle = 'rgba(255,255,255,0.3)';
+                      lCtx.fillRect(0, 0, logoW, logoH);
+                      lCtx.globalCompositeOperation = 'destination-out';
+                      lCtx.drawImage(logoImg, -1, -1, logoW, logoH);
+
+                      ctx.save();
+                      ctx.filter = 'blur(0.5px)';
+                      ctx.globalCompositeOperation = 'screen';
+                      ctx.drawImage(lightEdge, logoX, logoY, logoW, logoH);
+                      ctx.restore();
+                    }
+                  }
                 }
-                
+
                 fullPreviewUrl = canvas.toDataURL('image/png', 0.9);
               }
             }
@@ -284,18 +284,18 @@ export const ProductDetailClient = ({
         customization:
           customization.enabled && !isGifts
             ? {
-                enabled: true,
-                choice: customization.blockingType,
-                foilColor: customization.blockingType === 'Foil blocked' ? customization.foilColor : undefined,
-                position: customization.logoPosition?.label || 'Center',
-                fileName: customization.logoFile?.name,
-                logoFile: customization.logoFile,
-                logoPreviewUrl: customization.logoPreviewUrl,
-                fullPreviewUrl: fullPreviewUrl,
-                leftPercent,
-                topPercent,
-                widthPercent,
-              }
+              enabled: true,
+              choice: customization.blockingType,
+              foilColor: customization.blockingType === 'Foil blocked' ? customization.foilColor : undefined,
+              position: customization.logoPosition?.label || 'Center',
+              fileName: customization.logoFile?.name,
+              logoFile: customization.logoFile,
+              logoPreviewUrl: customization.logoPreviewUrl,
+              fullPreviewUrl: fullPreviewUrl,
+              leftPercent,
+              topPercent,
+              widthPercent,
+            }
             : undefined,
         categorySlugs: product.categories.map((c) => c.slug),
       });
@@ -311,10 +311,36 @@ export const ProductDetailClient = ({
         style={{ backgroundColor: '#ffffff', color: '#1F2124' }}
       >
         {/* Left: gallery */}
-        <div className="relative z-10 lg:sticky lg:top-32 self-start">
+        <div className="relative z-10 lg:sticky lg:top-32 self-start flex flex-col md:flex-row gap-4 lg:gap-6">
+          {product.images.length > 1 && (
+            <div className="flex md:flex-col gap-4 overflow-x-auto md:overflow-y-auto md:max-h-[600px] pb-2 md:pb-0 scrollbar-hide shrink-0 order-2 md:order-1">
+              {product.images.map((img, index) => {
+                const thumb = img.thumbnail || img.src;
+                return (
+                  <button
+                    key={img.id}
+                    type="button"
+                    onClick={() => setActiveImageIndex(index)}
+                    className={`relative h-20 w-20 lg:h-24 lg:w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${index === activeImageIndex ? 'border-[#4a346e]' : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    style={{ backgroundColor: '#f9f9f9' }}
+                  >
+                    <Image
+                      src={thumb}
+                      alt={img.alt || product.name}
+                      fill
+                      sizes="96px"
+                      className="object-contain p-2"
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           <div
-            className="relative w-full overflow-hidden rounded-xl border border-gray-100 flex items-center justify-center p-4 group"
-            style={{ aspectRatio: '1 / 1', backgroundColor: '#ffffff' }}
+            className="relative w-full flex-1 overflow-hidden rounded-xl border border-gray-100 flex items-center justify-center p-4 group order-1 md:order-2"
+            style={{ aspectRatio: '4 / 5', backgroundColor: '#ffffff', maxHeight: '600px' }}
           >
             <button
               type="button"
@@ -341,17 +367,16 @@ export const ProductDetailClient = ({
                       fill
                       priority={true}
                       sizes="(max-width: 768px) 100vw, 50vw"
-                      className={`transition-all duration-500 object-contain p-4 group-hover:scale-105 ${
-                        isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                      }`}
+                      className={`transition-all duration-500 object-contain p-4  ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                        }`}
                     />
                   );
                 })}
                 {isCustomizationSurface && (
-                  <ProductCustomizationOverlay 
-                    product={product} 
-                    customization={customization} 
-                    onPositionChange={handlePositionChange} 
+                  <ProductCustomizationOverlay
+                    product={product}
+                    customization={customization}
+                    onPositionChange={handlePositionChange}
                   />
                 )}
               </div>
@@ -361,76 +386,28 @@ export const ProductDetailClient = ({
               </div>
             )}
           </div>
-
-          {product.images.length > 1 && (
-            <div className="mt-6 flex gap-4 overflow-x-auto pb-2">
-              {product.images.map((img, index) => {
-                const thumb = img.thumbnail || img.src;
-                return (
-                  <button
-                    key={img.id}
-                    type="button"
-                    onClick={() => setActiveImageIndex(index)}
-                    className={`relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
-                      index === activeImageIndex ? 'border-black' : 'border-transparent hover:border-gray-200'
-                    }`}
-                    style={{ backgroundColor: '#f9f9f9' }}
-                  >
-                    <Image
-                      src={thumb}
-                      alt={img.alt || product.name}
-                      fill
-                      sizes="96px"
-                      className="object-contain p-1"
-                    />
-                  </button>
-                );
-              })}
-            </div>
-          )}
-          {/* Available Colours Section */}
-          {colorVariants.length > 0 && (
-            <div className="mt-8 flex items-center gap-4">
-              <span className="text-sm font-semibold text-[#1F2124]">Available Colours</span>
-              <div className="flex items-center gap-3">
-                {colorVariants.map((color) => {
-                  const isActive = product.slug === color.slug;
-                  return (
-                    <Link
-                      key={color.slug}
-                      href={`/product/${color.slug}`}
-                      title={color.name}
-                      className={`w-8 h-8 rounded-full shadow-sm transition-transform hover:scale-110 ${
-                        isActive ? 'border-2 border-black scale-110' : 'border border-gray-300'
-                      }`}
-                      style={{ backgroundColor: color.hex }}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
+
 
         {/* Image Preview Modal */}
         {isPreviewOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/95 backdrop-blur-sm">
-            <button 
+            <button
               onClick={() => setIsPreviewOpen(false)}
               className="absolute top-6 right-6 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-[110]"
             >
               <X className="w-6 h-6 text-black" />
             </button>
-            
+
             {product.images.length > 1 && (
               <>
-                <button 
+                <button
                   onClick={handlePrevImage}
                   className="absolute left-6 p-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-[110]"
                 >
                   <ChevronLeft className="w-6 h-6 text-black" />
                 </button>
-                <button 
+                <button
                   onClick={handleNextImage}
                   className="absolute right-6 p-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-[110]"
                 >
@@ -449,10 +426,10 @@ export const ProductDetailClient = ({
                   className="object-contain"
                 />
                 {isCustomizationSurface && (
-                  <ProductCustomizationOverlay 
-                    product={product} 
-                    customization={customization} 
-                    onPositionChange={handlePositionChange} 
+                  <ProductCustomizationOverlay
+                    product={product}
+                    customization={customization}
+                    onPositionChange={handlePositionChange}
                   />
                 )}
               </div>
@@ -461,239 +438,241 @@ export const ProductDetailClient = ({
         )}
 
         {/* Right: details */}
-        <div className="relative z-20" style={{ backgroundColor: '#ffffff' }}>
-          <h1
-            className="text-2xl lg:text-[32px] font-bold leading-tight mb-2"
-            style={{ color: '#1F2124' }}
-          >
-            {product.name}
-          </h1>
-          <p className="text-sm mb-8" style={{ color: '#666666' }}>
-            SKU: {product.sku}
-          </p>
+        <div className="relative z-20 flex flex-col gap-5" style={{ backgroundColor: '#ffffff' }}>
+
+          <div>
+            <div className="text-[13px] font-bold tracking-widest text-[#4a346e] uppercase mb-2">
+              {product.categories?.[0]?.name ? `${product.categories[0].name} COLLECTION` : 'COLLECTION'}
+            </div>
+            <h1
+              className="text-2xl lg:text-[32px] font-bold leading-tight mb-2"
+              style={{ color: '#1F2124' }}
+            >
+              {product.name}
+            </h1>
+
+            {product.short_description && (
+              <div
+                className="text-[15px] text-[#1F2124] mb-3"
+                dangerouslySetInnerHTML={{ __html: product.short_description }}
+              />
+            )}
+          </div>
 
           {/* PRICE BLOCK */}
-          <div className="mb-8">
-            <div className="text-[26px] font-bold text-[#1F2124]">
-               {formatGBP(priceDetails.unitPrice)} <span className="text-[14px] font-normal text-gray-500">/ unit</span>
+          <div>
+            <div className="text-[20px] font-bold text-[#1F2124] mb-1">
+              {formatGBP(priceDetails.unitPrice)} <span className="text-[14px] font-normal text-gray-500">(ex VAT)</span>
             </div>
-            
+
             {priceDetails.statusText ? (
               <p
-                className="text-[16px] font-semibold mt-2"
+                className="text-[14px] font-semibold mt-1"
                 style={{ color: priceDetails.statusColor }}
               >
                 {priceDetails.statusText}
               </p>
             ) : (
-              <div className="text-[14px] text-gray-500 mt-1">
-                 {isGifts ? 'Excluding VAT' : 'Including logo customisation · Excluding VAT'}
-              </div>
-            )}
-
-            {priceDetails.discountRate > 0 && (
-              <div
-                className="mt-3 inline-block px-4 py-2 rounded-full font-bold text-[14px]"
-                style={{
-                  background: 'linear-gradient(135deg,#e6f7df,#d4f2c6)',
-                  color: '#1c6d14',
-                }}
-              >
-                {priceDetails.discountLabel}
+              <div className="text-[13px] text-gray-500">
+                {isGifts ? 'Excluding VAT' : 'Including logo branding'}
               </div>
             )}
           </div>
 
-          {!isGifts && (
-            <ProductCustomizer
-              product={product}
-              tiers={tiers}
-              basePrice={basePrice}
-              quantity={quantity}
-              customization={customization}
-              onQuantityChange={setQuantity}
-              onCustomizationChange={handleCustomizationChange}
-              onPriceChange={handlePriceChange}
-            />
-          )}
-
-          {/* PURCHASE CONTROLS */}
-          <div className="flex flex-col gap-6 pt-6 border-t border-gray-100">
-             <div className="flex justify-between items-end">
-                <div>
-                   <label className="block text-[14px] font-semibold text-[#1F2124] mb-2">Quantity</label>
-                   <input
-                      type="number"
-                      min={isGifts ? 1 : CUSTOMIZATION_MIN_QTY}
-                      value={quantity}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value, 10);
-                        if (val >= 1) setQuantity(val);
-                      }}
-                      className="w-[100px] h-[48px] text-[16px] border border-gray-300 rounded-lg text-center bg-white text-[#1F2124] focus:ring-1 focus:ring-black focus:border-black"
-                   />
-                </div>
-                <div className="text-right">
-                   <div className="text-[14px] text-gray-500 mb-1">Total</div>
-                   <div className="text-[22px] font-bold text-[#1F2124]">{formatGBP(priceDetails.totalPrice)}</div>
-                </div>
-             </div>
-
-             <button
-              type="button"
-              onClick={handleAddToCart}
-              disabled={isAdding}
-              className="w-full h-[54px] text-[16px] font-bold rounded-xl text-white transition-all disabled:opacity-50 flex items-center justify-center bg-black hover:bg-gray-900"
-              style={{ backgroundColor: '#7b5bc6' }}
-            >
-              {isAdding ? 'Adding...' : 'Add to Basket'}
-            </button>
+          <div className="text-[13px] text-gray-500 mb-2">
+            SKU: {product.sku}
           </div>
 
-          {/* VOLUME PRICING */}
-          {!isGifts && tiers.length > 0 && (
-            <div className="mt-8 pt-6 border-t border-gray-100">
-               <h3 className="text-[14px] font-semibold text-[#1F2124] mb-4">Volume Pricing</h3>
-               <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-                 <table className="w-full text-left text-[14px]">
-                   <thead>
-                     <tr className="border-b border-gray-200 text-[#1F2124]">
-                       <th className="py-3 px-4 font-bold w-1/2">Product Quantity</th>
-                       <th className="py-3 px-4 font-bold border-l border-gray-200 w-1/2">Price per Unit</th>
-                     </tr>
-                   </thead>
-                   <tbody>
-                     {tiers.map((tier) => {
-                       const isActive = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
-                       return (
-                         <tr 
-                           key={tier.min} 
-                           onClick={() => setQuantity(tier.min)}
-                           className={`border-b last:border-b-0 border-gray-200 cursor-pointer transition-colors ${
-                             isActive ? 'bg-[#7b5bc6] text-white' : 'hover:bg-gray-50 text-[#666666]'
-                           }`}
-                         >
-                           <td className="py-3 px-4 font-medium">
-                             {tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}
-                           </td>
-                           <td className={`py-3 px-4 border-l ${isActive ? 'border-[#8e74d1]' : 'border-gray-200'}`}>
-                             {formatGBP(tier.price)}
-                           </td>
-                         </tr>
-                       );
-                     })}
-                   </tbody>
-                 </table>
-               </div>
+          {/* Description Accordion */}
+          <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mb-2">
+            <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-[#1F2124] hover:bg-gray-50">
+              <span>Description</span>
+              <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
+            </summary>
+            <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
+              {product.description ? (
+                <div dangerouslySetInnerHTML={{ __html: product.description }} />
+              ) : (
+                <p className="italic">No description available.</p>
+              )}
+            </div>
+          </details>
+
+          {/* Available Colours Section */}
+          {colorVariants.length > 0 && (
+            <div className="mt-2 mb-2">
+              <span className="text-[14px] font-bold text-[#1F2124] block mb-3">Colour: {product.name.split(', ').pop() || 'Selected'}</span>
+              <div className="flex flex-wrap items-center gap-2">
+                {colorVariants.map((color) => {
+                  const isActive = product.slug === color.slug;
+                  return (
+                    <Link
+                      key={color.slug}
+                      href={`/product/${color.slug}`}
+                      title={color.name}
+                      className={`w-7 h-7 rounded-full shadow-sm transition-transform hover:scale-110 ${isActive ? 'ring-2 ring-offset-2 ring-black scale-110' : 'border border-gray-300'
+                        }`}
+                      style={{ backgroundColor: color.hex }}
+                    />
+                  );
+                })}
+              </div>
             </div>
           )}
 
-          {/* Bespoke Enquiry Section */}
-          <div className="mt-8">
-            <p className="text-[#1F2124] mb-4 text-[15px] font-medium">
-              If you'd like a more bespoke look to your product, get in touch with our Team, we can advise, inspire or just give you a quote.
-            </p>
-            <Link href="/contact" className="inline-flex items-center justify-center gap-2 bg-[#d2e0de] hover:bg-[#b8d1ce] transition-colors border border-black rounded-md px-8 py-3 font-semibold text-black tracking-wide text-[15px] shadow-[0px_4px_15px_rgba(0,0,0,0.08)]">
-              <Send className="w-4 h-4" />
-              BESPOKE ORDER ENQUIRY
-            </Link>
-          </div>
+          {/* Quantity Box */}
+          <div className="bg-transparent border border-gray-200 rounded-lg p-5 flex flex-col gap-4 mt-2">
+            <div className="flex justify-between items-center border-b border-gray-200 pb-4">
+              <label className="text-[14px] font-bold text-[#1F2124]">Quantity</label>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center border border-gray-300 bg-white rounded-md overflow-hidden h-[36px]">
+                  <button type="button" className="px-3 hover:bg-gray-100 text-gray-600 transition" onClick={() => setQuantity(Math.max(isGifts ? 1 : CUSTOMIZATION_MIN_QTY, quantity - 1))}>-</button>
+                  <input
+                    type="number"
+                    min={isGifts ? 1 : CUSTOMIZATION_MIN_QTY}
+                    value={quantity}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      if (val >= 1) setQuantity(val);
+                    }}
+                    className="w-[50px] text-center font-bold text-[#1F2124] focus:outline-none"
+                  />
+                  <button type="button" className="px-3 hover:bg-gray-100 text-gray-600 transition" onClick={() => setQuantity(quantity + 1)}>+</button>
+                </div>
+              </div>
+            </div>
 
-          {/* Icons Row */}
-          <div className="mt-8">
-            <TrustIndicators compact={true} />
-          </div>
+            <div className="flex justify-end pt-2 pb-2">
+              <div className="text-[15px] font-bold text-[#1F2124]">
+                {formatGBP(priceDetails.unitPrice)} <span className="text-[13px] font-normal text-gray-500">per unit (ex VAT)</span>
+              </div>
+            </div>
 
-          {/* Tabs Section */}
-          <div className="mt-12 w-full">
-            {(() => {
-              const allTabs: string[] = [];
-              
-              const hasCustomDescription = customTabs.some(t => t.title.trim().toLowerCase() === 'description');
-              if (product.description && !hasCustomDescription) {
-                allTabs.push('Description');
-              }
-              
-              allTabs.push('Additional information');
-              
-              customTabs.forEach(t => {
-                const title = t.title.trim();
-                if (!allTabs.includes(title)) {
-                  allTabs.push(title);
-                }
-              });
-              
-              const activeCustomTab = customTabs.find(t => t.title.trim() === activeTab);
+            {!isGifts && (
+              <ProductCustomizer
+                product={product}
+                tiers={tiers}
+                basePrice={basePrice}
+                quantity={quantity}
+                customization={customization}
+                onQuantityChange={setQuantity}
+                onCustomizationChange={handleCustomizationChange}
+                onPriceChange={handlePriceChange}
+              />
+            )}
 
-              return (
-                <>
-                  <div className="flex overflow-x-auto border-b border-gray-200 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] gap-6">
-                    {allTabs.map((tab) => (
+            {/* Savings Callout */}
+            {!isGifts && tiers.length > 0 && (() => {
+              const currentTierIndex = tiers.findIndex(t => quantity >= t.min && (t.max === null || quantity <= t.max));
+              const nextTier = currentTierIndex >= 0 && currentTierIndex < tiers.length - 1 ? tiers[currentTierIndex + 1] : null;
+
+              if (nextTier) {
+                const potentialSavings = (priceDetails.unitPrice - nextTier.price) * nextTier.min;
+                if (potentialSavings > 0) {
+                  return (
+                    <div className="bg-[#e6f0ef] rounded-lg p-4 mb-2 mt-2 border border-[#d2e0de]">
+                      <div className="font-bold text-[#1f6d63] text-[14px]">You could save {formatGBP(potentialSavings)}</div>
+                      <div className="text-[13px] text-gray-600 mb-3">by ordering {nextTier.min} units ({formatGBP(nextTier.price)} per unit, ex VAT)</div>
                       <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`pb-3 text-[15px] font-semibold whitespace-nowrap transition-all duration-300 relative ${
-                          activeTab === tab
-                            ? 'text-black'
-                            : 'text-gray-400 hover:text-gray-700'
-                        }`}
+                        type="button"
+                        onClick={() => setQuantity(nextTier.min)}
+                        className="w-full py-2 bg-white rounded-md border border-[#1f6d63] text-[#1f6d63] text-[13px] font-bold hover:bg-[#d2e0de] transition"
                       >
-                        {tab}
-                        {activeTab === tab && (
-                          <span className="absolute bottom-0 left-0 w-full h-[2px] bg-black rounded-t-md"></span>
-                        )}
+                        Increase to {nextTier.min} units &rarr;
                       </button>
-                    ))}
-                  </div>
-                  
-                  <div className="py-8 min-h-[200px] animate-in fade-in duration-500">
-                    {activeTab === 'Description' && !activeCustomTab && (
-                      product.description ? (
-                        <div
-                          className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-black hover:prose-a:text-gray-600"
-                          dangerouslySetInnerHTML={{ __html: product.description }}
-                        />
-                      ) : (
-                        <p className="text-gray-500 italic">No description available.</p>
-                      )
-                    )}
-
-                    {activeTab === 'Additional information' && (
-                      product.attributes.length > 0 ? (
-                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                          <table className="w-full text-[15px] text-left">
-                            <tbody className="divide-y divide-gray-100">
-                              {product.attributes.map((attr) => (
-                                <tr key={attr.id} className="hover:bg-gray-50/50 transition-colors">
-                                  <td className="py-4 px-6 font-semibold text-gray-900 w-1/3">
-                                    {attr.name}
-                                  </td>
-                                  <td className="py-4 px-6 text-gray-600">
-                                    {attr.terms.map((t) => t.name).join(', ')}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      ) : (
-                        <p className="text-gray-500 italic">No additional information available.</p>
-                      )
-                    )}
-
-                    {activeCustomTab && (
-                      <div
-                        className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-black hover:prose-a:text-gray-600"
-                        dangerouslySetInnerHTML={{ __html: activeCustomTab.content }}
-                      />
-                    )}
-                  </div>
-                </>
-              );
+                    </div>
+                  );
+                }
+              }
+              return null;
             })()}
+
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              disabled={isAdding}
+              className="w-full h-[54px] text-[16px] font-bold rounded-lg text-white transition-all disabled:opacity-50 flex items-center justify-center bg-[#4a346e] hover:bg-[#392657] mt-2"
+            >
+              {isAdding ? 'Processing...' : 'Add to Basket \u2192'}
+            </button>
           </div>
+
+          <div className="text-[14px] text-gray-600 mt-2">
+            Prices below include logo branding.
+          </div>
+
+          {/* VOLUME PRICING TABLE */}
+          {!isGifts && tiers.length > 0 && (
+            <div className="mt-2">
+              <h3 className="text-[14px] font-bold tracking-widest text-[#1F2124] uppercase mb-4">PRICE BREAKS (PER UNIT)</h3>
+              <div className="overflow-hidden bg-transparent border border-gray-200 rounded-lg">
+                <table className="w-full text-left text-[14px]">
+                  <thead>
+                    <tr className="border-b border-gray-200 text-gray-500">
+                      <th className="py-3 px-4 font-normal w-1/2">Quantity</th>
+                      <th className="py-3 px-4 font-normal w-1/2 text-right">Price per unit (ex VAT)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tiers.map((tier) => {
+                      const isActive = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
+                      return (
+                        <tr
+                          key={tier.min}
+                          onClick={() => setQuantity(tier.min)}
+                          className={`border-b last:border-b-0 border-gray-200 cursor-pointer transition-colors ${isActive ? 'bg-[#4a346e] text-white font-bold' : 'hover:bg-gray-100 text-[#1F2124]'
+                            }`}
+                        >
+                          <td className="py-3 px-4">
+                            {tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            {formatGBP(tier.price)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Specifications Accordion */}
+          <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
+            <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-[#1F2124] hover:bg-gray-50">
+              <span>Specifications</span>
+              <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
+            </summary>
+            <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
+              {product.attributes.length > 0 ? (
+                <ul className="list-disc pl-5 space-y-1">
+                  {product.attributes.map(attr => (
+                    <li key={attr.id}><span className="font-semibold">{attr.name}:</span> {attr.terms.map(t => t.name).join(', ')}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="italic">No additional specifications available.</p>
+              )}
+            </div>
+          </details>
+
+          {/* Delivery Accordion */}
+          <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden">
+            <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-[#1F2124] hover:bg-gray-50">
+              <span>Delivery</span>
+              <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
+            </summary>
+            <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
+              Standard delivery takes 3-5 working days. For customized products, please allow an additional 5-7 working days.
+            </div>
+          </details>
+
         </div>
       </div>
     </div>
   );
 };
+
+
+

@@ -23,7 +23,7 @@ export const RelatedProducts = async ({ categoryId }: { categoryId?: number }) =
       <Container>
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <div className="relative inline-block">
-            <h2 className="text-3xl font-extrabold text-black font-sans tracking-tight">
+            <h2 className="text-3xl font-extrabold text-black tracking-tight">
               You May Also Like
             </h2>
             <ArrowIcon className="absolute -right-22 -top-1 hidden md:block" />

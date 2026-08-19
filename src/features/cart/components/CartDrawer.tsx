@@ -124,7 +124,7 @@ export const CartDrawer = () => {
             </div>
 
             {/* Line Items */}
-            <div className="flex-1 overflow-y-auto overscroll-contain px-6 py-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <div className="flex-1 overflow-y-auto overscroll-contain px-6 py-6" data-lenis-prevent style={{ WebkitOverflowScrolling: 'touch' }}>
               {items.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center gap-4 py-20">
                   <ShoppingBag className="w-10 h-10 text-gray-300" strokeWidth={1.5} />
@@ -271,3 +271,4 @@ export const CartDrawer = () => {
     </>
   );
 };
+
