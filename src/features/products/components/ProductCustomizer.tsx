@@ -18,7 +18,7 @@ export type CustomizationState = {
   logoFile?: File;
   logoPreviewUrl?: string;
   logoScale: number;
-  logoPosition: { x: number; y: number; label: string };
+  logoPosition: { top: number; left: number; label: string };
 };
 
 function useEvent<T extends (...args: any[]) => any>(handler: T) {
@@ -56,6 +56,20 @@ export const ProductCustomizer = ({
   const isFoil = isFoilBlockedProduct(product);
 
   const [collapseOpen, setCollapseOpen] = useState(true);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const [priceResult, setPriceResult] = useState(() =>
     calculateProductPrice({
@@ -104,17 +118,29 @@ export const ProductCustomizer = ({
   return (
     <div className="mt-4 mb-6" style={{ backgroundColor: '#ffffff' }}>
       <label
-        className="flex items-center gap-2 font-semibold text-[15px] mb-4 cursor-pointer text-[#1F2124]"
+        className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${!customization.enabled
+            ? 'border-gray-300 bg-white'
+            : 'border-gray-200 bg-gray-50'
+          }`}
       >
-        <input
-          type="checkbox"
-          checked={customization.enabled}
-          onChange={(e) =>
-            onCustomizationChange({ ...customization, enabled: e.target.checked })
-          }
-          className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
-        />
-        Customise this product (Logo upload required)
+        <div className="pt-0.5">
+          <input
+            type="checkbox"
+            checked={!customization.enabled}
+            onChange={(e) =>
+              onCustomizationChange({ ...customization, enabled: !e.target.checked })
+            }
+            className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
+          />
+        </div>
+        <div className="flex-1">
+          <span className="block font-bold text-[14px] text-[#4a346e]">
+            No customisation required
+          </span>
+          <span className="block text-[13px] text-gray-500 mt-1">
+            I don't need to add a logo or personalisation. Prices below will update to exclude branding.
+          </span>
+        </div>
       </label>
 
       {customization.enabled && (
@@ -130,24 +156,43 @@ export const ProductCustomizer = ({
 
           {collapseOpen && (
             <div className="animate-in fade-in slide-in-from-top-2 duration-300 mt-4 space-y-5">
-              
+
               <div>
                 <label className="block text-sm font-semibold mb-2 text-[#1F2124]">Blocking Type</label>
-                <select
-                  value={customization.blockingType}
-                  onChange={(e) => {
-                    const newType = e.target.value;
-                    onCustomizationChange({
-                      ...customization,
-                      blockingType: newType,
-                      foilColor: newType === 'Foil blocked' ? 'Silver' : undefined,
-                    });
-                  }}
-                  className="w-full p-2.5 rounded-lg border border-gray-300 text-[14px] bg-white text-[#1F2124] focus:ring-1 focus:ring-black focus:border-black"
-                >
-                  <option value="Foil blocked">Foil blocked</option>
-                  <option value="Embossed">Embossed</option>
-                </select>
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-gray-300 text-[14px] bg-white text-[#1F2124] focus:ring-1 focus:ring-black focus:border-black outline-none transition-shadow text-left"
+                  >
+                    <span>{customization.blockingType}</span>
+                    <svg className={`w-4 h-4 text-gray-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {isDropdownOpen && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                      {['Foil blocked', 'Embossed'].map((type) => (
+                        <button
+                          key={type}
+                          type="button"
+                          className={`w-full text-left px-4 py-2.5 text-[14px] transition-colors ${customization.blockingType === type ? 'bg-[#f5f0fa] font-semibold text-[#4a346e]' : 'text-gray-700 hover:bg-gray-50'
+                            }`}
+                          onClick={() => {
+                            onCustomizationChange({
+                              ...customization,
+                              blockingType: type,
+                              foilColor: type === 'Foil blocked' ? 'Silver' : undefined,
+                            });
+                            setIsDropdownOpen(false);
+                          }}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {isFoilSelected && (
@@ -159,11 +204,10 @@ export const ProductCustomizer = ({
                         key={color}
                         type="button"
                         onClick={() => onCustomizationChange({ ...customization, foilColor: color })}
-                        className={`px-5 py-2 rounded-lg border font-medium text-[14px] transition-all ${
-                          customization.foilColor === color 
-                            ? 'border-black bg-gray-50 text-black' 
+                        className={`px-5 py-2 rounded-lg border font-medium text-[14px] transition-all ${customization.foilColor === color
+                            ? 'border-black bg-gray-50 text-black'
                             : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900'
-                        }`}
+                          }`}
                       >
                         {color}
                       </button>
@@ -184,7 +228,7 @@ export const ProductCustomizer = ({
                   onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
-                    
+
                     try {
                       const processedUrl = await processLogo(file);
                       onCustomizationChange({
@@ -209,17 +253,17 @@ export const ProductCustomizer = ({
                   className="block w-full text-[14px] text-[#1F2124] file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer"
                 />
               </div>
-              
+
               {customization.logoPreviewUrl && (
                 <div className="pt-2">
                   <label className="block text-sm font-semibold mb-2 text-[#1F2124]">Logo Scale</label>
                   <div className="flex items-center gap-4">
                     <span className="text-[13px] text-[#1F2124] font-bold w-8">{Math.round(customization.logoScale * 100)}%</span>
-                    <input 
-                      type="range" 
-                      min="0.5" 
-                      max="2" 
-                      step="0.1" 
+                    <input
+                      type="range"
+                      min="0.5"
+                      max="2"
+                      step="0.1"
                       value={customization.logoScale}
                       onChange={(e) => onCustomizationChange({ ...customization, logoScale: parseFloat(e.target.value) })}
                       className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
@@ -227,7 +271,7 @@ export const ProductCustomizer = ({
                     <span className="text-[13px] text-gray-500 font-medium w-8 text-right">200%</span>
                   </div>
                   <p className="text-[13px] text-gray-500 italic mt-3">
-                    Drag and position the logo directly on the main product image. 
+                    Drag and position the logo directly on the main product image.
                     <br />
                     <span className="font-semibold text-gray-700 not-italic">Current Position Zone: {customization.logoPosition.label}</span>
                   </p>
@@ -240,3 +284,4 @@ export const ProductCustomizer = ({
     </div>
   );
 };
+

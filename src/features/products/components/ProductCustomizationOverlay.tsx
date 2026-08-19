@@ -31,21 +31,24 @@ export const ProductCustomizationOverlay = ({
 
   // Calculate physical dimensions
   const { width: widthMm, height: heightMm } = getProductPhysicalDimensionsMm(product);
-  const marginMm = 20;
+  const marginMm = 7;
   
   // The image container is always a 1:1 square. The book touches the longest edge.
+  const IMAGE_PADDING_PERCENT = 5;
+  const usableSpace = 100 - (2 * IMAGE_PADDING_PERCENT);
+
   const maxDimension = Math.max(widthMm, heightMm);
   
   // Calculate how much of the square the book actually occupies
-  const visualWidthPercent = (widthMm / maxDimension) * 100;
-  const visualHeightPercent = (heightMm / maxDimension) * 100;
+  const visualWidthPercent = (widthMm / maxDimension) * usableSpace;
+  const visualHeightPercent = (heightMm / maxDimension) * usableSpace;
   
   // Calculate the empty white space on the sides
   const leftWhiteSpace = (100 - visualWidthPercent) / 2;
   const topWhiteSpace = (100 - visualHeightPercent) / 2;
   
   // Calculate the physical 20mm margin as a percentage of the square
-  const marginPercent = (marginMm / maxDimension) * 100;
+  const marginPercent = (marginMm / maxDimension) * usableSpace;
   
   const safeLeftPercent = leftWhiteSpace + marginPercent;
   const safeRightPercent = leftWhiteSpace + marginPercent;
@@ -72,9 +75,9 @@ export const ProductCustomizationOverlay = ({
       />
     
       {/* Draggable Logo Centering Wrapper */}
-      <div style={{ position: 'absolute', top: '50%', left: '50%', zIndex: 20 }}>
+      <div style={{ position: 'absolute', top: '0', left: '0', width: '100%', height: '100%', zIndex: 20 }}>
         <motion.div
-          key={customization.logoScale}
+          
           drag
           dragConstraints={constraintsRef}
           dragElastic={0}
@@ -103,15 +106,15 @@ export const ProductCustomizationOverlay = ({
           }}
           style={{
             position: 'absolute',
-            top: -(60 * customization.logoScale), // Half of scaled width
-            left: -(60 * customization.logoScale), // Half of scaled height
-            width: 120 * customization.logoScale, // Base width * scale
-            height: 120 * customization.logoScale, // Base height * scale
+            width: '25%', height: '25%', top: '37.5%', left: '37.5%',
+            scale: customization.logoScale,
+            
+            
             x: logoX,
             y: logoY,
             cursor: 'grab',
           }}
-          whileDrag={{ cursor: 'grabbing', scale: 1.05 }}
+          whileDrag={{ cursor: 'grabbing', scale: customization.logoScale * 1.05 }}
         >
           {customization.blockingType === 'Foil blocked' ? (
             <div 
@@ -178,3 +181,11 @@ export const ProductCustomizationOverlay = ({
     </>
   );
 };
+
+
+
+
+
+
+
+
