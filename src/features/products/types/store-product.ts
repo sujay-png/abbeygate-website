@@ -112,6 +112,7 @@ export type LogoCustomization = {
   enabled: boolean;
   choice: string;
   foilColor?: string;
+  cornerEdges?: string;
   fileUrl?: string;
   fileName?: string;
   logoFile?: File;
@@ -121,4 +122,5 @@ export type LogoCustomization = {
   leftPercent?: number;
   topPercent?: number;
   widthPercent?: number;
+  imageBounds?: { top: number, bottom: number, left: number, right: number };
 };

@@ -1,59 +1,63 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
-import { motion, useMotionValue } from 'framer-motion';
 import type { StoreProduct } from '../types/store-product';
-import { getProductPhysicalDimensionsMm } from '../utils/product-helpers';
+import { getLogoAnchors } from '../utils/product-helpers';
 import type { CustomizationState } from './ProductCustomizer';
 
 type ProductCustomizationOverlayProps = {
   product: StoreProduct;
   customization: CustomizationState;
   onPositionChange: (position: { x: number; y: number }) => void;
+  imageBounds?: { top: number, bottom: number, left: number, right: number } | null;
 };
 
 export const ProductCustomizationOverlay = ({
   product,
   customization,
   onPositionChange,
+  imageBounds,
 }: ProductCustomizationOverlayProps) => {
-  const constraintsRef = useRef<HTMLDivElement>(null);
-  
-  // Safely track precise visual coordinates
-  const logoX = useMotionValue(customization.logoPosition.x);
-  const logoY = useMotionValue(customization.logoPosition.y);
-  
-  // Sync if customization state changes from outside
-  useEffect(() => {
-    logoX.set(customization.logoPosition.x);
-    logoY.set(customization.logoPosition.y);
-  }, [customization.logoPosition.x, customization.logoPosition.y, logoX, logoY]);
+  // Dragging logic removed by user request
 
-  // Calculate physical dimensions
-  const { width: widthMm, height: heightMm } = getProductPhysicalDimensionsMm(product);
-  const marginMm = 7;
+  const anchors = getLogoAnchors(product);
   
-  // The image container is always a 1:1 square. The book touches the longest edge.
-  const IMAGE_PADDING_PERCENT = 5;
-  const usableSpace = 100 - (2 * IMAGE_PADDING_PERCENT);
+  const safeLeft = anchors.safeLeft;
+  const safeRight = anchors.safeRight;
+  const safeTop = anchors.safeTop;
+  const safeBottom = anchors.safeBottom;
+  
+  const bookLeft = imageBounds ? imageBounds.left : anchors.bookLeft;
+  const bookRight = imageBounds ? imageBounds.right : anchors.bookRight;
+  const bookTop = imageBounds ? imageBounds.top : anchors.bookTop;
+  const bookBottom = imageBounds ? imageBounds.bottom : anchors.bookBottom;
 
-  const maxDimension = Math.max(widthMm, heightMm);
+  const getAlignX = (align: 'left' | 'center' | 'right') => {
+    if (align === 'left') return safeLeft;
+    if (align === 'right') return safeRight - 25; // 25 is widthPercent
+    return 50 - 12.5;                                                      
+  };
+
+  const getAlignY = (align: 'top' | 'center' | 'bottom') => {
+    if (align === 'top') return safeTop;
+    if (align === 'bottom') return safeBottom - 25; // 25 is heightPercent
+    return 50 - 12.5;
+  };
+
+  const posLabel = customization.logoPosition?.label || 'center';
+  let cssLeft = getAlignX('center');
+  let cssTop = getAlignY('center');
+
+  let transformOrigin = 'center center';
   
-  // Calculate how much of the square the book actually occupies
-  const visualWidthPercent = (widthMm / maxDimension) * usableSpace;
-  const visualHeightPercent = (heightMm / maxDimension) * usableSpace;
-  
-  // Calculate the empty white space on the sides
-  const leftWhiteSpace = (100 - visualWidthPercent) / 2;
-  const topWhiteSpace = (100 - visualHeightPercent) / 2;
-  
-  // Calculate the physical 20mm margin as a percentage of the square
-  const marginPercent = (marginMm / maxDimension) * usableSpace;
-  
-  const safeLeftPercent = leftWhiteSpace + marginPercent;
-  const safeRightPercent = leftWhiteSpace + marginPercent;
-  const safeTopPercent = topWhiteSpace + marginPercent;
-  const safeBottomPercent = topWhiteSpace + marginPercent;
+  if (posLabel === 'top-left') { cssLeft = getAlignX('left'); cssTop = getAlignY('top'); transformOrigin = 'top left'; }
+  else if (posLabel === 'top-center') { cssLeft = getAlignX('center'); cssTop = getAlignY('top'); transformOrigin = 'top center'; }
+  else if (posLabel === 'top-right') { cssLeft = getAlignX('right'); cssTop = getAlignY('top'); transformOrigin = 'top right'; }
+  else if (posLabel === 'center-left') { cssLeft = getAlignX('left'); cssTop = getAlignY('center'); transformOrigin = 'center left'; }
+  else if (posLabel === 'center') { cssLeft = getAlignX('center'); cssTop = getAlignY('center'); transformOrigin = 'center center'; }
+  else if (posLabel === 'center-right') { cssLeft = getAlignX('right'); cssTop = getAlignY('center'); transformOrigin = 'center right'; }
+  else if (posLabel === 'bottom-left') { cssLeft = getAlignX('left'); cssTop = getAlignY('bottom'); transformOrigin = 'bottom left'; }
+  else if (posLabel === 'bottom-center') { cssLeft = getAlignX('center'); cssTop = getAlignY('bottom'); transformOrigin = 'bottom center'; }
+  else if (posLabel === 'bottom-right') { cssLeft = getAlignX('right'); cssTop = getAlignY('bottom'); transformOrigin = 'bottom right'; }
 
   if (!customization.enabled || !customization.logoPreviewUrl) {
     return null;
@@ -61,46 +65,30 @@ export const ProductCustomizationOverlay = ({
 
   return (
     <>
-      {/* Safe Area for Dragging (dynamically calculated 20mm padding) */}
-      <div
-        ref={constraintsRef}
-        className="absolute pointer-events-none"
-        style={{
-          top: `${safeTopPercent}%`,
-          bottom: `${safeBottomPercent}%`,
-          left: `${safeLeftPercent}%`,
-          right: `${safeRightPercent}%`,
-          zIndex: 10,
-        }}
-      />
-    
-      {/* Draggable Logo Centering Wrapper */}
+      {/* Non-draggable Logo Centering Wrapper */}
       <div style={{ position: 'absolute', top: '0', left: '0', width: '100%', height: '100%', zIndex: 20 }}>
-        <motion.div
-          
-          drag
-          dragConstraints={constraintsRef}
-          dragElastic={0}
-          dragMomentum={false}
-          onDragEnd={() => {
-            onPositionChange({ 
-              x: logoX.get(), 
-              y: logoY.get() 
-            });
-          }}
+        <div
           style={{
             position: 'absolute',
-            width: '25%', height: '25%', top: '37.5%', left: '37.5%',
-            scale: customization.logoScale,
-            
-            
-            x: logoX,
-            y: logoY,
-            cursor: 'grab',
+            width: '25%', height: '25%', 
+            top: `${cssTop}%`, 
+            left: `${cssLeft}%`,
+            transform: `scale(${customization.logoScale})`,
+            transformOrigin,
+            pointerEvents: 'none'
           }}
-          whileDrag={{ cursor: 'grabbing', scale: customization.logoScale * 1.05 }}
         >
-          {customization.blockingType === 'Foil blocked' ? (
+          {customization.blockingType === 'UV Print' ? (
+            <div 
+              className="w-full h-full pointer-events-none drop-shadow-sm"
+              style={{
+                backgroundImage: `url(${customization.logoPreviewUrl})`,
+                backgroundSize: 'contain',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center',
+              }}
+            />
+          ) : customization.blockingType === 'Foil blocked' ? (
             <div 
               className="w-full h-full pointer-events-none"
               style={{
@@ -160,16 +148,56 @@ export const ProductCustomizationOverlay = ({
               />
             </>
           )}
-        </motion.div>
+        </div>
       </div>
+
+      {customization.cornerEdges !== 'None' && customization.cornerEdges && (
+        <div style={{ position: 'absolute', top: '0', left: '0', width: '100%', height: '100%', zIndex: 15, pointerEvents: 'none' }}>
+          {(() => {
+            // Shift brackets slightly outward by 0.4% so they "wrap around" the physical rounded corners
+            const offset = 0.4;
+            return ([] as Array<{top?: number, bottom?: number, left?: number, right?: number, rotate: string}>).concat([
+              { top: bookTop - offset, right: 100 - bookRight - offset, rotate: 'rotate-0' }, // top-right
+              { bottom: 100 - bookBottom - offset, right: 100 - bookRight - offset, rotate: 'rotate-90' }, // bottom-right
+            ]).map((pos, i) => (
+            <div
+              key={i}
+              className={`absolute w-[6%] h-[6%] drop-shadow-md ${pos.rotate}`}
+              style={{
+                top: pos.top !== undefined ? `${pos.top}%` : undefined,
+                bottom: pos.bottom !== undefined ? `${pos.bottom}%` : undefined,
+                left: pos.left !== undefined ? `${pos.left}%` : undefined,
+                right: pos.right !== undefined ? `${pos.right}%` : undefined,
+                transformOrigin: 'center center',
+              }}
+            >
+              <svg width="100%" height="100%" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id={`cornerGrad-${i}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                    {customization.cornerEdges === 'Gold' ? (
+                      <>
+                        <stop offset="0%" stopColor="#F3E5AB" />
+                        <stop offset="50%" stopColor="#D4AF37" />
+                        <stop offset="100%" stopColor="#AA7C11" />
+                      </>
+                    ) : (
+                      <>
+                        <stop offset="0%" stopColor="#F5F5F5" />
+                        <stop offset="50%" stopColor="#C0C0C0" />
+                        <stop offset="100%" stopColor="#808080" />
+                      </>
+                    )}
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M 0 0 L 32 0 Q 36 0 36 4 L 36 36 L 28 36 L 28 12 Q 28 8 24 8 L 0 8 Z"
+                  fill={`url(#cornerGrad-${i})`}
+                />
+              </svg>
+            </div>
+          ))})()}
+        </div>
+      )}
     </>
   );
 };
-
-
-
-
-
-
-
-

@@ -7,11 +7,33 @@ import { ProductCustomizer, type CustomizationState } from './ProductCustomizer'
 import { ProductCustomizationOverlay } from './ProductCustomizationOverlay';
 import { useCart } from '@/features/cart/context/CartContext';
 import { CUSTOMIZATION_MIN_QTY, formatGBP, isGiftsProduct } from '../utils/pricing';
+import { getLogoAnchors, getImageBoundingBox } from '../utils/product-helpers';
+import { getConfiguredImageBounds } from '../utils/product-image-bounds';
 import { TrustIndicators } from '@/components/home/TrustIndicators';
 import { Send, X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
 import Link from 'next/link';
 
 import type { CustomTab } from '@/features/products/services/store-products';
+
+const ImageWithFallback = ({ src, fallbackSrc = '/images/logo/abbeygate-logo.png', ...rest }: any) => {
+  const [imgSrc, setImgSrc] = useState(src);
+
+  useEffect(() => {
+    setImgSrc(src);
+  }, [src]);
+
+  return (
+    <Image
+      {...rest}
+      src={imgSrc || fallbackSrc}
+      onError={() => {
+        if (imgSrc !== fallbackSrc) {
+          setImgSrc(fallbackSrc);
+        }
+      }}
+    />
+  );
+};
 
 export type ColorVariant = {
   name: string;
@@ -36,6 +58,7 @@ export const ProductDetailClient = ({
 }: ProductDetailClientProps) => {
   const { addItem } = useCart();
   const isGifts = isGiftsProduct(product);
+  const activeColorHex = colorVariants.find(c => c.slug === product.slug)?.hex;
 
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const [quantity, setQuantity] = useState(isGifts ? 1 : CUSTOMIZATION_MIN_QTY);
@@ -50,14 +73,17 @@ export const ProductDetailClient = ({
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('Description');
+  const [isCustomizingStarted, setIsCustomizingStarted] = useState(false);
   const isCustomizationSurface = activeImageIndex === 0;
   const [customization, setCustomization] = useState<CustomizationState>({
     enabled: !isGifts,
     blockingType: 'Embossed',
-    logoScale: 1,
+    logoScale: 0.8,
     logoPosition: { x: 0, y: 0 },
+    cornerEdges: 'None',
   });
   const [isAdding, setIsAdding] = useState(false);
+  const [imageBounds, setImageBounds] = useState<{top: number, bottom: number, left: number, right: number} | null>(null);
 
   const handlePriceChange = useCallback((result: any) => {
     setPriceDetails({
@@ -91,6 +117,21 @@ export const ProductDetailClient = ({
     setActiveImageIndex((prev) => (prev === product.images.length - 1 ? 0 : prev + 1));
   };
 
+  useEffect(() => {
+    if (activeSrc) {
+      const configuredBounds = getConfiguredImageBounds(activeSrc);
+      if (configuredBounds) {
+        setImageBounds(configuredBounds);
+        return;
+      }
+
+      getImageBoundingBox(activeSrc).then(bounds => {
+        console.log('[DEBUG] imageBounds for', activeSrc, ':', bounds);
+        if (bounds) setImageBounds(bounds);
+      });
+    }
+  }, [activeSrc]);
+
   // Close preview on escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -109,6 +150,13 @@ export const ProductDetailClient = ({
   }, [isPreviewOpen]);
 
   const handleAddToCart = async () => {
+    // If not customizing yet, the button will act as "Start customising"
+    if (customization.enabled && !isCustomizingStarted && !isGifts) {
+      setIsCustomizingStarted(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     if (
       customization.enabled &&
       quantity < CUSTOMIZATION_MIN_QTY &&
@@ -127,6 +175,7 @@ export const ProductDetailClient = ({
       let topPercent = 50;
       let widthPercent = 20;
       let fullPreviewUrl: string | undefined = undefined;
+      let finalBounds: { top: number, bottom: number, left: number, right: number } | null = null;
 
       if (customization.enabled && !isGifts) {
         attributes.push({ name: 'Custom Logo', value: '' });
@@ -137,15 +186,11 @@ export const ProductDetailClient = ({
         if (customization.blockingType === 'Foil blocked' && customization.foilColor) {
           attributes.push({ name: 'Foil Colour', value: customization.foilColor });
         }
-        if (customization.logoScale) {
-          const scale = Math.round((customization.logoScale || 1) * 100);
-          attributes.push({
-            name: 'Logo Scale',
-            value: `${scale}%`,
-          });
-        }
         if (customization.logoFile) {
           attributes.push({ name: 'Logo', value: customization.logoFile.name });
+        }
+        if (customization.cornerEdges !== 'None') {
+          attributes.push({ name: 'Corner Edges', value: customization.cornerEdges });
         }
 
         // Calculate responsive percentages for the CartItemPreview
@@ -153,9 +198,26 @@ export const ProductDetailClient = ({
           const rect = previewContainerRef.current.getBoundingClientRect();
           const cx = customization.logoPosition?.x || 0;
           const cy = customization.logoPosition?.y || 0;
+          const posLabel = customization.logoPosition?.label || 'center';
+          
+          const { safeLeft, safeRight, safeTop, safeBottom } = getLogoAnchors(product);
+          
+          let baseLeftPercent = 50;
+          let baseTopPercent = 50;
+          
+          // Width percent is 25, height percent is 25
+          if (posLabel === 'top-left') { baseLeftPercent = safeLeft + 12.5; baseTopPercent = safeTop + 12.5; }
+          else if (posLabel === 'top-center') { baseLeftPercent = 50; baseTopPercent = safeTop + 12.5; }
+          else if (posLabel === 'top-right') { baseLeftPercent = safeRight - 12.5; baseTopPercent = safeTop + 12.5; }
+          else if (posLabel === 'center-left') { baseLeftPercent = safeLeft + 12.5; baseTopPercent = 50; }
+          else if (posLabel === 'center') { baseLeftPercent = 50; baseTopPercent = 50; }
+          else if (posLabel === 'center-right') { baseLeftPercent = safeRight - 12.5; baseTopPercent = 50; }
+          else if (posLabel === 'bottom-left') { baseLeftPercent = safeLeft + 12.5; baseTopPercent = safeBottom - 12.5; }
+          else if (posLabel === 'bottom-center') { baseLeftPercent = 50; baseTopPercent = safeBottom - 12.5; }
+          else if (posLabel === 'bottom-right') { baseLeftPercent = safeRight - 12.5; baseTopPercent = safeBottom - 12.5; }
 
-          leftPercent = 50 + (cx / rect.width) * 100;
-          topPercent = 50 + (cy / rect.height) * 100;
+          leftPercent = baseLeftPercent + (cx / rect.width) * 100;
+          topPercent = baseTopPercent + (cy / rect.height) * 100;
           widthPercent = 25 * (customization.logoScale || 1);
           // 1. Generate image using native canvas to avoid html2canvas CSS/CORS bugs
           try {
@@ -264,6 +326,63 @@ export const ProductDetailClient = ({
                   }
                 }
 
+                // Draw corner clips if selected
+                if (customization.cornerEdges && customization.cornerEdges !== 'None') {
+                  try {
+                    // getImageBoundingBox already proxies remote images when needed.
+                    // Passing the JSON proxy endpoint here meant it was inspecting a
+                    // JSON response rather than the image, so no corners were drawn.
+                    const bounds = getConfiguredImageBounds(activeSrc) ?? await getImageBoundingBox(activeSrc);
+                    if (bounds) {
+                      finalBounds = bounds;
+                      const offset = CANVAS_SIZE * 0.004; // 0.4%
+                      const clipW = CANVAS_SIZE * 0.06; // 6%
+                      const clipH = clipW;
+                      
+                      const bookRightPx = drawX + (bounds.right / 100) * drawW;
+                      const bookTopPx = drawY + (bounds.top / 100) * drawH;
+                      const bookBottomPx = drawY + (bounds.bottom / 100) * drawH;
+
+                      const clipPath = new Path2D('M 0 0 L 32 0 Q 36 0 36 4 L 36 36 L 28 36 L 28 12 Q 28 8 24 8 L 0 8 Z');
+
+                      const drawCorner = (x: number, y: number, rotation: number) => {
+                        ctx.save();
+                        ctx.translate(x, y);
+                        
+                        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                        ctx.shadowBlur = 4;
+                        ctx.shadowOffsetY = 2;
+
+                        ctx.translate(clipW/2, clipH/2);
+                        ctx.rotate(rotation * Math.PI / 180);
+                        ctx.translate(-clipW/2, -clipH/2);
+                        
+                        ctx.scale(clipW/36, clipH/36);
+                        
+                        const grad = ctx.createLinearGradient(0, 0, 36, 36);
+                        if (customization.cornerEdges === 'Gold') {
+                          grad.addColorStop(0, '#F3E5AB');
+                          grad.addColorStop(0.5, '#D4AF37');
+                          grad.addColorStop(1, '#AA7C11');
+                        } else {
+                          grad.addColorStop(0, '#F5F5F5');
+                          grad.addColorStop(0.5, '#C0C0C0');
+                          grad.addColorStop(1, '#808080');
+                        }
+                        ctx.fillStyle = grad;
+                        ctx.fill(clipPath);
+                        
+                        ctx.restore();
+                      };
+
+                      drawCorner(bookRightPx + offset - clipW, bookTopPx - offset, 0);
+                      drawCorner(bookRightPx + offset - clipW, bookBottomPx + offset - clipH, 90);
+                    }
+                  } catch (e) {
+                    console.error('Failed to draw corners on canvas', e);
+                  }
+                }
+
                 fullPreviewUrl = canvas.toDataURL('image/png', 0.9);
               }
             }
@@ -287,7 +406,8 @@ export const ProductDetailClient = ({
               enabled: true,
               choice: customization.blockingType,
               foilColor: customization.blockingType === 'Foil blocked' ? customization.foilColor : undefined,
-              position: `X: ${Math.round(customization.logoPosition?.x || 0)}, Y: ${Math.round(customization.logoPosition?.y || 0)}, Scale: ${Math.round((customization.logoScale || 1) * 100)}%`,
+              cornerEdges: customization.cornerEdges,
+              position: (customization.logoPosition?.label || 'center').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
               fileName: customization.logoFile?.name,
               logoFile: customization.logoFile,
               logoPreviewUrl: customization.logoPreviewUrl,
@@ -295,6 +415,7 @@ export const ProductDetailClient = ({
               leftPercent,
               topPercent,
               widthPercent,
+              imageBounds: finalBounds || undefined,
             }
             : undefined,
         categorySlugs: product.categories.map((c) => c.slug),
@@ -310,81 +431,104 @@ export const ProductDetailClient = ({
         className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 lg:items-start"
         style={{ backgroundColor: '#ffffff', color: '#1F2124' }}
       >
-        {/* Left: gallery */}
-        <div className="relative z-10 lg:sticky lg:top-32 self-start flex flex-col md:flex-row gap-4 lg:gap-6">
-          {product.images.length > 1 && (
-            <div className="flex md:flex-col gap-4 overflow-x-auto md:overflow-y-auto md:max-h-[600px] pb-2 md:pb-0 scrollbar-hide shrink-0 order-2 md:order-1">
-              {product.images.map((img, index) => {
-                const thumb = img.thumbnail || img.src;
-                return (
-                  <button
-                    key={img.id}
-                    type="button"
-                    onClick={() => setActiveImageIndex(index)}
-                    className={`relative h-20 w-20 lg:h-24 lg:w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${index === activeImageIndex ? 'border-[#4a346e]' : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    style={{ backgroundColor: '#f9f9f9' }}
-                  >
-                    <Image
-                      src={thumb}
-                      alt={img.alt || product.name}
-                      fill
-                      sizes="96px"
-                      className="object-contain p-2"
-                    />
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          <div
-            className="relative w-full flex-1 overflow-hidden rounded-xl border border-gray-100 flex items-center justify-center p-4 group order-1 md:order-2"
-            style={{ aspectRatio: '1 / 1', backgroundColor: '#ffffff' }}
-          >
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsPreviewOpen(true);
-              }}
-              className="absolute top-4 right-4 z-[30] p-2.5 rounded-full bg-white/90 backdrop-blur shadow-sm text-gray-600 hover:text-black hover:bg-white transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 border border-gray-200"
-              title="Fullscreen Preview"
-            >
-              <ZoomIn className="w-5 h-5" />
-            </button>
-
-            {product.images && product.images.length > 0 ? (
-              <div className="absolute inset-0 bg-gray-50" ref={previewContainerRef}>
-                {product.images.map((img, idx) => {
-                  const isActive = img.src === activeSrc;
+        {/* Left: gallery and customizer */}
+        <div className="relative z-10 lg:sticky lg:top-32 self-start flex flex-col gap-8 w-full">
+          <div className="flex flex-col md:flex-row gap-4 lg:gap-6 w-full">
+            {product.images.length > 1 && (
+              <div className="flex md:flex-col gap-4 overflow-x-auto md:overflow-y-auto md:max-h-[600px] pb-2 md:pb-0 scrollbar-hide shrink-0 order-2 md:order-1">
+                {product.images.map((img, index) => {
+                  const thumb = img.thumbnail || img.src;
                   return (
-                    <Image
-                      key={img.id || idx}
-                      src={img.src}
-                      alt={img.alt || product.name}
-                      fill
-                      priority={true}
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                      className={`transition-all duration-500 object-contain p-4 scale-105 ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
-                    />
+                    <button
+                      key={img.id}
+                      type="button"
+                      onClick={() => setActiveImageIndex(index)}
+                      className={`relative h-20 w-20 lg:h-24 lg:w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${index === activeImageIndex ? 'border-[#4a346e]' : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      style={{ backgroundColor: '#f9f9f9' }}
+                    >
+                      <ImageWithFallback
+                        src={thumb}
+                        alt={img.alt || product.name}
+                        fill
+                        sizes="96px"
+                        className="object-contain p-2"
+                      />
+                    </button>
                   );
                 })}
-                {isCustomizationSurface && (
-                  <ProductCustomizationOverlay
-                    product={product}
-                    customization={customization}
-                    onPositionChange={handlePositionChange}
-                  />
-                )}
-              </div>
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                No image
               </div>
             )}
+
+            <div
+              className="relative w-full flex-1 overflow-hidden rounded-xl border border-gray-100 flex items-center justify-center p-4 group order-1 md:order-2"
+              style={{ aspectRatio: '1 / 1', backgroundColor: '#ffffff' }}
+            >
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsPreviewOpen(true);
+                }}
+                className="absolute top-4 right-4 z-[30] p-2.5 rounded-full bg-white/90 backdrop-blur shadow-sm text-gray-600 hover:text-black hover:bg-white transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 border border-gray-200"
+                title="Fullscreen Preview"
+              >
+                <ZoomIn className="w-5 h-5" />
+              </button>
+
+              {product.images && product.images.length > 0 ? (
+                <div className="absolute inset-0 bg-gray-50" ref={previewContainerRef}>
+                  <div className="absolute inset-0 p-4 scale-105">
+                    <div className="relative w-full h-full">
+                      {product.images.map((img, idx) => {
+                        const isActive = img.src === activeSrc;
+                        return (
+                          <ImageWithFallback
+                            key={img.id || idx}
+                            src={img.src}
+                            alt={img.alt || product.name}
+                            fill
+                            priority={true}
+                            sizes="(max-width: 768px) 100vw, 50vw"
+                            className={`transition-all duration-500 object-contain ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+                          />
+                        );
+                      })}
+                      {isCustomizationSurface && (
+                        <ProductCustomizationOverlay
+                          product={product}
+                          customization={customization}
+                          onPositionChange={handlePositionChange}
+                          imageBounds={imageBounds}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                  No image
+                </div>
+              )}
+            </div>
           </div>
+          
+          {/* Customizer underneath the gallery on the left */}
+          {!isGifts && isCustomizingStarted && customization.enabled && (
+            <ProductCustomizer
+              product={product}
+              tiers={tiers}
+              basePrice={basePrice}
+              quantity={quantity}
+              customization={customization}
+              onQuantityChange={setQuantity}
+              onCustomizationChange={handleCustomizationChange}
+              onPriceChange={handlePriceChange}
+              activeColorHex={activeColorHex}
+              activeImageUrl={activeSrc}
+            />
+          )}
         </div>
 
 
@@ -417,7 +561,7 @@ export const ProductDetailClient = ({
 
             <div className="relative w-[90vw] h-[90vh] flex items-center justify-center p-4">
               <div className="relative max-h-full max-w-full aspect-square h-full">
-                <Image
+                <ImageWithFallback
                   src={activeImage?.src || activeSrc}
                   alt={activeImage?.alt || product.name}
                   fill
@@ -429,6 +573,7 @@ export const ProductDetailClient = ({
                     product={product}
                     customization={customization}
                     onPositionChange={handlePositionChange}
+                    imageBounds={imageBounds}
                   />
                 )}
               </div>
@@ -555,17 +700,36 @@ export const ProductDetailClient = ({
               </div>
             </div>
 
-            {!isGifts && (
-              <ProductCustomizer
-                product={product}
-                tiers={tiers}
-                basePrice={basePrice}
-                quantity={quantity}
-                customization={customization}
-                onQuantityChange={setQuantity}
-                onCustomizationChange={handleCustomizationChange}
-                onPriceChange={handlePriceChange}
-              />
+            {!isGifts && quantity >= CUSTOMIZATION_MIN_QTY && (
+              <label
+                className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${!customization.enabled
+                    ? 'border-gray-300 bg-white'
+                    : 'border-gray-200 bg-gray-50'
+                  }`}
+              >
+                <div className="pt-0.5">
+                  <input
+                    type="checkbox"
+                    checked={!customization.enabled}
+                    onChange={(e) => {
+                      const enabled = !e.target.checked;
+                      handleCustomizationChange({ ...customization, enabled });
+                      if (!enabled) {
+                        setIsCustomizingStarted(false);
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
+                  />
+                </div>
+                <div className="flex-1">
+                  <span className="block font-bold text-[14px] text-[#4a346e]">
+                    No customisation required
+                  </span>
+                  <span className="block text-[13px] text-gray-500 mt-1">
+                    I don't need to add a logo or personalisation. Prices below will update to exclude branding.
+                  </span>
+                </div>
+              </label>
             )}
 
             {/* Savings Callout */}
@@ -600,12 +764,16 @@ export const ProductDetailClient = ({
               disabled={isAdding}
               className="w-full h-[54px] text-[16px] font-bold rounded-lg text-white transition-all disabled:opacity-50 flex items-center justify-center bg-[#4a346e] hover:bg-[#392657] mt-2"
             >
-              {isAdding ? 'Processing...' : 'Add to Basket \u2192'}
+              {isAdding 
+                ? 'Processing...' 
+                : (!customization.enabled || isCustomizingStarted || isGifts)
+                  ? 'Add to Basket \u2192' 
+                  : 'Start customising \u2192'}
             </button>
           </div>
 
           <div className="text-[14px] text-gray-600 mt-2">
-            Prices below include logo branding.
+            Prices below {customization.enabled ? 'include logo branding' : 'exclude branding'}.
           </div>
 
           {/* VOLUME PRICING TABLE */}
