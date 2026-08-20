@@ -28,7 +28,7 @@ export const Categories = () => {
             Crafted Collections, Designed to Impress
           </h2>
 
-          <Button href="/collections" variant="primary" className="self-start sm:self-auto">
+          <Button href="/collection" variant="primary" className="self-start sm:self-auto">
             Shop All
           </Button>
         </div>
