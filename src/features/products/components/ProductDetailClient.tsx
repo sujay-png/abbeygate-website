@@ -61,6 +61,7 @@ export const ProductDetailClient = ({
   const activeColorHex = colorVariants.find(c => c.slug === product.slug)?.hex;
 
   const previewContainerRef = useRef<HTMLDivElement>(null);
+  const customizerSectionRef = useRef<HTMLDivElement>(null);
   const [quantity, setQuantity] = useState(isGifts ? 1 : CUSTOMIZATION_MIN_QTY);
   const [priceDetails, setPriceDetails] = useState({
     unitPrice: basePrice,
@@ -153,7 +154,11 @@ export const ProductDetailClient = ({
     // If not customizing yet, the button will act as "Start customising"
     if (customization.enabled && !isCustomizingStarted && !isGifts) {
       setIsCustomizingStarted(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // The customizer is below the gallery on mobile, so scrolling to the
+      // page top leaves it out of view. Wait for it to render, then target it.
+      requestAnimationFrame(() => {
+        customizerSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
       return;
     }
 
@@ -516,18 +521,20 @@ export const ProductDetailClient = ({
           
           {/* Customizer underneath the gallery on the left */}
           {!isGifts && isCustomizingStarted && customization.enabled && (
-            <ProductCustomizer
-              product={product}
-              tiers={tiers}
-              basePrice={basePrice}
-              quantity={quantity}
-              customization={customization}
-              onQuantityChange={setQuantity}
-              onCustomizationChange={handleCustomizationChange}
-              onPriceChange={handlePriceChange}
-              activeColorHex={activeColorHex}
-              activeImageUrl={activeSrc}
-            />
+            <div ref={customizerSectionRef}>
+              <ProductCustomizer
+                product={product}
+                tiers={tiers}
+                basePrice={basePrice}
+                quantity={quantity}
+                customization={customization}
+                onQuantityChange={setQuantity}
+                onCustomizationChange={handleCustomizationChange}
+                onPriceChange={handlePriceChange}
+                activeColorHex={activeColorHex}
+                activeImageUrl={activeSrc}
+              />
+            </div>
           )}
         </div>
 
@@ -581,8 +588,83 @@ export const ProductDetailClient = ({
           </div>
         )}
 
-        {/* Right: details */}
-        <div className="relative z-20 flex flex-col gap-5" style={{ backgroundColor: '#ffffff' }}>
+        {/* Customisation order sidebar: replaces the product-detail panel once
+            the customer starts the multi-step customisation flow. */}
+        {isCustomizingStarted && customization.enabled && (
+          <aside className="relative z-20 flex h-fit flex-col gap-5 lg:sticky lg:top-32">
+            <div>
+              <p className="text-[13px] font-bold uppercase tracking-widest text-[#4a346e]">{product.categories?.[0]?.name ? `${product.categories[0].name} collection` : 'Collection'}</p>
+              <h2 className="mt-2 text-2xl font-bold leading-tight text-[#1F2124] lg:text-[32px]">{product.name}</h2>
+              {product.sku && <p className="mt-2 text-[13px] text-gray-500">SKU: {product.sku}</p>}
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-transparent p-5">
+              <span className="text-[14px] font-bold text-[#1F2124]">Quantity</span>
+              <div className="flex h-9 items-center overflow-hidden rounded-md border border-gray-300 bg-white">
+                <button type="button" aria-label="Decrease quantity" className="px-3 text-gray-600 hover:bg-gray-100" onClick={() => setQuantity(Math.max(CUSTOMIZATION_MIN_QTY, quantity - 1))}>−</button>
+                <span className="w-10 text-center text-[14px] font-bold text-[#1F2124]">{quantity}</span>
+                <button type="button" aria-label="Increase quantity" className="px-3 text-gray-600 hover:bg-gray-100" onClick={() => setQuantity(quantity + 1)}>+</button>
+              </div>
+            </div>
+
+            <dl className="rounded-lg border border-gray-200 bg-transparent p-5 space-y-2.5 text-[13px] text-gray-600">
+              <div className="flex justify-between gap-4"><dt>Unit price (ex VAT)</dt><dd className="font-medium text-[#1F2124]">{formatGBP(priceDetails.unitPrice)}</dd></div>
+              <div className="flex justify-between gap-4"><dt>Branding</dt><dd className="text-right font-medium text-[#1F2124]">{customization.blockingType}</dd></div>
+              <div className="flex justify-between gap-4"><dt>Corner edges</dt><dd className="font-medium text-[#1F2124]">{customization.cornerEdges}</dd></div>
+              <div className="flex justify-between gap-4 border-t border-gray-200 pt-3"><dt>Subtotal (ex VAT)</dt><dd className="font-semibold text-[#1F2124]">{formatGBP(priceDetails.totalPrice)}</dd></div>
+            </dl>
+
+            {!isGifts && tiers.length > 0 && (() => {
+              const activeTierIndex = tiers.findIndex(tier => quantity >= tier.min && (tier.max === null || quantity <= tier.max));
+              const nextTier = activeTierIndex >= 0 ? tiers[activeTierIndex + 1] : null;
+              const savings = nextTier ? (priceDetails.unitPrice - nextTier.price) * nextTier.min : 0;
+
+              if (!nextTier || savings <= 0) return null;
+
+              return (
+                <div className="mt-5 rounded-lg border border-[#d2e0de] bg-[#e6f0ef] p-4">
+                  <p className="text-[14px] font-bold text-[#1f6d63]">You could save {formatGBP(savings)}</p>
+                  <p className="mt-1 text-[12px] text-gray-600">by ordering {nextTier.min} units ({formatGBP(nextTier.price)} per unit, ex VAT)</p>
+                  <button type="button" onClick={() => setQuantity(nextTier.min)} className="mt-3 w-full rounded-md border border-[#1f6d63] bg-white px-3 py-2 text-[12px] font-bold text-[#1f6d63] transition-colors hover:bg-[#d2e0de]">
+                    Increase to {nextTier.min} units →
+                  </button>
+                </div>
+              );
+            })()}
+
+            <button type="button" onClick={handleAddToCart} disabled={isAdding} className="mt-5 flex h-[50px] w-full items-center justify-center rounded-lg bg-[#4a346e] text-[15px] font-bold text-white transition-colors hover:bg-[#392657] disabled:opacity-50">
+              {isAdding ? 'Processing...' : 'Add to Basket →'}
+            </button>
+            <p className="mt-3 text-[12px] leading-relaxed text-gray-500">All prices shown exclude VAT. Applicable VAT is calculated at checkout. A final digital proof is provided for approval before production.</p>
+
+            {!isGifts && tiers.length > 0 && (
+              <div className="mt-5 border-t border-gray-200 pt-5">
+                <h3 className="mb-3 text-[12px] font-bold tracking-widest text-[#1F2124]">PRICE BREAKS (PER UNIT)</h3>
+                <div className="overflow-hidden rounded-lg border border-gray-200">
+                  <table className="w-full text-left text-[12px]">
+                    <thead className="bg-white text-gray-500">
+                      <tr><th className="px-3 py-2.5 font-medium">Quantity</th><th className="px-3 py-2.5 text-right font-medium">Price (ex VAT)</th></tr>
+                    </thead>
+                    <tbody>
+                      {tiers.map(tier => {
+                        const active = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
+                        return (
+                          <tr key={tier.min} onClick={() => setQuantity(tier.min)} className={`cursor-pointer border-t border-gray-200 ${active ? 'bg-[#4a346e] font-bold text-white' : 'text-[#1F2124] hover:bg-gray-50'}`}>
+                            <td className="px-3 py-2.5">{tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}</td>
+                            <td className="px-3 py-2.5 text-right">{formatGBP(tier.price)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </aside>
+        )}
+
+        {/* Right: normal product details */}
+        <div className={`relative z-20 flex flex-col gap-5 ${isCustomizingStarted && customization.enabled ? 'hidden' : ''}`} style={{ backgroundColor: '#ffffff' }}>
 
           <div>
             <div className="text-[13px] font-bold tracking-widest text-[#4a346e] uppercase mb-2">

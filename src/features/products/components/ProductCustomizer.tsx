@@ -125,7 +125,6 @@ export const ProductCustomizer = ({
 
   return (
     <div className="mt-4 mb-6 animate-in fade-in slide-in-from-top-2 duration-300" style={{ backgroundColor: '#ffffff' }}>
-      
       {/* STEP TRACKER (Optional visual flair) */}
       <div className="flex items-center gap-2 mb-8">
         <div className={`text-sm font-bold ${step === 1 ? 'text-[#4a346e]' : 'text-gray-400'}`}>1. Branding</div>
@@ -508,4 +507,3 @@ export const ProductCustomizer = ({
     </div>
   );
 };
-
