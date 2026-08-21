@@ -22,3 +22,11 @@ This project uses a Domain-Driven / Feature-Sliced architecture. It strictly sep
 1. **Keep `page.tsx` Clean**: A page file should act primarily as a layout composer and data fetcher. Do not write complex UI or business logic inside `page.tsx`. Import components from the `components/` or `features/` directory.
 2. **Consult the Architecture First**: Before adding any new component or feature, ask yourself if it's domain-agnostic (`components/`) or domain-specific (`features/`). If it's a domain feature, colocate its types, hooks, and services within its feature folder.
 3. **Services**: Put core client wrappers in `src/lib/`. Put domain-specific API calls in `src/features/<feature>/services/`.
+
+- Never delete or overwrite a file wholesale without first copying it to 
+  /backups/<filename>.<timestamp>.bak
+- Before any destructive change (delete >20 lines, remove a file, force-overwrite), 
+  stop and ask for confirmation, describing exactly what will be removed and why
+- Always commit current work with `git commit -m "checkpoint: before <action>"` 
+  before starting a task that touches more than one file
+- Prefer additive/incremental edits over full-file rewrites unless explicitly told to rewrite
