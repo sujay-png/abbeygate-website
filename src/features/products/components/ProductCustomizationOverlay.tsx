@@ -21,15 +21,20 @@ export const ProductCustomizationOverlay = ({
 
   const anchors = getLogoAnchors(product);
   
-  const safeLeft = anchors.safeLeft;
-  const safeRight = anchors.safeRight;
-  const safeTop = anchors.safeTop;
-  const safeBottom = anchors.safeBottom;
-  
   const bookLeft = imageBounds ? imageBounds.left : anchors.bookLeft;
   const bookRight = imageBounds ? imageBounds.right : anchors.bookRight;
   const bookTop = imageBounds ? imageBounds.top : anchors.bookTop;
   const bookBottom = imageBounds ? imageBounds.bottom : anchors.bookBottom;
+
+  const bookWidth = bookRight - bookLeft;
+  const bookHeight = bookBottom - bookTop;
+  const marginX = bookWidth * 0.08;
+  const marginY = bookHeight * 0.05;
+
+  const safeLeft = bookLeft + marginX;
+  const safeRight = bookRight - marginX;
+  const safeTop = bookTop + marginY;
+  const safeBottom = bookBottom - marginY;
 
   const getAlignX = (align: 'left' | 'center' | 'right') => {
     if (align === 'left') return safeLeft;
@@ -48,16 +53,17 @@ export const ProductCustomizationOverlay = ({
   let cssTop = getAlignY('center');
 
   let transformOrigin = 'center center';
+  let bgPosition = 'center center';
   
-  if (posLabel === 'top-left') { cssLeft = getAlignX('left'); cssTop = getAlignY('top'); transformOrigin = 'top left'; }
-  else if (posLabel === 'top-center') { cssLeft = getAlignX('center'); cssTop = getAlignY('top'); transformOrigin = 'top center'; }
-  else if (posLabel === 'top-right') { cssLeft = getAlignX('right'); cssTop = getAlignY('top'); transformOrigin = 'top right'; }
-  else if (posLabel === 'center-left') { cssLeft = getAlignX('left'); cssTop = getAlignY('center'); transformOrigin = 'center left'; }
-  else if (posLabel === 'center') { cssLeft = getAlignX('center'); cssTop = getAlignY('center'); transformOrigin = 'center center'; }
-  else if (posLabel === 'center-right') { cssLeft = getAlignX('right'); cssTop = getAlignY('center'); transformOrigin = 'center right'; }
-  else if (posLabel === 'bottom-left') { cssLeft = getAlignX('left'); cssTop = getAlignY('bottom'); transformOrigin = 'bottom left'; }
-  else if (posLabel === 'bottom-center') { cssLeft = getAlignX('center'); cssTop = getAlignY('bottom'); transformOrigin = 'bottom center'; }
-  else if (posLabel === 'bottom-right') { cssLeft = getAlignX('right'); cssTop = getAlignY('bottom'); transformOrigin = 'bottom right'; }
+  if (posLabel === 'top-left') { cssLeft = getAlignX('left'); cssTop = getAlignY('top'); transformOrigin = 'top left'; bgPosition = 'left top'; }
+  else if (posLabel === 'top-center') { cssLeft = getAlignX('center'); cssTop = getAlignY('top'); transformOrigin = 'top center'; bgPosition = 'center top'; }
+  else if (posLabel === 'top-right') { cssLeft = getAlignX('right'); cssTop = getAlignY('top'); transformOrigin = 'top right'; bgPosition = 'right top'; }
+  else if (posLabel === 'center-left') { cssLeft = getAlignX('left'); cssTop = getAlignY('center'); transformOrigin = 'center left'; bgPosition = 'left center'; }
+  else if (posLabel === 'center') { cssLeft = getAlignX('center'); cssTop = getAlignY('center'); transformOrigin = 'center center'; bgPosition = 'center center'; }
+  else if (posLabel === 'center-right') { cssLeft = getAlignX('right'); cssTop = getAlignY('center'); transformOrigin = 'center right'; bgPosition = 'right center'; }
+  else if (posLabel === 'bottom-left') { cssLeft = getAlignX('left'); cssTop = getAlignY('bottom'); transformOrigin = 'bottom left'; bgPosition = 'left bottom'; }
+  else if (posLabel === 'bottom-center') { cssLeft = getAlignX('center'); cssTop = getAlignY('bottom'); transformOrigin = 'bottom center'; bgPosition = 'center bottom'; }
+  else if (posLabel === 'bottom-right') { cssLeft = getAlignX('right'); cssTop = getAlignY('bottom'); transformOrigin = 'bottom right'; bgPosition = 'right bottom'; }
 
   if (!customization.enabled || !customization.logoPreviewUrl) {
     return null;
@@ -85,7 +91,7 @@ export const ProductCustomizationOverlay = ({
                 backgroundImage: `url(${customization.logoPreviewUrl})`,
                 backgroundSize: 'contain',
                 backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'center',
+                backgroundPosition: bgPosition,
               }}
             />
           ) : customization.blockingType === 'Foil blocked' ? (
@@ -98,8 +104,8 @@ export const ProductCustomizationOverlay = ({
                 WebkitMaskSize: 'contain',
                 maskRepeat: 'no-repeat',
                 WebkitMaskRepeat: 'no-repeat',
-                maskPosition: 'center',
-                WebkitMaskPosition: 'center',
+                maskPosition: bgPosition,
+                WebkitMaskPosition: bgPosition,
                 backgroundImage: customization.foilColor === 'Gold' ? 'url(/images/foil/gold.avif)' : 'url(/images/foil/silver.avif)',
                 backgroundSize: 'cover',
                 opacity: 0.95,
@@ -114,8 +120,8 @@ export const ProductCustomizationOverlay = ({
                 style={{
                   maskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
                   WebkitMaskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
-                  maskPosition: 'calc(50% - 1px) calc(50% - 1px), center',
-                  WebkitMaskPosition: 'calc(50% - 1px) calc(50% - 1px), center',
+                  maskPosition: `calc(${posLabel.includes('left') ? '0%' : posLabel.includes('right') ? '100%' : '50%'} - 1px) calc(${posLabel.includes('top') ? '0%' : posLabel.includes('bottom') ? '100%' : '50%'} - 1px), ${bgPosition}`,
+                  WebkitMaskPosition: `calc(${posLabel.includes('left') ? '0%' : posLabel.includes('right') ? '100%' : '50%'} - 1px) calc(${posLabel.includes('top') ? '0%' : posLabel.includes('bottom') ? '100%' : '50%'} - 1px), ${bgPosition}`,
                   maskSize: 'contain, contain',
                   WebkitMaskSize: 'contain, contain',
                   maskRepeat: 'no-repeat, no-repeat',
@@ -133,8 +139,8 @@ export const ProductCustomizationOverlay = ({
                 style={{
                   maskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
                   WebkitMaskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
-                  maskPosition: 'calc(50% + 1px) calc(50% + 1px), center',
-                  WebkitMaskPosition: 'calc(50% + 1px) calc(50% + 1px), center',
+                  maskPosition: `calc(${posLabel.includes('left') ? '0%' : posLabel.includes('right') ? '100%' : '50%'} + 1px) calc(${posLabel.includes('top') ? '0%' : posLabel.includes('bottom') ? '100%' : '50%'} + 1px), ${bgPosition}`,
+                  WebkitMaskPosition: `calc(${posLabel.includes('left') ? '0%' : posLabel.includes('right') ? '100%' : '50%'} + 1px) calc(${posLabel.includes('top') ? '0%' : posLabel.includes('bottom') ? '100%' : '50%'} + 1px), ${bgPosition}`,
                   maskSize: 'contain, contain',
                   WebkitMaskSize: 'contain, contain',
                   maskRepeat: 'no-repeat, no-repeat',

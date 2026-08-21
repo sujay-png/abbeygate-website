@@ -1,9 +1,11 @@
 import { Container } from '@/components/ui/Container';
 import { Breadcrumb } from '@/components/content/Breadcrumb';
+import { ScrollToTop } from '@/components/layout/ScrollToTop';
 
 export const CategoryPageSkeleton = () => {
   return (
     <div className="bg-white min-h-screen">
+      <ScrollToTop />
       <Breadcrumb paths={[{ label: 'Home', href: '/' }, { label: 'Loading...' }]} />
 
       <Container className="py-8">

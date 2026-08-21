@@ -20,6 +20,11 @@ export type CustomizationState = {
   logoScale: number;
   logoPosition: { x: number; y: number; label?: string; leftPercent?: number; topPercent?: number };
   cornerEdges: 'None' | 'Gold' | 'Silver';
+  fullPreviewUrl?: string;
+  leftPercent?: number;
+  topPercent?: number;
+  widthPercent?: number;
+  imageBounds?: any;
 };
 
 function useEvent<T extends (...args: any[]) => any>(handler: T) {
@@ -44,6 +49,9 @@ type ProductCustomizerProps = {
   onPriceChange: (result: ReturnType<typeof calculateProductPrice>) => void;
   activeColorHex?: string;
   activeImageUrl?: string;
+  onGenerateProof?: () => Promise<Partial<CustomizationState> | null>;
+  onAddToCart?: () => void;
+  isAdding?: boolean;
 };
 
 export const ProductCustomizer = ({
@@ -56,13 +64,17 @@ export const ProductCustomizer = ({
   onPriceChange,
   activeColorHex,
   activeImageUrl,
+  onGenerateProof,
+  onAddToCart,
+  isAdding,
 }: ProductCustomizerProps) => {
   const isGifts = isGiftsProduct(product);
   const isFoil = isFoilBlockedProduct(product);
 
   const [collapseOpen, setCollapseOpen] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [isGeneratingProof, setIsGeneratingProof] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -127,11 +139,13 @@ export const ProductCustomizer = ({
     <div className="mt-4 mb-6 animate-in fade-in slide-in-from-top-2 duration-300" style={{ backgroundColor: '#ffffff' }}>
       {/* STEP TRACKER (Optional visual flair) */}
       <div className="flex items-center gap-2 mb-8">
-        <div className={`text-sm font-bold ${step === 1 ? 'text-[#4a346e]' : 'text-gray-400'}`}>1. Branding</div>
-        <div className="h-px bg-gray-200 flex-1" />
-        <div className={`text-sm font-bold ${step === 2 ? 'text-[#4a346e]' : 'text-gray-400'}`}>2. Position</div>
-        <div className="h-px bg-gray-200 flex-1" />
-        <div className={`text-sm font-bold ${step === 3 ? 'text-[#4a346e]' : 'text-gray-400'}`}>3. Extras</div>
+        <div className={`text-sm font-bold ${step === 1 ? 'text-[#4a346e]' : 'text-gray-400 hidden sm:block'}`}>1. Branding</div>
+        <div className="h-px bg-gray-200 flex-1 hidden sm:block" />
+        <div className={`text-sm font-bold ${step === 2 ? 'text-[#4a346e]' : 'text-gray-400 hidden sm:block'}`}>2. Position</div>
+        <div className="h-px bg-gray-200 flex-1 hidden sm:block" />
+        <div className={`text-sm font-bold ${step === 3 ? 'text-[#4a346e]' : 'text-gray-400 hidden sm:block'}`}>3. Extras</div>
+        <div className="h-px bg-gray-200 flex-1 hidden sm:block" />
+        <div className={`text-sm font-bold ${step === 4 ? 'text-[#4a346e]' : 'text-gray-400 hidden sm:block'}`}>4. Review</div>
       </div>
 
       {step === 1 && (
@@ -493,7 +507,7 @@ export const ProductCustomizer = ({
             </div>
           </div>
 
-          <div className="pt-6 border-t border-gray-100 flex justify-start">
+          <div className="pt-6 border-t border-gray-100 flex justify-between">
              <button
                 type="button"
                 onClick={() => setStep(2)}
@@ -501,7 +515,146 @@ export const ProductCustomizer = ({
              >
                 &larr; Back to Position
              </button>
+             <button
+                type="button"
+                onClick={async () => {
+                  setStep(4);
+                  if (onGenerateProof) {
+                    setIsGeneratingProof(true);
+                    try {
+                      const result = await onGenerateProof();
+                      if (result) {
+                        onCustomizationChange({ ...customization, ...result });
+                      }
+                    } finally {
+                      setIsGeneratingProof(false);
+                    }
+                  }
+                }}
+                disabled={isGeneratingProof}
+                className="px-8 py-3 bg-[#4a346e] text-white font-bold rounded-lg hover:bg-[#3d2a5a] transition-colors disabled:opacity-50"
+             >
+                Review &rarr;
+             </button>
           </div>
+        </div>
+      )}      {step === 4 && (
+        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+          <div>
+            <div className="space-y-4 mb-8">
+               <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <div className="text-[#1F2124] font-medium">Branding</div>
+                  <div className="text-[#1F2124] font-bold">
+                     {customization.blockingType}
+                     {customization.blockingType === 'Foil blocked' && customization.foilColor ? ' · ' + customization.foilColor : ''}
+                  </div>
+               </div>
+               <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <div className="text-[#1F2124] font-medium">Position</div>
+                  <div className="text-[#1F2124] font-bold">
+                     {customization.logoPosition?.label ? 
+                        customization.logoPosition.label.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Center'}
+                  </div>
+               </div>
+               <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <div className="text-[#1F2124] font-medium">Corner edges</div>
+                  <div className="text-[#1F2124] font-bold">{customization.cornerEdges}</div>
+               </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-6 items-center p-6 bg-white rounded-xl border border-gray-200 min-h-[160px] shadow-sm">
+              {isGeneratingProof ? (
+                 <div className="flex w-full items-center justify-center gap-4 py-8">
+                   <div className="w-8 h-8 border-4 border-[#4a346e]/30 border-t-[#4a346e] rounded-full animate-spin" />
+                   <div className="text-sm font-medium text-gray-600 animate-pulse">Generating your digital proof...</div>
+                 </div>
+              ) : customization.fullPreviewUrl ? (
+                 <>
+                   <div className="w-24 h-auto shrink-0 bg-[#f5f5f5] rounded overflow-hidden shadow border border-black/5">
+                     <img 
+                       src={customization.fullPreviewUrl} 
+                       alt="Digital Proof" 
+                       className="w-full h-auto" 
+                     />
+                   </div>
+                   <div className="flex-1 text-center sm:text-left">
+                     <div className="font-bold text-[#1F2124] mb-1">Digital proof included</div>
+                     <p className="text-[13px] text-gray-500 mb-4 max-w-sm">
+                       We'll send a final digital proof via email for your approval before production.
+                     </p>
+                     <button
+                       type="button"
+                       onClick={async () => {
+                         if (!onGenerateProof) return;
+                         setIsGeneratingProof(true);
+                         try {
+                            const { generateDigitalProof } = await import('../utils/generate-pdf');
+                            const { calculateProductPrice } = await import('../utils/pricing');
+                            const priceDetails = calculateProductPrice({
+                                quantity,
+                                basePrice,
+                                tiers,
+                                customizationEnabled: true,
+                                blockingType: customization.blockingType,
+                                cornerEdges: customization.cornerEdges,
+                                isGifts: false,
+                            });
+                            const pdfBuffer = await generateDigitalProof(product, customization, quantity, priceDetails.unitPrice);
+                            const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'proof-' + product.slug + '.pdf';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                         } catch (err) {
+                            console.error(err);
+                            alert("Failed to generate PDF. Please try again.");
+                         } finally {
+                            setIsGeneratingProof(false);
+                         }
+                       }}
+                       disabled={isGeneratingProof}
+                       className="text-[#4a346e] font-bold text-[14px] hover:underline disabled:opacity-50"
+                     >
+                       Download proof (PDF) &darr;
+                     </button>
+                   </div>
+                 </>
+              ) : (
+                 <div className="w-full text-center text-red-500 text-sm font-medium">Failed to generate proof. Please go back and try again.</div>
+              )}
+            </div>
+          </div>
+
+          <div className="pt-6 flex justify-between items-center gap-4">
+             <button
+                type="button"
+                onClick={() => setStep(3)}
+                className="px-6 py-3 bg-white border border-gray-300 text-[#1F2124] font-bold rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
+             >
+                &larr; Back: Extras
+             </button>
+             {onAddToCart && (
+               <button
+                  type="button"
+                  onClick={onAddToCart}
+                  disabled={isAdding || isGeneratingProof || !customization.fullPreviewUrl}
+                  className="w-full py-3 bg-[#4a346e] text-white font-bold rounded-lg hover:bg-[#3d2a5a] transition-colors disabled:opacity-50"
+               >
+                  {isAdding ? 'Processing...' : 'Add to Basket'}
+               </button>
+             )}
+          </div>
+          
+          <button
+             type="button"
+             className="w-full py-3 bg-white text-[#4a346e] border border-[#4a346e] font-bold rounded-lg hover:bg-gray-50 transition-colors"
+          >
+             Continue Shopping
+          </button>
         </div>
       )}
     </div>

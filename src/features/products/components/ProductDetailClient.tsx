@@ -150,6 +150,236 @@ export const ProductDetailClient = ({
     };
   }, [isPreviewOpen]);
 
+
+  const generateProof = async (): Promise<Partial<CustomizationState> | null> => {
+    if (!activeSrc || !customization.enabled || isGifts) return null;
+
+    let fullPreviewUrl: string | undefined = undefined;
+    let finalBounds: any = null;
+    let leftPercent = 50;
+    let topPercent = 50;
+    let widthPercent = 25 * (customization.logoScale || 1);
+
+    try {
+      const CANVAS_SIZE = 800;
+      const canvas = document.createElement('canvas');
+      canvas.width = CANVAS_SIZE;
+      canvas.height = CANVAS_SIZE;
+      const ctx = canvas.getContext('2d');
+
+      if (ctx) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+        const res = await fetch(`/api/proxy-image?url=${encodeURIComponent(activeSrc)}`);
+        const data = await res.json();
+
+        if (data.dataUrl) {
+          const productImg = new window.Image();
+          productImg.src = data.dataUrl;
+          await new Promise(r => { productImg.onload = r; productImg.onerror = r; });
+
+          const imgAspect = productImg.width / productImg.height;
+          let drawW = CANVAS_SIZE;
+          let drawH = CANVAS_SIZE;
+          let drawX = 0;
+          let drawY = 0;
+          if (imgAspect > 1) {
+            drawH = CANVAS_SIZE / imgAspect;
+            drawY = (CANVAS_SIZE - drawH) / 2;
+          } else {
+            drawW = CANVAS_SIZE * imgAspect;
+            drawX = (CANVAS_SIZE - drawW) / 2;
+          }
+          ctx.drawImage(productImg, drawX, drawY, drawW, drawH);
+
+          const bounds = getConfiguredImageBounds(activeSrc) ?? await getImageBoundingBox(activeSrc);
+          if (bounds) finalBounds = bounds;
+
+          const anchors = getLogoAnchors(product);
+          const bookLeft = finalBounds ? finalBounds.left : anchors.bookLeft;
+          const bookRight = finalBounds ? finalBounds.right : anchors.bookRight;
+          const bookTop = finalBounds ? finalBounds.top : anchors.bookTop;
+          const bookBottom = finalBounds ? finalBounds.bottom : anchors.bookBottom;
+
+          const bookWidth = bookRight - bookLeft;
+          const bookHeight = bookBottom - bookTop;
+          const marginX = bookWidth * 0.08;
+          const marginY = bookHeight * 0.05;
+
+          const safeLeft = bookLeft + marginX;
+          const safeRight = bookRight - marginX;
+          const safeTop = bookTop + marginY;
+          const safeBottom = bookBottom - marginY;
+
+          if (customization.logoPreviewUrl) {
+            const logoImg = new window.Image();
+            logoImg.src = customization.logoPreviewUrl;
+            await new Promise(r => { logoImg.onload = r; logoImg.onerror = r; });
+
+            const posLabel = customization.logoPosition?.label || 'center';
+            let boxLeft = 50 - 12.5;
+            let boxTop = 50 - 12.5;
+
+            if (posLabel === 'top-left') { boxLeft = safeLeft; boxTop = safeTop; }
+            else if (posLabel === 'top-center') { boxLeft = 50 - 12.5; boxTop = safeTop; }
+            else if (posLabel === 'top-right') { boxLeft = safeRight - 25; boxTop = safeTop; }
+            else if (posLabel === 'center-left') { boxLeft = safeLeft; boxTop = 50 - 12.5; }
+            else if (posLabel === 'center-right') { boxLeft = safeRight - 25; boxTop = 50 - 12.5; }
+            else if (posLabel === 'bottom-left') { boxLeft = safeLeft; boxTop = safeBottom - 25; }
+            else if (posLabel === 'bottom-center') { boxLeft = 50 - 12.5; boxTop = safeBottom - 25; }
+            else if (posLabel === 'bottom-right') { boxLeft = safeRight - 25; boxTop = safeBottom - 25; }
+
+            const scaledBoxWidth = 25 * (customization.logoScale || 1);
+            const scaledBoxHeight = 25 * (customization.logoScale || 1);
+            
+            if (posLabel.includes('right')) boxLeft = boxLeft + 25 - scaledBoxWidth;
+            else if (!posLabel.includes('left')) boxLeft = boxLeft + 12.5 - scaledBoxWidth / 2;
+
+            if (posLabel.includes('bottom')) boxTop = boxTop + 25 - scaledBoxHeight;
+            else if (!posLabel.includes('top')) boxTop = boxTop + 12.5 - scaledBoxHeight / 2;
+
+            const logoImgAspect = logoImg.width / logoImg.height;
+            let drawLogoW = scaledBoxWidth;
+            let drawLogoH = scaledBoxHeight;
+            if (logoImgAspect > 1) {
+              drawLogoH = scaledBoxWidth / logoImgAspect;
+            } else {
+              drawLogoW = scaledBoxHeight * logoImgAspect;
+            }
+
+            let logoDrawXPercent = boxLeft;
+            let logoDrawYPercent = boxTop;
+            
+            if (posLabel.includes('right')) logoDrawXPercent = boxLeft + scaledBoxWidth - drawLogoW;
+            else if (!posLabel.includes('left')) logoDrawXPercent = boxLeft + (scaledBoxWidth - drawLogoW) / 2;
+
+            if (posLabel.includes('bottom')) logoDrawYPercent = boxTop + scaledBoxHeight - drawLogoH;
+            else if (!posLabel.includes('top')) logoDrawYPercent = boxTop + (scaledBoxHeight - drawLogoH) / 2;
+            
+            leftPercent = logoDrawXPercent + (drawLogoW / 2);
+            topPercent = logoDrawYPercent + (drawLogoH / 2);
+            widthPercent = drawLogoW;
+
+            const logoX = CANVAS_SIZE * (logoDrawXPercent / 100);
+            const logoY = CANVAS_SIZE * (logoDrawYPercent / 100);
+            const logoW = CANVAS_SIZE * (drawLogoW / 100);
+            const logoH = CANVAS_SIZE * (drawLogoH / 100);
+
+            if (customization.blockingType === 'Foil blocked') {
+              const tintCanvas = document.createElement('canvas');
+              tintCanvas.width = logoW;
+              tintCanvas.height = logoH;
+              const tCtx = tintCanvas.getContext('2d');
+              if (tCtx) {
+                tCtx.drawImage(logoImg, 0, 0, logoW, logoH);
+                tCtx.globalCompositeOperation = 'source-in';
+                tCtx.fillStyle = customization.foilColor === 'Gold' ? '#D4AF37' : '#C0C0C0';
+                tCtx.fillRect(0, 0, logoW, logoH);
+                ctx.drawImage(tintCanvas, logoX, logoY, logoW, logoH);
+              }
+            } else if (customization.blockingType === 'Embossed') {
+              const darkEdge = document.createElement('canvas');
+              darkEdge.width = logoW; darkEdge.height = logoH;
+              const dCtx = darkEdge.getContext('2d');
+              if (dCtx) {
+                dCtx.drawImage(logoImg, 0, 0, logoW, logoH);
+                dCtx.globalCompositeOperation = 'source-in';
+                dCtx.fillStyle = 'rgba(0,0,0,0.5)';
+                dCtx.fillRect(0, 0, logoW, logoH);
+                dCtx.globalCompositeOperation = 'destination-out';
+                dCtx.drawImage(logoImg, 1, 1, logoW, logoH);
+
+                ctx.save();
+                ctx.filter = 'blur(0.5px)';
+                ctx.globalCompositeOperation = 'multiply';
+                ctx.drawImage(darkEdge, logoX, logoY, logoW, logoH);
+                ctx.restore();
+              }
+
+              const lightEdge = document.createElement('canvas');
+              lightEdge.width = logoW; lightEdge.height = logoH;
+              const lCtx = lightEdge.getContext('2d');
+              if (lCtx) {
+                lCtx.drawImage(logoImg, 0, 0, logoW, logoH);
+                lCtx.globalCompositeOperation = 'source-in';
+                lCtx.fillStyle = 'rgba(255,255,255,0.3)';
+                lCtx.fillRect(0, 0, logoW, logoH);
+                lCtx.globalCompositeOperation = 'destination-out';
+                lCtx.drawImage(logoImg, -1, -1, logoW, logoH);
+
+                ctx.save();
+                ctx.filter = 'blur(0.5px)';
+                ctx.globalCompositeOperation = 'screen';
+                ctx.drawImage(lightEdge, logoX, logoY, logoW, logoH);
+                ctx.restore();
+              }
+            } else {
+              ctx.drawImage(logoImg, logoX, logoY, logoW, logoH);
+            }
+          }
+
+          if (customization.cornerEdges && customization.cornerEdges !== 'None') {
+            try {
+              if (finalBounds) {
+                const offset = CANVAS_SIZE * 0.004;
+                const clipW = CANVAS_SIZE * 0.06;
+                const clipH = clipW;
+                
+                const bookRightPx = drawX + (finalBounds.right / 100) * drawW;
+                const bookTopPx = drawY + (finalBounds.top / 100) * drawH;
+                const bookBottomPx = drawY + (finalBounds.bottom / 100) * drawH;
+
+                const clipPath = new Path2D('M 0 0 L 32 0 Q 36 0 36 4 L 36 36 L 28 36 L 28 12 Q 28 8 24 8 L 0 8 Z');
+
+                const drawCorner = (x: number, y: number, rotation: number) => {
+                  ctx.save();
+                  ctx.translate(x, y);
+                  ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                  ctx.shadowBlur = 4;
+                  ctx.shadowOffsetY = 2;
+                  ctx.translate(clipW/2, clipH/2);
+                  ctx.rotate(rotation * Math.PI / 180);
+                  ctx.translate(-clipW/2, -clipH/2);
+                  ctx.scale(clipW/36, clipH/36);
+                  const grad = ctx.createLinearGradient(0, 0, 36, 36);
+                  if (customization.cornerEdges === 'Gold') {
+                    grad.addColorStop(0, '#F3E5AB');
+                    grad.addColorStop(0.5, '#D4AF37');
+                    grad.addColorStop(1, '#AA7C11');
+                  } else {
+                    grad.addColorStop(0, '#F5F5F5');
+                    grad.addColorStop(0.5, '#C0C0C0');
+                    grad.addColorStop(1, '#808080');
+                  }
+                  ctx.fillStyle = grad;
+                  ctx.fill(clipPath);
+                  ctx.restore();
+                };
+
+                drawCorner(bookRightPx + offset - clipW, bookTopPx - offset, 0);
+                drawCorner(bookRightPx + offset - clipW, bookBottomPx + offset - clipH, 90);
+              }
+            } catch (e) {
+              console.error('Failed to draw corners on canvas', e);
+            }
+          }
+
+          fullPreviewUrl = canvas.toDataURL('image/png', 0.9);
+        }
+      }
+    } catch (e) {
+      console.error('Native canvas composition failed', e);
+    }
+
+    return {
+      fullPreviewUrl,
+      imageBounds: finalBounds,
+      leftPercent,
+      topPercent,
+      widthPercent
+    };
+  };
   const handleAddToCart = async () => {
     // If not customizing yet, the button will act as "Start customising"
     if (customization.enabled && !isCustomizingStarted && !isGifts) {
@@ -198,204 +428,25 @@ export const ProductDetailClient = ({
           attributes.push({ name: 'Corner Edges', value: customization.cornerEdges });
         }
 
-        // Calculate responsive percentages for the CartItemPreview
-        if (previewContainerRef.current) {
-          const rect = previewContainerRef.current.getBoundingClientRect();
-          const cx = customization.logoPosition?.x || 0;
-          const cy = customization.logoPosition?.y || 0;
-          const posLabel = customization.logoPosition?.label || 'center';
-          
-          const { safeLeft, safeRight, safeTop, safeBottom } = getLogoAnchors(product);
-          
-          let baseLeftPercent = 50;
-          let baseTopPercent = 50;
-          
-          // Width percent is 25, height percent is 25
-          if (posLabel === 'top-left') { baseLeftPercent = safeLeft + 12.5; baseTopPercent = safeTop + 12.5; }
-          else if (posLabel === 'top-center') { baseLeftPercent = 50; baseTopPercent = safeTop + 12.5; }
-          else if (posLabel === 'top-right') { baseLeftPercent = safeRight - 12.5; baseTopPercent = safeTop + 12.5; }
-          else if (posLabel === 'center-left') { baseLeftPercent = safeLeft + 12.5; baseTopPercent = 50; }
-          else if (posLabel === 'center') { baseLeftPercent = 50; baseTopPercent = 50; }
-          else if (posLabel === 'center-right') { baseLeftPercent = safeRight - 12.5; baseTopPercent = 50; }
-          else if (posLabel === 'bottom-left') { baseLeftPercent = safeLeft + 12.5; baseTopPercent = safeBottom - 12.5; }
-          else if (posLabel === 'bottom-center') { baseLeftPercent = 50; baseTopPercent = safeBottom - 12.5; }
-          else if (posLabel === 'bottom-right') { baseLeftPercent = safeRight - 12.5; baseTopPercent = safeBottom - 12.5; }
 
-          leftPercent = baseLeftPercent + (cx / rect.width) * 100;
-          topPercent = baseTopPercent + (cy / rect.height) * 100;
-          widthPercent = 25 * (customization.logoScale || 1);
-          // 1. Generate image using native canvas to avoid html2canvas CSS/CORS bugs
-          try {
-            const canvas = document.createElement('canvas');
-            const CANVAS_SIZE = 800;
-            canvas.width = CANVAS_SIZE;
-            canvas.height = CANVAS_SIZE;
-            const ctx = canvas.getContext('2d');
+        let fullPreviewUrl = customization.fullPreviewUrl;
+        let finalBounds = customization.imageBounds;
 
-            if (ctx && activeSrc) {
-              // Fill white background
-              ctx.fillStyle = '#ffffff';
-              ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-
-              // Get product image via proxy
-              const res = await fetch(`/api/proxy-image?url=${encodeURIComponent(activeSrc)}`);
-              const data = await res.json();
-
-              if (data.dataUrl) {
-                const productImg = new window.Image();
-                productImg.src = data.dataUrl;
-                await new Promise((resolve) => {
-                  productImg.onload = resolve;
-                  productImg.onerror = resolve;
-                });
-
-                // Draw product image
-                const imgAspect = productImg.width / productImg.height;
-                let drawW = CANVAS_SIZE;
-                let drawH = CANVAS_SIZE;
-                let drawX = 0;
-                let drawY = 0;
-                if (imgAspect > 1) {
-                  drawH = CANVAS_SIZE / imgAspect;
-                  drawY = (CANVAS_SIZE - drawH) / 2;
-                } else {
-                  drawW = CANVAS_SIZE * imgAspect;
-                  drawX = (CANVAS_SIZE - drawW) / 2;
-                }
-                ctx.drawImage(productImg, drawX, drawY, drawW, drawH);
-
-                // Draw logo if exists
-                if (customization.logoPreviewUrl) {
-                  const logoImg = new window.Image();
-                  logoImg.src = customization.logoPreviewUrl;
-                  await new Promise((resolve) => {
-                    logoImg.onload = resolve;
-                    logoImg.onerror = resolve;
-                  });
-
-                  const logoW = CANVAS_SIZE * (widthPercent / 100);
-                  const logoH = logoW; // aspect 1:1
-                  const logoX = CANVAS_SIZE * (leftPercent / 100) - (logoW / 2);
-                  const logoY = CANVAS_SIZE * (topPercent / 100) - (logoH / 2);
-
-                  // Tint if foil
-                  if (customization.blockingType === 'Foil blocked') {
-                    const tintCanvas = document.createElement('canvas');
-                    tintCanvas.width = logoW;
-                    tintCanvas.height = logoH;
-                    const tCtx = tintCanvas.getContext('2d');
-                    if (tCtx) {
-                      tCtx.drawImage(logoImg, 0, 0, logoW, logoH);
-                      tCtx.globalCompositeOperation = 'source-in';
-                      tCtx.fillStyle = customization.foilColor === 'Gold' ? '#D4AF37' : '#C0C0C0';
-                      tCtx.fillRect(0, 0, logoW, logoH);
-                      ctx.drawImage(tintCanvas, logoX, logoY, logoW, logoH);
-                    }
-                  } else {
-                    // Embossed fallback - replicate edge highlights
-                    const darkEdge = document.createElement('canvas');
-                    darkEdge.width = logoW; darkEdge.height = logoH;
-                    const dCtx = darkEdge.getContext('2d');
-                    if (dCtx) {
-                      dCtx.drawImage(logoImg, 0, 0, logoW, logoH);
-                      dCtx.globalCompositeOperation = 'source-in';
-                      dCtx.fillStyle = 'rgba(0,0,0,0.5)';
-                      dCtx.fillRect(0, 0, logoW, logoH);
-                      dCtx.globalCompositeOperation = 'destination-out';
-                      dCtx.drawImage(logoImg, 1, 1, logoW, logoH);
-
-                      ctx.save();
-                      ctx.filter = 'blur(0.5px)';
-                      ctx.globalCompositeOperation = 'multiply';
-                      ctx.drawImage(darkEdge, logoX, logoY, logoW, logoH);
-                      ctx.restore();
-                    }
-
-                    const lightEdge = document.createElement('canvas');
-                    lightEdge.width = logoW; lightEdge.height = logoH;
-                    const lCtx = lightEdge.getContext('2d');
-                    if (lCtx) {
-                      lCtx.drawImage(logoImg, 0, 0, logoW, logoH);
-                      lCtx.globalCompositeOperation = 'source-in';
-                      lCtx.fillStyle = 'rgba(255,255,255,0.3)';
-                      lCtx.fillRect(0, 0, logoW, logoH);
-                      lCtx.globalCompositeOperation = 'destination-out';
-                      lCtx.drawImage(logoImg, -1, -1, logoW, logoH);
-
-                      ctx.save();
-                      ctx.filter = 'blur(0.5px)';
-                      ctx.globalCompositeOperation = 'screen';
-                      ctx.drawImage(lightEdge, logoX, logoY, logoW, logoH);
-                      ctx.restore();
-                    }
-                  }
-                }
-
-                // Draw corner clips if selected
-                if (customization.cornerEdges && customization.cornerEdges !== 'None') {
-                  try {
-                    // getImageBoundingBox already proxies remote images when needed.
-                    // Passing the JSON proxy endpoint here meant it was inspecting a
-                    // JSON response rather than the image, so no corners were drawn.
-                    const bounds = getConfiguredImageBounds(activeSrc) ?? await getImageBoundingBox(activeSrc);
-                    if (bounds) {
-                      finalBounds = bounds;
-                      const offset = CANVAS_SIZE * 0.004; // 0.4%
-                      const clipW = CANVAS_SIZE * 0.06; // 6%
-                      const clipH = clipW;
-                      
-                      const bookRightPx = drawX + (bounds.right / 100) * drawW;
-                      const bookTopPx = drawY + (bounds.top / 100) * drawH;
-                      const bookBottomPx = drawY + (bounds.bottom / 100) * drawH;
-
-                      const clipPath = new Path2D('M 0 0 L 32 0 Q 36 0 36 4 L 36 36 L 28 36 L 28 12 Q 28 8 24 8 L 0 8 Z');
-
-                      const drawCorner = (x: number, y: number, rotation: number) => {
-                        ctx.save();
-                        ctx.translate(x, y);
-                        
-                        ctx.shadowColor = 'rgba(0,0,0,0.3)';
-                        ctx.shadowBlur = 4;
-                        ctx.shadowOffsetY = 2;
-
-                        ctx.translate(clipW/2, clipH/2);
-                        ctx.rotate(rotation * Math.PI / 180);
-                        ctx.translate(-clipW/2, -clipH/2);
-                        
-                        ctx.scale(clipW/36, clipH/36);
-                        
-                        const grad = ctx.createLinearGradient(0, 0, 36, 36);
-                        if (customization.cornerEdges === 'Gold') {
-                          grad.addColorStop(0, '#F3E5AB');
-                          grad.addColorStop(0.5, '#D4AF37');
-                          grad.addColorStop(1, '#AA7C11');
-                        } else {
-                          grad.addColorStop(0, '#F5F5F5');
-                          grad.addColorStop(0.5, '#C0C0C0');
-                          grad.addColorStop(1, '#808080');
-                        }
-                        ctx.fillStyle = grad;
-                        ctx.fill(clipPath);
-                        
-                        ctx.restore();
-                      };
-
-                      drawCorner(bookRightPx + offset - clipW, bookTopPx - offset, 0);
-                      drawCorner(bookRightPx + offset - clipW, bookBottomPx + offset - clipH, 90);
-                    }
-                  } catch (e) {
-                    console.error('Failed to draw corners on canvas', e);
-                  }
-                }
-
-                fullPreviewUrl = canvas.toDataURL('image/png', 0.9);
-              }
-            }
-          } catch (e) {
-            console.error('Native canvas composition failed', e);
+        if (!fullPreviewUrl) {
+          const result = await generateProof();
+          if (result) {
+            fullPreviewUrl = result.fullPreviewUrl;
+            finalBounds = result.imageBounds;
+            if (result.leftPercent !== undefined) leftPercent = result.leftPercent;
+            if (result.topPercent !== undefined) topPercent = result.topPercent;
+            if (result.widthPercent !== undefined) widthPercent = result.widthPercent;
           }
+        } else {
+           if (customization.leftPercent !== undefined) leftPercent = customization.leftPercent;
+           if (customization.topPercent !== undefined) topPercent = customization.topPercent;
+           if (customization.widthPercent !== undefined) widthPercent = customization.widthPercent;
         }
-      }
+      } // closing the if(customization.enabled) block!
 
       await addItem({
         productId: String(product.id),
@@ -533,6 +584,9 @@ export const ProductDetailClient = ({
                 onPriceChange={handlePriceChange}
                 activeColorHex={activeColorHex}
                 activeImageUrl={activeSrc}
+                onGenerateProof={generateProof}
+                onAddToCart={handleAddToCart}
+                isAdding={isAdding}
               />
             </div>
           )}
