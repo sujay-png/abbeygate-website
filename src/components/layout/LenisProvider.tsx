@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactLenis, useLenis } from 'lenis/react';
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 function RouteChangeScroller() {
@@ -23,7 +23,9 @@ function RouteChangeScroller() {
 export function LenisProvider({ children }: { children: ReactNode }) {
   return (
     <ReactLenis root>
-      <RouteChangeScroller />
+      <Suspense fallback={null}>
+        <RouteChangeScroller />
+      </Suspense>
       {children}
     </ReactLenis>
   );
