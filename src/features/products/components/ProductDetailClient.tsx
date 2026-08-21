@@ -6,7 +6,7 @@ import type { StoreProduct, PriceTier } from '../types/store-product';
 import { ProductCustomizer, type CustomizationState } from './ProductCustomizer';
 import { ProductCustomizationOverlay } from './ProductCustomizationOverlay';
 import { useCart } from '@/features/cart/context/CartContext';
-import { CUSTOMIZATION_MIN_QTY, formatGBP, isGiftsProduct, VAT_RATE } from '../utils/pricing';
+import { CUSTOMIZATION_MIN_QTY, formatGBP, isGiftsProduct, VAT_RATE, calculateProductPrice } from '../utils/pricing';
 import { getLogoAnchors, getImageBoundingBox } from '../utils/product-helpers';
 import { getConfiguredImageBounds } from '../utils/product-image-bounds';
 import { TrustIndicators } from '@/components/home/TrustIndicators';
@@ -105,6 +105,31 @@ export const ProductDetailClient = ({
   const handleCustomizationChange = useCallback((state: CustomizationState) => {
     setCustomization(state);
   }, []);
+
+  useEffect(() => {
+    // If we're customizing, ProductCustomizer handles the price updates.
+    if (isCustomizingStarted) return;
+    
+    const result = calculateProductPrice({
+      quantity,
+      basePrice,
+      tiers,
+      customizationEnabled: false, // Not customizing yet
+      isGifts
+    });
+    
+    setPriceDetails(prev => {
+      if (prev.unitPrice === result.unitPrice && prev.totalPrice === result.totalPrice) return prev;
+      return {
+        unitPrice: result.unitPrice,
+        totalPrice: result.totalPrice,
+        statusText: result.statusText,
+        statusColor: result.statusColor,
+        discountRate: result.discountRate,
+        discountLabel: result.discountLabel
+      };
+    });
+  }, [quantity, basePrice, tiers, isGifts, isCustomizingStarted]);
 
   const handlePositionChange = useCallback((position: { x: number; y: number }) => {
     setCustomization(prev => ({ ...prev, logoPosition: position }));
@@ -816,9 +841,9 @@ export const ProductDetailClient = ({
 
           {/* Quantity Box */}
           <div className="bg-transparent border border-gray-200 rounded-lg p-5 flex flex-col gap-4 mt-2">
-            <div className="flex justify-between items-center border-b border-gray-200 pb-4">
-              <label className="text-[14px] font-bold text-[#1F2124]">Quantity</label>
-              <div className="flex items-center gap-3">
+            <div className="flex justify-between items-start">
+              <label className="text-[14px] font-bold text-[#1F2124] mt-2">Quantity</label>
+              <div className="flex flex-col items-end gap-1.5">
                 <div className="flex items-center border border-gray-300 bg-white rounded-md overflow-hidden h-[36px]">
                   <button type="button" className="px-3 hover:bg-gray-100 text-gray-600 transition" onClick={() => setQuantity(Math.max(isGifts ? 1 : CUSTOMIZATION_MIN_QTY, quantity - 1))}>-</button>
                   <input
@@ -833,17 +858,9 @@ export const ProductDetailClient = ({
                   />
                   <button type="button" className="px-3 hover:bg-gray-100 text-gray-600 transition" onClick={() => setQuantity(quantity + 1)}>+</button>
                 </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <div className="text-[15px] font-bold text-[#1F2124]">
-                {formatGBP(priceDetails.unitPrice)} <span className="text-[13px] font-normal text-gray-500">per unit (ex VAT)</span>
-              </div>
-            </div>
-            <div className="flex justify-end pb-2">
-              <div className="text-[14px] font-bold text-[#1F2124]">
-                {formatGBP(priceDetails.unitPrice * (1 + VAT_RATE))} <span className="text-[12px] font-normal text-gray-500">per unit (inc. VAT)</span>
+                <div className="text-[15px] font-bold text-[#1F2124]">
+                  {formatGBP(priceDetails.unitPrice)} <span className="text-[13px] font-normal text-gray-500">per unit (ex VAT)</span>
+                </div>
               </div>
             </div>
 
