@@ -534,7 +534,7 @@ export const ProductCustomizer = ({
                 disabled={isGeneratingProof}
                 className="px-8 py-3 bg-[#4a346e] text-white font-bold rounded-lg hover:bg-[#3d2a5a] transition-colors disabled:opacity-50"
              >
-                Review &rarr;
+                Proceed to Review &rarr;
              </button>
           </div>
         </div>
