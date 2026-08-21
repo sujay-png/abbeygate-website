@@ -44,7 +44,30 @@ export async function storeFetch<T>(
     );
   }
 
-  return response.json() as Promise<T>;
+  const text = await response.text();
+  try {
+    return JSON.parse(text) as T;
+  } catch (err) {
+    const jsonStart = text.indexOf('{');
+    const jsonArrayStart = text.indexOf('[');
+    
+    let startIndex = -1;
+    if (jsonStart !== -1 && jsonArrayStart !== -1) {
+      startIndex = Math.min(jsonStart, jsonArrayStart);
+    } else if (jsonStart !== -1) {
+      startIndex = jsonStart;
+    } else if (jsonArrayStart !== -1) {
+      startIndex = jsonArrayStart;
+    }
+
+    if (startIndex !== -1) {
+      try {
+        const maybeJson = text.slice(startIndex);
+        return JSON.parse(maybeJson) as T;
+      } catch (innerErr) {}
+    }
+    throw new Error(`WooCommerce Store API returned invalid JSON. Response preview: ${text.substring(0, 200)}`);
+  }
 }
 
 export async function storeFetchWithHeaders<T>(

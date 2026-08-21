@@ -26,6 +26,11 @@ const ImageWithFallback = ({ src, fallbackSrc = '/images/logo/abbeygate-logo.png
     <Image
       {...rest}
       src={imgSrc || fallbackSrc}
+      {...(!rest.fill && !rest.width ? { width: 0, height: 0, sizes: "100vw" } : {})}
+      style={{
+        ...rest.style,
+        ...(!rest.fill ? { width: '100%', height: 'auto' } : {})
+      }}
       onError={() => {
         if (imgSrc !== fallbackSrc) {
           setImgSrc(fallbackSrc);
