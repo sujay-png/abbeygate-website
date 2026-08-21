@@ -229,9 +229,9 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
 
       // A true physical edge is a sharp transition over the whole length of the book.
       // Soft drop shadows have spread-out gradients.
-      // 15% of the max spike reliably isolates the sharp edge from the fuzzy shadow.
-      const threshX = maxSpikeX * 0.15;
-      const threshY = maxSpikeY * 0.15;
+      // 35% of the max spike reliably isolates the sharp edge from the fuzzy shadow.
+      const threshX = maxSpikeX * 0.35;
+      const threshY = maxSpikeY * 0.35;
 
       minX = marginX; maxX = canvas.width - marginX;
       minY = marginY; maxY = canvas.height - marginY;

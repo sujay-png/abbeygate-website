@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useLenis } from 'lenis/react';
 import Image from 'next/image';
 import type { StoreProduct, PriceTier } from '../types/store-product';
 import { ProductCustomizer, type CustomizationState } from './ProductCustomizer';
@@ -90,6 +91,7 @@ export const ProductDetailClient = ({
   });
   const [isAdding, setIsAdding] = useState(false);
   const [imageBounds, setImageBounds] = useState<{top: number, bottom: number, left: number, right: number} | null>(null);
+  const [imageAspectRatio, setImageAspectRatio] = useState<number>(1);
 
   const handlePriceChange = useCallback((result: any) => {
     setPriceDetails({
@@ -150,6 +152,14 @@ export const ProductDetailClient = ({
 
   useEffect(() => {
     if (activeSrc) {
+      const img = new window.Image();
+      img.onload = () => {
+        if (img.height > 0) {
+          setImageAspectRatio(img.width / img.height);
+        }
+      };
+      img.src = activeSrc;
+
       const configuredBounds = getConfiguredImageBounds(activeSrc);
       if (configuredBounds) {
         setImageBounds(configuredBounds);
@@ -410,15 +420,21 @@ export const ProductDetailClient = ({
       widthPercent
     };
   };
+  const lenis = useLenis();
   const handleAddToCart = async () => {
     // If not customizing yet, the button will act as "Start customising"
     if (customization.enabled && !isCustomizingStarted && !isGifts) {
       setIsCustomizingStarted(true);
-      // The customizer is below the gallery on mobile, so scrolling to the
-      // page top leaves it out of view. Wait for it to render, then target it.
-      requestAnimationFrame(() => {
-        customizerSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
+      setTimeout(() => {
+        const gallery = document.getElementById('product-gallery-container');
+        if (gallery) {
+          if (lenis) {
+            lenis.scrollTo(gallery, { offset: -120 });
+          } else {
+            gallery.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+      }, 100);
       return;
     }
 
@@ -518,7 +534,7 @@ export const ProductDetailClient = ({
         style={{ backgroundColor: '#ffffff', color: '#1F2124' }}
       >
         {/* Left: gallery and customizer */}
-        <div className="relative z-10 lg:sticky lg:top-32 self-start flex flex-col gap-8 w-full">
+        <div id="product-gallery-container" className={`relative z-10 self-start flex flex-col gap-8 w-full scroll-mt-[120px] ${!isCustomizingStarted ? 'lg:sticky lg:top-[120px]' : ''}`}>
           <div className="flex flex-col md:flex-row gap-4 lg:gap-6 w-full">
             {product.images.length > 1 && (
               <div className="flex md:flex-col gap-4 overflow-x-auto md:overflow-y-auto md:max-h-[600px] pb-2 md:pb-0 scrollbar-hide shrink-0 order-2 md:order-1">
@@ -547,8 +563,8 @@ export const ProductDetailClient = ({
             )}
 
             <div
-              className="relative w-full flex-1 overflow-hidden rounded-xl border border-gray-100 flex items-center justify-center p-4 group order-1 md:order-2"
-              style={{ aspectRatio: '1 / 1', backgroundColor: '#ffffff' }}
+              className="relative w-full max-w-[500px] mx-auto flex-1 overflow-hidden rounded-xl border border-gray-100 flex items-center justify-center p-4 group order-1 md:order-2"
+              style={{ aspectRatio: imageAspectRatio, backgroundColor: '#ffffff' }}
             >
               <button
                 type="button"
@@ -675,14 +691,14 @@ export const ProductDetailClient = ({
         {/* Customisation order sidebar: replaces the product-detail panel once
             the customer starts the multi-step customisation flow. */}
         {isCustomizingStarted && customization.enabled && (
-          <aside className="relative z-20 flex h-fit flex-col gap-5 lg:sticky lg:top-32">
+          <aside className="relative z-20 flex h-fit flex-col gap-4">
             <div>
               <p className="text-[13px] font-bold uppercase tracking-widest text-[#4a346e]">{product.categories?.[0]?.name ? `${product.categories[0].name} collection` : 'Collection'}</p>
               <h2 className="mt-2 text-2xl font-bold leading-tight text-[#1F2124] lg:text-[32px]">{product.name}</h2>
-              {product.sku && <p className="mt-2 text-[13px] text-gray-500">SKU: {product.sku}</p>}
+              {product.sku && <p className="mt-1 text-[13px] text-gray-500">SKU: {product.sku}</p>}
             </div>
 
-            <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-transparent p-5">
+            <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-transparent px-4 py-3">
               <span className="text-[14px] font-bold text-[#1F2124]">Quantity</span>
               <div className="flex h-9 items-center overflow-hidden rounded-md border border-gray-300 bg-white">
                 <button type="button" aria-label="Decrease quantity" className="px-3 text-gray-600 hover:bg-gray-100" onClick={() => setQuantity(Math.max(CUSTOMIZATION_MIN_QTY, quantity - 1))}>−</button>
@@ -691,12 +707,12 @@ export const ProductDetailClient = ({
               </div>
             </div>
 
-            <dl className="rounded-lg border border-gray-200 bg-transparent p-5 space-y-2.5 text-[13px] text-gray-600">
+            <dl className="rounded-lg border border-gray-200 bg-transparent px-4 py-3 space-y-1.5 text-[13px] text-gray-600">
               <div className="flex justify-between gap-4"><dt>Unit price (ex VAT)</dt><dd className="font-medium text-[#1F2124]">{formatGBP(priceDetails.unitPrice)}</dd></div>
               <div className="flex justify-between gap-4"><dt>Branding</dt><dd className="text-right font-medium text-[#1F2124]">{customization.blockingType}</dd></div>
               <div className="flex justify-between gap-4"><dt>Corner edges</dt><dd className="font-medium text-[#1F2124]">{customization.cornerEdges}</dd></div>
-              <div className="flex justify-between gap-4 border-t border-gray-200 pt-3"><dt>Subtotal (ex VAT)</dt><dd className="font-semibold text-[#1F2124]">{formatGBP(priceDetails.totalPrice)}</dd></div>
-              <div className="flex justify-between gap-4 bg-[#eff5f4] -mx-5 -mb-5 mt-4 p-5 rounded-b-lg border-t border-gray-200"><dt className="font-bold text-[#1F2124]">Including VAT (20%)</dt><dd className="font-bold text-[#1F2124]">{formatGBP(priceDetails.totalPrice * (1 + VAT_RATE))}</dd></div>
+              <div className="flex justify-between gap-4 border-t border-gray-200 pt-2 mt-2"><dt>Subtotal (ex VAT)</dt><dd className="font-semibold text-[#1F2124]">{formatGBP(priceDetails.totalPrice)}</dd></div>
+              <div className="flex justify-between gap-4 bg-[#eff5f4] -mx-4 -mb-3 mt-3 px-4 py-3 rounded-b-lg border-t border-gray-200"><dt className="font-bold text-[#1F2124]">Including VAT (20%)</dt><dd className="font-bold text-[#1F2124]">{formatGBP(priceDetails.totalPrice * (1 + VAT_RATE))}</dd></div>
             </dl>
 
             {!isGifts && tiers.length > 0 && (() => {
@@ -707,10 +723,10 @@ export const ProductDetailClient = ({
               if (!nextTier || savings <= 0) return null;
 
               return (
-                <div className="mt-5 rounded-lg border border-[#d2e0de] bg-[#e6f0ef] p-4">
+                <div className="mt-2 rounded-lg border border-[#d2e0de] bg-[#e6f0ef] px-4 py-3">
                   <p className="text-[14px] font-bold text-[#1f6d63]">You could save {formatGBP(savings)}</p>
-                  <p className="mt-1 text-[12px] text-gray-600">by ordering {nextTier.min} units ({formatGBP(nextTier.price)} per unit, ex VAT)</p>
-                  <button type="button" onClick={() => setQuantity(nextTier.min)} className="mt-3 w-full rounded-md border border-[#1f6d63] bg-white px-3 py-2 text-[12px] font-bold text-[#1f6d63] transition-colors hover:bg-[#d2e0de]">
+                  <p className="text-[12px] text-gray-600 mb-2">by ordering {nextTier.min} units ({formatGBP(nextTier.price)} per unit, ex VAT)</p>
+                  <button type="button" onClick={() => setQuantity(nextTier.min)} className="w-full rounded-md border border-[#1f6d63] bg-white px-3 py-1.5 text-[12px] font-bold text-[#1f6d63] transition-colors hover:bg-[#d2e0de]">
                     Increase to {nextTier.min} units →
                   </button>
                 </div>
@@ -723,20 +739,22 @@ export const ProductDetailClient = ({
             <p className="mt-3 text-[12px] leading-relaxed text-gray-500">All prices shown exclude VAT. Applicable VAT is calculated at checkout. A final digital proof is provided for approval before production.</p>
 
             {!isGifts && tiers.length > 0 && (
-              <div className="mt-5 border-t border-gray-200 pt-5">
-                <h3 className="mb-3 text-[12px] font-bold tracking-widest text-[#1F2124]">PRICE BREAKS (PER UNIT)</h3>
-                <div className="overflow-hidden rounded-lg border border-gray-200">
+              <div className="mt-1 border border-gray-200 rounded-lg bg-white overflow-hidden">
+                <div className="flex justify-between items-center font-bold px-4 py-3 text-[12px] tracking-widest text-[#1F2124] uppercase bg-gray-50 border-b border-gray-200">
+                  <span>PRICE BREAKS (PER UNIT)</span>
+                </div>
+                <div>
                   <table className="w-full text-left text-[12px]">
                     <thead className="bg-white text-gray-500">
-                      <tr><th className="px-3 py-2.5 font-medium">Quantity</th><th className="px-3 py-2.5 text-right font-medium">Price (ex VAT)</th></tr>
+                      <tr><th className="px-4 py-2 font-medium">Quantity</th><th className="px-4 py-2 text-right font-medium">Price (ex VAT)</th></tr>
                     </thead>
                     <tbody>
                       {tiers.map(tier => {
                         const active = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
                         return (
                           <tr key={tier.min} onClick={() => setQuantity(tier.min)} className={`cursor-pointer border-t border-gray-200 ${active ? 'bg-[#4a346e] font-bold text-white' : 'text-[#1F2124] hover:bg-gray-50'}`}>
-                            <td className="px-3 py-2.5">{tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}</td>
-                            <td className="px-3 py-2.5 text-right">{formatGBP(tier.price)}</td>
+                            <td className="px-4 py-2.5">{tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}</td>
+                            <td className="px-4 py-2.5 text-right">{formatGBP(tier.price)}</td>
                           </tr>
                         );
                       })}
@@ -749,7 +767,7 @@ export const ProductDetailClient = ({
         )}
 
         {/* Right: normal product details */}
-        <div className={`relative z-20 flex flex-col gap-5 ${isCustomizingStarted && customization.enabled ? 'hidden' : ''}`} style={{ backgroundColor: '#ffffff' }}>
+        <div className={`relative z-20 flex flex-col gap-4 ${isCustomizingStarted && customization.enabled ? 'hidden' : ''}`} style={{ backgroundColor: '#ffffff' }}>
 
           <div>
             <div className="text-[13px] font-bold tracking-widest text-[#4a346e] uppercase mb-2">
@@ -840,9 +858,9 @@ export const ProductDetailClient = ({
           )}
 
           {/* Quantity Box */}
-          <div className="bg-transparent border border-gray-200 rounded-lg p-5 flex flex-col gap-4 mt-2">
+          <div className="bg-transparent border border-gray-200 rounded-lg px-4 py-4 flex flex-col gap-3">
             <div className="flex justify-between items-start">
-              <label className="text-[14px] font-bold text-[#1F2124] mt-2">Quantity</label>
+              <label className="text-[14px] font-bold text-[#1F2124] mt-1">Quantity</label>
               <div className="flex flex-col items-end gap-1.5">
                 <div className="flex items-center border border-gray-300 bg-white rounded-md overflow-hidden h-[36px]">
                   <button type="button" className="px-3 hover:bg-gray-100 text-gray-600 transition" onClick={() => setQuantity(Math.max(isGifts ? 1 : CUSTOMIZATION_MIN_QTY, quantity - 1))}>-</button>
@@ -905,13 +923,13 @@ export const ProductDetailClient = ({
                 const potentialSavings = (priceDetails.unitPrice - nextTier.price) * nextTier.min;
                 if (potentialSavings > 0) {
                   return (
-                    <div className="bg-[#e6f0ef] rounded-lg p-4 mb-2 mt-2 border border-[#d2e0de]">
+                    <div className="bg-[#e6f0ef] rounded-lg px-4 py-3 mt-1 border border-[#d2e0de]">
                       <div className="font-bold text-[#1f6d63] text-[14px]">You could save {formatGBP(potentialSavings)}</div>
-                      <div className="text-[13px] text-gray-600 mb-3">by ordering {nextTier.min} units ({formatGBP(nextTier.price)} per unit, ex VAT)</div>
+                      <div className="text-[13px] text-gray-600 mb-2">by ordering {nextTier.min} units ({formatGBP(nextTier.price)} per unit, ex VAT)</div>
                       <button
                         type="button"
                         onClick={() => setQuantity(nextTier.min)}
-                        className="w-full py-2 bg-white rounded-md border border-[#1f6d63] text-[#1f6d63] text-[13px] font-bold hover:bg-[#d2e0de] transition"
+                        className="w-full py-1.5 bg-white rounded-md border border-[#1f6d63] text-[#1f6d63] text-[13px] font-bold hover:bg-[#d2e0de] transition"
                       >
                         Increase to {nextTier.min} units &rarr;
                       </button>
@@ -942,14 +960,16 @@ export const ProductDetailClient = ({
 
           {/* VOLUME PRICING TABLE */}
           {!isGifts && tiers.length > 0 && (
-            <div className="mt-2">
-              <h3 className="text-[14px] font-bold tracking-widest text-[#1F2124] uppercase mb-4">PRICE BREAKS (PER UNIT)</h3>
-              <div className="overflow-hidden bg-transparent border border-gray-200 rounded-lg">
-                <table className="w-full text-left text-[14px]">
-                  <thead>
-                    <tr className="border-b border-gray-200 text-gray-500">
-                      <th className="py-3 px-4 font-normal w-1/2">Quantity</th>
-                      <th className="py-3 px-4 font-normal w-1/2 text-right">Price per unit (ex VAT)</th>
+            <div className="mt-1 border border-gray-200 rounded-lg bg-white overflow-hidden">
+              <div className="flex justify-between items-center font-bold px-4 py-3 text-[13px] tracking-widest text-[#1F2124] uppercase bg-gray-50 border-b border-gray-200">
+                <span>PRICE BREAKS (PER UNIT)</span>
+              </div>
+              <div>
+                <table className="w-full text-left text-[13px]">
+                  <thead className="bg-white text-gray-500">
+                    <tr>
+                      <th className="py-2.5 px-4 font-medium w-1/2">Quantity</th>
+                      <th className="py-2.5 px-4 font-medium w-1/2 text-right">Price (ex VAT)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -959,13 +979,13 @@ export const ProductDetailClient = ({
                         <tr
                           key={tier.min}
                           onClick={() => setQuantity(tier.min)}
-                          className={`border-b last:border-b-0 border-gray-200 cursor-pointer transition-colors ${isActive ? 'bg-[#4a346e] text-white font-bold' : 'hover:bg-gray-100 text-[#1F2124]'
+                          className={`border-t border-gray-200 cursor-pointer transition-colors ${isActive ? 'bg-[#4a346e] text-white font-bold' : 'hover:bg-gray-100 text-[#1F2124]'
                             }`}
                         >
-                          <td className="py-3 px-4">
+                          <td className="py-2.5 px-4">
                             {tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}
                           </td>
-                          <td className="py-3 px-4 text-right">
+                          <td className="py-2.5 px-4 text-right">
                             {formatGBP(tier.price)}
                           </td>
                         </tr>
