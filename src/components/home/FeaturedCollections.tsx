@@ -90,7 +90,7 @@ export const FeaturedCollections = () => {
             <h3 className="text-xl md:text-2xl font-bold font-sans text-black mb-4">
               Harrogate Collection
             </h3>
-            <Button href="/collections/harrogate" variant="primary">
+            <Button href="/collection/harrogate" variant="primary">
               Shop Collection
             </Button>
           </div>
@@ -103,7 +103,7 @@ export const FeaturedCollections = () => {
             <h3 className="text-xl md:text-2xl font-bold font-sans text-black mb-4">
               Dorchester Collection
             </h3>
-            <Button href="/collections/dorchester" variant="primary">
+            <Button href="/collection/dorchester" variant="primary">
               Shop Collection
             </Button>
           </div>

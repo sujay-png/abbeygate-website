@@ -39,6 +39,10 @@ export const Navbar = () => {
   const scrollPositionRef = useRef(0);
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (pathname === '/search') {
       const q = urlSearchParams.get('q');
       if (q) setSearchQuery(q);
@@ -63,7 +67,6 @@ export const Navbar = () => {
       document.removeEventListener('pointerdown', handleClickOutside, true);
     };
   }, []);
-
 
   useEffect(() => {
     if (isMobileMenuOpen) {
@@ -163,7 +166,7 @@ export const Navbar = () => {
                 <Link
                   href={item.href}
                   className={`text-[16px] tracking-wide whitespace-nowrap transition-colors duration-300 ${
-                    activeMenuId === item.id ? 'text-black' : 'text-[#1F2124] hover:text-gray-500'
+                    activeMenuId === item.id ? 'text-black' : 'text-gray-600 hover:text-black'
                   }`}
                 >
                   {item.label}
@@ -346,8 +349,6 @@ export const Navbar = () => {
               </button>
             </div>
 
-   
- 
             <nav
               className="flex-1 overflow-y-auto overscroll-contain px-6 py-6"
               style={{ WebkitOverflowScrolling: 'touch' }}
@@ -398,7 +399,6 @@ export const Navbar = () => {
                             style={{ willChange: 'height' }}
                             className="overflow-hidden"
                           >
-                
                             <motion.div
                               variants={COLUMN_VARIANT}
                               initial="hidden"
