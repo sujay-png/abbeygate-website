@@ -8,6 +8,8 @@ import {
   formatGBP,
   isFoilBlockedProduct,
   isGiftsProduct,
+  LOGO_BLOCKING_PRICES,
+  LOGO_CUSTOMIZATION_FEE
 } from '../utils/pricing';
 import { processLogo } from '../utils/image-processing';
 
@@ -76,6 +78,12 @@ export const ProductCustomizer = ({
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [isGeneratingProof, setIsGeneratingProof] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const getExtraCostLabel = (type: string) => {
+    const price = LOGO_BLOCKING_PRICES[type.toLowerCase()] ?? LOGO_CUSTOMIZATION_FEE;
+    const extra = price - LOGO_CUSTOMIZATION_FEE;
+    return `From ${formatGBP(extra)}`;
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -229,7 +237,8 @@ export const ProductCustomizer = ({
                     )}
                  </div>
                  <div className="font-bold text-[#1F2124]">Foil blocked</div>
-                 <div className="text-[12px] text-gray-500 mt-1 mb-4 leading-relaxed">Metallic foil stamped into the cover for a premium finish.</div>
+                 <div className="text-[12px] text-gray-500 mt-1 mb-2 leading-relaxed">Metallic foil stamped into the cover for a premium finish.</div>
+                 <div className="text-[12px] font-bold text-[#4a346e] mb-4">{getExtraCostLabel('Foil blocked')}</div>
                  
                  {customization.blockingType === 'Foil blocked' && (
                     <div className="mt-auto pt-3 border-t border-gray-200/60" onClick={e => e.stopPropagation()}>
@@ -307,7 +316,8 @@ export const ProductCustomizer = ({
                     )}
                  </div>
                  <div className="font-bold text-[#1F2124]">Blind debossed</div>
-                 <div className="text-[12px] text-gray-500 mt-1 leading-relaxed">Logo is pressed directly into the material for a subtle effect.</div>
+                 <div className="text-[12px] text-gray-500 mt-1 mb-2 leading-relaxed">Logo is pressed directly into the material for a subtle effect.</div>
+                 <div className="text-[12px] font-bold text-[#4a346e] mb-4">{getExtraCostLabel('Embossed')}</div>
               </div>
 
               {/* UV Print Card */}
@@ -334,7 +344,8 @@ export const ProductCustomizer = ({
                     )}
                  </div>
                  <div className="font-bold text-[#1F2124]">UV Print</div>
-                 <div className="text-[12px] text-gray-500 mt-1 leading-relaxed">Full colour digital printing directly onto the product surface.</div>
+                 <div className="text-[12px] text-gray-500 mt-1 mb-2 leading-relaxed">Full colour digital printing directly onto the product surface.</div>
+                 <div className="text-[12px] font-bold text-[#4a346e] mb-4">{getExtraCostLabel('UV Print')}</div>
               </div>
 
             </div>
@@ -651,7 +662,8 @@ export const ProductCustomizer = ({
           
           <button
              type="button"
-             className="w-full py-3 bg-white text-[#4a346e] border border-[#4a346e] font-bold rounded-lg hover:bg-gray-50 transition-colors"
+             onClick={() => window.location.href = '/diaries'}
+             className="w-full py-3 bg-white text-[#4a346e] border border-[#4a346e] font-bold rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
           >
              Continue Shopping
           </button>
