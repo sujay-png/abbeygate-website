@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ProductCustomizer } from './ProductCustomizer';
-import { vi } from 'vitest';
-import type { StoreProduct } from '../../types/store-product';
+import { vi, describe, it, expect } from 'vitest';
+import type { StoreProduct } from '../types/store-product';
 
 describe('ProductCustomizer', () => {
   const mockProduct = {
@@ -23,9 +23,9 @@ describe('ProductCustomizer', () => {
     enabled: true,
     blockingType: 'Foil blocked' as const,
     foilColor: 'Gold',
-    logoFile: null,
+    logoFile: undefined,
     logoPreviewUrl: 'data:image/png;base64,mock',
-    logoPosition: { id: 'top-left', label: 'top-left' },
+    logoPosition: { id: 'top-left', label: 'top-left', x: 0, y: 0 },
     logoScale: 0.9,
     cornerEdges: 'None' as const,
     fullPreviewUrl: 'data:image/png;base64,mock'
@@ -41,6 +41,7 @@ describe('ProductCustomizer', () => {
     onPriceChange: vi.fn(),
     onGenerateProof: vi.fn().mockResolvedValue({}),
     onAddToCart: vi.fn(),
+    onQuantityChange: vi.fn(),
     isAdding: false
   };
 
@@ -57,7 +58,7 @@ describe('ProductCustomizer', () => {
     const nextToExtras = screen.getByRole('button', { name: /Proceed to Extras/i });
     fireEvent.click(nextToExtras);
     
-    const nextToReview = screen.getByRole('button', { name: /Review/i });
+    const nextToReview = screen.getByRole('button', { name: /Proceed to Review/i });
     fireEvent.click(nextToReview);
     
     // Now we should be on Step 4
@@ -82,15 +83,16 @@ describe('ProductCustomizer', () => {
       ...mockCustomization,
       blockingType: 'Embossed' as const,
       foilColor: undefined,
-      logoPosition: { id: 'center', label: 'center' },
+      logoPosition: { id: 'center', label: 'center', x: 0, y: 0 },
       logoScale: 1.2,
-      cornerEdges: 'Gold' as const
+      cornerEdges: 'Gold' as const,
+      logoFile: undefined
     };
     
     const { rerender } = render(<ProductCustomizer {...mockProps} />);
     fireEvent.click(screen.getByRole('button', { name: /Proceed to Position/i }));
     fireEvent.click(screen.getByRole('button', { name: /Proceed to Extras/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Review/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Proceed to Review/i }));
     
     // Rerender with updated props to simulate parent state change
     rerender(<ProductCustomizer {...mockProps} customization={updatedCustomization} />);

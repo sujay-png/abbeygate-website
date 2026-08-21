@@ -39,7 +39,7 @@ describe('generateDigitalProof', () => {
     enabled: true,
     blockingType: 'Foil blocked' as const,
     foilColor: 'Gold',
-    logoPosition: { id: 'top-left', label: 'top-left' },
+    logoPosition: { id: 'top-left', label: 'top-left', x: 0, y: 0 },
     logoScale: 0.9,
     cornerEdges: 'None' as const,
     fullPreviewUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
@@ -50,7 +50,7 @@ describe('generateDigitalProof', () => {
     
     // Dynamically import pdf-parse to avoid ESM/CJS issues in Vitest
     const pdfParseMod = await import('pdf-parse');
-    const pdfParse = pdfParseMod.default || pdfParseMod;
+    const pdfParse = (pdfParseMod as any).default || pdfParseMod;
     
     // Parse the PDF buffer
     const pdfData = await pdfParse(Buffer.from(arrayBuffer));
