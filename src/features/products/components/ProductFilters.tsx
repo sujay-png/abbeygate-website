@@ -6,6 +6,7 @@ import type { StoreAttribute, StoreAttributeTerm, StoreProduct } from '../types/
 import { FILTER_TAXONOMY_MAP, type FilterParamKey } from '../types/store-product';
 import type { FilterConfig } from '@/data/category-routes';
 import { countProductsForTerm, filtersToSearchParams } from '../utils/product-helpers';
+import { Settings2, X, ChevronRight, ChevronDown } from 'lucide-react';
 
 type ProductFiltersProps = {
   products: StoreProduct[];
@@ -40,6 +41,11 @@ const ProductFiltersInner = ({
   const searchParams = useSearchParams();
   const filterTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [openDropdown, setOpenDropdown] = useState<FilterParamKey | null>(null);
+  
+  // Mobile Modal States
+  const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
+  const [mobileOpenSection, setMobileOpenSection] = useState<FilterParamKey | null>(null);
+  
   const [isLoading, setIsLoading] = useState(false);
 
   const selectedFilters = useMemo(() => {
@@ -139,43 +145,77 @@ const ProductFiltersInner = ({
       if (filterTimeout.current) clearTimeout(filterTimeout.current);
     };
   }, []);
+  
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isMobileModalOpen) {
+       document.body.style.overflow = 'hidden';
+    } else {
+       document.body.style.overflow = 'auto';
+    }
+    return () => { document.body.style.overflow = 'auto'; };
+  }, [isMobileModalOpen]);
+
+  const activeFiltersMarkup = (
+    <div className="flex flex-wrap gap-2 flex-1">
+      {Object.entries(selectedFilters).flatMap(([key, slugs]) =>
+        slugs.map((slug) => (
+          <button
+            key={`${key}-${slug}`}
+            type="button"
+            onClick={() => removeFilter(slug)}
+            className="flex items-center gap-2 bg-[#f1f1f1] hover:bg-[#e2e2e2] px-3.5 py-1.5 rounded-full text-[13px] text-[#444] transition-colors"
+          >
+            {getTermName(key as FilterParamKey, slug)}
+            <span className="font-bold text-[#888]">×</span>
+          </button>
+        )),
+      )}
+      {activeCount > 0 && (
+        <button
+          type="button"
+          onClick={clearAll}
+          className="text-[13px] text-[#6F4086] underline self-center ml-2"
+        >
+          Clear All
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <div className={`mb-10 bg-white ${isLoading ? 'opacity-60 transition-opacity' : ''}`}>
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+      
+      {/* Mobile Top Bar */}
+      <div className="flex md:hidden items-center justify-between gap-4 mb-4 px-1">
+        <span className="text-[15px] text-[#444] font-medium">
+          {resultCount ?? products.length} products
+        </span>
+        <button 
+          onClick={() => setIsMobileModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 border border-[#ddd] rounded-md font-bold text-[#444] hover:bg-gray-50 transition-colors shadow-sm"
+        >
+          <Settings2 className="w-4 h-4" />
+          Filter
+        </button>
+      </div>
+      
+      {/* Mobile Active Filters */}
+      <div className="md:hidden mb-4 px-1">
+         {activeFiltersMarkup}
+      </div>
+
+      {/* Desktop Top Bar */}
+      <div className="hidden md:flex flex-wrap items-center justify-between gap-4 mb-4">
         <h3 className="text-lg font-semibold text-[#333] m-0">Filters</h3>
-
-        <div className="flex flex-wrap gap-2 flex-1">
-          {Object.entries(selectedFilters).flatMap(([key, slugs]) =>
-            slugs.map((slug) => (
-              <button
-                key={`${key}-${slug}`}
-                type="button"
-                onClick={() => removeFilter(slug)}
-                className="flex items-center gap-2 bg-[#f1f1f1] hover:bg-[#e2e2e2] px-3.5 py-1.5 rounded-full text-[13px] text-[#444] transition-colors"
-              >
-                {getTermName(key as FilterParamKey, slug)}
-                <span className="font-bold text-[#888]">×</span>
-              </button>
-            )),
-          )}
-          {activeCount > 0 && (
-            <button
-              type="button"
-              onClick={clearAll}
-              className="text-[13px] text-[#6F4086] underline self-center ml-2"
-            >
-              Clear All
-            </button>
-          )}
-        </div>
-
+        {activeFiltersMarkup}
         <span className="text-sm text-[#666] font-medium">
           {resultCount ?? products.length} products
         </span>
       </div>
 
-      <div className="flex w-full border-t border-b border-[#ddd] bg-white">
+      {/* Desktop Horizontal Filters */}
+      <div className="hidden md:flex w-full border-t border-b border-[#ddd] bg-white">
         {(Object.keys(FILTER_TAXONOMY_MAP) as FilterParamKey[]).map((key) => {
           const disabled = isFilterDisabled(key);
           const attr = getAttributeForFilter(key);
@@ -251,6 +291,96 @@ const ProductFiltersInner = ({
           );
         })}
       </div>
+      
+      {/* Mobile Fullscreen Filter Modal */}
+      {isMobileModalOpen && (
+        <div className="fixed inset-0 z-[9999] bg-white md:hidden flex flex-col">
+          <div className="flex items-center justify-between p-4 border-b border-[#ddd]">
+            <h3 className="text-xl font-bold text-[#1F2124] m-0">Filters</h3>
+            <button onClick={() => setIsMobileModalOpen(false)} className="text-[#888] hover:text-[#333] transition-colors p-2">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto">
+             <div className="flex flex-col">
+               {(Object.keys(FILTER_TAXONOMY_MAP) as FilterParamKey[]).map((key) => {
+                 const disabled = isFilterDisabled(key);
+                 if (disabled) return null;
+                 
+                 const attr = getAttributeForFilter(key);
+                 const terms = attr ? (attributeTerms[attr.id] ?? []) : [];
+                 const taxonomy = FILTER_TAXONOMY_MAP[key];
+                 const isOpen = mobileOpenSection === key;
+
+                 return (
+                   <div key={key} className="border-b border-[#ddd] bg-white">
+                      <button 
+                        type="button"
+                        onClick={() => setMobileOpenSection(isOpen ? null : key)} 
+                        className="flex items-center justify-between w-full p-5 text-[16px] font-medium text-[#1F2124]"
+                      >
+                         {FILTER_LABELS[key]}
+                         {isOpen ? <ChevronDown className="w-5 h-5 text-[#888]" /> : <ChevronRight className="w-5 h-5 text-[#888]" />}
+                      </button>
+                      
+                      {isOpen && (
+                         <div className="px-5 pb-5 flex flex-col gap-4">
+                           {terms.map((term) => {
+                             const count = countProductsForTerm(products, taxonomy, term.slug, selectedFilters, key);
+                             if (count === 0 && !selectedFilters[key].includes(term.slug)) return null;
+                             
+                             const isChecked = selectedFilters[key].includes(term.slug);
+                             const isDisabled = count === 0 && !isChecked;
+                             
+                             return (
+                               <label
+                                 key={term.slug}
+                                 className={`flex items-center gap-3 text-[15px] text-[#444] cursor-pointer ${
+                                   isDisabled ? 'opacity-35 pointer-events-none' : ''
+                                 }`}
+                               >
+                                 <input
+                                   type="checkbox"
+                                   checked={isChecked}
+                                   disabled={isDisabled}
+                                   onChange={() => toggleFilter(key, term.slug)}
+                                   className="cursor-pointer w-5 h-5 rounded border-gray-300 text-[#4a346e] focus:ring-[#4a346e]"
+                                 />
+                                 <span className="flex-1">{term.name}</span>
+                                 <span className="text-[#888] text-[13px]">
+                                   ({count})
+                                 </span>
+                               </label>
+                             );
+                           })}
+                         </div>
+                      )}
+                   </div>
+                 );
+               })}
+             </div>
+          </div>
+          
+          <div className="p-5 border-t border-[#ddd] bg-white flex items-center justify-between gap-4 shrink-0 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+            <button 
+              type="button"
+              onClick={clearAll} 
+              className="text-[#1F2124] underline text-[15px] font-medium px-2 py-3 hover:text-[#4a346e] transition-colors"
+            >
+              Clear all
+            </button>
+            <button 
+              type="button"
+              onClick={() => setIsMobileModalOpen(false)} 
+              className="flex-1 bg-[#1F2124] text-white px-6 py-3.5 rounded-lg font-bold text-[15px] hover:bg-black transition-colors"
+            >
+              Apply Filters
+            </button>
+          </div>
+        </div>
+      )}
+      
     </div>
   );
 };

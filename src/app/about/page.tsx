@@ -12,13 +12,21 @@ export default function AboutPage() {
         title={aboutData.hero.title} 
         overline={aboutData.hero.overline}
         subtitle={aboutData.hero.subtitle}
-        backgroundImage={aboutData.hero.backgroundImage} 
+        backgroundImage={aboutData.hero.backgroundImage}
+        subtitleAlign="left"
       />
+      
+      <Container maxWidthClass="max-w-[1400px]">
+        <div className="flex justify-center -mt-2 mb-4">
+          <div className="w-12 h-1 bg-gray-200 rounded-full" />
+        </div>
+      </Container>
       
       <TextWithImageGrid 
         title={aboutData.madeInEngland.title}
         content={aboutData.madeInEngland.content}
         images={aboutData.madeInEngland.images}
+        className="!pt-6 md:!pt-10"
       />
 
       <Container maxWidthClass="max-w-[1400px]"><div className="border-b border-gray-200" /></Container>
