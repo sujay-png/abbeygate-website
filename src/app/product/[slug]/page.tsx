@@ -58,15 +58,63 @@ export default async function ProductPage({ params }: PageProps) {
         blue: '#2943a3',
         black: '#212322',
         'dark-blue': '#1a233a',
+        'feint-ruled-blue': '#354a65',
+        'biscuit': '#e2d3c1',
+        'rose-pink': '#dfc3c9',
+        'ocean-blue': '#486884',
+        'slate-grey': '#72787d',
+        'stone-grey': '#b0b2b1',
+        'forest-green': '#324a3e',
+        'navy': '#2b364a',
+        'mustard': '#c39540',
+        'teal': '#2b5f63',
+        'tan': '#b58b66',
+        'brown': '#5c4033',
+        'white': '#f8f8f8',
+        'cream': '#f4eedd',
+        'orange': '#c85a2f',
+        'yellow': '#e3b23c',
+        'gold': '#bf953f',
+        'silver': '#b0b0b0',
+        'pink': '#e5b0b9',
+        'grey': '#808080',
+        'gray': '#808080',
+        'light-blue': '#8eb6d6',
+        'charcoal': '#36454F',
+        'pewter': '#E9EAEC',
+        'sage-green': '#B2AC88',
+        'royal-blue': '#4169E1',
+        'light-pink': '#FFB6C1',
+        'violet': '#7F00FF',
+        'lime': '#32CD32',
+        'aqua': '#00FFFF',
+        'full-colour': '#ffffff',
       };
 
       const tagId = product.tags[0].id; // The grouping tag
       const { products: siblings } = await getStoreProducts({ tagId, perPage: 20 });
       
       colorVariants = siblings.map(sibling => {
+        const nameParts = sibling.name.split(', ');
+        const specificName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : null;
+        const specificSlug = specificName ? specificName.toLowerCase().replace(/\s+/g, '-') : null;
+
         const colorAttr = sibling.attributes.find(attr => attr.name === 'Colour' || attr.taxonomy === 'pa_colour');
-        const colorName = colorAttr?.terms[0]?.name || sibling.name;
-        const colorSlug = colorAttr?.terms[0]?.slug || 'black';
+        const attrName = colorAttr?.terms?.[0]?.name;
+        const attrSlug = colorAttr?.terms?.[0]?.slug;
+
+        const colorName = specificName || attrName || 'Selected';
+        
+        // Prioritize the exact specific color from the title for our hex dictionary,
+        // because WooCommerce pa_colour is often a broad filter (e.g. Biscuit is tagged as Brown)
+        let colorSlug = 'black';
+        if (specificSlug && COLOR_HEX_MAP[specificSlug]) {
+          colorSlug = specificSlug;
+        } else if (attrSlug) {
+          colorSlug = attrSlug;
+        } else if (specificSlug) {
+          colorSlug = specificSlug;
+        }
         
         return {
           name: colorName,

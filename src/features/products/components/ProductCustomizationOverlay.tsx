@@ -31,9 +31,16 @@ export const ProductCustomizationOverlay = ({
   const marginX = bookWidth * 0.08;
   const marginY = bookHeight * 0.05;
 
+  // Determine if product is a diary to avoid overlapping the pre-printed year (e.g. "2027")
+  const isDiary = product.categories?.some(c => 
+    c.name.toLowerCase().includes('diar') || c.slug.toLowerCase().includes('diar')
+  );
+  // Add an extra vertical offset for diaries (e.g. 15% of book height) so the logo sits below the year
+  const diaryTopOffset = isDiary ? (bookHeight * 0.15) : 0;
+
   const safeLeft = bookLeft + marginX;
   const safeRight = bookRight - marginX;
-  const safeTop = bookTop + marginY;
+  const safeTop = bookTop + marginY + diaryTopOffset;
   const safeBottom = bookBottom - marginY;
 
   const getAlignX = (align: 'left' | 'center' | 'right') => {
@@ -160,8 +167,8 @@ export const ProductCustomizationOverlay = ({
       {customization.cornerEdges !== 'None' && customization.cornerEdges && (
         <div style={{ position: 'absolute', top: '0', left: '0', width: '100%', height: '100%', zIndex: 15, pointerEvents: 'none' }}>
           {(() => {
-            // Shift brackets slightly outward by 0.4% so they "wrap around" the physical rounded corners
-            const offset = 0.4;
+            // Push brackets slightly outward by 0.2% to sit flush without clipping into the book
+            const offset = 0.2;
             return ([] as Array<{top?: number, bottom?: number, left?: number, right?: number, rotate: string}>).concat([
               { top: bookTop - offset, right: 100 - bookRight - offset, rotate: 'rotate-0' }, // top-right
               { bottom: 100 - bookBottom - offset, right: 100 - bookRight - offset, rotate: 'rotate-90' }, // bottom-right

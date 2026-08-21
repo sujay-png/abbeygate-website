@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLenis } from 'lenis/react';
 import type { StoreProduct, PriceTier } from '../types/store-product';
 import {
   calculateProductPrice,
@@ -96,6 +97,27 @@ export const ProductCustomizer = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const lenis = useLenis();
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    
+    // Use a short timeout to ensure React has fully rendered the new step's DOM
+    setTimeout(() => {
+      const gallery = document.getElementById('product-gallery-container');
+      if (gallery) {
+        if (lenis) {
+          lenis.scrollTo(gallery, { offset: -120 });
+        } else {
+          gallery.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    }, 100);
+  }, [step, lenis]);
 
   const [priceResult, setPriceResult] = useState(() =>
     calculateProductPrice({
