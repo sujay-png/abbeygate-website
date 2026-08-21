@@ -14,7 +14,7 @@ const CATEGORIES = [
     title: "Journals & Notebooks",
     image:
       "/images/categories/notebooks-journals.webp",
-    href: "/journals",
+    href: "/notebooks",
   },
 ];
 

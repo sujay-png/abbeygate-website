@@ -16,10 +16,10 @@ export const CustomisationCTA = () => {
               Experience the luxury of bespoke craftsmanship. Our team of experts will guide you through every step of the custom design process, ensuring your diaries and notebooks exceed expectations.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Button variant="primary" className="uppercase text-[13px] tracking-wider px-8 font-bold">
+              <Button href="/quote" variant="primary" className="uppercase text-[13px] tracking-wider px-8 font-bold">
                 Customize Yours Today
               </Button>
-              <Button variant="outline" className="uppercase text-[13px] tracking-wider px-8 font-bold">
+              <Button href="/contact" variant="outline" className="uppercase text-[13px] tracking-wider px-8 font-bold">
                 Request A Sample
               </Button>
             </div>
@@ -43,4 +43,3 @@ export const CustomisationCTA = () => {
     </section>
   );
 };
-
