@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useCallback, useMemo, useEffect, R
 import type { LogoCustomization } from '@/features/products/types/store-product';
 import type { StoreProduct } from '@/features/products/types/store-product';
 import { calculateShipping } from '@/features/products/utils/shipping';
+import { VAT_RATE } from '@/features/products/utils/pricing';
 import * as idb from '@/lib/idb';
 import toast from 'react-hot-toast';
 
@@ -29,6 +30,7 @@ interface CartContextValue {
   subtotal: number;
   shippingCost: number;
   shippingLabel: string;
+  vatCost: number;
   total: number;
   openCart: () => void;
   closeCart: () => void;
@@ -137,7 +139,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     return calculateShipping(shippingItems);
   }, [items]);
 
-  const total = subtotal + shippingCost;
+  const vatCost = useMemo(() => (subtotal + shippingCost) * VAT_RATE, [subtotal, shippingCost]);
+  const total = subtotal + shippingCost + vatCost;
 
   const value: CartContextValue = {
     items,
@@ -147,6 +150,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     subtotal,
     shippingCost,
     shippingLabel,
+    vatCost,
     total,
     openCart,
     closeCart,

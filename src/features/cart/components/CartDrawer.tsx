@@ -15,7 +15,7 @@ const formatPrice = (value: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
 
 export const CartDrawer = () => {
-  const { items, isOpen, isLoading, subtotal, shippingCost, shippingLabel, total, closeCart, removeItem, updateQuantity } = useCart();
+  const { items, isOpen, isLoading, subtotal, shippingCost, shippingLabel, vatCost, total, closeCart, removeItem, updateQuantity } = useCart();
   const [previewItem, setPreviewItem] = useState<any | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -224,15 +224,19 @@ export const CartDrawer = () => {
             {items.length > 0 && (
               <div className="border-t border-gray-100 px-6 py-6 shrink-0 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[15px] text-[#1F2124] font-work">Subtotal</span>
+                  <span className="text-[15px] text-[#1F2124] font-work">Subtotal (ex VAT)</span>
                   <span className="text-[17px] text-[#1F2124] font-bold">{formatPrice(subtotal)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[14px] text-gray-600">{shippingLabel}</span>
                   <span className="text-[15px] text-[#1F2124] font-medium">{formatPrice(shippingCost)}</span>
                 </div>
+                <div className="flex items-center justify-between pt-2">
+                  <span className="text-[14px] text-gray-600">VAT (20%)</span>
+                  <span className="text-[15px] text-[#1F2124] font-medium">{formatPrice(vatCost)}</span>
+                </div>
                 <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                  <span className="text-[15px] text-[#1F2124] font-bold">Total</span>
+                  <span className="text-[15px] text-[#1F2124] font-bold">Total (inc. VAT)</span>
                   <span className="text-[17px] text-[#1F2124] font-bold">{formatPrice(total)}</span>
                 </div>
                 <button

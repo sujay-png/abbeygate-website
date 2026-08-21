@@ -13,7 +13,7 @@ const formatPrice = (value: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
 
 export default function CartPage() {
-  const { items, subtotal, shippingCost, shippingLabel, total, removeItem, updateQuantity } = useCart();
+  const { items, subtotal, shippingCost, shippingLabel, vatCost, total, removeItem, updateQuantity } = useCart();
   const [isSyncing, setIsSyncing] = useState(false);
   const [previewItem, setPreviewItem] = useState<any | null>(null);
 
@@ -160,15 +160,19 @@ export default function CartPage() {
               <h2 className="text-lg font-bold mb-4">Order Summary</h2>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span className="font-medium">{formatPrice(subtotal)}</span>
+                  <span>Subtotal (ex VAT)</span>
+                  <span className="font-medium text-gray-900">{formatPrice(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>{shippingLabel}</span>
-                  <span className="font-medium">{formatPrice(shippingCost)}</span>
+                  <span className="font-medium text-gray-900">{formatPrice(shippingCost)}</span>
                 </div>
-                <div className="flex justify-between pt-3 border-t border-gray-200 text-base font-bold">
-                  <span>Total</span>
+                <div className="flex justify-between">
+                  <span>VAT (20%)</span>
+                  <span className="font-medium text-gray-900">{formatPrice(vatCost)}</span>
+                </div>
+                <div className="flex justify-between text-base font-bold pt-3 border-t border-gray-200">
+                  <span>Total (inc. VAT)</span>
                   <span>{formatPrice(total)}</span>
                 </div>
               </div>

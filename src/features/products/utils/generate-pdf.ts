@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf';
 import type { StoreProduct } from '../types/store-product';
 import type { CustomizationState } from '../components/ProductCustomizer';
-import { formatGBP } from './pricing';
+import { formatGBP, VAT_RATE } from './pricing';
 
 const fetchImageAsBase64 = async (url: string): Promise<string> => {
   const response = await fetch(url);
@@ -146,8 +146,6 @@ export const generateDigitalProof = async (
   };
 
   const subtotal = quantity * unitPrice;
-  // HARDCODED VAT RATE (20%) - Mark as hardcoded per requirements
-  const VAT_RATE = 0.20; 
   const total = subtotal * (1 + VAT_RATE);
 
   addPriceRow('Quantity', quantity.toString());

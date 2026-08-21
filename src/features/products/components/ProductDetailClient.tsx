@@ -6,7 +6,7 @@ import type { StoreProduct, PriceTier } from '../types/store-product';
 import { ProductCustomizer, type CustomizationState } from './ProductCustomizer';
 import { ProductCustomizationOverlay } from './ProductCustomizationOverlay';
 import { useCart } from '@/features/cart/context/CartContext';
-import { CUSTOMIZATION_MIN_QTY, formatGBP, isGiftsProduct } from '../utils/pricing';
+import { CUSTOMIZATION_MIN_QTY, formatGBP, isGiftsProduct, VAT_RATE } from '../utils/pricing';
 import { getLogoAnchors, getImageBoundingBox } from '../utils/product-helpers';
 import { getConfiguredImageBounds } from '../utils/product-image-bounds';
 import { TrustIndicators } from '@/components/home/TrustIndicators';
@@ -666,6 +666,7 @@ export const ProductDetailClient = ({
               <div className="flex justify-between gap-4"><dt>Branding</dt><dd className="text-right font-medium text-[#1F2124]">{customization.blockingType}</dd></div>
               <div className="flex justify-between gap-4"><dt>Corner edges</dt><dd className="font-medium text-[#1F2124]">{customization.cornerEdges}</dd></div>
               <div className="flex justify-between gap-4 border-t border-gray-200 pt-3"><dt>Subtotal (ex VAT)</dt><dd className="font-semibold text-[#1F2124]">{formatGBP(priceDetails.totalPrice)}</dd></div>
+              <div className="flex justify-between gap-4 bg-[#eff5f4] -mx-5 -mb-5 mt-4 p-5 rounded-b-lg border-t border-gray-200"><dt className="font-bold text-[#1F2124]">Including VAT (20%)</dt><dd className="font-bold text-[#1F2124]">{formatGBP(priceDetails.totalPrice * (1 + VAT_RATE))}</dd></div>
             </dl>
 
             {!isGifts && tiers.length > 0 && (() => {
@@ -830,9 +831,14 @@ export const ProductDetailClient = ({
               </div>
             </div>
 
-            <div className="flex justify-end pt-2 pb-2">
+            <div className="flex justify-end pt-2">
               <div className="text-[15px] font-bold text-[#1F2124]">
                 {formatGBP(priceDetails.unitPrice)} <span className="text-[13px] font-normal text-gray-500">per unit (ex VAT)</span>
+              </div>
+            </div>
+            <div className="flex justify-end pb-2">
+              <div className="text-[14px] font-bold text-[#1F2124]">
+                {formatGBP(priceDetails.unitPrice * (1 + VAT_RATE))} <span className="text-[12px] font-normal text-gray-500">per unit (inc. VAT)</span>
               </div>
             </div>
 
