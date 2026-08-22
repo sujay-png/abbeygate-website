@@ -7,6 +7,34 @@ import type {
   StoreAttributeTerm,
 } from "../types/store-product";
 import { woocommerceApi } from "@/lib/woocommerce/client";
+import probe from "probe-image-size";
+
+const dimensionCache = new Map<string, { width: number; height: number }>();
+
+async function enrichImageDimensions(products: StoreProduct[]): Promise<StoreProduct[]> {
+  const promises = products.map(async (product) => {
+    const enrichedImages = await Promise.all(
+      product.images.map(async (image) => {
+        if (!image.src) return image;
+        const cacheKey = image.src;
+        if (dimensionCache.has(cacheKey)) {
+          const dims = dimensionCache.get(cacheKey)!;
+          return { ...image, width: dims.width, height: dims.height };
+        }
+        try {
+          const result = await probe(image.src);
+          dimensionCache.set(cacheKey, { width: result.width, height: result.height });
+          return { ...image, width: result.width, height: result.height };
+        } catch (e) {
+          console.error("Failed to probe image size for", image.src, e);
+          return image;
+        }
+      })
+    );
+    return { ...product, images: enrichedImages };
+  });
+  return Promise.all(promises);
+}
 
 export type ProductListOptions = {
   categoryId?: number;
@@ -37,7 +65,8 @@ export async function getStoreProducts(
     { params, revalidate: 120 },
   );
 
-  return { products: data, total, totalPages };
+  const enrichedData = await enrichImageDimensions(data);
+  return { products: enrichedData, total, totalPages };
 }
 
 /** Fetch category products (capped pages for speed). */
@@ -67,13 +96,17 @@ export const getStoreProductBySlug = cache(async (
     params: { slug },
     revalidate: 120,
   });
-  return products[0] ?? null;
+  if (!products || products.length === 0) return null;
+  const enriched = await enrichImageDimensions(products);
+  return enriched[0] ?? null;
 });
 
 export const getStoreProductById = cache(async (
   id: number,
 ): Promise<StoreProduct> => {
-  return storeFetch<StoreProduct>(`/products/${id}`, { revalidate: 120 });
+  const product = await storeFetch<StoreProduct>(`/products/${id}`, { revalidate: 120 });
+  const enriched = await enrichImageDimensions([product]);
+  return enriched[0];
 });
 
 export async function getStoreCategories(): Promise<StoreCategory[]> {

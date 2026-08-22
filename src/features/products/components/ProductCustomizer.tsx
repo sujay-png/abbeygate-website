@@ -166,16 +166,16 @@ export const ProductCustomizer = ({
   const isFoilSelected = customization.blockingType === 'Foil blocked';
 
   return (
-    <div className="mt-4 mb-6 animate-in fade-in slide-in-from-top-2 duration-300" style={{ backgroundColor: '#ffffff' }}>
+    <div className="mt-0 mb-6 animate-in fade-in slide-in-from-top-2 duration-300" style={{ backgroundColor: '#ffffff' }}>
       {/* STEP TRACKER (Optional visual flair) */}
-      <div className="flex items-center gap-2 mb-8">
-        <div className={`text-sm font-bold ${step === 1 ? 'text-[#4a346e]' : 'text-gray-400 hidden sm:block'}`}>1. Branding</div>
+      <div className="flex items-center gap-2 mb-4">
+        <div className={`text-[12px] font-bold ${step === 1 ? 'text-[#4a346e]' : 'text-gray-400 hidden sm:block'}`}>1. Branding</div>
         <div className="h-px bg-gray-200 flex-1 hidden sm:block" />
-        <div className={`text-sm font-bold ${step === 2 ? 'text-[#4a346e]' : 'text-gray-400 hidden sm:block'}`}>2. Position</div>
+        <div className={`text-[12px] font-bold ${step === 2 ? 'text-[#4a346e]' : 'text-gray-400 hidden sm:block'}`}>2. Position</div>
         <div className="h-px bg-gray-200 flex-1 hidden sm:block" />
-        <div className={`text-sm font-bold ${step === 3 ? 'text-[#4a346e]' : 'text-gray-400 hidden sm:block'}`}>3. Extras</div>
+        <div className={`text-[12px] font-bold ${step === 3 ? 'text-[#4a346e]' : 'text-gray-400 hidden sm:block'}`}>3. Extras</div>
         <div className="h-px bg-gray-200 flex-1 hidden sm:block" />
-        <div className={`text-sm font-bold ${step === 4 ? 'text-[#4a346e]' : 'text-gray-400 hidden sm:block'}`}>4. Review</div>
+        <div className={`text-[12px] font-bold ${step === 4 ? 'text-[#4a346e]' : 'text-gray-400 hidden sm:block'}`}>4. Review</div>
       </div>
 
       {step === 1 && (
@@ -192,6 +192,11 @@ export const ProductCustomizer = ({
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
+                
+                if (file.size > 1.5 * 1024 * 1024) {
+                  alert("Logo file is too large! Please upload a file smaller than 1.5MB.");
+                  return;
+                }
 
                 try {
                   const processedUrl = await processLogo(file);
@@ -200,6 +205,10 @@ export const ProductCustomizer = ({
                     logoFile: file,
                     logoPreviewUrl: processedUrl,
                   });
+                  // Auto-scroll up to see the logo applied to the product image
+                  setTimeout(() => {
+                    document.getElementById('product-gallery-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 150);
                 } catch (error) {
                   console.error('Failed to process logo:', error);
                   // fallback
@@ -210,6 +219,9 @@ export const ProductCustomizer = ({
                       logoFile: file,
                       logoPreviewUrl: ev.target?.result as string,
                     });
+                    setTimeout(() => {
+                      document.getElementById('product-gallery-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 150);
                   };
                   reader.readAsDataURL(file);
                 }
@@ -225,14 +237,14 @@ export const ProductCustomizer = ({
               {/* Foil Blocked Card */}
               <div 
                 onClick={() => onCustomizationChange({ ...customization, blockingType: 'Foil blocked', foilColor: customization.foilColor || 'Gold' })}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-4 ${customization.blockingType === 'Foil blocked' ? 'border-[#4a346e] bg-[#f5f0fa]' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'Foil blocked' ? 'border-[#4a346e] bg-[#f5f0fa]' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
               >
                   <div 
-                    className="aspect-[4/3] rounded-lg mb-4 flex items-center justify-center overflow-hidden relative bg-center"
+                    className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative bg-center"
                     style={{ 
                       backgroundColor: activeColorHex || '#f3f4f6',
-                      backgroundImage: activeImageUrl ? `url(${activeImageUrl})` : undefined,
-                      backgroundSize: activeImageUrl ? '300%' : undefined
+                      backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
+                      backgroundSize: product.images?.[0]?.src ? '300%' : undefined
                     }}
                  >
                     {customization.logoPreviewUrl ? (
@@ -281,17 +293,17 @@ export const ProductCustomizer = ({
                  )}
               </div>
 
-              {/* Embossed Card */}
+              {/* Blind Debossed Card */}
               <div 
                 onClick={() => onCustomizationChange({ ...customization, blockingType: 'Embossed', foilColor: undefined })}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-4 ${customization.blockingType === 'Embossed' ? 'border-[#4a346e] bg-[#f5f0fa]' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'Embossed' ? 'border-[#4a346e] bg-[#f5f0fa]' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
               >
                   <div 
-                    className="aspect-[4/3] rounded-lg mb-4 relative overflow-hidden bg-center"
+                    className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative bg-center"
                     style={{ 
-                      backgroundColor: activeColorHex || '#e3e0dd',
-                      backgroundImage: activeImageUrl ? `url(${activeImageUrl})` : undefined,
-                      backgroundSize: activeImageUrl ? '300%' : undefined
+                      backgroundColor: activeColorHex || '#f3f4f6',
+                      backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
+                      backgroundSize: product.images?.[0]?.src ? '300%' : undefined
                     }}
                  >
                     {customization.logoPreviewUrl ? (
@@ -345,14 +357,14 @@ export const ProductCustomizer = ({
               {/* UV Print Card */}
               <div 
                 onClick={() => onCustomizationChange({ ...customization, blockingType: 'UV Print', foilColor: undefined })}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-4 ${customization.blockingType === 'UV Print' ? 'border-[#4a346e] bg-[#f5f0fa]' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'UV Print' ? 'border-[#4a346e] bg-[#f5f0fa]' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
               >
                   <div 
-                    className="aspect-[4/3] rounded-lg mb-4 flex items-center justify-center overflow-hidden bg-center relative"
+                    className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative bg-center"
                     style={{ 
                       backgroundColor: activeColorHex || '#f3f4f6',
-                      backgroundImage: activeImageUrl ? `url(${activeImageUrl})` : undefined,
-                      backgroundSize: activeImageUrl ? '300%' : undefined
+                      backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
+                      backgroundSize: product.images?.[0]?.src ? '300%' : undefined
                     }}
                  >
                     {customization.logoPreviewUrl ? (
@@ -373,12 +385,12 @@ export const ProductCustomizer = ({
             </div>
           </div>
 
-          <div className="pt-6 border-t border-gray-100 flex justify-end">
+          <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-end mt-4">
              <button
                 type="button"
                 onClick={() => setStep(2)}
                 disabled={!customization.logoPreviewUrl}
-                className="px-6 py-3 bg-[#1F2124] text-white font-bold rounded-lg hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-[#1F2124] text-white font-bold rounded-lg hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-center"
              >
                 Proceed to Position &rarr;
              </button>
@@ -450,18 +462,18 @@ export const ProductCustomizer = ({
             </div>
           </div>
 
-          <div className="pt-6 border-t border-gray-100 flex justify-between">
+          <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-between gap-3 mt-4">
              <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="px-6 py-3 bg-gray-100 text-[#1F2124] font-bold rounded-lg hover:bg-gray-200 transition-colors"
+                className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-gray-100 text-[#1F2124] font-bold rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap text-center"
              >
                 &larr; Back to Branding
              </button>
              <button
                 type="button"
                 onClick={() => setStep(3)}
-                className="px-8 py-3 bg-[#4a346e] text-white font-bold rounded-lg hover:bg-[#3d2a5a] transition-colors"
+                className="w-full sm:w-auto px-4 sm:px-8 py-3 bg-[#4a346e] text-white font-bold rounded-lg hover:bg-[#3d2a5a] transition-colors whitespace-nowrap text-center"
              >
                 Proceed to Extras &rarr;
              </button>
@@ -480,7 +492,14 @@ export const ProductCustomizer = ({
                 onClick={() => onCustomizationChange({ ...customization, cornerEdges: 'None' })}
                 className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'None' ? 'border-[#4a346e] bg-[#f5f0fa]' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
               >
-                 <div className="w-10 h-10 rounded mb-3 shadow-sm border border-black/10" style={{ backgroundColor: activeColorHex || '#1F2124' }} />
+                 <div 
+                   className="w-10 h-10 rounded mb-3 shadow-sm border border-black/10 bg-center" 
+                   style={{ 
+                     backgroundColor: activeColorHex || '#1F2124',
+                     backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
+                     backgroundSize: product.images?.[0]?.src ? '300%' : undefined
+                   }} 
+                 />
                  <div className="font-bold text-[#1F2124]">None</div>
                  <div className="text-[12px] text-gray-500 mt-1">Included</div>
               </div>
@@ -491,8 +510,12 @@ export const ProductCustomizer = ({
                 className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'Gold' ? 'border-[#4a346e] bg-[#f5f0fa]' : 'border-gray-200 hover:border-gray-300 bg-[#fbfaf8]'}`}
               >
                  <div 
-                   className="w-10 h-10 rounded mb-3 relative shadow-sm border border-black/10"
-                   style={{ backgroundColor: activeColorHex || '#1F2124' }}
+                   className="w-10 h-10 rounded mb-3 relative shadow-sm border border-black/10 bg-center"
+                   style={{ 
+                     backgroundColor: activeColorHex || '#1F2124',
+                     backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
+                     backgroundSize: product.images?.[0]?.src ? '300%' : undefined
+                   }}
                  >
                     <div className="absolute top-[-1px] right-[-1px] w-[50%] h-[50%] drop-shadow-sm">
                       <svg width="100%" height="100%" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -517,8 +540,12 @@ export const ProductCustomizer = ({
                 className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'Silver' ? 'border-[#4a346e] bg-[#f5f0fa]' : 'border-gray-200 hover:border-gray-300 bg-[#f5f6f8]'}`}
               >
                  <div 
-                   className="w-10 h-10 rounded mb-3 relative shadow-sm border border-black/10"
-                   style={{ backgroundColor: activeColorHex || '#1F2124' }}
+                   className="w-10 h-10 rounded mb-3 relative shadow-sm border border-black/10 bg-center"
+                   style={{ 
+                     backgroundColor: activeColorHex || '#1F2124',
+                     backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
+                     backgroundSize: product.images?.[0]?.src ? '300%' : undefined
+                   }}
                  >
                     <div className="absolute top-[-1px] right-[-1px] w-[50%] h-[50%] drop-shadow-sm">
                       <svg width="100%" height="100%" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -540,11 +567,11 @@ export const ProductCustomizer = ({
             </div>
           </div>
 
-          <div className="pt-6 border-t border-gray-100 flex justify-between">
+          <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-between gap-3 mt-4">
              <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="px-6 py-3 bg-gray-100 text-[#1F2124] font-bold rounded-lg hover:bg-gray-200 transition-colors"
+                className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-gray-100 text-[#1F2124] font-bold rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap text-center"
              >
                 &larr; Back to Position
              </button>
@@ -565,7 +592,7 @@ export const ProductCustomizer = ({
                   }
                 }}
                 disabled={isGeneratingProof}
-                className="px-8 py-3 bg-[#4a346e] text-white font-bold rounded-lg hover:bg-[#3d2a5a] transition-colors disabled:opacity-50"
+                className="w-full sm:w-auto px-4 sm:px-8 py-3 bg-[#4a346e] text-white font-bold rounded-lg hover:bg-[#3d2a5a] transition-colors disabled:opacity-50 whitespace-nowrap text-center"
              >
                 Proceed to Review &rarr;
              </button>
@@ -662,11 +689,11 @@ export const ProductCustomizer = ({
             </div>
           </div>
 
-          <div className="pt-6 flex justify-between items-center gap-4">
+          <div className="pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 mt-4">
              <button
                 type="button"
                 onClick={() => setStep(3)}
-                className="px-6 py-3 bg-white border border-gray-300 text-[#1F2124] font-bold rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
+                className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-white border border-gray-300 text-[#1F2124] font-bold rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap text-center"
              >
                 &larr; Back: Extras
              </button>
@@ -675,7 +702,7 @@ export const ProductCustomizer = ({
                   type="button"
                   onClick={onAddToCart}
                   disabled={isAdding || isGeneratingProof || !customization.fullPreviewUrl}
-                  className="w-full py-3 bg-[#4a346e] text-white font-bold rounded-lg hover:bg-[#3d2a5a] transition-colors disabled:opacity-50"
+                  className="w-full flex-1 py-3 bg-[#4a346e] text-white font-bold rounded-lg hover:bg-[#3d2a5a] transition-colors disabled:opacity-50 whitespace-nowrap text-center"
                >
                   {isAdding ? 'Processing...' : 'Add to Basket'}
                </button>

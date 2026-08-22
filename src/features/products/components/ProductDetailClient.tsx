@@ -45,6 +45,7 @@ export type ColorVariant = {
   name: string;
   slug: string;
   hex: string;
+  imageSrc?: string;
 };
 
 type ProductDetailClientProps = {
@@ -62,6 +63,25 @@ export const ProductDetailClient = ({
   colorVariants = [],
   customTabs = [],
 }: ProductDetailClientProps) => {
+  useEffect(() => {
+    // Silently preload variant images to warm up Next.js optimization cache and browser cache
+    if (!colorVariants || colorVariants.length === 0) return;
+    
+    // Use a short delay so we don't compete with the main LCP image
+    const timeout = setTimeout(() => {
+      colorVariants.forEach(variant => {
+        if (variant.imageSrc && variant.slug !== product.slug) {
+          // Preload at a standard size (e.g., 1080w) that Next.js will generate for large views
+          const preloadUrl = `/_next/image?url=${encodeURIComponent(variant.imageSrc)}&w=1080&q=75`;
+          const img = new window.Image();
+          img.src = preloadUrl;
+        }
+      });
+    }, 1000);
+
+    return () => clearTimeout(timeout);
+  }, [colorVariants, product.slug]);
+
   const { addItem } = useCart();
   const isGifts = isGiftsProduct(product);
   const activeColorHex = colorVariants.find(c => c.slug === product.slug)?.hex;
@@ -89,6 +109,67 @@ export const ProductDetailClient = ({
     logoPosition: { x: 0, y: 0 },
     cornerEdges: 'None',
   });
+
+  // Rehydrate customization state from localStorage on mount
+  useEffect(() => {
+    if (!product || !product.slug || isGifts) return;
+    try {
+      const draftStr = localStorage.getItem(`customization_draft_${product.slug}`);
+      if (draftStr) {
+        const draft = JSON.parse(draftStr);
+        if (draft) {
+          setIsCustomizingStarted(true);
+          // If the draft contains a base64 logoPreviewUrl, convert it back to a File object for checkout
+          if (draft.logoPreviewUrl && draft.logoPreviewUrl.startsWith('data:image')) {
+             fetch(draft.logoPreviewUrl)
+               .then(res => res.blob())
+               .then(blob => {
+                 const file = new File([blob], 'restored-logo.png', { type: blob.type });
+                 setCustomization({ ...draft, logoFile: file });
+               })
+               .catch(e => {
+                 console.error("Failed to restore logo file from base64", e);
+                 setCustomization(draft);
+               });
+          } else {
+             setCustomization(draft);
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Failed to rehydrate customization draft", e);
+      localStorage.removeItem(`customization_draft_${product.slug}`);
+    }
+  }, [product, isGifts]);
+
+  // Persist customization state to localStorage on change
+  useEffect(() => {
+    if (!product || !product.slug || isGifts || !isCustomizingStarted) return;
+    
+    const isDefault = 
+      customization.blockingType === 'Embossed' &&
+      customization.logoScale === 0.8 &&
+      customization.cornerEdges === 'None' &&
+      !customization.logoPreviewUrl;
+
+    if (!isDefault) {
+      const timeoutId = setTimeout(() => {
+        const draftState = {
+          ...customization,
+          logoFile: undefined, // Cannot serialize File objects
+        };
+        try {
+          localStorage.setItem(`customization_draft_${product.slug}`, JSON.stringify(draftState));
+        } catch (e) {
+          if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+             console.error("LocalStorage quota exceeded, cannot save customization state.");
+          }
+        }
+      }, 500); // 500ms debounce
+      return () => clearTimeout(timeoutId);
+    }
+  }, [customization, product, isGifts, isCustomizingStarted]);
+
   const [isAdding, setIsAdding] = useState(false);
   const [imageBounds, setImageBounds] = useState<{top: number, bottom: number, left: number, right: number} | null>(null);
   const [imageAspectRatio, setImageAspectRatio] = useState<number>(1);
@@ -152,13 +233,18 @@ export const ProductDetailClient = ({
 
   useEffect(() => {
     if (activeSrc) {
-      const img = new window.Image();
-      img.onload = () => {
-        if (img.height > 0) {
-          setImageAspectRatio(img.width / img.height);
-        }
-      };
-      img.src = activeSrc;
+      const activeImage = product.images.find(img => img.src === activeSrc || img.thumbnail === activeSrc);
+      if (activeImage && activeImage.width && activeImage.height && activeImage.height > 0) {
+        setImageAspectRatio(activeImage.width / activeImage.height);
+      } else {
+        const img = new window.Image();
+        img.onload = () => {
+          if (img.height > 0) {
+            setImageAspectRatio(img.width / img.height);
+          }
+        };
+        img.src = activeSrc;
+      }
 
       const configuredBounds = getConfiguredImageBounds(activeSrc);
       if (configuredBounds) {
@@ -247,9 +333,14 @@ export const ProductDetailClient = ({
           const marginX = bookWidth * 0.08;
           const marginY = bookHeight * 0.05;
 
+          const isDiary = product.categories?.some(c => 
+            c.name.toLowerCase().includes('diar') || c.slug.toLowerCase().includes('diar')
+          );
+          const diaryTopOffset = isDiary ? (bookHeight * 0.15) : 0;
+
           const safeLeft = bookLeft + marginX;
           const safeRight = bookRight - marginX;
-          const safeTop = bookTop + marginY;
+          const safeTop = bookTop + marginY + diaryTopOffset;
           const safeBottom = bookBottom - marginY;
 
           if (customization.logoPreviewUrl) {
@@ -523,18 +614,33 @@ export const ProductDetailClient = ({
         categorySlugs: product.categories.map((c) => c.slug),
       });
     } finally {
+      try {
+        localStorage.removeItem(`customization_draft_${product.slug}`);
+      } catch (e) {
+        // ignore
+      }
       setIsAdding(false);
     }
   };
 
   return (
     <div className="flex flex-col gap-12 lg:gap-16">
+      {isCustomizingStarted && (
+        <style>{`
+          @media (min-width: 1024px) {
+            #customizer-grid {
+              zoom: 0.8;
+            }
+          }
+        `}</style>
+      )}
       <div
-        className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 lg:items-start"
+        id="customizer-grid"
+        className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] xl:grid-cols-[1.5fr_0.8fr] gap-10 lg:gap-16 lg:items-start transition-all duration-500"
         style={{ backgroundColor: '#ffffff', color: '#1F2124' }}
       >
         {/* Left: gallery and customizer */}
-        <div id="product-gallery-container" className={`relative z-10 self-start flex flex-col gap-8 w-full scroll-mt-[120px] ${!isCustomizingStarted ? 'lg:sticky lg:top-[120px]' : ''}`}>
+        <div id="product-gallery-container" className={`relative z-10 self-start flex flex-col gap-4 w-full scroll-mt-[120px] ${!isCustomizingStarted ? 'lg:sticky lg:top-[120px]' : ''}`}>
           <div className="flex flex-col md:flex-row gap-4 lg:gap-6 w-full">
             {product.images.length > 1 && (
               <div className="flex md:flex-col gap-4 overflow-x-auto md:overflow-y-auto md:max-h-[600px] pb-2 md:pb-0 scrollbar-hide shrink-0 order-2 md:order-1">
@@ -667,7 +773,13 @@ export const ProductDetailClient = ({
             )}
 
             <div className="relative w-[90vw] h-[90vh] flex items-center justify-center p-4">
-              <div className="relative max-h-full max-w-full aspect-square h-full">
+              <div 
+                className="relative"
+                style={{ 
+                  aspectRatio: imageAspectRatio,
+                  width: `min(100%, calc((90vh - 32px) * ${imageAspectRatio}))`
+                }}
+              >
                 <ImageWithFallback
                   src={activeImage?.src || activeSrc}
                   alt={activeImage?.alt || product.name}
@@ -691,14 +803,14 @@ export const ProductDetailClient = ({
         {/* Customisation order sidebar: replaces the product-detail panel once
             the customer starts the multi-step customisation flow. */}
         {isCustomizingStarted && customization.enabled && (
-          <aside className="relative z-20 flex h-fit flex-col gap-4">
+          <aside className="relative z-20 flex h-fit flex-col gap-3">
             <div>
               <p className="text-[13px] font-bold uppercase tracking-widest text-[#4a346e]">{product.categories?.[0]?.name ? `${product.categories[0].name} collection` : 'Collection'}</p>
-              <h2 className="mt-2 text-2xl font-bold leading-tight text-[#1F2124] lg:text-[32px]">{product.name}</h2>
-              {product.sku && <p className="mt-1 text-[13px] text-gray-500">SKU: {product.sku}</p>}
+              <h2 className="mt-1 text-2xl font-bold leading-tight text-[#1F2124] lg:text-[28px]">{product.name}</h2>
+              {product.sku && <p className="mt-0.5 text-[12px] text-gray-500">SKU: {product.sku}</p>}
             </div>
 
-            <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-transparent px-4 py-3">
+            <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-transparent px-3 py-2.5">
               <span className="text-[14px] font-bold text-[#1F2124]">Quantity</span>
               <div className="flex h-9 items-center overflow-hidden rounded-md border border-gray-300 bg-white">
                 <button type="button" aria-label="Decrease quantity" className="px-3 text-gray-600 hover:bg-gray-100" onClick={() => setQuantity(Math.max(CUSTOMIZATION_MIN_QTY, quantity - 1))}>−</button>
@@ -707,12 +819,12 @@ export const ProductDetailClient = ({
               </div>
             </div>
 
-            <dl className="rounded-lg border border-gray-200 bg-transparent px-4 py-3 space-y-1.5 text-[13px] text-gray-600">
+            <dl className="rounded-lg border border-gray-200 bg-transparent px-3 py-2.5 space-y-1 text-[13px] text-gray-600">
               <div className="flex justify-between gap-4"><dt>Unit price (ex VAT)</dt><dd className="font-medium text-[#1F2124]">{formatGBP(priceDetails.unitPrice)}</dd></div>
               <div className="flex justify-between gap-4"><dt>Branding</dt><dd className="text-right font-medium text-[#1F2124]">{customization.blockingType}</dd></div>
               <div className="flex justify-between gap-4"><dt>Corner edges</dt><dd className="font-medium text-[#1F2124]">{customization.cornerEdges}</dd></div>
-              <div className="flex justify-between gap-4 border-t border-gray-200 pt-2 mt-2"><dt>Subtotal (ex VAT)</dt><dd className="font-semibold text-[#1F2124]">{formatGBP(priceDetails.totalPrice)}</dd></div>
-              <div className="flex justify-between gap-4 bg-[#eff5f4] -mx-4 -mb-3 mt-3 px-4 py-3 rounded-b-lg border-t border-gray-200"><dt className="font-bold text-[#1F2124]">Including VAT (20%)</dt><dd className="font-bold text-[#1F2124]">{formatGBP(priceDetails.totalPrice * (1 + VAT_RATE))}</dd></div>
+              <div className="flex justify-between gap-4 border-t border-gray-200 pt-1.5 mt-1.5"><dt>Subtotal (ex VAT)</dt><dd className="font-semibold text-[#1F2124]">{formatGBP(priceDetails.totalPrice)}</dd></div>
+              <div className="flex justify-between gap-4 bg-[#eff5f4] -mx-3 -mb-2.5 mt-2 px-3 py-2.5 rounded-b-lg border-t border-gray-200"><dt className="font-bold text-[#1F2124]">Including VAT (20%)</dt><dd className="font-bold text-[#1F2124]">{formatGBP(priceDetails.totalPrice * (1 + VAT_RATE))}</dd></div>
             </dl>
 
             {!isGifts && tiers.length > 0 && (() => {
@@ -723,17 +835,17 @@ export const ProductDetailClient = ({
               if (!nextTier || savings <= 0) return null;
 
               return (
-                <div className="mt-2 rounded-lg border border-[#d2e0de] bg-[#e6f0ef] px-4 py-3">
-                  <p className="text-[14px] font-bold text-[#1f6d63]">You could save {formatGBP(savings)}</p>
-                  <p className="text-[12px] text-gray-600 mb-2">by ordering {nextTier.min} units ({formatGBP(nextTier.price)} per unit, ex VAT)</p>
-                  <button type="button" onClick={() => setQuantity(nextTier.min)} className="w-full rounded-md border border-[#1f6d63] bg-white px-3 py-1.5 text-[12px] font-bold text-[#1f6d63] transition-colors hover:bg-[#d2e0de]">
+                <div className="mt-1 rounded-lg border border-[#d2e0de] bg-[#e6f0ef] px-3 py-2.5">
+                  <p className="text-[13px] font-bold text-[#1f6d63]">You could save {formatGBP(savings)}</p>
+                  <p className="text-[11px] text-gray-600 mb-1.5">by ordering {nextTier.min} units ({formatGBP(nextTier.price)} per unit, ex VAT)</p>
+                  <button type="button" onClick={() => setQuantity(nextTier.min)} className="w-full rounded-md border border-[#1f6d63] bg-white px-2 py-1 text-[11px] font-bold text-[#1f6d63] transition-colors hover:bg-[#d2e0de]">
                     Increase to {nextTier.min} units →
                   </button>
                 </div>
               );
             })()}
 
-            <button type="button" onClick={handleAddToCart} disabled={isAdding} className="mt-5 flex h-[50px] w-full items-center justify-center rounded-lg bg-[#4a346e] text-[15px] font-bold text-white transition-colors hover:bg-[#392657] disabled:opacity-50">
+            <button type="button" onClick={handleAddToCart} disabled={isAdding} className="mt-3 flex h-[46px] w-full items-center justify-center rounded-lg bg-[#4a346e] text-[15px] font-bold text-white transition-colors hover:bg-[#392657] disabled:opacity-50">
               {isAdding ? 'Processing...' : 'Add to Basket →'}
             </button>
             <p className="mt-3 text-[12px] leading-relaxed text-gray-500">All prices shown exclude VAT. Applicable VAT is calculated at checkout. A final digital proof is provided for approval before production.</p>

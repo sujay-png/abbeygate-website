@@ -6,6 +6,8 @@ export type StoreProductImage = {
   thumbnail: string;
   alt: string;
   name: string;
+  width?: number;
+  height?: number;
 };
 
 export type StoreProductCategory = {
