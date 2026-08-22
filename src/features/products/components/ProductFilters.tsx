@@ -6,7 +6,7 @@ import type { StoreAttribute, StoreAttributeTerm, StoreProduct } from '../types/
 import { FILTER_TAXONOMY_MAP, type FilterParamKey } from '../types/store-product';
 import type { FilterConfig } from '@/data/category-routes';
 import { countProductsForTerm, filtersToSearchParams } from '../utils/product-helpers';
-import { X, ChevronRight, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 
 type ProductFiltersProps = {
   products: StoreProduct[];
@@ -41,10 +41,6 @@ const ProductFiltersInner = ({
   const searchParams = useSearchParams();
   const filterTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [openDropdown, setOpenDropdown] = useState<FilterParamKey | null>(null);
-  
-  // Mobile Modal States
-  const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
-  const [mobileOpenSection, setMobileOpenSection] = useState<FilterParamKey | null>(null);
   
   const [isLoading, setIsLoading] = useState(false);
 
@@ -125,6 +121,10 @@ const ProductFiltersInner = ({
 
   const activeCount = Object.values(selectedFilters).flat().length;
 
+  const mobileDropdown = openDropdown;
+  const mobileAttribute = mobileDropdown ? getAttributeForFilter(mobileDropdown) : undefined;
+  const mobileTerms = mobileAttribute ? (attributeTerms[mobileAttribute.id] ?? []) : [];
+
   const getTermName = (key: FilterParamKey, slug: string): string => {
     const attr = getAttributeForFilter(key);
     if (!attr) return slug;
@@ -146,16 +146,6 @@ const ProductFiltersInner = ({
     };
   }, []);
   
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (isMobileModalOpen) {
-       document.body.style.overflow = 'hidden';
-    } else {
-       document.body.style.overflow = 'auto';
-    }
-    return () => { document.body.style.overflow = 'auto'; };
-  }, [isMobileModalOpen]);
-
   const activeFiltersMarkup = (
     <div className="flex flex-wrap gap-2 flex-1">
       {Object.entries(selectedFilters).flatMap(([key, slugs]) =>
@@ -203,9 +193,9 @@ const ProductFiltersInner = ({
                   key={key}
                   type="button"
                   disabled={disabled}
-                  onClick={() => {
-                    setMobileOpenSection(key);
-                    setIsMobileModalOpen(true);
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setOpenDropdown(openDropdown === key ? null : key);
                   }}
                   className={`flex min-w-[152px] items-center justify-between border-r border-brand-border px-5 py-5 text-[15px] font-medium transition-colors last:border-r-0 ${
                     disabled
@@ -220,6 +210,43 @@ const ProductFiltersInner = ({
             })}
           </div>
         </div>
+
+        {mobileDropdown && (
+          <div
+            className="max-h-[300px] overflow-y-auto border-b border-brand-border bg-white shadow-[0_8px_18px_rgba(0,0,0,0.08)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex flex-col gap-3 p-4">
+              {mobileTerms.map((term) => {
+                const taxonomy = FILTER_TAXONOMY_MAP[mobileDropdown];
+                const count = countProductsForTerm(products, taxonomy, term.slug, selectedFilters, mobileDropdown);
+                if (count === 0 && !selectedFilters[mobileDropdown].includes(term.slug)) return null;
+
+                const isChecked = selectedFilters[mobileDropdown].includes(term.slug);
+                const isDisabled = count === 0 && !isChecked;
+
+                return (
+                  <label
+                    key={term.slug}
+                    className={`flex items-center gap-3 text-[15px] text-brand-body cursor-pointer ${
+                      isDisabled ? 'opacity-35 pointer-events-none' : ''
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      disabled={isDisabled}
+                      onChange={() => toggleFilter(mobileDropdown, term.slug)}
+                      className="cursor-pointer w-5 h-5 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                    />
+                    <span className="flex-1">{term.name}</span>
+                    <span className="text-brand-grey text-[13px]">({count})</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Mobile Active Filters */}
@@ -313,95 +340,6 @@ const ProductFiltersInner = ({
           );
         })}
       </div>
-      
-      {/* Mobile Fullscreen Filter Modal */}
-      {isMobileModalOpen && (
-        <div className="fixed inset-0 z-[9999] bg-white md:hidden flex flex-col">
-          <div className="flex items-center justify-between p-4 border-b border-brand-border">
-            <h3 className="text-xl font-bold text-brand-body m-0">Filters</h3>
-            <button onClick={() => setIsMobileModalOpen(false)} className="text-brand-grey hover:text-brand-primary-dark transition-colors p-2">
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto">
-             <div className="flex flex-col">
-               {(Object.keys(FILTER_TAXONOMY_MAP) as FilterParamKey[]).map((key) => {
-                 const disabled = isFilterDisabled(key);
-                 if (disabled) return null;
-                 
-                 const attr = getAttributeForFilter(key);
-                 const terms = attr ? (attributeTerms[attr.id] ?? []) : [];
-                 const taxonomy = FILTER_TAXONOMY_MAP[key];
-                 const isOpen = mobileOpenSection === key;
-
-                 return (
-                   <div key={key} className="border-b border-brand-border bg-white">
-                      <button 
-                        type="button"
-                        onClick={() => setMobileOpenSection(isOpen ? null : key)} 
-                        className="flex items-center justify-between w-full p-5 text-[16px] font-medium text-brand-body"
-                      >
-                         {FILTER_LABELS[key]}
-                         {isOpen ? <ChevronDown className="w-5 h-5 text-brand-grey" /> : <ChevronRight className="w-5 h-5 text-brand-grey" />}
-                      </button>
-                      
-                      {isOpen && (
-                         <div className="px-5 pb-5 flex flex-col gap-4">
-                           {terms.map((term) => {
-                             const count = countProductsForTerm(products, taxonomy, term.slug, selectedFilters, key);
-                             if (count === 0 && !selectedFilters[key].includes(term.slug)) return null;
-                             
-                             const isChecked = selectedFilters[key].includes(term.slug);
-                             const isDisabled = count === 0 && !isChecked;
-                             
-                             return (
-                               <label
-                                 key={term.slug}
-                                 className={`flex items-center gap-3 text-[15px] text-brand-body cursor-pointer ${
-                                   isDisabled ? 'opacity-35 pointer-events-none' : ''
-                                 }`}
-                               >
-                                 <input
-                                   type="checkbox"
-                                   checked={isChecked}
-                                   disabled={isDisabled}
-                                   onChange={() => toggleFilter(key, term.slug)}
-                                   className="cursor-pointer w-5 h-5 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
-                                 />
-                                 <span className="flex-1">{term.name}</span>
-                                 <span className="text-brand-grey text-[13px]">
-                                   ({count})
-                                 </span>
-                               </label>
-                             );
-                           })}
-                         </div>
-                      )}
-                   </div>
-                 );
-               })}
-             </div>
-          </div>
-          
-          <div className="p-5 border-t border-brand-border bg-white flex items-center justify-between gap-4 shrink-0 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
-            <button 
-              type="button"
-              onClick={clearAll} 
-              className="text-brand-body underline text-[15px] font-medium px-2 py-3 hover:text-brand-primary transition-colors"
-            >
-              Clear all
-            </button>
-            <button 
-              type="button"
-              onClick={() => setIsMobileModalOpen(false)} 
-              className="flex-1 bg-brand-primary-dark text-white px-6 py-3.5 rounded-lg font-bold text-[15px] hover:bg-brand-primary-dark transition-colors"
-            >
-              Apply Filters
-            </button>
-          </div>
-        </div>
-      )}
       
     </div>
   );
