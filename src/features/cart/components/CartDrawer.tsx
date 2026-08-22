@@ -111,7 +111,7 @@ export const CartDrawer = () => {
           >
             {/* Header */}
             <div className="flex items-center justify-between h-20 px-6 border-b border-gray-100 shrink-0">
-              <h2 className="text-[15px] font-bold tracking-wide uppercase text-[#1F2124]">
+              <h2 className="text-[15px] font-bold tracking-wide uppercase text-brand-body">
                 Your Bag {items.length > 0 && `(${items.length})`}
               </h2>
               <button
@@ -146,7 +146,7 @@ export const CartDrawer = () => {
 
                       <div className="flex-1 flex flex-col min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-[15px] text-[#1F2124] font-medium leading-snug">{item.name}</p>
+                          <p className="text-[15px] text-brand-body font-medium leading-snug">{item.name}</p>
                           <button
                             aria-label={`Remove ${item.name}`}
                             onClick={() => removeItem(item.key)}
@@ -176,13 +176,13 @@ export const CartDrawer = () => {
                             {item.customization.fileName && (
                               <p className="text-[12px] text-gray-600">
                                 <span className="font-medium">Logo:</span> {item.customization.fileName} —{' '}
-                                <a href={item.customization.logoFile ? URL.createObjectURL(item.customization.logoFile) : '#'} target="_blank" rel="noopener noreferrer" className="text-black underline hover:text-gray-600">View file</a>
+                                <a href={item.customization.logoFile ? URL.createObjectURL(item.customization.logoFile) : '#'} target="_blank" rel="noopener noreferrer" className="text-brand-primary-dark underline hover:text-gray-600">View file</a>
                               </p>
                             )}
                             {item.customization.logoPreviewUrl && (
                               <p className="text-[12px] text-gray-600">
                                 <span className="font-medium">Preview:</span>{' '}
-                                <button type="button" onClick={() => setPreviewItem(item)} className="text-black underline hover:text-gray-600">View preview</button>
+                                <button type="button" onClick={() => setPreviewItem(item)} className="text-brand-primary-dark underline hover:text-gray-600">View preview</button>
                               </p>
                             )}
                             <p className="text-[12px] text-gray-600"><span className="font-medium">Position:</span> {item.customization.position}</p>
@@ -195,21 +195,21 @@ export const CartDrawer = () => {
                               aria-label="Decrease quantity"
                               onClick={() => updateQuantity(item.key, item.quantity - 1)}
                               disabled={isLoading}
-                              className="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-black transition-colors disabled:opacity-40"
+                              className="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-brand-primary-dark transition-colors disabled:opacity-40"
                             >
                               <Minus className="w-3 h-3" strokeWidth={2} />
                             </button>
-                            <span className="w-8 text-center text-[14px] text-[#1F2124]">{item.quantity}</span>
+                            <span className="w-8 text-center text-[14px] text-brand-body">{item.quantity}</span>
                             <button
                               aria-label="Increase quantity"
                               onClick={() => updateQuantity(item.key, item.quantity + 1)}
                               disabled={isLoading}
-                              className="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-black transition-colors disabled:opacity-40"
+                              className="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-brand-primary-dark transition-colors disabled:opacity-40"
                             >
                               <Plus className="w-3 h-3" strokeWidth={2} />
                             </button>
                           </div>
-                          <p className="text-[15px] text-[#1F2124] font-medium">
+                          <p className="text-[15px] text-brand-body font-medium">
                             {formatPrice(item.price * item.quantity)}
                           </p>
                         </div>
@@ -224,25 +224,25 @@ export const CartDrawer = () => {
             {items.length > 0 && (
               <div className="border-t border-gray-100 px-6 py-6 shrink-0 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[15px] text-[#1F2124] font-work">Subtotal (ex VAT)</span>
-                  <span className="text-[17px] text-[#1F2124] font-bold">{formatPrice(subtotal)}</span>
+                  <span className="text-[15px] text-brand-body font-work">Subtotal (ex VAT)</span>
+                  <span className="text-[17px] text-brand-body font-bold">{formatPrice(subtotal)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[14px] text-gray-600">{shippingLabel}</span>
-                  <span className="text-[15px] text-[#1F2124] font-medium">{formatPrice(shippingCost)}</span>
+                  <span className="text-[15px] text-brand-body font-medium">{formatPrice(shippingCost)}</span>
                 </div>
                 <div className="flex items-center justify-between pt-2">
                   <span className="text-[14px] text-gray-600">VAT (20%)</span>
-                  <span className="text-[15px] text-[#1F2124] font-medium">{formatPrice(vatCost)}</span>
+                  <span className="text-[15px] text-brand-body font-medium">{formatPrice(vatCost)}</span>
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                  <span className="text-[15px] text-[#1F2124] font-bold">Total (inc. VAT)</span>
-                  <span className="text-[17px] text-[#1F2124] font-bold">{formatPrice(total)}</span>
+                  <span className="text-[15px] text-brand-body font-bold">Total (inc. VAT)</span>
+                  <span className="text-[17px] text-brand-body font-bold">{formatPrice(total)}</span>
                 </div>
                 <button
                   onClick={handleCheckout}
                   disabled={isSyncing}
-                  className="flex items-center justify-center gap-2 w-full text-center bg-black text-white text-[15px] font-medium py-4 rounded-md hover:bg-gray-800 transition-colors disabled:bg-gray-400"
+                  className="flex items-center justify-center gap-2 w-full text-center bg-brand-primary text-white text-[15px] font-medium py-4 rounded-md hover:bg-brand-primary-dark transition-colors disabled:bg-gray-400"
                 >
                   {isSyncing ? (
                     <>
@@ -256,7 +256,7 @@ export const CartDrawer = () => {
                 <Link
                   href="/cart"
                   onClick={closeCart}
-                  className="block w-full text-center text-[14px] text-gray-600 hover:text-black transition-colors mt-3 underline underline-offset-4"
+                  className="block w-full text-center text-[14px] text-gray-600 hover:text-brand-primary-dark transition-colors mt-3 underline underline-offset-4"
                 >
                   View full cart
                 </Link>

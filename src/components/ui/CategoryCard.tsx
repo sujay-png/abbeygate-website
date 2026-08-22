@@ -28,7 +28,7 @@ export function CategoryCard({
         />
       </div>
 
-      <h3 className="mt-4 text-center font-josefin text-[19px] font-semibold text-black">
+      <h3 className="mt-4 text-center font-josefin text-[19px] font-semibold text-brand-primary-dark">
         {title}
       </h3>
     </Link>

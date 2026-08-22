@@ -164,10 +164,10 @@ const ProductFiltersInner = ({
             key={`${key}-${slug}`}
             type="button"
             onClick={() => removeFilter(slug)}
-            className="flex items-center gap-2 bg-[#f1f1f1] hover:bg-[#e2e2e2] px-3.5 py-1.5 rounded-full text-[13px] text-[#444] transition-colors"
+            className="flex items-center gap-2 bg-brand-tint hover:bg-brand-soft px-3.5 py-1.5 rounded-full text-[13px] text-brand-body transition-colors"
           >
             {getTermName(key as FilterParamKey, slug)}
-            <span className="font-bold text-[#888]">×</span>
+            <span className="font-bold text-brand-grey">×</span>
           </button>
         )),
       )}
@@ -175,7 +175,7 @@ const ProductFiltersInner = ({
         <button
           type="button"
           onClick={clearAll}
-          className="text-[13px] text-[#6F4086] underline self-center ml-2"
+          className="text-[13px] text-brand-primary underline self-center ml-2"
         >
           Clear All
         </button>
@@ -188,12 +188,12 @@ const ProductFiltersInner = ({
       
       {/* Mobile Top Bar */}
       <div className="flex md:hidden items-center justify-between gap-4 mb-4 px-1">
-        <span className="text-[15px] text-[#444] font-medium">
+        <span className="text-[15px] text-brand-body font-medium">
           {resultCount ?? products.length} products
         </span>
         <button 
           onClick={() => setIsMobileModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 border border-[#ddd] rounded-md font-bold text-[#444] hover:bg-gray-50 transition-colors shadow-sm"
+          className="flex items-center gap-2 px-4 py-2 border border-brand-border rounded-md font-bold text-brand-body hover:bg-brand-tint transition-colors shadow-sm"
         >
           <Settings2 className="w-4 h-4" />
           Filter
@@ -206,16 +206,16 @@ const ProductFiltersInner = ({
       </div>
 
       {/* Desktop Top Bar */}
-      <div className="hidden md:flex flex-wrap items-center justify-between gap-4 mb-4">
-        <h3 className="text-lg font-semibold text-[#333] m-0">Filters</h3>
+      <div className="hidden md:flex flex-wrap items-center justify-between gap-4 px-6 py-4">
+        <h3 className="text-lg font-semibold text-brand-primary-dark m-0">Filters</h3>
         {activeFiltersMarkup}
-        <span className="text-sm text-[#666] font-medium">
+        <span className="text-sm text-brand-grey font-medium">
           {resultCount ?? products.length} products
         </span>
       </div>
 
       {/* Desktop Horizontal Filters */}
-      <div className="hidden md:flex w-full border-t border-b border-[#ddd] bg-white">
+      <div className="hidden md:flex w-full border-t border-b border-brand-border bg-white">
         {(Object.keys(FILTER_TAXONOMY_MAP) as FilterParamKey[]).map((key) => {
           const disabled = isFilterDisabled(key);
           const attr = getAttributeForFilter(key);
@@ -225,8 +225,8 @@ const ProductFiltersInner = ({
           return (
             <div
               key={key}
-              className={`relative flex-1 border-r border-[#ddd] last:border-r-0 bg-white ${
-                disabled ? 'opacity-40 pointer-events-none bg-[#f7f7f7]' : ''
+              className={`relative flex-1 border-r border-brand-border last:border-r-0 bg-white ${
+                disabled ? 'opacity-40 pointer-events-none bg-brand-tint' : ''
               }`}
               onClick={(e) => e.stopPropagation()}
             >
@@ -234,12 +234,12 @@ const ProductFiltersInner = ({
                 type="button"
                 onClick={() => !disabled && setOpenDropdown(openDropdown === key ? null : key)}
                 className={`w-full px-5 py-5 flex items-center justify-between text-[15px] font-medium transition-colors bg-white ${
-                  disabled ? 'text-[#999]' : 'text-[#444] hover:bg-[#f9f9f9]'
+                  disabled ? 'text-brand-grey' : 'text-brand-body hover:bg-brand-tint'
                 }`}
               >
                 {FILTER_LABELS[key]}
                 <span
-                  className={`text-[10px] text-[#888] transition-transform ${
+                  className={`text-[10px] text-brand-grey transition-transform ${
                     openDropdown === key ? 'rotate-180' : ''
                   }`}
                 >
@@ -248,7 +248,7 @@ const ProductFiltersInner = ({
               </button>
 
               {openDropdown === key && !disabled && (
-                <div className="absolute top-full left-[-1px] w-[calc(100%+2px)] bg-white border border-[#ddd] border-t-0 z-50 max-h-[300px] overflow-y-auto shadow-[0_4px_10px_rgba(0,0,0,0.08)]">
+                <div className="absolute top-full left-[-1px] w-[calc(100%+2px)] bg-white border border-brand-border border-t-0 z-50 max-h-[300px] overflow-y-auto shadow-[0_4px_10px_rgba(0,0,0,0.08)]">
                   <div className="p-4 flex flex-col gap-2.5">
                     {terms.map((term) => {
                       const count = countProductsForTerm(
@@ -266,7 +266,7 @@ const ProductFiltersInner = ({
                       return (
                         <label
                           key={term.slug}
-                          className={`flex items-center gap-2 text-sm text-[#444] cursor-pointer ${
+                          className={`flex items-center gap-2 text-sm text-brand-body cursor-pointer ${
                             isDisabled ? 'opacity-35 pointer-events-none' : ''
                           }`}
                         >
@@ -278,7 +278,7 @@ const ProductFiltersInner = ({
                             className="cursor-pointer"
                           />
                           <span className="flex-1 pl-2">{term.name}</span>
-                          <span className="bg-[#f1f1f1] text-[#555] text-[11px] font-semibold px-2 py-0.5 rounded-xl">
+                          <span className="bg-brand-tint text-brand-body text-[11px] font-semibold px-2 py-0.5 rounded-xl">
                             {count}
                           </span>
                         </label>
@@ -295,9 +295,9 @@ const ProductFiltersInner = ({
       {/* Mobile Fullscreen Filter Modal */}
       {isMobileModalOpen && (
         <div className="fixed inset-0 z-[9999] bg-white md:hidden flex flex-col">
-          <div className="flex items-center justify-between p-4 border-b border-[#ddd]">
-            <h3 className="text-xl font-bold text-[#1F2124] m-0">Filters</h3>
-            <button onClick={() => setIsMobileModalOpen(false)} className="text-[#888] hover:text-[#333] transition-colors p-2">
+          <div className="flex items-center justify-between p-4 border-b border-brand-border">
+            <h3 className="text-xl font-bold text-brand-body m-0">Filters</h3>
+            <button onClick={() => setIsMobileModalOpen(false)} className="text-brand-grey hover:text-brand-primary-dark transition-colors p-2">
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -314,14 +314,14 @@ const ProductFiltersInner = ({
                  const isOpen = mobileOpenSection === key;
 
                  return (
-                   <div key={key} className="border-b border-[#ddd] bg-white">
+                   <div key={key} className="border-b border-brand-border bg-white">
                       <button 
                         type="button"
                         onClick={() => setMobileOpenSection(isOpen ? null : key)} 
-                        className="flex items-center justify-between w-full p-5 text-[16px] font-medium text-[#1F2124]"
+                        className="flex items-center justify-between w-full p-5 text-[16px] font-medium text-brand-body"
                       >
                          {FILTER_LABELS[key]}
-                         {isOpen ? <ChevronDown className="w-5 h-5 text-[#888]" /> : <ChevronRight className="w-5 h-5 text-[#888]" />}
+                         {isOpen ? <ChevronDown className="w-5 h-5 text-brand-grey" /> : <ChevronRight className="w-5 h-5 text-brand-grey" />}
                       </button>
                       
                       {isOpen && (
@@ -336,7 +336,7 @@ const ProductFiltersInner = ({
                              return (
                                <label
                                  key={term.slug}
-                                 className={`flex items-center gap-3 text-[15px] text-[#444] cursor-pointer ${
+                                 className={`flex items-center gap-3 text-[15px] text-brand-body cursor-pointer ${
                                    isDisabled ? 'opacity-35 pointer-events-none' : ''
                                  }`}
                                >
@@ -345,10 +345,10 @@ const ProductFiltersInner = ({
                                    checked={isChecked}
                                    disabled={isDisabled}
                                    onChange={() => toggleFilter(key, term.slug)}
-                                   className="cursor-pointer w-5 h-5 rounded border-gray-300 text-[#4a346e] focus:ring-[#4a346e]"
+                                   className="cursor-pointer w-5 h-5 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
                                  />
                                  <span className="flex-1">{term.name}</span>
-                                 <span className="text-[#888] text-[13px]">
+                                 <span className="text-brand-grey text-[13px]">
                                    ({count})
                                  </span>
                                </label>
@@ -362,18 +362,18 @@ const ProductFiltersInner = ({
              </div>
           </div>
           
-          <div className="p-5 border-t border-[#ddd] bg-white flex items-center justify-between gap-4 shrink-0 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+          <div className="p-5 border-t border-brand-border bg-white flex items-center justify-between gap-4 shrink-0 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
             <button 
               type="button"
               onClick={clearAll} 
-              className="text-[#1F2124] underline text-[15px] font-medium px-2 py-3 hover:text-[#4a346e] transition-colors"
+              className="text-brand-body underline text-[15px] font-medium px-2 py-3 hover:text-brand-primary transition-colors"
             >
               Clear all
             </button>
             <button 
               type="button"
               onClick={() => setIsMobileModalOpen(false)} 
-              className="flex-1 bg-[#1F2124] text-white px-6 py-3.5 rounded-lg font-bold text-[15px] hover:bg-black transition-colors"
+              className="flex-1 bg-brand-primary-dark text-white px-6 py-3.5 rounded-lg font-bold text-[15px] hover:bg-brand-primary-dark transition-colors"
             >
               Apply Filters
             </button>

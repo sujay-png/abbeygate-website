@@ -37,10 +37,10 @@ export function ImageTextSection({
           
           {/* Text Side */}
           <div className="w-full lg:w-1/2">
-            <h2 className="text-2xl md:text-3xl font-bold text-black font-sans tracking-tight mb-6">
+            <h2 className="text-2xl md:text-3xl font-bold text-brand-primary-dark font-sans tracking-tight mb-6">
               {title}
             </h2>
-            <div className="prose prose-gray font-work max-w-none text-[#1F2124]/80 text-[15px] leading-relaxed">
+            <div className="prose prose-gray font-work max-w-none text-brand-body/80 text-[15px] leading-relaxed">
               {typeof content === 'string' ? (
                 <div dangerouslySetInnerHTML={{ __html: content }} />
               ) : (

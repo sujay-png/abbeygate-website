@@ -10,7 +10,7 @@ export const modernSlaveryData = {
     "/images/banners/modern-slavery-grid2.webp",
   ],
   contentPart1: `
-    <h3 class="font-bold text-black mb-4 uppercase text-sm tracking-wider font-sans">MODERN SLAVERY ACT</h3>
+    <h3 class="font-bold text-brand-primary-dark mb-4 uppercase text-sm tracking-wider font-sans">MODERN SLAVERY ACT</h3>
     <p>This statement is made pursuant to section 54 of the Modern Slavery Act 2015. It constitutes Abbeygate Manufacturing Company Ltd (AMC) slavery and human trafficking statement as at the 30 June 2020.</p>
     <p>AMC is a UK manufacturer of diaries, notebooks, calendars and leather gifts.</p>
     <p>AMC has around 20 staff, all of whom are based in the United Kingdom. Our staff are directly employed and are not in any category which is seen to be vulnerable to modern slavery in this country, so our main focus is to ensure there are policies and due diligence procedures in place for our suppliers.</p>

@@ -5,7 +5,7 @@ import { resourceGuideData } from '@/data/resource-guide';
 
 export default function ResourceGuidePage() {
   return (
-    <main className="flex flex-col min-h-screen bg-white">
+    <main className="flex flex-col min-h-screen bg-brand-cream">
       <Breadcrumb paths={[{ label: 'Home', href: '/' }, { label: 'Resource Guide' }]} />
       
       <PageHero 

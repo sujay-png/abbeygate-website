@@ -1,42 +1,93 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Abbeygate client palette */
+  --brand-primary: #4b2255;
+  --brand-primary-dark: #341a3d;
+  --brand-cream: #f7f1e2;
+  --brand-gold: #d1b051;
+  --brand-grey: #76787c;
+  --brand-soft: #c1dddd;
+  --brand-tint: #e7f2f2;
+  --brand-accent: #2f5f5f;
+  --brand-body: #251729;
+  --brand-border: rgba(118, 120, 124, 0.28);
+
+  --background: var(--brand-cream);
+  --foreground: var(--brand-body);
   color-scheme: light;
 }
 
 @theme inline {
-  --color-background: #ffffff;
-  --color-foreground: #171717;
-  --color-brand-light: #ECF5F5;
-  --font-didact: var(--font-didact-gothic);
-  --font-work: var(--font-work-sans);
+  --color-background: var(--brand-cream);
+  --color-foreground: var(--brand-body);
+  --color-brand-primary: #4b2255;
+  --color-brand-primary-dark: #341a3d;
+  --color-brand-cream: #f7f1e2;
+  --color-brand-gold: #d1b051;
+  --color-brand-grey: #76787c;
+  --color-brand-soft: #c1dddd;
+  --color-brand-tint: #e7f2f2;
+  --color-brand-accent: #2f5f5f;
+  --color-brand-body: #251729;
+  --color-brand-light: #e7f2f2;
+  --font-didact: var(--font-josefin-sans);
+  --font-work: var(--font-josefin-sans);
   --font-josefin: var(--font-josefin-sans);
+  --font-sans: var(--font-josefin-sans);
+
+  /* Re-map legacy Tailwind neutrals so unchanged components remain on-brand. */
+  --color-gray-50: #f7f1e2;
+  --color-gray-100: #e7f2f2;
+  --color-gray-200: #c1dddd;
+  --color-gray-300: #a7caca;
+  --color-gray-400: #76787c;
+  --color-gray-500: #76787c;
+  --color-gray-600: #5d6064;
+  --color-gray-700: #251729;
+  --color-gray-800: #341a3d;
+  --color-gray-900: #251729;
+  --color-neutral-100: #e7f2f2;
+  --color-neutral-300: #c1dddd;
 }
 
 @layer base {
   html,
   body {
-    background: #ffffff;
-    color: #171717;
+    background: var(--brand-cream);
+    color: var(--brand-body);
     color-scheme: light;
   }
 
   body {
-    font-family: var(--font-work-sans), sans-serif;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-josefin-sans), sans-serif;
-    color: #1f2124;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    line-height: 1.65;
   }
 
-  button, [role="button"] {
-    cursor: pointer;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-josefin-sans), sans-serif;
+    font-weight: 600;
+    color: var(--brand-primary-dark);
+    letter-spacing: 0.02em;
   }
-  
-  button:disabled, [role="button"][aria-disabled="true"] {
+
+  button,
+  [role="button"] {
+    cursor: pointer;
+    font-family: var(--font-josefin-sans), sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
     cursor: not-allowed;
   }
 }
@@ -50,5 +101,3 @@ input[type="number"]::-webkit-outer-spin-button {
 input[type="number"] {
   -moz-appearance: textfield;
 }
-
- 

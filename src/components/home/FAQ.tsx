@@ -44,7 +44,7 @@ export const FAQ = ({ hideTitle = false, className = "bg-brand-light" }: FAQProp
     <section className={`py-16 md:py-24 ${className}`}>
       <Container>
         {!hideTitle && (
-          <h2 className="font-josefin text-[26px] font-bold tracking-tight text-black lg:text-[37px] text-center mb-12">
+          <h2 className="font-josefin text-[26px] font-bold tracking-tight text-brand-primary-dark lg:text-[37px] text-center mb-12">
             Frequently Asked Questions
           </h2>
         )}
@@ -57,9 +57,9 @@ export const FAQ = ({ hideTitle = false, className = "bg-brand-light" }: FAQProp
             >
               <button
                 onClick={() => toggleFAQ(index)}
-                className="w-full flex items-center justify-between p-6 text-left focus:outline-none focus-visible:bg-black/5 cursor-pointer transition-colors hover:bg-black/5"
+                className="w-full flex items-center justify-between p-6 text-left focus:outline-none focus-visible:bg-brand-primary/5 cursor-pointer transition-colors hover:bg-brand-primary-dark/5"
               >
-                <span className="font-semibold text-black pr-8 text-[15px]">
+                <span className="font-semibold text-brand-primary-dark pr-8 text-[15px]">
                   {faq.question}
                 </span>
                 <motion.div
@@ -67,7 +67,7 @@ export const FAQ = ({ hideTitle = false, className = "bg-brand-light" }: FAQProp
                   transition={{ duration: 0.3, ease: "easeInOut" }}
                   className="flex-shrink-0"
                 >
-                  <ChevronDown className="w-5 h-5 text-black" />
+                  <ChevronDown className="w-5 h-5 text-brand-primary-dark" />
                 </motion.div>
               </button>
 

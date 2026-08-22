@@ -5,7 +5,7 @@ import Image from 'next/image';
 
 export default function ModernSlaveryPage() {
   return (
-    <main className="flex flex-col min-h-screen bg-white">
+    <main className="flex flex-col min-h-screen bg-brand-cream">
       <Breadcrumb paths={[{ label: 'Home', href: '/' }, { label: 'Modern Slavery Statement' }]} />
       
       <PageHero 
@@ -17,13 +17,13 @@ export default function ModernSlaveryPage() {
       
       <Container maxWidthClass="max-w-[1500px]" className="py-16 md:py-24">
         {/* Page Title */}
-        <h2 className="text-3xl md:text-[40px] font-bold text-black font-sans tracking-tight mb-12">
+        <h2 className="text-3xl md:text-[40px] font-bold text-brand-primary-dark font-sans tracking-tight mb-12">
           Modern Slavery Statement
         </h2>
 
         {/* Content Part 1 */}
         <div 
-          className="font-sans text-[14px] md:text-[15px] text-black leading-relaxed [&>p]:mb-6 [&>ul]:mb-6 [&>ul]:list-disc [&>ul]:pl-6 [&>ul>li]:mb-1 mb-12"
+          className="font-sans text-[14px] md:text-[15px] text-brand-primary-dark leading-relaxed [&>p]:mb-6 [&>ul]:mb-6 [&>ul]:list-disc [&>ul]:pl-6 [&>ul>li]:mb-1 mb-12"
           dangerouslySetInnerHTML={{ __html: modernSlaveryData.contentPart1 }}
         />
 
@@ -45,7 +45,7 @@ export default function ModernSlaveryPage() {
 
         {/* Content Part 2 */}
         <div 
-          className="font-sans text-[14px] md:text-[15px] text-black leading-relaxed [&>p]:mb-6 [&>ul]:mb-6 [&>ul]:list-disc [&>ul]:pl-6 [&>ul>li]:mb-1"
+          className="font-sans text-[14px] md:text-[15px] text-brand-primary-dark leading-relaxed [&>p]:mb-6 [&>ul]:mb-6 [&>ul]:list-disc [&>ul]:pl-6 [&>ul>li]:mb-1"
           dangerouslySetInnerHTML={{ __html: modernSlaveryData.contentPart2 }}
         />
       </Container>

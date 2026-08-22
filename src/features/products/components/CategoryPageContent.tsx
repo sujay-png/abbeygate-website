@@ -31,7 +31,7 @@ export const CategoryPageContent = ({
   const filteredProducts = allProducts.filter((p) => productMatchesFilters(p, filters));
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-brand-cream min-h-screen">
       <Breadcrumb paths={[{ label: 'Home', href: '/' }, ...breadcrumbItems]} />
 
       <Container className="py-8">
@@ -43,23 +43,21 @@ export const CategoryPageContent = ({
           resultCount={filteredProducts.length}
         />
 
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 mt-8">
-          <div className="lg:w-1/3 flex-shrink-0">
-            <h1 className="text-3xl md:text-4xl font-extrabold text-[#1F2124] mb-4">
+        <div className="mt-8">
+          <div className="max-w-3xl mb-10 md:mb-12">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-brand-primary-dark mb-4">
               {title}
             </h1>
-            
+
             {description && (
-              <div 
-                className="prose prose-sm md:prose-base text-gray-700" 
-                dangerouslySetInnerHTML={{ __html: description }} 
+              <div
+                className="prose prose-sm md:prose-base text-brand-body"
+                dangerouslySetInnerHTML={{ __html: description }}
               />
             )}
           </div>
-          
-          <div className="lg:w-2/3">
-            <ProductGrid products={filteredProducts} />
-          </div>
+
+          <ProductGrid products={filteredProducts} />
         </div>
       </Container>
     </div>

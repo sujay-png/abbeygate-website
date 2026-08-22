@@ -169,19 +169,19 @@ export const ProductCustomizer = ({
     <div className="mt-0 mb-6 animate-in fade-in slide-in-from-top-2 duration-300" style={{ backgroundColor: '#ffffff' }}>
       {/* STEP TRACKER (Optional visual flair) */}
       <div className="flex items-center gap-2 mb-4">
-        <div className={`text-[12px] font-bold ${step === 1 ? 'text-[#4a346e]' : 'text-gray-400 hidden sm:block'}`}>1. Branding</div>
+        <div className={`text-[12px] font-bold ${step === 1 ? 'text-brand-primary' : 'text-gray-400 hidden sm:block'}`}>1. Branding</div>
         <div className="h-px bg-gray-200 flex-1 hidden sm:block" />
-        <div className={`text-[12px] font-bold ${step === 2 ? 'text-[#4a346e]' : 'text-gray-400 hidden sm:block'}`}>2. Position</div>
+        <div className={`text-[12px] font-bold ${step === 2 ? 'text-brand-primary' : 'text-gray-400 hidden sm:block'}`}>2. Position</div>
         <div className="h-px bg-gray-200 flex-1 hidden sm:block" />
-        <div className={`text-[12px] font-bold ${step === 3 ? 'text-[#4a346e]' : 'text-gray-400 hidden sm:block'}`}>3. Extras</div>
+        <div className={`text-[12px] font-bold ${step === 3 ? 'text-brand-primary' : 'text-gray-400 hidden sm:block'}`}>3. Extras</div>
         <div className="h-px bg-gray-200 flex-1 hidden sm:block" />
-        <div className={`text-[12px] font-bold ${step === 4 ? 'text-[#4a346e]' : 'text-gray-400 hidden sm:block'}`}>4. Review</div>
+        <div className={`text-[12px] font-bold ${step === 4 ? 'text-brand-primary' : 'text-gray-400 hidden sm:block'}`}>4. Review</div>
       </div>
 
       {step === 1 && (
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
           <div>
-            <div className="text-xl font-bold text-[#1F2124] mb-2">Upload Logo</div>
+            <div className="text-xl font-bold text-brand-body mb-2">Upload Logo</div>
             <p className="text-[13px] text-gray-500 mb-3">
               For best results, upload a high-contrast image (black on white) or a transparent PNG.
             </p>
@@ -226,18 +226,18 @@ export const ProductCustomizer = ({
                   reader.readAsDataURL(file);
                 }
               }}
-              className="block w-full text-[14px] text-[#1F2124] file:mr-4 file:py-2.5 file:px-5 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#4a346e]/10 file:text-[#4a346e] hover:file:bg-[#4a346e]/20 cursor-pointer transition-colors border border-gray-200 rounded-lg p-1"
+              className="block w-full text-[14px] text-brand-body file:mr-4 file:py-2.5 file:px-5 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-brand-primary/10 file:text-brand-primary hover:file:bg-brand-primary/20 cursor-pointer transition-colors border border-gray-200 rounded-lg p-1"
             />
           </div>
 
           <div>
-            <div className="text-xl font-bold text-[#1F2124] mb-4">Choose Branding Type</div>
+            <div className="text-xl font-bold text-brand-body mb-4">Choose Branding Type</div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               
               {/* Foil Blocked Card */}
               <div 
                 onClick={() => onCustomizationChange({ ...customization, blockingType: 'Foil blocked', foilColor: customization.foilColor || 'Gold' })}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'Foil blocked' ? 'border-[#4a346e] bg-[#f5f0fa]' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'Foil blocked' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
               >
                   <div 
                     className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative bg-center"
@@ -270,9 +270,9 @@ export const ProductCustomizer = ({
                        <div className="text-gray-400 text-sm font-medium">Logo Preview</div>
                     )}
                  </div>
-                 <div className="font-bold text-[#1F2124]">Foil blocked</div>
+                 <div className="font-bold text-brand-body">Foil blocked</div>
                  <div className="text-[12px] text-gray-500 mt-1 mb-2 leading-relaxed">Metallic foil stamped into the cover for a premium finish.</div>
-                 <div className="text-[12px] font-bold text-[#4a346e] mb-4">{getExtraCostLabel('Foil blocked')}</div>
+                 <div className="text-[12px] font-bold text-brand-primary mb-4">{getExtraCostLabel('Foil blocked')}</div>
                  
                  {customization.blockingType === 'Foil blocked' && (
                     <div className="mt-auto pt-3 border-t border-gray-200/60" onClick={e => e.stopPropagation()}>
@@ -296,7 +296,7 @@ export const ProductCustomizer = ({
               {/* Blind Debossed Card */}
               <div 
                 onClick={() => onCustomizationChange({ ...customization, blockingType: 'Embossed', foilColor: undefined })}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'Embossed' ? 'border-[#4a346e] bg-[#f5f0fa]' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'Embossed' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
               >
                   <div 
                     className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative bg-center"
@@ -349,15 +349,15 @@ export const ProductCustomizer = ({
                        <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-sm font-medium">Logo Preview</div>
                     )}
                  </div>
-                 <div className="font-bold text-[#1F2124]">Blind debossed</div>
+                 <div className="font-bold text-brand-body">Blind debossed</div>
                  <div className="text-[12px] text-gray-500 mt-1 mb-2 leading-relaxed">Logo is pressed directly into the material for a subtle effect.</div>
-                 <div className="text-[12px] font-bold text-[#4a346e] mb-4">{getExtraCostLabel('Embossed')}</div>
+                 <div className="text-[12px] font-bold text-brand-primary mb-4">{getExtraCostLabel('Embossed')}</div>
               </div>
 
               {/* UV Print Card */}
               <div 
                 onClick={() => onCustomizationChange({ ...customization, blockingType: 'UV Print', foilColor: undefined })}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'UV Print' ? 'border-[#4a346e] bg-[#f5f0fa]' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'UV Print' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
               >
                   <div 
                     className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative bg-center"
@@ -377,9 +377,9 @@ export const ProductCustomizer = ({
                        <div className="text-gray-400 text-sm font-medium">Logo Preview</div>
                     )}
                  </div>
-                 <div className="font-bold text-[#1F2124]">UV Print</div>
+                 <div className="font-bold text-brand-body">UV Print</div>
                  <div className="text-[12px] text-gray-500 mt-1 mb-2 leading-relaxed">Full colour digital printing directly onto the product surface.</div>
-                 <div className="text-[12px] font-bold text-[#4a346e] mb-4">{getExtraCostLabel('UV Print')}</div>
+                 <div className="text-[12px] font-bold text-brand-primary mb-4">{getExtraCostLabel('UV Print')}</div>
               </div>
 
             </div>
@@ -390,7 +390,7 @@ export const ProductCustomizer = ({
                 type="button"
                 onClick={() => setStep(2)}
                 disabled={!customization.logoPreviewUrl}
-                className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-[#1F2124] text-white font-bold rounded-lg hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-center"
+                className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-brand-primary-dark text-white font-bold rounded-lg hover:bg-brand-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-center"
              >
                 Proceed to Position &rarr;
              </button>
@@ -401,7 +401,7 @@ export const ProductCustomizer = ({
       {step === 2 && (
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
           <div>
-            <div className="text-xl font-bold text-[#1F2124] mb-4">Placement</div>
+            <div className="text-xl font-bold text-brand-body mb-4">Placement</div>
             <div className="flex flex-wrap gap-2">
               {[
                 { id: 'top-left', label: 'Top left' },
@@ -425,10 +425,10 @@ export const ProductCustomizer = ({
                         logoPosition: { x: 0, y: 0, label: pos.id }
                       });
                     }}
-                    className={`px-4 py-3 rounded-lg border-2 text-[13px] font-bold transition-all flex flex-col items-center justify-center gap-1 min-w-[100px] flex-1 ${isSelected ? 'border-[#4a346e] bg-[#f5f0fa] text-[#4a346e]' : 'border-gray-200 bg-[#f8f7f5] text-[#1F2124] hover:border-gray-300'}`}
+                    className={`px-4 py-3 rounded-lg border-2 text-[13px] font-bold transition-all flex flex-col items-center justify-center gap-1 min-w-[100px] flex-1 ${isSelected ? 'border-brand-primary bg-brand-tint text-brand-primary' : 'border-gray-200 bg-[#f8f7f5] text-brand-body hover:border-gray-300'}`}
                   >
-                    <div className={`relative w-[22px] h-[30px] border-[1.5px] rounded-[3px] mb-1.5 transition-colors ${isSelected ? 'border-[#4a346e] bg-white' : 'border-gray-400 bg-white'}`}>
-                      <div className={`absolute w-[4px] h-[4px] rounded-full transition-colors ${isSelected ? 'bg-[#4a346e]' : 'bg-gray-400'} ${
+                    <div className={`relative w-[22px] h-[30px] border-[1.5px] rounded-[3px] mb-1.5 transition-colors ${isSelected ? 'border-brand-primary bg-white' : 'border-gray-400 bg-white'}`}>
+                      <div className={`absolute w-[4px] h-[4px] rounded-full transition-colors ${isSelected ? 'bg-brand-primary' : 'bg-gray-400'} ${
                         pos.id === 'top-left' ? 'top-[3px] left-[3px]' :
                         pos.id === 'top-center' ? 'top-[3px] left-1/2 -translate-x-1/2' :
                         pos.id === 'top-right' ? 'top-[3px] right-[3px]' :
@@ -446,9 +446,9 @@ export const ProductCustomizer = ({
           </div>
 
           <div>
-            <div className="text-xl font-bold text-[#1F2124] mb-4">Logo Scale</div>
+            <div className="text-xl font-bold text-brand-body mb-4">Logo Scale</div>
             <div className="flex items-center gap-4 max-w-md bg-gray-50 p-4 rounded-lg border border-gray-100">
-              <span className="text-[13px] text-[#1F2124] font-bold w-10">{Math.round(customization.logoScale * 100)}%</span>
+              <span className="text-[13px] text-brand-body font-bold w-10">{Math.round(customization.logoScale * 100)}%</span>
               <input
                 type="range"
                 min="0.5"
@@ -456,7 +456,7 @@ export const ProductCustomizer = ({
                 step="0.1"
                 value={customization.logoScale}
                 onChange={(e) => onCustomizationChange({ ...customization, logoScale: parseFloat(e.target.value) })}
-                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#4a346e]"
+                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-primary"
               />
               <span className="text-[13px] text-gray-500 font-medium w-10 text-right">200%</span>
             </div>
@@ -466,14 +466,14 @@ export const ProductCustomizer = ({
              <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-gray-100 text-[#1F2124] font-bold rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap text-center"
+                className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-gray-100 text-brand-body font-bold rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap text-center"
              >
                 &larr; Back to Branding
              </button>
              <button
                 type="button"
                 onClick={() => setStep(3)}
-                className="w-full sm:w-auto px-4 sm:px-8 py-3 bg-[#4a346e] text-white font-bold rounded-lg hover:bg-[#3d2a5a] transition-colors whitespace-nowrap text-center"
+                className="w-full sm:w-auto px-4 sm:px-8 py-3 bg-brand-primary text-white font-bold rounded-lg hover:bg-brand-primary-dark transition-colors whitespace-nowrap text-center"
              >
                 Proceed to Extras &rarr;
              </button>
@@ -484,35 +484,35 @@ export const ProductCustomizer = ({
       {step === 3 && (
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
           <div>
-            <div className="text-xl font-bold text-[#1F2124] mb-2 uppercase tracking-wide text-[13px] text-gray-700">Corner Edges</div>
+            <div className="text-xl font-bold text-brand-body mb-2 uppercase tracking-wide text-[13px] text-gray-700">Corner Edges</div>
             <div className="grid grid-cols-3 gap-4">
               
               {/* None Card */}
               <div 
                 onClick={() => onCustomizationChange({ ...customization, cornerEdges: 'None' })}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'None' ? 'border-[#4a346e] bg-[#f5f0fa]' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'None' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
               >
                  <div 
                    className="w-10 h-10 rounded mb-3 shadow-sm border border-black/10 bg-center" 
                    style={{ 
-                     backgroundColor: activeColorHex || '#1F2124',
+                     backgroundColor: activeColorHex || 'var(--brand-primary-dark)',
                      backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
                      backgroundSize: product.images?.[0]?.src ? '300%' : undefined
                    }} 
                  />
-                 <div className="font-bold text-[#1F2124]">None</div>
+                 <div className="font-bold text-brand-body">None</div>
                  <div className="text-[12px] text-gray-500 mt-1">Included</div>
               </div>
 
               {/* Gold Card */}
               <div 
                 onClick={() => onCustomizationChange({ ...customization, cornerEdges: 'Gold' })}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'Gold' ? 'border-[#4a346e] bg-[#f5f0fa]' : 'border-gray-200 hover:border-gray-300 bg-[#fbfaf8]'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'Gold' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-[#fbfaf8]'}`}
               >
                  <div 
                    className="w-10 h-10 rounded mb-3 relative shadow-sm border border-black/10 bg-center"
                    style={{ 
-                     backgroundColor: activeColorHex || '#1F2124',
+                     backgroundColor: activeColorHex || 'var(--brand-primary-dark)',
                      backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
                      backgroundSize: product.images?.[0]?.src ? '300%' : undefined
                    }}
@@ -530,19 +530,19 @@ export const ProductCustomizer = ({
                       </svg>
                     </div>
                  </div>
-                 <div className="font-bold text-[#1F2124]">Gold</div>
+                 <div className="font-bold text-brand-body">Gold</div>
                  <div className="text-[12px] text-gray-500 mt-1">+£0.24 per unit</div>
               </div>
 
               {/* Silver Card */}
               <div 
                 onClick={() => onCustomizationChange({ ...customization, cornerEdges: 'Silver' })}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'Silver' ? 'border-[#4a346e] bg-[#f5f0fa]' : 'border-gray-200 hover:border-gray-300 bg-[#f5f6f8]'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'Silver' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-[#f5f6f8]'}`}
               >
                  <div 
                    className="w-10 h-10 rounded mb-3 relative shadow-sm border border-black/10 bg-center"
                    style={{ 
-                     backgroundColor: activeColorHex || '#1F2124',
+                     backgroundColor: activeColorHex || 'var(--brand-primary-dark)',
                      backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
                      backgroundSize: product.images?.[0]?.src ? '300%' : undefined
                    }}
@@ -560,7 +560,7 @@ export const ProductCustomizer = ({
                       </svg>
                     </div>
                  </div>
-                 <div className="font-bold text-[#1F2124]">Silver</div>
+                 <div className="font-bold text-brand-body">Silver</div>
                  <div className="text-[12px] text-gray-500 mt-1">+£0.24 per unit</div>
               </div>
 
@@ -571,7 +571,7 @@ export const ProductCustomizer = ({
              <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-gray-100 text-[#1F2124] font-bold rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap text-center"
+                className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-gray-100 text-brand-body font-bold rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap text-center"
              >
                 &larr; Back to Position
              </button>
@@ -592,7 +592,7 @@ export const ProductCustomizer = ({
                   }
                 }}
                 disabled={isGeneratingProof}
-                className="w-full sm:w-auto px-4 sm:px-8 py-3 bg-[#4a346e] text-white font-bold rounded-lg hover:bg-[#3d2a5a] transition-colors disabled:opacity-50 whitespace-nowrap text-center"
+                className="w-full sm:w-auto px-4 sm:px-8 py-3 bg-brand-primary text-white font-bold rounded-lg hover:bg-brand-primary-dark transition-colors disabled:opacity-50 whitespace-nowrap text-center"
              >
                 Proceed to Review &rarr;
              </button>
@@ -603,29 +603,29 @@ export const ProductCustomizer = ({
           <div>
             <div className="space-y-4 mb-8">
                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <div className="text-[#1F2124] font-medium">Branding</div>
-                  <div className="text-[#1F2124] font-bold">
+                  <div className="text-brand-body font-medium">Branding</div>
+                  <div className="text-brand-body font-bold">
                      {customization.blockingType}
                      {customization.blockingType === 'Foil blocked' && customization.foilColor ? ' · ' + customization.foilColor : ''}
                   </div>
                </div>
                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <div className="text-[#1F2124] font-medium">Position</div>
-                  <div className="text-[#1F2124] font-bold">
+                  <div className="text-brand-body font-medium">Position</div>
+                  <div className="text-brand-body font-bold">
                      {customization.logoPosition?.label ? 
                         customization.logoPosition.label.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Center'}
                   </div>
                </div>
                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <div className="text-[#1F2124] font-medium">Corner edges</div>
-                  <div className="text-[#1F2124] font-bold">{customization.cornerEdges}</div>
+                  <div className="text-brand-body font-medium">Corner edges</div>
+                  <div className="text-brand-body font-bold">{customization.cornerEdges}</div>
                </div>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-6 items-center p-6 bg-white rounded-xl border border-gray-200 min-h-[160px] shadow-sm">
               {isGeneratingProof ? (
                  <div className="flex w-full items-center justify-center gap-4 py-8">
-                   <div className="w-8 h-8 border-4 border-[#4a346e]/30 border-t-[#4a346e] rounded-full animate-spin" />
+                   <div className="w-8 h-8 border-4 border-brand-primary/30 border-t-brand-primary rounded-full animate-spin" />
                    <div className="text-sm font-medium text-gray-600 animate-pulse">Generating your digital proof...</div>
                  </div>
               ) : customization.fullPreviewUrl ? (
@@ -638,7 +638,7 @@ export const ProductCustomizer = ({
                      />
                    </div>
                    <div className="flex-1 text-center sm:text-left">
-                     <div className="font-bold text-[#1F2124] mb-1">Digital proof included</div>
+                     <div className="font-bold text-brand-body mb-1">Digital proof included</div>
                      <p className="text-[13px] text-gray-500 mb-4 max-w-sm">
                        We'll send a final digital proof via email for your approval before production.
                      </p>
@@ -677,7 +677,7 @@ export const ProductCustomizer = ({
                          }
                        }}
                        disabled={isGeneratingProof}
-                       className="text-[#4a346e] font-bold text-[14px] hover:underline disabled:opacity-50"
+                       className="text-brand-primary font-bold text-[14px] hover:underline disabled:opacity-50"
                      >
                        Download proof (PDF) &darr;
                      </button>
@@ -693,7 +693,7 @@ export const ProductCustomizer = ({
              <button
                 type="button"
                 onClick={() => setStep(3)}
-                className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-white border border-gray-300 text-[#1F2124] font-bold rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap text-center"
+                className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-white border border-gray-300 text-brand-body font-bold rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap text-center"
              >
                 &larr; Back: Extras
              </button>
@@ -702,7 +702,7 @@ export const ProductCustomizer = ({
                   type="button"
                   onClick={onAddToCart}
                   disabled={isAdding || isGeneratingProof || !customization.fullPreviewUrl}
-                  className="w-full flex-1 py-3 bg-[#4a346e] text-white font-bold rounded-lg hover:bg-[#3d2a5a] transition-colors disabled:opacity-50 whitespace-nowrap text-center"
+                  className="w-full flex-1 py-3 bg-brand-primary text-white font-bold rounded-lg hover:bg-brand-primary-dark transition-colors disabled:opacity-50 whitespace-nowrap text-center"
                >
                   {isAdding ? 'Processing...' : 'Add to Basket'}
                </button>
@@ -712,7 +712,7 @@ export const ProductCustomizer = ({
           <button
              type="button"
              onClick={() => window.location.href = '/diaries'}
-             className="w-full py-3 bg-white text-[#4a346e] border border-[#4a346e] font-bold rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+             className="w-full py-3 bg-white text-brand-primary border border-brand-primary font-bold rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
           >
              Continue Shopping
           </button>

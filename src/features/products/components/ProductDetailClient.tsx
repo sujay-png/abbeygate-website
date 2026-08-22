@@ -303,7 +303,7 @@ export const ProductDetailClient = ({
       const ctx = canvas.getContext('2d');
 
       if (ctx) {
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = '#fff';
         ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
         const res = await fetch(`/api/proxy-image?url=${encodeURIComponent(activeSrc)}`);
@@ -646,8 +646,7 @@ export const ProductDetailClient = ({
       )}
       <div
         id="customizer-grid"
-        className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] xl:grid-cols-[1.5fr_0.8fr] gap-10 lg:gap-16 lg:items-start transition-all duration-500"
-        style={{ backgroundColor: '#ffffff', color: '#1F2124' }}
+        className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] xl:grid-cols-[1.5fr_0.8fr] gap-10 lg:gap-16 lg:items-start transition-all duration-500 text-brand-body"
       >
         {/* Left: gallery and customizer */}
         <div id="product-gallery-container" className={`relative z-10 self-start flex flex-col gap-4 w-full scroll-mt-[120px] ${!isCustomizingStarted ? 'lg:sticky lg:top-[120px]' : ''}`}>
@@ -661,7 +660,7 @@ export const ProductDetailClient = ({
                       key={img.id}
                       type="button"
                       onClick={() => setActiveImageIndex(index)}
-                      className={`relative h-20 w-20 lg:h-24 lg:w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${index === activeImageIndex ? 'border-[#4a346e]' : 'border-gray-200 hover:border-gray-300'
+                      className={`relative h-20 w-20 lg:h-24 lg:w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${index === activeImageIndex ? 'border-brand-primary' : 'border-gray-200 hover:border-gray-300'
                         }`}
                       style={{ backgroundColor: '#f9f9f9' }}
                     >
@@ -680,7 +679,7 @@ export const ProductDetailClient = ({
 
             <div
               className="relative w-full max-w-[500px] mx-auto flex-1 overflow-hidden rounded-xl border border-gray-100 flex items-center justify-center p-4 group order-1 md:order-2"
-              style={{ aspectRatio: imageAspectRatio, backgroundColor: '#ffffff' }}
+              style={{ aspectRatio: imageAspectRatio, backgroundColor: 'var(--brand-cream)' }}
             >
               <button
                 type="button"
@@ -689,7 +688,7 @@ export const ProductDetailClient = ({
                   e.stopPropagation();
                   setIsPreviewOpen(true);
                 }}
-                className="absolute top-4 right-4 z-[30] p-2.5 rounded-full bg-white/90 backdrop-blur shadow-sm text-gray-600 hover:text-black hover:bg-white transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 border border-gray-200"
+                className="absolute top-4 right-4 z-[30] p-2.5 rounded-full bg-white/90 backdrop-blur shadow-sm text-gray-600 hover:text-brand-primary-dark hover:bg-white transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 border border-gray-200"
                 title="Fullscreen Preview"
               >
                 <ZoomIn className="w-5 h-5" />
@@ -762,7 +761,7 @@ export const ProductDetailClient = ({
               onClick={() => setIsPreviewOpen(false)}
               className="absolute top-6 right-6 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-[110]"
             >
-              <X className="w-6 h-6 text-black" />
+              <X className="w-6 h-6 text-brand-primary-dark" />
             </button>
 
             {product.images.length > 1 && (
@@ -771,13 +770,13 @@ export const ProductDetailClient = ({
                   onClick={handlePrevImage}
                   className="absolute left-6 p-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-[110]"
                 >
-                  <ChevronLeft className="w-6 h-6 text-black" />
+                  <ChevronLeft className="w-6 h-6 text-brand-primary-dark" />
                 </button>
                 <button
                   onClick={handleNextImage}
                   className="absolute right-6 p-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-[110]"
                 >
-                  <ChevronRight className="w-6 h-6 text-black" />
+                  <ChevronRight className="w-6 h-6 text-brand-primary-dark" />
                 </button>
               </>
             )}
@@ -815,26 +814,26 @@ export const ProductDetailClient = ({
         {isCustomizingStarted && customizationActive && (
           <aside className="relative z-20 flex h-fit flex-col gap-3">
             <div>
-              <p className="text-[13px] font-bold uppercase tracking-widest text-[#4a346e]">{product.categories?.[0]?.name ? `${product.categories[0].name} collection` : 'Collection'}</p>
-              <h2 className="mt-1 text-2xl font-bold leading-tight text-[#1F2124] lg:text-[28px]">{product.name}</h2>
+              <p className="text-[13px] font-bold uppercase tracking-widest text-brand-primary">{product.categories?.[0]?.name ? `${product.categories[0].name} collection` : 'Collection'}</p>
+              <h2 className="mt-1 text-2xl font-bold leading-tight text-brand-body lg:text-[28px]">{product.name}</h2>
               {product.sku && <p className="mt-0.5 text-[12px] text-gray-500">SKU: {product.sku}</p>}
             </div>
 
             <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-transparent px-3 py-2.5">
-              <span className="text-[14px] font-bold text-[#1F2124]">Quantity</span>
+              <span className="text-[14px] font-bold text-brand-body">Quantity</span>
               <div className="flex h-9 items-center overflow-hidden rounded-md border border-gray-300 bg-white">
                 <button type="button" aria-label="Decrease quantity" className="px-3 text-gray-600 hover:bg-gray-100" onClick={() => setQuantity(Math.max(CUSTOMIZATION_MIN_QTY, quantity - 1))}>−</button>
-                <span className="w-10 text-center text-[14px] font-bold text-[#1F2124]">{quantity}</span>
+                <span className="w-10 text-center text-[14px] font-bold text-brand-body">{quantity}</span>
                 <button type="button" aria-label="Increase quantity" className="px-3 text-gray-600 hover:bg-gray-100" onClick={() => setQuantity(quantity + 1)}>+</button>
               </div>
             </div>
 
             <dl className="rounded-lg border border-gray-200 bg-transparent px-3 py-2.5 space-y-1 text-[13px] text-gray-600">
-              <div className="flex justify-between gap-4"><dt>Unit price (ex VAT)</dt><dd className="font-medium text-[#1F2124]">{formatGBP(priceDetails.unitPrice)}</dd></div>
-              <div className="flex justify-between gap-4"><dt>Branding</dt><dd className="text-right font-medium text-[#1F2124]">{customization.blockingType}</dd></div>
-              <div className="flex justify-between gap-4"><dt>Corner edges</dt><dd className="font-medium text-[#1F2124]">{customization.cornerEdges}</dd></div>
-              <div className="flex justify-between gap-4 border-t border-gray-200 pt-1.5 mt-1.5"><dt>Subtotal (ex VAT)</dt><dd className="font-semibold text-[#1F2124]">{formatGBP(priceDetails.totalPrice)}</dd></div>
-              <div className="flex justify-between gap-4 bg-[#eff5f4] -mx-3 -mb-2.5 mt-2 px-3 py-2.5 rounded-b-lg border-t border-gray-200"><dt className="font-bold text-[#1F2124]">Including VAT (20%)</dt><dd className="font-bold text-[#1F2124]">{formatGBP(priceDetails.totalPrice * (1 + VAT_RATE))}</dd></div>
+              <div className="flex justify-between gap-4"><dt>Unit price (ex VAT)</dt><dd className="font-medium text-brand-body">{formatGBP(priceDetails.unitPrice)}</dd></div>
+              <div className="flex justify-between gap-4"><dt>Branding</dt><dd className="text-right font-medium text-brand-body">{customization.blockingType}</dd></div>
+              <div className="flex justify-between gap-4"><dt>Corner edges</dt><dd className="font-medium text-brand-body">{customization.cornerEdges}</dd></div>
+              <div className="flex justify-between gap-4 border-t border-gray-200 pt-1.5 mt-1.5"><dt>Subtotal (ex VAT)</dt><dd className="font-semibold text-brand-body">{formatGBP(priceDetails.totalPrice)}</dd></div>
+              <div className="flex justify-between gap-4 bg-brand-tint -mx-3 -mb-2.5 mt-2 px-3 py-2.5 rounded-b-lg border-t border-gray-200"><dt className="font-bold text-brand-body">Including VAT (20%)</dt><dd className="font-bold text-brand-body">{formatGBP(priceDetails.totalPrice * (1 + VAT_RATE))}</dd></div>
             </dl>
 
             {!isGifts && tiers.length > 0 && (() => {
@@ -845,24 +844,24 @@ export const ProductDetailClient = ({
               if (!nextTier || savings <= 0) return null;
 
               return (
-                <div className="mt-1 rounded-lg border border-[#d2e0de] bg-[#e6f0ef] px-3 py-2.5">
-                  <p className="text-[13px] font-bold text-[#1f6d63]">You could save {formatGBP(savings)}</p>
+                <div className="mt-1 rounded-lg border border-brand-soft bg-brand-tint px-3 py-2.5">
+                  <p className="text-[13px] font-bold text-brand-accent">You could save {formatGBP(savings)}</p>
                   <p className="text-[11px] text-gray-600 mb-1.5">by ordering {nextTier.min} units ({formatGBP(nextTier.price)} per unit, ex VAT)</p>
-                  <button type="button" onClick={() => setQuantity(nextTier.min)} className="w-full rounded-md border border-[#1f6d63] bg-white px-2 py-1 text-[11px] font-bold text-[#1f6d63] transition-colors hover:bg-[#d2e0de]">
+                  <button type="button" onClick={() => setQuantity(nextTier.min)} className="w-full rounded-md border border-brand-accent bg-white px-2 py-1 text-[11px] font-bold text-brand-accent transition-colors hover:bg-brand-soft/50">
                     Increase to {nextTier.min} units →
                   </button>
                 </div>
               );
             })()}
 
-            <button type="button" onClick={handleAddToCart} disabled={isAdding} className="mt-3 flex h-[46px] w-full items-center justify-center rounded-lg bg-[#4a346e] text-[15px] font-bold text-white transition-colors hover:bg-[#392657] disabled:opacity-50">
+            <button type="button" onClick={handleAddToCart} disabled={isAdding} className="mt-3 flex h-[46px] w-full items-center justify-center rounded-lg bg-brand-primary text-[15px] font-bold text-white transition-colors hover:bg-brand-primary-dark disabled:opacity-50">
               {isAdding ? 'Processing...' : 'Add to Basket →'}
             </button>
             <p className="mt-3 text-[12px] leading-relaxed text-gray-500">All prices shown exclude VAT. Applicable VAT is calculated at checkout. A final digital proof is provided for approval before production.</p>
 
             {!isGifts && tiers.length > 0 && (
               <div className="mt-1 border border-gray-200 rounded-lg bg-white overflow-hidden">
-                <div className="flex justify-between items-center font-bold px-4 py-3 text-[12px] tracking-widest text-[#1F2124] uppercase bg-gray-50 border-b border-gray-200">
+                <div className="flex justify-between items-center font-bold px-4 py-3 text-[12px] tracking-widest text-brand-body uppercase bg-gray-50 border-b border-gray-200">
                   <span>PRICE BREAKS (PER UNIT)</span>
                 </div>
                 <div>
@@ -874,7 +873,7 @@ export const ProductDetailClient = ({
                       {tiers.map(tier => {
                         const active = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
                         return (
-                          <tr key={tier.min} onClick={() => setQuantity(tier.min)} className={`cursor-pointer border-t border-gray-200 ${active ? 'bg-[#4a346e] font-bold text-white' : 'text-[#1F2124] hover:bg-gray-50'}`}>
+                          <tr key={tier.min} onClick={() => setQuantity(tier.min)} className={`cursor-pointer border-t border-gray-200 ${active ? 'bg-brand-primary font-bold text-white' : 'text-brand-body hover:bg-gray-50'}`}>
                             <td className="px-4 py-2.5">{tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}</td>
                             <td className="px-4 py-2.5 text-right">{formatGBP(tier.price)}</td>
                           </tr>
@@ -889,22 +888,22 @@ export const ProductDetailClient = ({
         )}
 
         {/* Right: normal product details */}
-        <div className={`relative z-20 flex flex-col gap-4 ${isCustomizingStarted && customizationActive ? 'hidden' : ''}`} style={{ backgroundColor: '#ffffff' }}>
+        <div className={`relative z-20 flex flex-col gap-4 ${isCustomizingStarted && customizationActive ? 'hidden' : ''}`}>
 
           <div>
-            <div className="text-[13px] font-bold tracking-widest text-[#4a346e] uppercase mb-2">
+            <div className="text-[13px] font-bold tracking-widest text-brand-primary uppercase mb-2">
               {product.categories?.[0]?.name ? `${product.categories[0].name} COLLECTION` : 'COLLECTION'}
             </div>
             <h1
               className="text-2xl lg:text-[32px] font-bold leading-tight mb-2"
-              style={{ color: '#1F2124' }}
+              style={{ color: 'var(--brand-body)' }}
             >
               {product.name}
             </h1>
 
             {product.short_description && (
               <div
-                className="text-[15px] text-[#1F2124] mb-3"
+                className="text-[15px] text-brand-body mb-3"
                 dangerouslySetInnerHTML={{ __html: product.short_description }}
               />
             )}
@@ -912,7 +911,7 @@ export const ProductDetailClient = ({
 
           {/* PRICE BLOCK */}
           <div>
-            <div className="text-[20px] font-bold text-[#1F2124] mb-1">
+            <div className="text-[20px] font-bold text-brand-body mb-1">
               {formatGBP(priceDetails.unitPrice)} <span className="text-[14px] font-normal text-gray-500">(ex VAT)</span>
             </div>
 
@@ -940,7 +939,7 @@ export const ProductDetailClient = ({
 
           {/* Description Accordion */}
           <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mb-2">
-            <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-[#1F2124] hover:bg-gray-50">
+            <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body hover:bg-gray-50">
               <span>Description</span>
               <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
             </summary>
@@ -951,7 +950,7 @@ export const ProductDetailClient = ({
                   if (descHtml) {
                     return (
                       <div 
-                        className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-black hover:prose-a:text-gray-600"
+                        className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
                         dangerouslySetInnerHTML={{ __html: descHtml }} 
                       />
                     );
@@ -964,7 +963,7 @@ export const ProductDetailClient = ({
           {/* Available Colours Section */}
           {colorVariants.length > 0 && (
             <div className="mt-2 mb-2">
-              <span className="text-[14px] font-bold text-[#1F2124] block mb-3">Colour: {product.name.split(', ').pop() || 'Selected'}</span>
+              <span className="text-[14px] font-bold text-brand-body block mb-3">Colour: {product.name.split(', ').pop() || 'Selected'}</span>
               <div className="flex flex-wrap items-center gap-2">
                 {colorVariants.map((color) => {
                   const isActive = product.slug === color.slug;
@@ -986,7 +985,7 @@ export const ProductDetailClient = ({
           {/* Quantity Box */}
           <div className="bg-transparent border border-gray-200 rounded-lg px-4 py-4 flex flex-col gap-3">
             <div className="flex justify-between items-start">
-              <label className="text-[14px] font-bold text-[#1F2124] mt-1">Quantity</label>
+              <label className="text-[14px] font-bold text-brand-body mt-1">Quantity</label>
               <div className="flex flex-col items-end gap-1.5">
                 <div className="flex items-center border border-gray-300 bg-white rounded-md overflow-hidden h-[36px]">
                   <button type="button" className="px-3 hover:bg-gray-100 text-gray-600 transition" onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
@@ -998,11 +997,11 @@ export const ProductDetailClient = ({
                       const val = parseInt(e.target.value, 10);
                       if (!Number.isNaN(val) && val >= 1) setQuantity(val);
                     }}
-                    className="w-[50px] text-center font-bold text-[#1F2124] focus:outline-none"
+                    className="w-[50px] text-center font-bold text-brand-body focus:outline-none"
                   />
                   <button type="button" className="px-3 hover:bg-gray-100 text-gray-600 transition" onClick={() => setQuantity(quantity + 1)}>+</button>
                 </div>
-                <div className="text-[15px] font-bold text-[#1F2124]">
+                <div className="text-[15px] font-bold text-brand-body">
                   {formatGBP(priceDetails.unitPrice)} <span className="text-[13px] font-normal text-gray-500">per unit (ex VAT)</span>
                 </div>
               </div>
@@ -1032,11 +1031,11 @@ export const ProductDetailClient = ({
                         setIsCustomizingStarted(false);
                       }
                     }}
-                    className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
+                    className="w-4 h-4 rounded border-gray-300 text-brand-primary-dark focus:ring-black"
                   />
                 </div>
                 <div className="flex-1">
-                  <span className="block font-bold text-[14px] text-[#4a346e]">
+                  <span className="block font-bold text-[14px] text-brand-primary">
                     No customisation required
                   </span>
                   <span className="block text-[13px] text-gray-500 mt-1">
@@ -1055,13 +1054,13 @@ export const ProductDetailClient = ({
                 const potentialSavings = (priceDetails.unitPrice - nextTier.price) * nextTier.min;
                 if (potentialSavings > 0) {
                   return (
-                    <div className="bg-[#e6f0ef] rounded-lg px-4 py-3 mt-1 border border-[#d2e0de]">
-                      <div className="font-bold text-[#1f6d63] text-[14px]">You could save {formatGBP(potentialSavings)}</div>
+                    <div className="bg-brand-tint rounded-lg px-4 py-3 mt-1 border border-brand-soft">
+                      <div className="font-bold text-brand-accent text-[14px]">You could save {formatGBP(potentialSavings)}</div>
                       <div className="text-[13px] text-gray-600 mb-2">by ordering {nextTier.min} units ({formatGBP(nextTier.price)} per unit, ex VAT)</div>
                       <button
                         type="button"
                         onClick={() => setQuantity(nextTier.min)}
-                        className="w-full py-1.5 bg-white rounded-md border border-[#1f6d63] text-[#1f6d63] text-[13px] font-bold hover:bg-[#d2e0de] transition"
+                        className="w-full py-1.5 bg-white rounded-md border border-brand-accent text-brand-accent text-[13px] font-bold hover:bg-brand-soft/50 transition"
                       >
                         Increase to {nextTier.min} units &rarr;
                       </button>
@@ -1076,7 +1075,7 @@ export const ProductDetailClient = ({
               type="button"
               onClick={handleAddToCart}
               disabled={isAdding}
-              className="w-full h-[54px] text-[16px] font-bold rounded-lg text-white transition-all disabled:opacity-50 flex items-center justify-center bg-[#4a346e] hover:bg-[#392657] mt-2"
+              className="w-full h-[54px] text-[16px] font-bold rounded-lg text-white transition-all disabled:opacity-50 flex items-center justify-center bg-brand-primary hover:bg-brand-primary-dark mt-2"
             >
               {isAdding 
                 ? 'Processing...' 
@@ -1093,7 +1092,7 @@ export const ProductDetailClient = ({
           {/* VOLUME PRICING TABLE */}
           {!isGifts && tiers.length > 0 && (
             <div className="mt-1 border border-gray-200 rounded-lg bg-white overflow-hidden">
-              <div className="flex justify-between items-center font-bold px-4 py-3 text-[13px] tracking-widest text-[#1F2124] uppercase bg-gray-50 border-b border-gray-200">
+              <div className="flex justify-between items-center font-bold px-4 py-3 text-[13px] tracking-widest text-brand-body uppercase bg-gray-50 border-b border-gray-200">
                 <span>PRICE BREAKS (PER UNIT)</span>
               </div>
               <div>
@@ -1111,7 +1110,7 @@ export const ProductDetailClient = ({
                         <tr
                           key={tier.min}
                           onClick={() => setQuantity(tier.min)}
-                          className={`border-t border-gray-200 cursor-pointer transition-colors ${isActive ? 'bg-[#4a346e] text-white font-bold' : 'hover:bg-gray-100 text-[#1F2124]'
+                          className={`border-t border-gray-200 cursor-pointer transition-colors ${isActive ? 'bg-brand-primary text-white font-bold' : 'hover:bg-gray-100 text-brand-body'
                             }`}
                         >
                           <td className="py-2.5 px-4">
@@ -1131,7 +1130,7 @@ export const ProductDetailClient = ({
 
           {/* Specifications Accordion */}
           <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
-            <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-[#1F2124] hover:bg-gray-50">
+            <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body hover:bg-gray-50">
               <span>Specifications</span>
               <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
             </summary>
@@ -1159,13 +1158,13 @@ export const ProductDetailClient = ({
 
               return (
                 <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
-                  <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-[#1F2124] hover:bg-gray-50">
+                  <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body hover:bg-gray-50">
                     <span>Delivery</span>
                     <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
                   </summary>
                   <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
                     <div 
-                      className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-black hover:prose-a:text-gray-600"
+                      className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
                       dangerouslySetInnerHTML={{ __html: deliveryTab.content }} 
                     />
                   </div>
@@ -1179,13 +1178,13 @@ export const ProductDetailClient = ({
               return title !== 'description' && title !== 'shipping' && title !== 'delivery';
             }).map((tab, idx) => (
               <details key={idx} className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
-                <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-[#1F2124] hover:bg-gray-50">
+                <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body hover:bg-gray-50">
                   <span>{tab.title}</span>
                   <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
                 </summary>
                 <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
                   <div 
-                    className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-black hover:prose-a:text-gray-600"
+                    className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
                     dangerouslySetInnerHTML={{ __html: tab.content }} 
                   />
                 </div>

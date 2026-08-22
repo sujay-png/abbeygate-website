@@ -60,12 +60,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   });
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-brand-cream min-h-screen">
       <Breadcrumb paths={[{ label: 'Home', href: '/' }, { label: 'Search Results' }]} />
 
       <Container className="py-8">
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-[#1F2124] mb-4">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-brand-body mb-4">
             Search Results
           </h1>
           {products.length > 0 && (

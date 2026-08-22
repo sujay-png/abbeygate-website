@@ -6,7 +6,7 @@ import { heritageData } from '@/data/heritage';
 import { Link2 } from 'lucide-react';
 
 const SocialIcons = ({ className = '' }: { className?: string }) => (
-  <div className={`flex items-center gap-4 text-black ${className}`}>
+  <div className={`flex items-center gap-4 text-brand-primary-dark ${className}`}>
     <button aria-label="Share on Facebook" className="hover:text-gray-600 transition-colors">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" stroke="none">
         <path d="M14 13.5h2.5l1-4H14v-2c0-1.03 0-2 2-2h1.5V2.14c-.326-.043-1.557-.14-2.857-.14C11.928 2 10 3.657 10 6.7v2.8H7.5v4H10v12h4v-12z" />
@@ -25,7 +25,7 @@ const SocialIcons = ({ className = '' }: { className?: string }) => (
 
 export default function HeritagePage() {
   return (
-    <main className="flex flex-col min-h-screen bg-white">
+    <main className="flex flex-col min-h-screen bg-brand-cream">
       <Breadcrumb paths={[{ label: 'Home', href: '/' }, { label: heritageData.breadcrumb }]} />
       
       <section className="py-12 md:py-20">
@@ -33,13 +33,13 @@ export default function HeritagePage() {
           <div className="max-w-5xl mx-auto flex flex-col items-center">
             
             {/* Title */}
-            <h1 className="text-4xl md:text-5xl lg:text-[54px] font-extrabold text-black font-sans tracking-tight text-center mb-8 leading-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-[54px] font-extrabold text-brand-primary-dark font-sans tracking-tight text-center mb-8 leading-tight">
               {heritageData.title}
             </h1>
             
             {/* Intro */}
             <p 
-              className="text-[15px] text-[#1F2124]/90 font-work text-center mb-10 leading-relaxed max-w-5xl"
+              className="text-[15px] text-brand-body/90 font-work text-center mb-10 leading-relaxed max-w-5xl"
               dangerouslySetInnerHTML={{ __html: heritageData.intro }}
             />
             
@@ -48,13 +48,13 @@ export default function HeritagePage() {
             
             {/* Main Content Area */}
             <div className="w-full text-left">
-              <h3 className="font-bold text-[15px] font-sans text-black mb-6">
+              <h3 className="font-bold text-[15px] font-sans text-brand-primary-dark mb-6">
                 {heritageData.copyright}
               </h3>
               
               <div className="flex flex-col gap-6">
                 {heritageData.content.map((paragraph, idx) => (
-                  <p key={idx} className="text-[15px] text-[#1F2124]/90 font-work leading-relaxed">
+                  <p key={idx} className="text-[15px] text-brand-body/90 font-work leading-relaxed">
                     {paragraph}
                   </p>
                 ))}
