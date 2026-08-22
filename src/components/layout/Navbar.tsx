@@ -144,7 +144,7 @@ export const Navbar = () => {
 
   return (
     <header
-      className="sticky top-0 z-50 w-full bg-brand-cream border-b border-brand-border shadow-sm relative"
+      className="sticky top-0 z-50 w-full bg-white relative"
       onMouseLeave={scheduleClose}
     >
       <div className="w-full max-w-[1600px] mx-auto px-6 lg:px-10 xl:px-16">
@@ -165,7 +165,7 @@ export const Navbar = () => {
               <div key={item.id} className="h-20 flex items-center" onMouseEnter={() => openMenu(item.id)}>
                 <Link
                   href={item.href}
-                  className={`text-[16px] tracking-wide whitespace-nowrap transition-colors duration-300 ${
+                  className={`font-josefin uppercase tracking-widest text-[14px] whitespace-nowrap transition-colors duration-300 ${
                   activeMenuId === item.id ? 'text-brand-primary-dark' : 'text-brand-grey hover:text-brand-primary-dark'
                   }`}
                 >

@@ -43,21 +43,21 @@ export const CategoryPageContent = ({
           resultCount={filteredProducts.length}
         />
 
-        <div className="mt-8">
-          <div className="max-w-3xl mb-10 md:mb-12">
-            <h1 className="text-3xl md:text-4xl font-extrabold text-brand-primary-dark mb-4">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 mt-8">
+          <div className="lg:w-1/3 flex-shrink-0">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-brand-primary-dark mb-4 leading-tight tracking-tight">
               {title}
             </h1>
-
             {description && (
               <div
-                className="prose prose-sm md:prose-base text-brand-body"
+                className="prose prose-sm text-brand-body max-w-full [&>p]:leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: description }}
               />
             )}
           </div>
-
-          <ProductGrid products={filteredProducts} />
+          <div className="lg:w-2/3">
+            <ProductGrid products={filteredProducts} />
+          </div>
         </div>
       </Container>
     </div>

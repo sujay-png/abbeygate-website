@@ -166,7 +166,7 @@ export const ProductCustomizer = ({
   const isFoilSelected = customization.blockingType === 'Foil blocked';
 
   return (
-    <div className="mt-0 mb-6 animate-in fade-in slide-in-from-top-2 duration-300" style={{ backgroundColor: '#ffffff' }}>
+    <div className="mt-0 mb-6 animate-in fade-in slide-in-from-top-2 duration-300">
       {/* STEP TRACKER (Optional visual flair) */}
       <div className="flex items-center gap-2 mb-4">
         <div className={`text-[12px] font-bold ${step === 1 ? 'text-brand-primary' : 'text-gray-400 hidden sm:block'}`}>1. Branding</div>
@@ -237,7 +237,7 @@ export const ProductCustomizer = ({
               {/* Foil Blocked Card */}
               <div 
                 onClick={() => onCustomizationChange({ ...customization, blockingType: 'Foil blocked', foilColor: customization.foilColor || 'Gold' })}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'Foil blocked' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'Foil blocked' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
               >
                   <div 
                     className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative bg-center"
@@ -296,7 +296,7 @@ export const ProductCustomizer = ({
               {/* Blind Debossed Card */}
               <div 
                 onClick={() => onCustomizationChange({ ...customization, blockingType: 'Embossed', foilColor: undefined })}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'Embossed' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'Embossed' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
               >
                   <div 
                     className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative bg-center"
@@ -357,7 +357,7 @@ export const ProductCustomizer = ({
               {/* UV Print Card */}
               <div 
                 onClick={() => onCustomizationChange({ ...customization, blockingType: 'UV Print', foilColor: undefined })}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'UV Print' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'UV Print' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
               >
                   <div 
                     className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative bg-center"
@@ -490,7 +490,7 @@ export const ProductCustomizer = ({
               {/* None Card */}
               <div 
                 onClick={() => onCustomizationChange({ ...customization, cornerEdges: 'None' })}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'None' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'None' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
               >
                  <div 
                    className="w-10 h-10 rounded mb-3 shadow-sm border border-black/10 bg-center" 
@@ -507,7 +507,7 @@ export const ProductCustomizer = ({
               {/* Gold Card */}
               <div 
                 onClick={() => onCustomizationChange({ ...customization, cornerEdges: 'Gold' })}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'Gold' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-[#fbfaf8]'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'Gold' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
               >
                  <div 
                    className="w-10 h-10 rounded mb-3 relative shadow-sm border border-black/10 bg-center"
@@ -537,7 +537,7 @@ export const ProductCustomizer = ({
               {/* Silver Card */}
               <div 
                 onClick={() => onCustomizationChange({ ...customization, cornerEdges: 'Silver' })}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'Silver' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-[#f5f6f8]'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'Silver' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
               >
                  <div 
                    className="w-10 h-10 rounded mb-3 relative shadow-sm border border-black/10 bg-center"
@@ -622,7 +622,7 @@ export const ProductCustomizer = ({
                </div>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-6 items-center p-6 bg-white rounded-xl border border-gray-200 min-h-[160px] shadow-sm">
+            <div className="flex flex-col sm:flex-row gap-6 items-center p-6 bg-transparent rounded-xl border border-gray-200 min-h-[160px] shadow-sm">
               {isGeneratingProof ? (
                  <div className="flex w-full items-center justify-center gap-4 py-8">
                    <div className="w-8 h-8 border-4 border-brand-primary/30 border-t-brand-primary rounded-full animate-spin" />
