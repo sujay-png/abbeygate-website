@@ -470,6 +470,8 @@ export const ProductDetailClient = ({
                 const bookTopPx = drawY + (finalBounds.top / 100) * drawH;
                 const bookBottomPx = drawY + (finalBounds.bottom / 100) * drawH;
 
+                const isCurved = product.name?.toLowerCase().includes('lewes smoothgrain') || product.slug?.toLowerCase().includes('lewes-smoothgrain');
+
                 const drawCorner = (x: number, y: number, rotation: number) => {
                   ctx.save();
                   ctx.translate(x, y);
@@ -487,7 +489,11 @@ export const ProductDetailClient = ({
                   ctx.scale(clipW/40, clipH/40);
                   
                   // Main Body
-                  const mainPath = new Path2D('M 0 0 L 36 0 Q 40 0 40 4 L 40 40 L 34 40 L 34 10 Q 34 6 30 6 L 0 6 Z');
+                  const mainPathStr = isCurved 
+                    ? 'M 8 0 L 20 0 Q 40 0 40 20 L 40 32 L 34 32 L 34 20 Q 34 6 20 6 L 8 6 Z' 
+                    : 'M 0 0 L 36 0 Q 40 0 40 4 L 40 40 L 34 40 L 34 10 Q 34 6 30 6 L 0 6 Z';
+                  const mainPath = new Path2D(mainPathStr);
+                  
                   const grad = ctx.createLinearGradient(0, 0, 40, 40);
                   if (customization.cornerEdges === 'Gold') {
                     grad.addColorStop(0, '#D4AF37');
@@ -514,31 +520,31 @@ export const ProductDetailClient = ({
                   // Dark inner shadow line
                   ctx.strokeStyle = 'rgba(0,0,0,0.6)';
                   ctx.lineWidth = 0.75;
-                  ctx.stroke(new Path2D('M 0 6 L 30 6 Q 34 6 34 10 L 34 40'));
+                  ctx.stroke(new Path2D(isCurved ? 'M 8 6 L 20 6 Q 34 6 34 20 L 34 32' : 'M 0 6 L 30 6 Q 34 6 34 10 L 34 40'));
 
                   // Dark outer edge line
                   ctx.strokeStyle = 'rgba(0,0,0,0.3)';
                   ctx.lineWidth = 0.5;
-                  ctx.stroke(new Path2D('M 0 0 L 36 0 Q 40 0 40 4 L 40 40'));
+                  ctx.stroke(new Path2D(isCurved ? 'M 8 0 L 20 0 Q 40 0 40 20 L 40 32' : 'M 0 0 L 36 0 Q 40 0 40 4 L 40 40'));
                   
                   // Primary highlight
                   ctx.strokeStyle = 'rgba(255,255,255,0.9)';
                   ctx.lineWidth = 1.2;
                   ctx.shadowColor = 'rgba(255,255,255,0.9)';
                   ctx.shadowBlur = 2; // Simulates the SVG blur filter
-                  ctx.stroke(new Path2D('M 0 1.5 L 35 1.5 Q 38.5 1.5 38.5 5 L 38.5 40'));
+                  ctx.stroke(new Path2D(isCurved ? 'M 8 1.5 L 20 1.5 Q 38.5 1.5 38.5 20 L 38.5 32' : 'M 0 1.5 L 35 1.5 Q 38.5 1.5 38.5 5 L 38.5 40'));
                   
                   // Secondary highlight
                   ctx.strokeStyle = 'rgba(255,255,255,0.4)';
                   ctx.lineWidth = 2;
                   ctx.shadowBlur = 4;
-                  ctx.stroke(new Path2D('M 0 3 L 34 3 Q 37 3 37 6 L 37 40'));
+                  ctx.stroke(new Path2D(isCurved ? 'M 8 3 L 20 3 Q 37 3 37 20 L 37 32' : 'M 0 3 L 34 3 Q 37 3 37 6 L 37 40'));
                   
                   // Dark shadow inner rim
                   ctx.strokeStyle = 'rgba(0,0,0,0.3)';
                   ctx.lineWidth = 1;
                   ctx.shadowColor = 'rgba(0,0,0,0.3)';
-                  ctx.stroke(new Path2D('M 0 5 L 31 5 Q 35 5 35 9 L 35 40'));
+                  ctx.stroke(new Path2D(isCurved ? 'M 8 5 L 20 5 Q 35 5 35 20 L 35 32' : 'M 0 5 L 31 5 Q 35 5 35 9 L 35 40'));
                   
                   ctx.shadowColor = 'transparent';
                   ctx.shadowBlur = 0;

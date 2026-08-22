@@ -134,7 +134,7 @@ export const CartDrawer = () => {
                 <ul className="flex flex-col gap-6">
                   {items.map((item) => (
                     <li key={item.key} className="flex gap-4">
-                      <div className="w-20 h-20 relative shrink-0 bg-gray-50 rounded">
+                      <div className="w-20 h-20 relative shrink-0 bg-transparent rounded">
                         <Image
                           src={item.image}
                           alt={item.name}
@@ -167,7 +167,7 @@ export const CartDrawer = () => {
                         )}
                         
                         {item.customization?.enabled && (
-                          <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                          <div className="mt-3 p-3 bg-transparent rounded-lg border border-gray-100">
                             <p className="text-[13px] font-semibold text-gray-900 mb-1">Custom Logo</p>
                             <p className="text-[12px] text-gray-600"><span className="font-medium">Blocking:</span> {item.customization.choice.replace(' blocked', '')}</p>
                             {item.customization.foilColor && (
