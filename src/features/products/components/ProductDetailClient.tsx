@@ -118,7 +118,6 @@ export const ProductDetailClient = ({
       if (draftStr) {
         const draft = JSON.parse(draftStr);
         if (draft) {
-          setIsCustomizingStarted(true);
           // If the draft contains a base64 logoPreviewUrl, convert it back to a File object for checkout
           if (draft.logoPreviewUrl && draft.logoPreviewUrl.startsWith('data:image')) {
              fetch(draft.logoPreviewUrl)
@@ -188,6 +187,16 @@ export const ProductDetailClient = ({
   const handleCustomizationChange = useCallback((state: CustomizationState) => {
     setCustomization(state);
   }, []);
+
+  const customizationAllowed = !isGifts && quantity >= CUSTOMIZATION_MIN_QTY;
+  const customizationActive = customizationAllowed && customization.enabled;
+
+  // Customisation is only available at 25+ units — exit the stepper if quantity drops below
+  useEffect(() => {
+    if (!customizationAllowed && isCustomizingStarted) {
+      setIsCustomizingStarted(false);
+    }
+  }, [customizationAllowed, isCustomizingStarted]);
 
   useEffect(() => {
     // If we're customizing, ProductCustomizer handles the price updates.
@@ -513,8 +522,8 @@ export const ProductDetailClient = ({
   };
   const lenis = useLenis();
   const handleAddToCart = async () => {
-    // If not customizing yet, the button will act as "Start customising"
-    if (customization.enabled && !isCustomizingStarted && !isGifts) {
+    // If not customizing yet, the button will act as "Start customising" (25+ units only)
+    if (customizationActive && !isCustomizingStarted) {
       setIsCustomizingStarted(true);
       setTimeout(() => {
         const gallery = document.getElementById('product-gallery-container');
@@ -532,7 +541,8 @@ export const ProductDetailClient = ({
     if (
       customization.enabled &&
       quantity < CUSTOMIZATION_MIN_QTY &&
-      !isGifts
+      !isGifts &&
+      isCustomizingStarted
     ) {
       alert(
         `Minimum order quantity for customisable products with logos is ${CUSTOMIZATION_MIN_QTY}. Please increase your quantity or remove the customisation.`
@@ -549,7 +559,7 @@ export const ProductDetailClient = ({
       let fullPreviewUrl: string | undefined = undefined;
       let finalBounds: { top: number, bottom: number, left: number, right: number } | null = null;
 
-      if (customization.enabled && !isGifts) {
+      if (customizationActive) {
         attributes.push({ name: 'Custom Logo', value: '' });
 
         if (customization.blockingType) {
@@ -594,7 +604,7 @@ export const ProductDetailClient = ({
         quantity,
         attributes,
         customization:
-          customization.enabled && !isGifts
+          customizationActive
             ? {
               enabled: true,
               choice: customization.blockingType,
@@ -703,7 +713,7 @@ export const ProductDetailClient = ({
                           />
                         );
                       })}
-                      {isCustomizationSurface && (
+                      {isCustomizationSurface && isCustomizingStarted && customizationActive && (
                         <ProductCustomizationOverlay
                           product={product}
                           customization={customization}
@@ -723,7 +733,7 @@ export const ProductDetailClient = ({
           </div>
           
           {/* Customizer underneath the gallery on the left */}
-          {!isGifts && isCustomizingStarted && customization.enabled && (
+          {!isGifts && isCustomizingStarted && customizationActive && (
             <div ref={customizerSectionRef}>
               <ProductCustomizer
                 product={product}
@@ -787,7 +797,7 @@ export const ProductDetailClient = ({
                   sizes="90vw"
                   className="object-contain"
                 />
-                {isCustomizationSurface && (
+                {isCustomizationSurface && isCustomizingStarted && customizationActive && (
                   <ProductCustomizationOverlay
                     product={product}
                     customization={customization}
@@ -802,7 +812,7 @@ export const ProductDetailClient = ({
 
         {/* Customisation order sidebar: replaces the product-detail panel once
             the customer starts the multi-step customisation flow. */}
-        {isCustomizingStarted && customization.enabled && (
+        {isCustomizingStarted && customizationActive && (
           <aside className="relative z-20 flex h-fit flex-col gap-3">
             <div>
               <p className="text-[13px] font-bold uppercase tracking-widest text-[#4a346e]">{product.categories?.[0]?.name ? `${product.categories[0].name} collection` : 'Collection'}</p>
@@ -879,7 +889,7 @@ export const ProductDetailClient = ({
         )}
 
         {/* Right: normal product details */}
-        <div className={`relative z-20 flex flex-col gap-4 ${isCustomizingStarted && customization.enabled ? 'hidden' : ''}`} style={{ backgroundColor: '#ffffff' }}>
+        <div className={`relative z-20 flex flex-col gap-4 ${isCustomizingStarted && customizationActive ? 'hidden' : ''}`} style={{ backgroundColor: '#ffffff' }}>
 
           <div>
             <div className="text-[13px] font-bold tracking-widest text-[#4a346e] uppercase mb-2">
@@ -915,7 +925,11 @@ export const ProductDetailClient = ({
               </p>
             ) : (
               <div className="text-[13px] text-gray-500">
-                {isGifts ? 'Excluding VAT' : 'Including logo branding'}
+                {isGifts
+                  ? 'Excluding VAT'
+                  : customizationActive
+                    ? 'Including logo branding'
+                    : 'Excluding logo branding'}
               </div>
             )}
           </div>
@@ -975,14 +989,14 @@ export const ProductDetailClient = ({
               <label className="text-[14px] font-bold text-[#1F2124] mt-1">Quantity</label>
               <div className="flex flex-col items-end gap-1.5">
                 <div className="flex items-center border border-gray-300 bg-white rounded-md overflow-hidden h-[36px]">
-                  <button type="button" className="px-3 hover:bg-gray-100 text-gray-600 transition" onClick={() => setQuantity(Math.max(isGifts ? 1 : CUSTOMIZATION_MIN_QTY, quantity - 1))}>-</button>
+                  <button type="button" className="px-3 hover:bg-gray-100 text-gray-600 transition" onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
                   <input
                     type="number"
-                    min={isGifts ? 1 : CUSTOMIZATION_MIN_QTY}
+                    min={1}
                     value={quantity}
                     onChange={(e) => {
                       const val = parseInt(e.target.value, 10);
-                      if (val >= 1) setQuantity(val);
+                      if (!Number.isNaN(val) && val >= 1) setQuantity(val);
                     }}
                     className="w-[50px] text-center font-bold text-[#1F2124] focus:outline-none"
                   />
@@ -994,7 +1008,13 @@ export const ProductDetailClient = ({
               </div>
             </div>
 
-            {!isGifts && quantity >= CUSTOMIZATION_MIN_QTY && (
+            {!isGifts && !customizationAllowed && (
+              <p className="text-[13px] text-gray-500">
+                Logo customisation is available on orders of {CUSTOMIZATION_MIN_QTY}+ units.
+              </p>
+            )}
+
+            {!isGifts && customizationAllowed && (
               <label
                 className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${!customization.enabled
                     ? 'border-gray-300 bg-white'
@@ -1060,14 +1080,14 @@ export const ProductDetailClient = ({
             >
               {isAdding 
                 ? 'Processing...' 
-                : (!customization.enabled || isCustomizingStarted || isGifts)
+                : (!customizationActive || isCustomizingStarted || isGifts)
                   ? 'Add to Basket \u2192' 
                   : 'Start customising \u2192'}
             </button>
           </div>
 
           <div className="text-[14px] text-gray-600 mt-2">
-            Prices below {customization.enabled ? 'include logo branding' : 'exclude branding'}.
+            Prices below {customizationActive ? 'include logo branding' : 'exclude logo branding'}.
           </div>
 
           {/* VOLUME PRICING TABLE */}
