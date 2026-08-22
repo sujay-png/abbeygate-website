@@ -860,13 +860,13 @@ export const ProductDetailClient = ({
             <p className="mt-3 text-[12px] leading-relaxed text-gray-500">All prices shown exclude VAT. Applicable VAT is calculated at checkout. A final digital proof is provided for approval before production.</p>
 
             {!isGifts && tiers.length > 0 && (
-              <div className="mt-1 border border-gray-200 rounded-lg bg-white overflow-hidden">
-                <div className="flex justify-between items-center font-bold px-4 py-3 text-[12px] tracking-widest text-brand-body uppercase bg-gray-50 border-b border-gray-200">
+              <div className="mt-1 border border-gray-200 rounded-lg bg-transparent overflow-hidden">
+                <div className="flex justify-between items-center font-bold px-4 py-3 text-[12px] tracking-widest text-brand-body uppercase bg-transparent border-b border-gray-200">
                   <span>PRICE BREAKS (PER UNIT)</span>
                 </div>
                 <div>
                   <table className="w-full text-left text-[12px]">
-                    <thead className="bg-white text-gray-500">
+                    <thead className="bg-transparent text-gray-500">
                       <tr><th className="px-4 py-2 font-medium">Quantity</th><th className="px-4 py-2 text-right font-medium">Price (ex VAT)</th></tr>
                     </thead>
                     <tbody>
@@ -938,7 +938,7 @@ export const ProductDetailClient = ({
           </div>
 
           {/* Description Accordion */}
-          <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mb-2">
+          <details className="group border border-gray-200 rounded-lg bg-transparent overflow-hidden mb-2">
             <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body hover:bg-gray-50">
               <span>Description</span>
               <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
@@ -1091,13 +1091,13 @@ export const ProductDetailClient = ({
 
           {/* VOLUME PRICING TABLE */}
           {!isGifts && tiers.length > 0 && (
-            <div className="mt-1 border border-gray-200 rounded-lg bg-white overflow-hidden">
-              <div className="flex justify-between items-center font-bold px-4 py-3 text-[13px] tracking-widest text-brand-body uppercase bg-gray-50 border-b border-gray-200">
+            <div className="mt-1 border border-gray-200 rounded-lg bg-transparent overflow-hidden">
+              <div className="flex justify-between items-center font-bold px-4 py-3 text-[13px] tracking-widest text-brand-body uppercase bg-transparent border-b border-gray-200">
                 <span>PRICE BREAKS (PER UNIT)</span>
               </div>
               <div>
                 <table className="w-full text-left text-[13px]">
-                  <thead className="bg-white text-gray-500">
+                  <thead className="bg-transparent text-gray-500">
                     <tr>
                       <th className="py-2.5 px-4 font-medium w-1/2">Quantity</th>
                       <th className="py-2.5 px-4 font-medium w-1/2 text-right">Price (ex VAT)</th>
@@ -1129,7 +1129,7 @@ export const ProductDetailClient = ({
           )}
 
           {/* Specifications Accordion */}
-          <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
+          <details className="group border border-gray-200 rounded-lg bg-transparent overflow-hidden mt-4">
             <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body hover:bg-gray-50">
               <span>Specifications</span>
               <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
@@ -1157,7 +1157,7 @@ export const ProductDetailClient = ({
               if (!deliveryTab) return null;
 
               return (
-                <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
+                <details className="group border border-gray-200 rounded-lg bg-transparent overflow-hidden mt-4">
                   <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body hover:bg-gray-50">
                     <span>Delivery</span>
                     <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
@@ -1177,7 +1177,7 @@ export const ProductDetailClient = ({
               const title = t.title.trim().toLowerCase();
               return title !== 'description' && title !== 'shipping' && title !== 'delivery';
             }).map((tab, idx) => (
-              <details key={idx} className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
+              <details key={idx} className="group border border-gray-200 rounded-lg bg-transparent overflow-hidden mt-4">
                 <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body hover:bg-gray-50">
                   <span>{tab.title}</span>
                   <span className="transition group-open:rotate-45 text-xl leading-none">+</span>

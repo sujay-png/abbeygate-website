@@ -50,7 +50,7 @@ const TradeBrochure = () => {
                 href={TRADE_BROCHURE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block w-full sm:w-fit text-center bg-brand-soft border border-brand-accent text-brand-body text-[14px] sm:text-[15px] font-josefin font-medium px-6 sm:px-10 py-4 rounded-md hover:bg-brand-tint shadow-[0_6px_16px_rgba(0,0,0,0.12)] hover:shadow-[0_10px_24px_rgba(0,0,0,0.22)] transition-shadow duration-500 ease-out"
+                className="inline-block w-full sm:w-fit text-center bg-brand-tint border border-brand-accent text-brand-body text-[14px] sm:text-[15px] font-josefin font-medium px-6 sm:px-10 py-4 rounded-md hover:bg-brand-soft shadow-[0_10px_24px_rgba(0,0,0,0.22)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.12)] transition-all duration-500 ease-out"
               >
                 Abbeygate Manufacturing Trade Brochure
               </a>

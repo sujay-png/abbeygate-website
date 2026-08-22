@@ -81,7 +81,7 @@ export const ResourceCarousel = () => {
   }, [emblaApi, onSelect]);
 
   return (
-    <section className="relative w-full h-[500px] md:h-[600px] overflow-hidden bg-gray-100">
+    <section className="relative w-full h-[500px] md:h-[600px] overflow-hidden bg-brand-cream">
       <div className="overflow-hidden w-full h-full touch-pan-y" ref={emblaRef}>
         <div className="flex w-full h-full" style={TRACK_STYLE}>
           {SLIDES.map((slide, index) => (
@@ -96,19 +96,19 @@ export const ResourceCarousel = () => {
                 className="object-cover object-center"
               />
 
-              {/* Dark Gradient Overlay for text readability */}
-              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10" />
+              {/* Light Gradient Overlay for text readability */}
+              <div className="absolute top-0 left-0 h-full w-full md:w-[60%] lg:w-[50%] xl:w-[45%] bg-gradient-to-r from-brand-cream/95 via-brand-cream/80 to-transparent z-10 pointer-events-none" />
 
               {/* Text Content */}
-              <div className="absolute top-0 left-0 h-full w-full md:w-[80%] lg:w-[68%] xl:w-[58%] flex flex-col justify-center pt-12 pb-24 md:pt-24 md:pb-0 px-8 md:px-12 lg:px-24 z-20">
-                <h2 className="font-josefin text-4xl md:text-5xl font-bold text-white mb-6">
+              <div className="absolute top-0 left-0 h-full w-full md:w-[55%] lg:w-[45%] xl:w-[40%] flex flex-col justify-center pt-12 pb-24 md:pt-24 md:pb-0 px-8 md:px-12 lg:px-24 z-20">
+                <h2 className="font-josefin text-4xl md:text-5xl font-bold text-brand-primary-dark mb-6">
                   {slide.title}
                 </h2>
-                <p className="font-work text-base md:text-lg text-white leading-relaxed mb-10 max-w-4xl pr-4">
+                <p className="font-work text-base md:text-lg text-brand-primary-dark leading-relaxed mb-10 max-w-4xl pr-4">
                   {slide.description}
                 </p>
                 <div>
-                  <Button variant="white" className="uppercase tracking-wide min-w-36" href={slide.href}>
+                  <Button variant="primary" className="uppercase tracking-wide min-w-36" href={slide.href}>
                     {slide.buttonText}
                   </Button>
                 </div>
