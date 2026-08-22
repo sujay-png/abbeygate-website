@@ -185,37 +185,58 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, title = 'Customizatio
                   ]).map((pos, i) => (
                     <div
                       key={i}
-                      className={`absolute w-[6%] h-[6%] drop-shadow-md ${pos.rotate}`}
+                      className={`absolute w-[8%] h-[8%] ${pos.rotate}`}
                       style={{
                         top: pos.top !== undefined ? `${pos.top}%` : undefined,
                         bottom: pos.bottom !== undefined ? `${pos.bottom}%` : undefined,
                         left: pos.left !== undefined ? `${pos.left}%` : undefined,
                         right: pos.right !== undefined ? `${pos.right}%` : undefined,
                         transformOrigin: 'center center',
+                        zIndex: 25,
                       }}
                     >
-                      <svg width="100%" height="100%" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <svg width="100%" height="100%" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ overflow: 'visible' }}>
                         <defs>
                           <linearGradient id={`modalGrad-${i}`} x1="0%" y1="0%" x2="100%" y2="100%">
                             {cornerEdges === 'Gold' ? (
                               <>
-                                <stop offset="0%" stopColor="#F3E5AB" />
-                                <stop offset="50%" stopColor="#D4AF37" />
-                                <stop offset="100%" stopColor="#AA7C11" />
+                                <stop offset="0%" stopColor="#D4AF37" />
+                                <stop offset="15%" stopColor="#FFF4D0" />
+                                <stop offset="35%" stopColor="#AA7C11" />
+                                <stop offset="65%" stopColor="#F9E596" />
+                                <stop offset="100%" stopColor="#8A6311" />
                               </>
                             ) : (
                               <>
-                                <stop offset="0%" stopColor="#F5F5F5" />
-                                <stop offset="50%" stopColor="#C0C0C0" />
-                                <stop offset="100%" stopColor="#808080" />
+                                <stop offset="0%" stopColor="#A0A0A0" />
+                                <stop offset="15%" stopColor="#FFFFFF" />
+                                <stop offset="35%" stopColor="#707070" />
+                                <stop offset="65%" stopColor="#E0E0E0" />
+                                <stop offset="100%" stopColor="#505050" />
                               </>
                             )}
                           </linearGradient>
+                          
+                          <filter id={`modalShadow-${i}`} x="-20%" y="-20%" width="150%" height="150%">
+                            <feDropShadow dx="-1" dy="2" stdDeviation="1.5" floodColor="#000000" floodOpacity="0.4" />
+                          </filter>
                         </defs>
-                        <path
-                          d="M 0 0 L 32 0 Q 36 0 36 4 L 36 36 L 28 36 L 28 12 Q 28 8 24 8 L 0 8 Z"
-                          fill={`url(#modalGrad-${i})`}
-                        />
+                        
+                        <g filter={`url(#modalShadow-${i})`}>
+                          <path
+                            d="M 0 0 L 36 0 Q 40 0 40 4 L 40 40 L 34 40 L 34 10 Q 34 6 30 6 L 0 6 Z"
+                            fill={`url(#modalGrad-${i})`}
+                          />
+                          <path d="M 0 6 L 30 6 Q 34 6 34 10 L 34 40" stroke="rgba(0,0,0,0.6)" strokeWidth="0.75" fill="none" />
+                          <path d="M 0 0 L 36 0 Q 40 0 40 4 L 40 40" stroke="rgba(0,0,0,0.3)" strokeWidth="0.5" fill="none" />
+                          <path d="M 0 1.5 L 35 1.5 Q 38.5 1.5 38.5 5 L 38.5 40" stroke="rgba(255,255,255,0.9)" strokeWidth="1.2" fill="none" style={{ filter: 'blur(0.5px)' }} />
+                          <path d="M 0 3 L 34 3 Q 37 3 37 6 L 37 40" stroke="rgba(255,255,255,0.4)" strokeWidth="2" fill="none" style={{ filter: 'blur(1px)' }} />
+                          <path d="M 0 5 L 31 5 Q 35 5 35 9 L 35 40" stroke="rgba(0,0,0,0.3)" strokeWidth="1" fill="none" style={{ filter: 'blur(1px)' }} />
+                          <path d="M 12 0 L 12 6 M 14 0 L 14 6" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
+                          <path d="M 12.5 0 L 12.5 6 M 14.5 0 L 14.5 6" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
+                          <path d="M 34 26 L 40 26 M 34 28 L 40 28" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
+                          <path d="M 34 26.5 L 40 26.5 M 34 28.5 L 40 28.5" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
+                        </g>
                       </svg>
                     </div>
                   ));

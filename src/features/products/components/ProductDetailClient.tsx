@@ -463,37 +463,94 @@ export const ProductDetailClient = ({
             try {
               if (finalBounds) {
                 const offset = CANVAS_SIZE * 0.004;
-                const clipW = CANVAS_SIZE * 0.06;
+                const clipW = CANVAS_SIZE * 0.08; // Increased from 0.06 to match 8% visual size
                 const clipH = clipW;
                 
                 const bookRightPx = drawX + (finalBounds.right / 100) * drawW;
                 const bookTopPx = drawY + (finalBounds.top / 100) * drawH;
                 const bookBottomPx = drawY + (finalBounds.bottom / 100) * drawH;
 
-                const clipPath = new Path2D('M 0 0 L 32 0 Q 36 0 36 4 L 36 36 L 28 36 L 28 12 Q 28 8 24 8 L 0 8 Z');
-
                 const drawCorner = (x: number, y: number, rotation: number) => {
                   ctx.save();
                   ctx.translate(x, y);
-                  ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                  
+                  // Drop shadow
+                  ctx.shadowColor = 'rgba(0,0,0,0.4)';
                   ctx.shadowBlur = 4;
+                  ctx.shadowOffsetX = -1;
                   ctx.shadowOffsetY = 2;
+                  
                   ctx.translate(clipW/2, clipH/2);
                   ctx.rotate(rotation * Math.PI / 180);
                   ctx.translate(-clipW/2, -clipH/2);
-                  ctx.scale(clipW/36, clipH/36);
-                  const grad = ctx.createLinearGradient(0, 0, 36, 36);
+                  
+                  ctx.scale(clipW/40, clipH/40);
+                  
+                  // Main Body
+                  const mainPath = new Path2D('M 0 0 L 36 0 Q 40 0 40 4 L 40 40 L 34 40 L 34 10 Q 34 6 30 6 L 0 6 Z');
+                  const grad = ctx.createLinearGradient(0, 0, 40, 40);
                   if (customization.cornerEdges === 'Gold') {
-                    grad.addColorStop(0, '#F3E5AB');
-                    grad.addColorStop(0.5, '#D4AF37');
-                    grad.addColorStop(1, '#AA7C11');
+                    grad.addColorStop(0, '#D4AF37');
+                    grad.addColorStop(0.15, '#FFF4D0');
+                    grad.addColorStop(0.35, '#AA7C11');
+                    grad.addColorStop(0.65, '#F9E596');
+                    grad.addColorStop(1, '#8A6311');
                   } else {
-                    grad.addColorStop(0, '#F5F5F5');
-                    grad.addColorStop(0.5, '#C0C0C0');
-                    grad.addColorStop(1, '#808080');
+                    grad.addColorStop(0, '#A0A0A0');
+                    grad.addColorStop(0.15, '#FFFFFF');
+                    grad.addColorStop(0.35, '#707070');
+                    grad.addColorStop(0.65, '#E0E0E0');
+                    grad.addColorStop(1, '#505050');
                   }
                   ctx.fillStyle = grad;
-                  ctx.fill(clipPath);
+                  ctx.fill(mainPath);
+                  
+                  // Clear drop shadow so strokes don't have it
+                  ctx.shadowColor = 'transparent';
+                  ctx.shadowBlur = 0;
+                  ctx.shadowOffsetX = 0;
+                  ctx.shadowOffsetY = 0;
+
+                  // Dark inner shadow line
+                  ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+                  ctx.lineWidth = 0.75;
+                  ctx.stroke(new Path2D('M 0 6 L 30 6 Q 34 6 34 10 L 34 40'));
+
+                  // Dark outer edge line
+                  ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                  ctx.lineWidth = 0.5;
+                  ctx.stroke(new Path2D('M 0 0 L 36 0 Q 40 0 40 4 L 40 40'));
+                  
+                  // Primary highlight
+                  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+                  ctx.lineWidth = 1.2;
+                  ctx.shadowColor = 'rgba(255,255,255,0.9)';
+                  ctx.shadowBlur = 2; // Simulates the SVG blur filter
+                  ctx.stroke(new Path2D('M 0 1.5 L 35 1.5 Q 38.5 1.5 38.5 5 L 38.5 40'));
+                  
+                  // Secondary highlight
+                  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+                  ctx.lineWidth = 2;
+                  ctx.shadowBlur = 4;
+                  ctx.stroke(new Path2D('M 0 3 L 34 3 Q 37 3 37 6 L 37 40'));
+                  
+                  // Dark shadow inner rim
+                  ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                  ctx.lineWidth = 1;
+                  ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                  ctx.stroke(new Path2D('M 0 5 L 31 5 Q 35 5 35 9 L 35 40'));
+                  
+                  ctx.shadowColor = 'transparent';
+                  ctx.shadowBlur = 0;
+
+                  // Crimps
+                  ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+                  ctx.lineWidth = 0.5;
+                  ctx.stroke(new Path2D('M 12 0 L 12 6 M 14 0 L 14 6 M 34 26 L 40 26 M 34 28 L 40 28'));
+                  
+                  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+                  ctx.stroke(new Path2D('M 12.5 0 L 12.5 6 M 14.5 0 L 14.5 6 M 34 26.5 L 40 26.5 M 34 28.5 L 40 28.5'));
+
                   ctx.restore();
                 };
 
