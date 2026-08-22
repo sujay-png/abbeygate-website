@@ -35,6 +35,10 @@ export const ProductCustomizationOverlay = ({
   const isDiary = product.categories?.some(c => 
     c.name.toLowerCase().includes('diar') || c.slug.toLowerCase().includes('diar')
   );
+  
+  // Determine if product is a notebook for rounded corners
+  const isNotebook = product.name?.toLowerCase().includes('lewes smoothgrain') || product.slug?.toLowerCase().includes('lewes-smoothgrain');
+  
   // Add an extra vertical offset for diaries (e.g. 15% of book height) so the logo sits below the year
   const diaryTopOffset = isDiary ? (bookHeight * 0.15) : 0;
 
@@ -167,8 +171,8 @@ export const ProductCustomizationOverlay = ({
       {customization.cornerEdges !== 'None' && customization.cornerEdges && (
         <div style={{ position: 'absolute', top: '0', left: '0', width: '100%', height: '100%', zIndex: 15, pointerEvents: 'none' }}>
           {(() => {
-            // Push brackets slightly outward by 0.2% to sit flush without clipping into the book
-            const offset = 0.2;
+            // For notebooks, we don't want to push it outward because the corner recedes
+            const offset = isNotebook ? 0 : 0.2;
             return ([] as Array<{top?: number, bottom?: number, left?: number, right?: number, rotate: string}>).concat([
               { top: bookTop - offset, right: 100 - bookRight - offset, rotate: 'rotate-0' }, // top-right
               { bottom: 100 - bookBottom - offset, right: 100 - bookRight - offset, rotate: 'rotate-90' }, // bottom-right
@@ -214,14 +218,14 @@ export const ProductCustomizationOverlay = ({
                 
                 <g filter={`url(#shadow-${i})`}>
                   <path
-                    d="M 0 0 L 36 0 Q 40 0 40 4 L 40 40 L 34 40 L 34 10 Q 34 6 30 6 L 0 6 Z"
+                    d={isNotebook ? "M 8 0 L 20 0 Q 40 0 40 20 L 40 32 L 34 32 L 34 20 Q 34 6 20 6 L 8 6 Z" : "M 0 0 L 36 0 Q 40 0 40 4 L 40 40 L 34 40 L 34 10 Q 34 6 30 6 L 0 6 Z"}
                     fill={`url(#metalBase-${i})`}
                   />
-                  <path d="M 0 6 L 30 6 Q 34 6 34 10 L 34 40" stroke="rgba(0,0,0,0.6)" strokeWidth="0.75" fill="none" />
-                  <path d="M 0 0 L 36 0 Q 40 0 40 4 L 40 40" stroke="rgba(0,0,0,0.3)" strokeWidth="0.5" fill="none" />
-                  <path d="M 0 1.5 L 35 1.5 Q 38.5 1.5 38.5 5 L 38.5 40" stroke="rgba(255,255,255,0.9)" strokeWidth="1.2" fill="none" style={{ filter: 'blur(0.5px)' }} />
-                  <path d="M 0 3 L 34 3 Q 37 3 37 6 L 37 40" stroke="rgba(255,255,255,0.4)" strokeWidth="2" fill="none" style={{ filter: 'blur(1px)' }} />
-                  <path d="M 0 5 L 31 5 Q 35 5 35 9 L 35 40" stroke="rgba(0,0,0,0.3)" strokeWidth="1" fill="none" style={{ filter: 'blur(1px)' }} />
+                  <path d={isNotebook ? "M 8 6 L 20 6 Q 34 6 34 20 L 34 32" : "M 0 6 L 30 6 Q 34 6 34 10 L 34 40"} stroke="rgba(0,0,0,0.6)" strokeWidth="0.75" fill="none" />
+                  <path d={isNotebook ? "M 8 0 L 20 0 Q 40 0 40 20 L 40 32" : "M 0 0 L 36 0 Q 40 0 40 4 L 40 40"} stroke="rgba(0,0,0,0.3)" strokeWidth="0.5" fill="none" />
+                  <path d={isNotebook ? "M 8 1.5 L 20 1.5 Q 38.5 1.5 38.5 20 L 38.5 32" : "M 0 1.5 L 35 1.5 Q 38.5 1.5 38.5 5 L 38.5 40"} stroke="rgba(255,255,255,0.9)" strokeWidth="1.2" fill="none" style={{ filter: 'blur(0.5px)' }} />
+                  <path d={isNotebook ? "M 8 3 L 20 3 Q 37 3 37 20 L 37 32" : "M 0 3 L 34 3 Q 37 3 37 6 L 37 40"} stroke="rgba(255,255,255,0.4)" strokeWidth="2" fill="none" style={{ filter: 'blur(1px)' }} />
+                  <path d={isNotebook ? "M 8 5 L 20 5 Q 35 5 35 20 L 35 32" : "M 0 5 L 31 5 Q 35 5 35 9 L 35 40"} stroke="rgba(0,0,0,0.3)" strokeWidth="1" fill="none" style={{ filter: 'blur(1px)' }} />
                   <path d="M 12 0 L 12 6 M 14 0 L 14 6" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
                   <path d="M 12.5 0 L 12.5 6 M 14.5 0 L 14.5 6" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
                   <path d="M 34 26 L 40 26 M 34 28 L 40 28" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
