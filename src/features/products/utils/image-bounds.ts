@@ -1,4 +1,11 @@
+const boundsCache = new Map<string, { top: number, bottom: number, left: number, right: number } | null>();
+
 export async function getImageBoundingBox(imageUrl: string): Promise<{ top: number, bottom: number, left: number, right: number } | null> {
+  const cacheKey = imageUrl.split('?')[0];
+  if (boundsCache.has(cacheKey)) {
+    return boundsCache.get(cacheKey)!;
+  }
+
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'Anonymous';
@@ -32,17 +39,23 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
       }
       
       if (minX >= maxX || minY >= maxY) {
+        boundsCache.set(cacheKey, null);
         return resolve(null); // empty or fully transparent
       }
       
-      resolve({
+      const result = {
         left: (minX / canvas.width) * 100,
         right: (maxX / canvas.width) * 100,
         top: (minY / canvas.height) * 100,
         bottom: (maxY / canvas.height) * 100
-      });
+      };
+      boundsCache.set(cacheKey, result);
+      resolve(result);
     };
-    img.onerror = () => resolve(null);
+    img.onerror = () => {
+      boundsCache.set(cacheKey, null);
+      resolve(null);
+    };
     img.src = imageUrl;
   });
 }

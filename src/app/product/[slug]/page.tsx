@@ -119,7 +119,8 @@ export default async function ProductPage({ params }: PageProps) {
         return {
           name: colorName,
           slug: sibling.slug,
-          hex: COLOR_HEX_MAP[colorSlug] || '#cccccc'
+          hex: COLOR_HEX_MAP[colorSlug] || '#cccccc',
+          imageSrc: sibling.images?.[0]?.src
         };
       });
     } catch (error) {
