@@ -8,11 +8,11 @@ import { contactData } from '@/data/contact';
 // Will be either sent to backend or to an email service provider (yet to confirm)
 
 export default function ContactPage() {
-  const inputClass = "w-full h-12 bg-white border border-gray-200 rounded-md px-4 text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all duration-200 text-[13px] tracking-wide";
-  const textareaClass = "w-full bg-white border border-gray-200 rounded-md p-4 text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all duration-200 text-[13px] tracking-wide min-h-[150px] resize-y";
+  const inputClass = "w-full h-12 bg-white border border-gray-200 rounded-md px-4 text-brand-primary-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all duration-200 text-[13px] tracking-wide";
+  const textareaClass = "w-full bg-white border border-gray-200 rounded-md p-4 text-brand-primary-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all duration-200 text-[13px] tracking-wide min-h-[150px] resize-y";
 
   return (
-    <main className="flex flex-col min-h-screen bg-white">
+    <main className="flex flex-col min-h-screen bg-brand-cream">
       <Breadcrumb paths={[{ label: 'Home', href: '/' }, { label: contactData.breadcrumb }]} />
       
       <PageHero 
@@ -27,7 +27,7 @@ export default function ContactPage() {
           
           {/* Intro Text */}
           <div className="text-center mb-12">
-            <p className="text-[14px] md:text-[15px] font-sans text-black leading-relaxed">
+            <p className="text-[14px] md:text-[15px] font-sans text-brand-primary-dark leading-relaxed">
               {contactData.intro}
             </p>
           </div>
@@ -83,7 +83,7 @@ export default function ContactPage() {
 
             <button 
               type="submit"
-              className="w-full h-12 bg-black text-white text-[14px] font-bold tracking-wide rounded-md hover:bg-gray-900 hover:shadow-md hover:-translate-y-[1px] transition-all duration-200 uppercase"
+              className="w-full h-12 bg-brand-primary text-white text-[14px] font-bold tracking-wide rounded-md hover:bg-brand-primary-dark hover:shadow-md hover:-translate-y-[1px] transition-all duration-200 uppercase"
             >
               Submit
             </button>

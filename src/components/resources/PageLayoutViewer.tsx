@@ -40,26 +40,26 @@ export function PageLayoutViewer({ diaries, notebooks }: PageLayoutViewerProps) 
 
       {/* Right side: Details */}
       <div className="w-full lg:w-1/2 flex flex-col">
-        <h3 className="text-2xl md:text-3xl font-bold text-black font-sans tracking-tight mb-8">
+        <h3 className="text-2xl md:text-3xl font-bold text-brand-primary-dark font-sans tracking-tight mb-8">
           {category} - {layout.name}
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
           <div>
-            <h4 className="font-bold text-black mb-4">Branding Options</h4>
+            <h4 className="font-bold text-brand-primary-dark mb-4">Branding Options</h4>
             <ul className="space-y-3">
               {layout.brandingOptions.map((option, idx) => (
-                <li key={idx} className="text-[15px] text-[#1F2124]/80 font-work">
+                <li key={idx} className="text-[15px] text-brand-body/80 font-work">
                   {option}
                 </li>
               ))}
             </ul>
           </div>
           <div>
-            <h4 className="font-bold text-black mb-4">Optional Extras</h4>
+            <h4 className="font-bold text-brand-primary-dark mb-4">Optional Extras</h4>
             <ul className="space-y-3">
               {layout.optionalExtras.map((extra, idx) => (
-                <li key={idx} className="text-[15px] text-[#1F2124]/80 font-work">
+                <li key={idx} className="text-[15px] text-brand-body/80 font-work">
                   {extra}
                 </li>
               ))}
@@ -82,7 +82,7 @@ export function PageLayoutViewer({ diaries, notebooks }: PageLayoutViewerProps) 
             </div>
           )}
           {layout.notes && (
-            <p className="text-[15px] text-[#1F2124]/80 font-work">
+            <p className="text-[15px] text-brand-body/80 font-work">
               {layout.notes}
             </p>
           )}
@@ -96,7 +96,7 @@ export function PageLayoutViewer({ diaries, notebooks }: PageLayoutViewerProps) 
       <Container maxWidthClass="max-w-[1400px]">
         {/* Diaries Section */}
         <div className="mb-20">
-          <h2 className="text-2xl md:text-3xl font-bold text-black font-sans tracking-tight mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-brand-primary-dark font-sans tracking-tight mb-8">
             Choose Your Page Layout
           </h2>
           
@@ -108,8 +108,8 @@ export function PageLayoutViewer({ diaries, notebooks }: PageLayoutViewerProps) 
                 onClick={() => setActiveDiaryTab(tab.id)}
                 className={`px-6 py-3 rounded text-sm font-work transition-colors ${
                   activeDiaryTab === tab.id
-                    ? 'bg-black text-white'
-                    : 'bg-[#F4F6F7] text-[#1F2124] hover:bg-gray-200'
+                    ? 'bg-brand-primary text-white'
+                    : 'bg-brand-tint text-brand-body hover:bg-brand-soft'
                 }`}
               >
                 {tab.name}
@@ -125,7 +125,7 @@ export function PageLayoutViewer({ diaries, notebooks }: PageLayoutViewerProps) 
 
         {/* Notebooks Section */}
         <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-black font-sans tracking-tight mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-brand-primary-dark font-sans tracking-tight mb-8">
             Notebooks
           </h2>
           
@@ -137,8 +137,8 @@ export function PageLayoutViewer({ diaries, notebooks }: PageLayoutViewerProps) 
                 onClick={() => setActiveNotebookTab(tab.id)}
                 className={`px-6 py-3 rounded text-sm font-work transition-colors ${
                   activeNotebookTab === tab.id
-                    ? 'bg-black text-white'
-                    : 'bg-[#F4F6F7] text-[#1F2124] hover:bg-gray-200'
+                    ? 'bg-brand-primary text-white'
+                    : 'bg-brand-tint text-brand-body hover:bg-brand-soft'
                 }`}
               >
                 {tab.name}

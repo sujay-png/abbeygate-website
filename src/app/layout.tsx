@@ -25,6 +25,7 @@ const workSans = Work_Sans({
 const josefinSans = Josefin_Sans({
   variable: "--font-josefin-sans",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -60,7 +61,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   colorScheme: "light",
-  themeColor: "#ffffff",
+  themeColor: "#F7F1E2",
 };
 
 export default function RootLayout({
@@ -71,24 +72,23 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${didactGothic.variable} ${workSans.variable} ${josefinSans.variable} h-full antialiased`}
-      style={{ backgroundColor: "#ffffff", colorScheme: "light" }}
+      className={`${didactGothic.variable} ${workSans.variable} ${josefinSans.variable} h-full antialiased bg-brand-cream`}
+      style={{ colorScheme: "light" }}
       suppressHydrationWarning
     >
       <body
-        className="min-h-full flex flex-col"
-        style={{ backgroundColor: "#ffffff", color: "#171717" }}
+        className="min-h-full flex flex-col bg-brand-cream text-brand-body"
         suppressHydrationWarning
       >
         <LenisProvider>
           <CartProvider>
             <Suspense fallback={null}><Navbar /></Suspense>
-            <main className="flex-1" style={{ backgroundColor: "#ffffff" }}>
+            <main className="flex-1 bg-brand-cream">
               {children}
             </main>
             <Footer />
             <CartDrawer />
-            <Toaster position="bottom-left" toastOptions={{ duration: 4000, style: { background: '#333', color: '#fff' } }} />
+            <Toaster position="bottom-left" toastOptions={{ duration: 4000, style: { background: '#341a3d', color: '#fff' } }} />
           </CartProvider>
         </LenisProvider>
       </body>

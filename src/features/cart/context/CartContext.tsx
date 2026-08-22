@@ -100,7 +100,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const itemToRemove = items.find((i) => i.key === key);
       if (itemToRemove) {
         toast.success(`${itemToRemove.name} removed from basket`, {
-          style: { background: '#333', color: '#fff' }
+          style: { background: '#341a3d', color: '#fff' }
         });
       }
       setItems((prev) => prev.filter((i) => i.key !== key));

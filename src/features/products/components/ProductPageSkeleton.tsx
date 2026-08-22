@@ -4,7 +4,7 @@ import { ScrollToTop } from '@/components/layout/ScrollToTop';
 
 export const ProductPageSkeleton = () => {
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-brand-cream min-h-screen">
       <ScrollToTop />
       <Breadcrumb paths={[{ label: 'Home', href: '/' }, { label: 'Loading...' }]} />
       <Container className="py-8">

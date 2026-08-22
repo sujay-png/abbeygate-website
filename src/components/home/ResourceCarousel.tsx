@@ -127,16 +127,16 @@ export const ResourceCarousel = () => {
               onClick={() => scrollTo(index)}
               aria-label={`Go to slide ${index + 1}`}
               className={`inline-block h-2 w-2 rounded-full border-0 p-0 cursor-pointer transition-all duration-300 ${
-                index === selectedIndex ? 'bg-black scale-125' : 'bg-black/40'
+                index === selectedIndex ? 'bg-brand-primary scale-125' : 'bg-brand-soft/80'
               }`}
             />
           ))}
         </div>
         <div className="flex items-center justify-center gap-6 order-2 md:order-1">
-          <button onClick={scrollPrev} className="text-black hover:text-gray-600 transition-colors" aria-label="Previous slide">
+          <button onClick={scrollPrev} className="text-brand-primary-dark hover:text-gray-600 transition-colors" aria-label="Previous slide">
             <ChevronLeft className="w-8 h-8" strokeWidth={2} />
           </button>
-          <button onClick={scrollNext} className="text-black hover:text-gray-600 transition-colors" aria-label="Next slide">
+          <button onClick={scrollNext} className="text-brand-primary-dark hover:text-gray-600 transition-colors" aria-label="Next slide">
             <ChevronRight className="w-8 h-8" strokeWidth={2} />
           </button>
         </div>

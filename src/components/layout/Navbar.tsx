@@ -144,7 +144,7 @@ export const Navbar = () => {
 
   return (
     <header
-      className="sticky top-0 z-50 w-full bg-white border-b border-gray-100 shadow-sm relative"
+      className="sticky top-0 z-50 w-full bg-brand-cream border-b border-brand-border shadow-sm relative"
       onMouseLeave={scheduleClose}
     >
       <div className="w-full max-w-[1600px] mx-auto px-6 lg:px-10 xl:px-16">
@@ -166,7 +166,7 @@ export const Navbar = () => {
                 <Link
                   href={item.href}
                   className={`text-[16px] tracking-wide whitespace-nowrap transition-colors duration-300 ${
-                    activeMenuId === item.id ? 'text-black' : 'text-gray-600 hover:text-black'
+                  activeMenuId === item.id ? 'text-brand-primary-dark' : 'text-brand-grey hover:text-brand-primary-dark'
                   }`}
                 >
                   {item.label}
@@ -204,7 +204,7 @@ export const Navbar = () => {
             >
               <div
                 className={`flex items-center justify-end transition-all duration-700 ease-in-out rounded overflow-hidden ${
-                  isSearchOpen ? 'bg-[#F0F0F0] w-60' : 'bg-transparent w-10'
+                  isSearchOpen ? 'bg-brand-tint w-60' : 'bg-transparent w-10'
                 }`}
               >
                 <input
@@ -223,7 +223,7 @@ export const Navbar = () => {
                   aria-label="Search"
                   onClick={handleSearchToggle}
                   className={`w-10 h-10 shrink-0 transition-colors flex items-center justify-center cursor-pointer ${
-                    isSearchOpen ? 'text-black' : 'text-gray-800'
+                    isSearchOpen ? 'text-brand-primary-dark' : 'text-gray-800'
                   }`}
                 >
                   <Search className="w-[18px] h-[18px]" strokeWidth={2.5} />
@@ -240,7 +240,7 @@ export const Navbar = () => {
                 <path d="M352 160v-32C352 57.42 294.579 0 224 0 153.42 0 96 57.42 96 128v32H0v272c0 44.183 35.817 80 80 80h288c44.183 0 80-35.817 80-80V160h-96zm-192-32c0-35.29 28.71-64 64-64s64 28.71 64 64v32H160v-32zm160 120c-13.255 0-24-10.745-24-24s10.745-24 24-24 24 10.745 24 24-10.745 24-24 24zm-192 0c-13.255 0-24-10.745-24-24s10.745-24 24-24 24 10.745 24 24-10.745 24-24 24z" />
               </svg>
               {isMounted && itemCount > 0 && (
-                <span className="absolute -top-2 -right-2 w-4 h-4 bg-black text-white text-[10px] rounded-full flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 w-4 h-4 bg-brand-gold text-brand-primary-dark text-[10px] font-semibold rounded-full flex items-center justify-center">
                   {itemCount}
                 </span>
               )}
@@ -277,7 +277,7 @@ export const Navbar = () => {
                           <li key={link.id}>
                             <Link
                               href={link.href}
-                              className="text-[15px] text-[#1F2124] hover:text-gray-500 transition-colors duration-300"
+                              className="text-[15px] text-brand-body hover:text-gray-500 transition-colors duration-300"
                             >
                               {link.label}
                             </Link>
@@ -342,7 +342,7 @@ export const Navbar = () => {
                   <path d="M352 160v-32C352 57.42 294.579 0 224 0 153.42 0 96 57.42 96 128v32H0v272c0 44.183 35.817 80 80 80h288c44.183 0 80-35.817 80-80V160h-96zm-192-32c0-35.29 28.71-64 64-64s64 28.71 64 64v32H160v-32zm160 120c-13.255 0-24-10.745-24-24s10.745-24 24-24 24 10.745 24 24-10.745 24-24 24zm-192 0c-13.255 0-24-10.745-24-24s10.745-24 24-24 24 10.745 24 24-10.745 24-24 24z" />
                 </svg>
                 {isMounted && itemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-black text-white text-[10px] rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-gold text-brand-primary-dark text-[10px] font-semibold rounded-full flex items-center justify-center">
                     {itemCount}
                   </span>
                 )}
@@ -367,7 +367,7 @@ export const Navbar = () => {
                       <Link
                         href={item.href}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="text-[15px] font-medium tracking-wide text-[#1F2124] uppercase"
+                        className="text-[15px] font-medium tracking-wide text-brand-body uppercase"
                       >
                         {item.label}
                       </Link>
@@ -418,7 +418,7 @@ export const Navbar = () => {
                                         <Link
                                           href={link.href}
                                           onClick={() => setIsMobileMenuOpen(false)}
-                                          className="text-[15px] text-[#1F2124]"
+                                          className="text-[15px] text-brand-body"
                                         >
                                           {link.label}
                                         </Link>

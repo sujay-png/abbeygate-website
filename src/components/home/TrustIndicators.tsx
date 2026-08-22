@@ -43,7 +43,7 @@ export const TrustIndicators = ({ compact = false }: TrustIndicatorsProps = {}) 
               className="object-contain max-w-full max-h-full w-auto h-auto"
             />
           </div>
-          <h3 className={`font-bold tracking-wide text-black ${compact ? 'text-sm' : 'text-base md:text-lg'}`}>
+          <h3 className={`font-bold tracking-wide text-brand-primary-dark ${compact ? 'text-sm' : 'text-base md:text-lg'}`}>
             {feature.title}
           </h3>
         </div>
@@ -53,7 +53,7 @@ export const TrustIndicators = ({ compact = false }: TrustIndicatorsProps = {}) 
 
   if (compact) return innerContent;
   return (
-    <section className="py-12 bg-white">
+    <section className="py-12 bg-brand-cream">
       <Container>
         <div className="border-t border-b border-gray-200 py-2 md:py-12">
           {innerContent}

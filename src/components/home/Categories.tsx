@@ -20,11 +20,11 @@ const CATEGORIES = [
 
 export const Categories = () => {
   return (
-    <section className="bg-white py-16">
+    <section className="bg-brand-cream py-16">
       <Container>
         {/* Header — stacks on mobile, row on larger screens */}
         <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-          <h2 className="font-josefin text-[26px] font-bold tracking-tight text-black lg:text-[32px]">
+          <h2 className="font-josefin text-[26px] font-bold tracking-tight text-brand-primary-dark lg:text-[32px]">
             Crafted Collections, Designed to Impress
           </h2>
 

@@ -70,10 +70,10 @@ const NavControls = ({ scrollSnaps, selectedIndex, scrollTo, scrollPrev, scrollN
       ))}
     </div>
     <div className="flex items-center gap-3">
-      <button onClick={scrollPrev} className="text-black hover:text-gray-600 transition-colors" aria-label="Previous slide">
+      <button onClick={scrollPrev} className="text-brand-primary-dark hover:text-gray-600 transition-colors" aria-label="Previous slide">
         <ChevronLeft className="w-7 h-7 sm:w-8 sm:h-8" strokeWidth={1.5} />
       </button>
-      <button onClick={scrollNext} className="text-black hover:text-gray-600 transition-colors" aria-label="Next slide">
+      <button onClick={scrollNext} className="text-brand-primary-dark hover:text-gray-600 transition-colors" aria-label="Next slide">
         <ChevronRight className="w-7 h-7 sm:w-8 sm:h-8" strokeWidth={1.5} />
       </button>
     </div>
@@ -108,7 +108,7 @@ export const Hero = () => {
   }, [emblaApi, onSelect]);
 
   return (
-    <section className="relative w-full h-screen overflow-hidden bg-[#F5F5F3]">
+    <section className="relative w-full h-screen overflow-hidden bg-brand-cream">
       <div className="overflow-hidden w-full h-full touch-pan-y" ref={emblaRef}>
 
         <div
@@ -131,15 +131,15 @@ export const Hero = () => {
               />
 
               <div className="absolute top-0 left-0 h-full w-full md:w-[50%] lg:w-[45%] xl:w-[40%] bg-gradient-to-r from-white/95 via-white/80 to-transparent flex flex-col justify-center px-8 md:px-12 z-10 pointer-events-none">
-                <p className="text-[21px] font-didact font-normal text-black mb-6">
+                <p className="text-[21px] font-didact font-normal text-brand-primary-dark mb-6">
                   {slide.category}
                 </p>
 
-                <h2 className="font-josefin text-[40px] font-bold text-black leading-[1.2] mb-6">
+                <h2 className="font-josefin text-[40px] font-bold text-brand-primary-dark leading-[1.2] mb-6">
                   {slide.title}
                 </h2>
 
-                <p className="font-work text-[20px] text-black leading-relaxed mb-10 max-w-md font-normal">
+                <p className="font-work text-[20px] text-brand-primary-dark leading-relaxed mb-10 max-w-md font-normal">
                   {slide.description}
                 </p>
 
@@ -173,7 +173,7 @@ export const Hero = () => {
           width: 8px;
           height: 8px;
           border-radius: 50%;
-          background-color: rgba(0, 0, 0, 0.3);
+          background-color: rgba(118, 120, 124, 0.55);
           cursor: pointer;
           transition: all 0.3s ease;
           display: inline-block;
@@ -181,7 +181,7 @@ export const Hero = () => {
           border: none;
         }
         .hero-bullet-active {
-          background-color: #000;
+          background-color: var(--brand-primary);
           transform: scale(1.2);
         }
       `}</style>

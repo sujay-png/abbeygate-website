@@ -10,11 +10,11 @@ export default function AccountPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <main className="flex flex-col min-h-screen bg-white">
+    <main className="flex flex-col min-h-screen bg-brand-cream">
       <Breadcrumb paths={[{ label: 'Home', href: '/' }, { label: 'My Account' }]} />
       
       <Container maxWidthClass="max-w-[1400px]" className="py-8 md:py-12">
-        <h1 className="text-3xl md:text-4xl font-bold text-black font-sans tracking-tight mb-8 md:mb-12">
+        <h1 className="text-3xl md:text-4xl font-bold text-brand-primary-dark font-sans tracking-tight mb-8 md:mb-12">
           My Account
         </h1>
 
@@ -22,7 +22,7 @@ export default function AccountPage() {
           
           {/* Login Card */}
           <div className="w-full flex flex-col h-full">
-            <h2 className="text-2xl font-semibold text-black mb-6">Login</h2>
+            <h2 className="text-2xl font-semibold text-brand-primary-dark mb-6">Login</h2>
             <div className="bg-white border border-gray-200/80 rounded-lg shadow-sm p-6 md:p-8 flex-1">
               <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
                 <div className="space-y-2">
@@ -31,7 +31,7 @@ export default function AccountPage() {
                   </label>
                   <input 
                     type="text" 
-                    className="w-full h-12 bg-gray-50/50 border border-gray-200 rounded-md px-4 text-black focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all duration-200"
+                    className="w-full h-12 bg-gray-50/50 border border-gray-200 rounded-md px-4 text-brand-primary-dark focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all duration-200"
                   />
                 </div>
                 
@@ -42,7 +42,7 @@ export default function AccountPage() {
                   <div className="relative">
                     <input 
                       type={showPassword ? "text" : "password"} 
-                      className="w-full h-12 bg-gray-50/50 border border-gray-200 rounded-md px-4 text-black focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all duration-200"
+                      className="w-full h-12 bg-gray-50/50 border border-gray-200 rounded-md px-4 text-brand-primary-dark focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all duration-200"
                     />
                     <button 
                       type="button"
@@ -57,18 +57,18 @@ export default function AccountPage() {
                 <div className="flex items-center gap-4 pt-2">
                   <button 
                     type="submit"
-                    className="h-11 px-8 bg-black text-white text-[15px] font-medium rounded-md hover:bg-gray-900 hover:shadow-md hover:-translate-y-[1px] transition-all duration-200"
+                    className="h-11 px-8 bg-brand-primary text-white text-[15px] font-medium rounded-md hover:bg-brand-primary-dark hover:shadow-md hover:-translate-y-[1px] transition-all duration-200"
                   >
                     Log in
                   </button>
                   <label className="flex items-center gap-2 cursor-pointer group">
-                    <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black cursor-pointer" />
-                    <span className="text-[14px] text-gray-600 group-hover:text-black transition-colors">Remember me</span>
+                    <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-brand-primary-dark focus:ring-black cursor-pointer" />
+                    <span className="text-[14px] text-gray-600 group-hover:text-brand-primary-dark transition-colors">Remember me</span>
                   </label>
                 </div>
 
                 <div className="pt-2">
-                  <Link href="#" className="text-[14px] text-[#4a90e2] hover:text-[#357abd] underline underline-offset-4 transition-colors">
+                  <Link href="#" className="text-[14px] text-brand-primary hover:text-brand-primary-dark underline underline-offset-4 transition-colors">
                     Lost your password?
                   </Link>
                 </div>
@@ -78,7 +78,7 @@ export default function AccountPage() {
 
           {/* Register Card */}
           <div className="w-full flex flex-col h-full">
-            <h2 className="text-2xl font-semibold text-black mb-6">Register</h2>
+            <h2 className="text-2xl font-semibold text-brand-primary-dark mb-6">Register</h2>
             <div className="bg-white border border-gray-200/80 rounded-lg shadow-sm p-6 md:p-8 flex-1">
               <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
                 <div className="space-y-2">
@@ -87,7 +87,7 @@ export default function AccountPage() {
                   </label>
                   <input 
                     type="email" 
-                    className="w-full h-12 bg-gray-50/50 border border-gray-200 rounded-md px-4 text-black focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all duration-200"
+                    className="w-full h-12 bg-gray-50/50 border border-gray-200 rounded-md px-4 text-brand-primary-dark focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all duration-200"
                   />
                 </div>
                 
@@ -107,13 +107,13 @@ export default function AccountPage() {
                 </div>
 
                 <p className="text-[13px] text-gray-500 leading-relaxed pt-2">
-                  Your personal data will be used to support your experience throughout this website, to manage access to your account, and for other purposes described in our <Link href="/privacy" className="text-[#4a90e2] hover:text-[#357abd] underline underline-offset-2 transition-colors">privacy policy</Link>.
+                  Your personal data will be used to support your experience throughout this website, to manage access to your account, and for other purposes described in our <Link href="/privacy" className="text-brand-primary hover:text-brand-primary-dark underline underline-offset-2 transition-colors">privacy policy</Link>.
                 </p>
 
                 <div className="pt-2">
                   <button 
                     type="submit"
-                    className="h-11 px-8 bg-black text-white text-[15px] font-medium rounded-md hover:bg-gray-900 hover:shadow-md hover:-translate-y-[1px] transition-all duration-200"
+                    className="h-11 px-8 bg-brand-primary text-white text-[15px] font-medium rounded-md hover:bg-brand-primary-dark hover:shadow-md hover:-translate-y-[1px] transition-all duration-200"
                   >
                     Register
                   </button>

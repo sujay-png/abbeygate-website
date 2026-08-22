@@ -13,7 +13,7 @@ interface BreadcrumbProps {
 
 export function Breadcrumb({ paths }: BreadcrumbProps) {
   return (
-    <div className="py-4 bg-white">
+    <div className="py-4 bg-brand-cream">
       <Container maxWidthClass="max-w-[1500px]">
         <nav aria-label="Breadcrumb" className="flex items-center text-sm">
           {paths.map((path, index) => {
@@ -24,12 +24,12 @@ export function Breadcrumb({ paths }: BreadcrumbProps) {
                 {path.href ? (
                   <Link 
                     href={path.href}
-                    className="text-gray-500 hover:text-black transition-colors font-sans"
+                    className="text-gray-500 hover:text-brand-primary-dark transition-colors font-sans"
                   >
                     {path.label}
                   </Link>
                 ) : (
-                  <span className="text-black font-sans" aria-current="page">
+                  <span className="text-brand-primary-dark font-sans" aria-current="page">
                     {path.label}
                   </span>
                 )}

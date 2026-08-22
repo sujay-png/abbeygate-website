@@ -88,7 +88,7 @@ export default async function ProductPage({ params }: PageProps) {
         'violet': '#7F00FF',
         'lime': '#32CD32',
         'aqua': '#00FFFF',
-        'full-colour': '#ffffff',
+        'full-colour': '#fff',
       };
 
       const tagId = product.tags[0].id; // The grouping tag
@@ -171,7 +171,7 @@ export default async function ProductPage({ params }: PageProps) {
   const customTabs = await getProductCustomTabs(product.id);
 
   return (
-    <div style={{ backgroundColor: '#ffffff', minHeight: '100vh' }}>
+    <div className="min-h-screen bg-brand-cream">
       <Breadcrumb paths={breadcrumbPaths} />
       <Container className="py-8 md:py-10">
         <ProductDetailClient
