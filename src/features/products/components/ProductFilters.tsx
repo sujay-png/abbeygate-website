@@ -6,7 +6,7 @@ import type { StoreAttribute, StoreAttributeTerm, StoreProduct } from '../types/
 import { FILTER_TAXONOMY_MAP, type FilterParamKey } from '../types/store-product';
 import type { FilterConfig } from '@/data/category-routes';
 import { countProductsForTerm, filtersToSearchParams } from '../utils/product-helpers';
-import { Settings2, X, ChevronRight, ChevronDown } from 'lucide-react';
+import { X, ChevronRight, ChevronDown } from 'lucide-react';
 
 type ProductFiltersProps = {
   products: StoreProduct[];
@@ -186,23 +186,45 @@ const ProductFiltersInner = ({
   return (
     <div className={`mb-10 bg-white ${isLoading ? 'opacity-60 transition-opacity' : ''}`}>
       
-      {/* Mobile Top Bar */}
-      <div className="flex md:hidden items-center justify-between gap-4 mb-4 px-1">
-        <span className="text-[15px] text-brand-body font-medium">
-          {resultCount ?? products.length} products
-        </span>
-        <button 
-          onClick={() => setIsMobileModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 border border-brand-border rounded-md font-bold text-brand-body hover:bg-brand-tint transition-colors shadow-sm"
-        >
-          <Settings2 className="w-4 h-4" />
-          Filter
-        </button>
+      {/* Mobile filter bar: matches desktop visually and scrolls instead of squeezing controls. */}
+      <div className="md:hidden">
+        <div className="flex items-center justify-between gap-4 px-4 py-4">
+          <h3 className="text-lg font-semibold text-brand-primary-dark m-0">Filters</h3>
+          <span className="text-sm text-brand-grey font-medium whitespace-nowrap">
+            {resultCount ?? products.length} products
+          </span>
+        </div>
+        <div className="overflow-x-auto overscroll-x-contain border-y border-brand-border" aria-label="Product filters">
+          <div className="flex min-w-max bg-white">
+            {(Object.keys(FILTER_TAXONOMY_MAP) as FilterParamKey[]).map((key) => {
+              const disabled = isFilterDisabled(key);
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => {
+                    setMobileOpenSection(key);
+                    setIsMobileModalOpen(true);
+                  }}
+                  className={`flex min-w-[152px] items-center justify-between border-r border-brand-border px-5 py-5 text-[15px] font-medium transition-colors last:border-r-0 ${
+                    disabled
+                      ? 'cursor-not-allowed bg-brand-tint text-brand-grey opacity-60'
+                      : 'bg-white text-brand-body hover:bg-brand-tint'
+                  }`}
+                >
+                  {FILTER_LABELS[key]}
+                  <ChevronDown className="ml-6 h-4 w-4 text-brand-grey" aria-hidden="true" />
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
-      
+
       {/* Mobile Active Filters */}
-      <div className="md:hidden mb-4 px-1">
-         {activeFiltersMarkup}
+      <div className="md:hidden px-4 py-4">
+        {activeCount > 0 && activeFiltersMarkup}
       </div>
 
       {/* Desktop Top Bar */}
