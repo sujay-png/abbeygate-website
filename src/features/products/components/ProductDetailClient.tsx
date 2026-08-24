@@ -185,7 +185,20 @@ export const ProductDetailClient = ({
   }, []);
 
   const handleCustomizationChange = useCallback((state: CustomizationState) => {
-    setCustomization(state);
+    setCustomization((prev) => {
+      const visualPropsChanged = 
+        state.blockingType !== prev.blockingType ||
+        state.cornerEdges !== prev.cornerEdges ||
+        state.foilColor !== prev.foilColor ||
+        state.logoPosition?.label !== prev.logoPosition?.label ||
+        state.logoFile !== prev.logoFile ||
+        state.logoScale !== prev.logoScale;
+
+      if (visualPropsChanged && state.fullPreviewUrl) {
+        return { ...state, fullPreviewUrl: undefined };
+      }
+      return state;
+    });
   }, []);
 
   const customizationAllowed = !isGifts && quantity >= CUSTOMIZATION_MIN_QTY;
@@ -423,6 +436,8 @@ export const ProductDetailClient = ({
                 tCtx.fillRect(0, 0, logoW, logoH);
                 ctx.drawImage(tintCanvas, logoX, logoY, logoW, logoH);
               }
+            } else if (customization.blockingType === 'UV Print') {
+              ctx.drawImage(logoImg, logoX, logoY, logoW, logoH);
             } else if (customization.blockingType === 'Embossed') {
               const darkEdge = document.createElement('canvas');
               darkEdge.width = logoW; darkEdge.height = logoH;

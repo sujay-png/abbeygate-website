@@ -159,10 +159,13 @@ export async function POST(request: NextRequest) {
         if (part.toLowerCase().startsWith('samesite=')) options.sameSite = part.substring(9).toLowerCase();
       }
 
-      // ENFORCE cross-subdomain sharing. 
-      // WooCommerce natively omits the Domain attribute, locking the cookie to a single exact subdomain.
-      // We must explicitly set it to the root domain so it works across Next.js and corporate.*
-      options.domain = '.abbeygate-england.com';
+      // ENFORCE cross-subdomain sharing ONLY if we are on the abbeygate domain.
+      // If we are testing on vercel.app, we must NOT set the domain attribute to .abbeygate-england.com,
+      // otherwise the browser will strictly reject the cookie.
+      const host = request.headers.get('host') || '';
+      if (host.includes('abbeygate-england.com')) {
+        options.domain = '.abbeygate-england.com';
+      }
 
       // In development, strip domain/secure ONLY if strictly testing on localhost.
       // If testing via a modified hosts file (e.g., local.abbeygate-england.com), we KEEP the domain.
