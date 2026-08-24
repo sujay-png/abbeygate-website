@@ -590,7 +590,27 @@ export const ProductDetailClient = ({
   };
   const lenis = useLenis();
   const handleAddToCart = async () => {
-    // If not customizing yet, the button will act as "Start customising" (25+ units only)
+    // If they have customisation enabled but haven't uploaded a logo yet
+    if (customizationActive && !customization.logoFile) {
+      if (!isCustomizingStarted) {
+        setIsCustomizingStarted(true);
+        setTimeout(() => {
+          const gallery = document.getElementById('product-gallery-container');
+          if (gallery) {
+            if (lenis) {
+              lenis.scrollTo(gallery, { offset: -120 });
+            } else {
+              gallery.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }
+        }, 100);
+      } else {
+        alert('Please upload a logo to continue with customisation, or disable customisation to proceed without it.');
+      }
+      return;
+    }
+
+    // If they aren't customising but want to start
     if (customizationActive && !isCustomizingStarted) {
       setIsCustomizingStarted(true);
       setTimeout(() => {
