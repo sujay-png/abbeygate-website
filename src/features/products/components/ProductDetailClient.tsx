@@ -306,15 +306,20 @@ export const ProductDetailClient = ({
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-        const res = await fetch(`/api/proxy-image?url=${encodeURIComponent(activeSrc)}`);
-        const data = await res.json();
+        const res = await fetch(`/_next/image?url=${encodeURIComponent(activeSrc)}&w=828&q=75`);
+        const blob = await res.blob();
+        const objectUrl = URL.createObjectURL(blob);
 
-        if (data.dataUrl) {
+        if (objectUrl) {
           const productImg = new window.Image();
-          productImg.src = data.dataUrl;
+          productImg.src = objectUrl;
           await new Promise(r => { productImg.onload = r; productImg.onerror = r; });
+          URL.revokeObjectURL(objectUrl);
 
           const imgAspect = productImg.width / productImg.height;
+          if (Number.isNaN(imgAspect) || productImg.width === 0) {
+            throw new Error('Failed to load product image for canvas');
+          }
           let drawW = CANVAS_SIZE;
           let drawH = CANVAS_SIZE;
           let drawX = 0;
@@ -639,8 +644,8 @@ export const ProductDetailClient = ({
         }
 
 
-        let fullPreviewUrl = customization.fullPreviewUrl;
-        let finalBounds = customization.imageBounds;
+        fullPreviewUrl = customization.fullPreviewUrl;
+        finalBounds = customization.imageBounds;
 
         if (!fullPreviewUrl) {
           const result = await generateProof();

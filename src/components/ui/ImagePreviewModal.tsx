@@ -30,6 +30,8 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, title = 'Customizatio
   }, [isOpen, onClose]);
 
   const [imageBounds, setImageBounds] = useState<{ top: number, bottom: number, left: number, right: number } | null>(null);
+  const [imageAspectRatio, setImageAspectRatio] = useState<number>(1);
+
   // New cart items include an exact, composited snapshot generated on the product
   // page. Prefer it so every customization layer (including corner clips) stays
   // in precisely the same place in the cart preview.
@@ -39,10 +41,10 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, title = 'Customizatio
   const cornerEdges = item?.customization?.cornerEdges || 
     item?.attributes?.find(a => a.name === 'Corner Edges')?.value;
   const hasCornerEdges = Boolean(cornerEdges && cornerEdges !== 'None');
-  // A composed preview with corner edges is only reliable when the bounds were
-  // saved alongside it. Older snapshots were generated before that was possible.
+  // Always use the dynamic CSS-based preview for corner edges to guarantee they perfectly
+  // match the main product page's logic. Composed canvas corners can sometimes drift.
   const useComposedPreview = Boolean(
-    fullPreviewUrl && (!hasCornerEdges || item?.customization?.imageBounds),
+    fullPreviewUrl && !hasCornerEdges,
   );
 
   const isNotebook = Boolean(
@@ -69,6 +71,18 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, title = 'Customizatio
     }
   }, [isOpen, item, cornerEdges]);
 
+  useEffect(() => {
+    if (isOpen && item?.image && !useComposedPreview) {
+      const img = new window.Image();
+      img.onload = () => {
+        if (img.height > 0) {
+          setImageAspectRatio(img.width / img.height);
+        }
+      };
+      img.src = item.image;
+    }
+  }, [isOpen, item?.image, useComposedPreview]);
+
   if (!isOpen || !item) return null;
 
   return (
@@ -90,7 +104,10 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, title = 'Customizatio
           </button>
         </div>
         <div className="p-8 overflow-auto flex items-center justify-center bg-[#f9f9f9]">
-          <div className="relative w-full aspect-square bg-white shadow-sm border border-gray-100 flex items-center justify-center p-4">
+          <div 
+            className="relative w-full bg-white shadow-sm border border-gray-100 flex items-center justify-center p-4"
+            style={{ aspectRatio: useComposedPreview ? 1 : imageAspectRatio }}
+          >
             {useComposedPreview ? (
               <img
                 src={fullPreviewUrl}

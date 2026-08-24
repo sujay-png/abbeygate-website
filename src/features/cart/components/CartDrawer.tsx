@@ -41,9 +41,9 @@ export const CartDrawer = () => {
             formData.append(`logo_${index}`, item.customization.logoFile);
             outItem.customization.hasLogo = true;
           }
-          if (item.customization.fullPreviewUrl || item.customization.logoPreviewUrl) {
+          if (item.customization.fullPreviewUrl) {
             try {
-              const previewDataUrl = item.customization.fullPreviewUrl || item.customization.logoPreviewUrl!;
+              const previewDataUrl = item.customization.fullPreviewUrl;
               const byteString = atob(previewDataUrl.split(',')[1]);
               const mimeString = previewDataUrl.split(',')[0].split(':')[1].split(';')[0];
               const ab = new ArrayBuffer(byteString.length);
