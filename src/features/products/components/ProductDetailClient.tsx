@@ -185,7 +185,20 @@ export const ProductDetailClient = ({
   }, []);
 
   const handleCustomizationChange = useCallback((state: CustomizationState) => {
-    setCustomization(state);
+    setCustomization((prev) => {
+      const visualPropsChanged = 
+        state.blockingType !== prev.blockingType ||
+        state.cornerEdges !== prev.cornerEdges ||
+        state.foilColor !== prev.foilColor ||
+        state.logoPosition?.label !== prev.logoPosition?.label ||
+        state.logoFile !== prev.logoFile ||
+        state.logoScale !== prev.logoScale;
+
+      if (visualPropsChanged && state.fullPreviewUrl) {
+        return { ...state, fullPreviewUrl: undefined };
+      }
+      return state;
+    });
   }, []);
 
   const customizationAllowed = !isGifts && quantity >= CUSTOMIZATION_MIN_QTY;
@@ -418,6 +431,8 @@ export const ProductDetailClient = ({
                 tCtx.fillRect(0, 0, logoW, logoH);
                 ctx.drawImage(tintCanvas, logoX, logoY, logoW, logoH);
               }
+            } else if (customization.blockingType === 'UV Print') {
+              ctx.drawImage(logoImg, logoX, logoY, logoW, logoH);
             } else if (customization.blockingType === 'Embossed') {
               const darkEdge = document.createElement('canvas');
               darkEdge.width = logoW; darkEdge.height = logoH;
@@ -585,7 +600,27 @@ export const ProductDetailClient = ({
   };
   const lenis = useLenis();
   const handleAddToCart = async () => {
-    // If not customizing yet, the button will act as "Start customising" (25+ units only)
+    // If they have customisation enabled but haven't uploaded a logo yet
+    if (customizationActive && !customization.logoFile) {
+      if (!isCustomizingStarted) {
+        setIsCustomizingStarted(true);
+        setTimeout(() => {
+          const gallery = document.getElementById('product-gallery-container');
+          if (gallery) {
+            if (lenis) {
+              lenis.scrollTo(gallery, { offset: -120 });
+            } else {
+              gallery.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }
+        }, 100);
+      } else {
+        alert('Please upload a logo to continue with customisation, or disable customisation to proceed without it.');
+      }
+      return;
+    }
+
+    // If they aren't customising but want to start
     if (customizationActive && !isCustomizingStarted) {
       setIsCustomizingStarted(true);
       setTimeout(() => {
@@ -639,8 +674,8 @@ export const ProductDetailClient = ({
         }
 
 
-        let fullPreviewUrl = customization.fullPreviewUrl;
-        let finalBounds = customization.imageBounds;
+        fullPreviewUrl = customization.fullPreviewUrl;
+        finalBounds = customization.imageBounds;
 
         if (!fullPreviewUrl) {
           const result = await generateProof();

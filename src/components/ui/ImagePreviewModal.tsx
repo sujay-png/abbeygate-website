@@ -136,6 +136,16 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, title = 'Customizatio
                       filter: 'drop-shadow(0px 1px 3px rgba(0,0,0,0.4))'
                     }}
                   />
+                ) : item.customization.choice === 'UV Print' ? (
+                  <div 
+                    className="w-full h-full pointer-events-none drop-shadow-sm"
+                    style={{
+                      backgroundImage: `url(${item.customization.logoPreviewUrl})`,
+                      backgroundSize: 'contain',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'center',
+                    }}
+                  />
                 ) : (
                   <>
                     <div
