@@ -126,7 +126,6 @@ export const ProductCustomizer = ({
       tiers,
       customizationEnabled: !isGifts,
       blockingType: isFoil ? 'Foil blocked' : 'Embossed',
-      cornerEdges: customization.cornerEdges,
       isGifts,
     }),
   );
@@ -149,7 +148,6 @@ export const ProductCustomizer = ({
       tiers,
       customizationEnabled: effectiveEnabled,
       blockingType: customization.blockingType,
-      cornerEdges: customization.cornerEdges,
       isGifts,
     });
 
@@ -686,9 +684,8 @@ export const ProductCustomizer = ({
                                 quantity,
                                 basePrice,
                                 tiers,
-                                customizationEnabled: true,
+                                customizationEnabled: customization.enabled,
                                 blockingType: customization.blockingType,
-                                cornerEdges: customization.cornerEdges,
                                 isGifts: false,
                             });
                             const pdfBuffer = await generateDigitalProof(product, customization, quantity, priceDetails.unitPrice);
