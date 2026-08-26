@@ -7,6 +7,7 @@ import { AnimatePresence, motion, Transition } from 'framer-motion';
 import { useCart } from '@/features/cart/context/CartContext';
 import { useState } from 'react';
 import { ImagePreviewModal } from '@/components/ui/ImagePreviewModal';
+import { validateCustomisationMinimums } from '@/features/cart/utils/colour-group';
 
 const OPEN_TRANSITION: Transition = { duration: 0.5, ease: [0.16, 1, 0.3, 1] };
 const CLOSE_TRANSITION: Transition = { duration: 0.35, ease: [0.7, 0, 0.84, 0] };
@@ -15,17 +16,25 @@ const formatPrice = (value: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
 
 export const CartDrawer = () => {
-  const { items, isOpen, isLoading, subtotal, shippingCost, shippingLabel, vatCost, total, closeCart, removeItem, updateQuantity } = useCart();
+  const { items: rawItems, pricedItems: items, isOpen, isLoading, subtotal, shippingCost, shippingLabel, vatCost, total, closeCart, removeItem, updateQuantity } = useCart();
   const [previewItem, setPreviewItem] = useState<any | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
+  const shortfalls = validateCustomisationMinimums(rawItems);
+  const hasShortfalls = shortfalls.length > 0;
+
   const handleCheckout = async () => {
+    if (hasShortfalls) {
+      alert("Please resolve the minimum quantity requirements before checking out.");
+      return;
+    }
+    
     try {
       setIsSyncing(true);
       
       const formData = new FormData();
       
-      const payload = items.map((item, index) => {
+      const payload = rawItems.map((item, index) => {
         const outItem: any = {
           productId: item.productId,
           quantity: item.quantity
@@ -132,8 +141,13 @@ export const CartDrawer = () => {
                 </div>
               ) : (
                 <ul className="flex flex-col gap-6">
-                  {items.map((item) => (
-                    <li key={item.key} className="flex gap-4">
+                  {items.map((item) => {
+                    const groupSize = rawItems.filter(i => (i.colourGroupId ?? i.key) === (item.colourGroupId ?? item.key)).length;
+                    const isGrouped = groupSize > 1;
+                    const shortfallData = shortfalls.find(s => s.groupId === (item.colourGroupId ?? item.key));
+                    
+                    return (
+                    <li key={item.key} className={`flex gap-4 ${isGrouped ? 'border-l-2 border-l-gray-200 pl-3 rounded-l -ml-3' : ''}`}>
                       <div className="w-20 h-20 relative shrink-0 bg-gray-50 rounded">
                         <Image
                           src={item.image}
@@ -189,6 +203,12 @@ export const CartDrawer = () => {
                           </div>
                         )}
 
+                        {shortfallData && (
+                          <div className="mt-2 text-[12px] text-red-600 font-medium bg-red-50 px-2 py-1.5 rounded">
+                            Needs {shortfallData.shortfall} more units for customisation.
+                          </div>
+                        )}
+
                         <div className="flex items-center justify-between mt-3">
                           <div className="flex items-center border border-gray-200 rounded">
                             <button
@@ -209,13 +229,20 @@ export const CartDrawer = () => {
                               <Plus className="w-3 h-3" strokeWidth={2} />
                             </button>
                           </div>
-                          <p className="text-[15px] text-[#1F2124] font-medium">
-                            {formatPrice(item.price * item.quantity)}
-                          </p>
+                          <div className="text-right">
+                            <p className="text-[15px] text-[#1F2124] font-medium">
+                              {formatPrice(item.lineTotal)}
+                            </p>
+                            {item.groupQuantity > item.quantity && (
+                              <div className="text-[11px] text-gray-500 mt-0.5">
+                                {item.groupQuantity}-unit total across {groupSize} colours
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </li>
-                  ))}
+                  )})}
                 </ul>
               )}
             </div>
@@ -241,7 +268,7 @@ export const CartDrawer = () => {
                 </div>
                 <button
                   onClick={handleCheckout}
-                  disabled={isSyncing}
+                  disabled={isSyncing || hasShortfalls}
                   className="flex items-center justify-center gap-2 w-full text-center bg-black text-white text-[15px] font-medium py-4 rounded-md hover:bg-gray-800 transition-colors disabled:bg-gray-400"
                 >
                   {isSyncing ? (
@@ -249,6 +276,8 @@ export const CartDrawer = () => {
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Syncing Cart...
                     </>
+                  ) : hasShortfalls ? (
+                    'Minimum requirement not met'
                   ) : (
                     'Checkout'
                   )}

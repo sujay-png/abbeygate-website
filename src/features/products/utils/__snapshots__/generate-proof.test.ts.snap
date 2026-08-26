@@ -1,0 +1,37 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`composeProof geometry calculations > calculates correct bounds for bottom-center > left-bottom-center 1`] = `50`;
+
+exports[`composeProof geometry calculations > calculates correct bounds for bottom-center > top-bottom-center 1`] = `73.5`;
+
+exports[`composeProof geometry calculations > calculates correct bounds for bottom-left > left-bottom-left 1`] = `28.9`;
+
+exports[`composeProof geometry calculations > calculates correct bounds for bottom-left > top-bottom-left 1`] = `73.5`;
+
+exports[`composeProof geometry calculations > calculates correct bounds for bottom-right > left-bottom-right 1`] = `71.1`;
+
+exports[`composeProof geometry calculations > calculates correct bounds for bottom-right > top-bottom-right 1`] = `73.5`;
+
+exports[`composeProof geometry calculations > calculates correct bounds for center > left-center 1`] = `50`;
+
+exports[`composeProof geometry calculations > calculates correct bounds for center > top-center 1`] = `50`;
+
+exports[`composeProof geometry calculations > calculates correct bounds for center-left > left-center-left 1`] = `28.9`;
+
+exports[`composeProof geometry calculations > calculates correct bounds for center-left > top-center-left 1`] = `50`;
+
+exports[`composeProof geometry calculations > calculates correct bounds for center-right > left-center-right 1`] = `71.1`;
+
+exports[`composeProof geometry calculations > calculates correct bounds for center-right > top-center-right 1`] = `50`;
+
+exports[`composeProof geometry calculations > calculates correct bounds for top-center > left-top-center 1`] = `50`;
+
+exports[`composeProof geometry calculations > calculates correct bounds for top-center > top-top-center 1`] = `26.5`;
+
+exports[`composeProof geometry calculations > calculates correct bounds for top-left > left-top-left 1`] = `28.9`;
+
+exports[`composeProof geometry calculations > calculates correct bounds for top-left > top-top-left 1`] = `26.5`;
+
+exports[`composeProof geometry calculations > calculates correct bounds for top-right > left-top-right 1`] = `71.1`;
+
+exports[`composeProof geometry calculations > calculates correct bounds for top-right > top-top-right 1`] = `26.5`;

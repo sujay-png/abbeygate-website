@@ -125,4 +125,6 @@ export type LogoCustomization = {
   topPercent?: number;
   widthPercent?: number;
   imageBounds?: { top: number, bottom: number, left: number, right: number };
+  positionLabel?: string;
+  logoScale?: number;
 };

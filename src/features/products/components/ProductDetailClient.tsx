@@ -8,8 +8,9 @@ import { ProductCustomizer, type CustomizationState } from './ProductCustomizer'
 import { ProductCustomizationOverlay } from './ProductCustomizationOverlay';
 import { useCart } from '@/features/cart/context/CartContext';
 import { CUSTOMIZATION_MIN_QTY, formatGBP, isGiftsProduct, VAT_RATE, calculateProductPrice } from '../utils/pricing';
-import { getLogoAnchors, getImageBoundingBox } from '../utils/product-helpers';
+import { getLogoAnchors, getImageBoundingBox, getProductPhysicalDimensionsMm } from '../utils/product-helpers';
 import { getConfiguredImageBounds } from '../utils/product-image-bounds';
+import { composeProof } from '../utils/generate-proof';
 import { TrustIndicators } from '@/components/home/TrustIndicators';
 import { Send, X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
 import Link from 'next/link';
@@ -42,6 +43,8 @@ const ImageWithFallback = ({ src, fallbackSrc = '/images/logo/abbeygate-logo.png
 };
 
 export type ColorVariant = {
+  productId: string;
+  productName: string;
   name: string;
   slug: string;
   hex: string;
@@ -54,6 +57,7 @@ type ProductDetailClientProps = {
   basePrice: number;
   colorVariants?: ColorVariant[];
   customTabs?: CustomTab[];
+  amendKey?: string;
 };
 
 export const ProductDetailClient = ({
@@ -62,6 +66,7 @@ export const ProductDetailClient = ({
   basePrice,
   colorVariants = [],
   customTabs = [],
+  amendKey,
 }: ProductDetailClientProps) => {
   useEffect(() => {
     // Silently preload variant images to warm up Next.js optimization cache and browser cache
@@ -85,6 +90,41 @@ export const ProductDetailClient = ({
   const { addItem } = useCart();
   const isGifts = isGiftsProduct(product);
   const activeColorHex = colorVariants.find(c => c.slug === product.slug)?.hex;
+
+  const [isAdding, setIsAdding] = useState(false);
+  const [pendingPropagate, setPendingPropagate] = useState<{ amendKey: string, customization: any, siblingsCount: number } | null>(null);
+  const [isPropagating, setIsPropagating] = useState(false);
+
+  useEffect(() => {
+    if (amendKey) {
+      const sessionData = sessionStorage.getItem(`abbeygate-amend-${amendKey}`);
+      if (sessionData) {
+        try {
+          const parsed = JSON.parse(sessionData);
+          setCustomization(prev => ({
+            ...prev,
+            ...parsed,
+            logoFile: undefined, // Will be hydrated from CartContext once loaded
+          }));
+          if (parsed.quantity) setQuantity(parsed.quantity);
+          setIsCustomizingStarted(true);
+        } catch(e) {
+          console.error('Failed to parse amend data from sessionStorage', e);
+        }
+      }
+    }
+  }, [amendKey]);
+
+  const { items, updateItem } = useCart();
+
+  useEffect(() => {
+    if (amendKey && items.length > 0) {
+      const cartItem = items.find(i => i.key === amendKey);
+      if (cartItem?.customization?.logoFile) {
+        setCustomization(prev => ({ ...prev, logoFile: cartItem.customization!.logoFile }));
+      }
+    }
+  }, [amendKey, items]);
 
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const customizerSectionRef = useRef<HTMLDivElement>(null);
@@ -112,7 +152,7 @@ export const ProductDetailClient = ({
 
   // Rehydrate customization state from localStorage on mount
   useEffect(() => {
-    if (!product || !product.slug || isGifts) return;
+    if (!product || !product.slug || isGifts || amendKey) return;
     try {
       const draftStr = localStorage.getItem(`customization_draft_${product.slug}`);
       if (draftStr) {
@@ -139,11 +179,11 @@ export const ProductDetailClient = ({
       console.error("Failed to rehydrate customization draft", e);
       localStorage.removeItem(`customization_draft_${product.slug}`);
     }
-  }, [product, isGifts]);
+  }, [product, isGifts, amendKey]);
 
   // Persist customization state to localStorage on change
   useEffect(() => {
-    if (!product || !product.slug || isGifts || !isCustomizingStarted) return;
+    if (!product || !product.slug || isGifts || !isCustomizingStarted || amendKey) return;
     
     const isDefault = 
       customization.blockingType === 'Embossed' &&
@@ -167,9 +207,8 @@ export const ProductDetailClient = ({
       }, 500); // 500ms debounce
       return () => clearTimeout(timeoutId);
     }
-  }, [customization, product, isGifts, isCustomizingStarted]);
+  }, [customization, product, isGifts, isCustomizingStarted, amendKey]);
 
-  const [isAdding, setIsAdding] = useState(false);
   const [imageBounds, setImageBounds] = useState<{top: number, bottom: number, left: number, right: number} | null>(null);
   const [imageAspectRatio, setImageAspectRatio] = useState<number>(1);
 
@@ -275,7 +314,6 @@ export const ProductDetailClient = ({
       }
 
       getImageBoundingBox(activeSrc).then(bounds => {
-        console.log('[DEBUG] imageBounds for', activeSrc, ':', bounds);
         if (bounds) setImageBounds(bounds);
       });
     }
@@ -302,306 +340,31 @@ export const ProductDetailClient = ({
   const generateProof = async (): Promise<Partial<CustomizationState> | null> => {
     if (!activeSrc || !customization.enabled || isGifts) return null;
 
-    let fullPreviewUrl: string | undefined = undefined;
-    let finalBounds: any = null;
-    let leftPercent = 50;
-    let topPercent = 50;
-    let widthPercent = 25 * (customization.logoScale || 1);
+    const { width, height } = getProductPhysicalDimensionsMm(product);
+    const isDiary = product.categories?.some(c => 
+      c.name.toLowerCase().includes('diar') || c.slug.toLowerCase().includes('diar')
+    ) ?? false;
+    const isCurved = product.name?.toLowerCase().includes('lewes smoothgrain') || product.slug?.toLowerCase().includes('lewes-smoothgrain');
 
-    try {
-      const CANVAS_SIZE = 800;
-      const canvas = document.createElement('canvas');
-      canvas.width = CANVAS_SIZE;
-      canvas.height = CANVAS_SIZE;
-      const ctx = canvas.getContext('2d');
-
-      if (ctx) {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-
-        const res = await fetch(`/_next/image?url=${encodeURIComponent(activeSrc)}&w=828&q=75`);
-        const blob = await res.blob();
-        const objectUrl = URL.createObjectURL(blob);
-
-        if (objectUrl) {
-          const productImg = new window.Image();
-          productImg.src = objectUrl;
-          await new Promise(r => { productImg.onload = r; productImg.onerror = r; });
-          URL.revokeObjectURL(objectUrl);
-
-          const imgAspect = productImg.width / productImg.height;
-          if (Number.isNaN(imgAspect) || productImg.width === 0) {
-            throw new Error('Failed to load product image for canvas');
-          }
-          let drawW = CANVAS_SIZE;
-          let drawH = CANVAS_SIZE;
-          let drawX = 0;
-          let drawY = 0;
-          if (imgAspect > 1) {
-            drawH = CANVAS_SIZE / imgAspect;
-            drawY = (CANVAS_SIZE - drawH) / 2;
-          } else {
-            drawW = CANVAS_SIZE * imgAspect;
-            drawX = (CANVAS_SIZE - drawW) / 2;
-          }
-          ctx.drawImage(productImg, drawX, drawY, drawW, drawH);
-
-          const bounds = getConfiguredImageBounds(activeSrc) ?? await getImageBoundingBox(activeSrc);
-          if (bounds) finalBounds = bounds;
-
-          const anchors = getLogoAnchors(product);
-          const bookLeft = finalBounds ? finalBounds.left : anchors.bookLeft;
-          const bookRight = finalBounds ? finalBounds.right : anchors.bookRight;
-          const bookTop = finalBounds ? finalBounds.top : anchors.bookTop;
-          const bookBottom = finalBounds ? finalBounds.bottom : anchors.bookBottom;
-
-          const bookWidth = bookRight - bookLeft;
-          const bookHeight = bookBottom - bookTop;
-          const marginX = bookWidth * 0.08;
-          const marginY = bookHeight * 0.05;
-
-          const isDiary = product.categories?.some(c => 
-            c.name.toLowerCase().includes('diar') || c.slug.toLowerCase().includes('diar')
-          );
-          const diaryTopOffset = isDiary ? (bookHeight * 0.15) : 0;
-
-          const safeLeft = bookLeft + marginX;
-          const safeRight = bookRight - marginX;
-          const safeTop = bookTop + marginY + diaryTopOffset;
-          const safeBottom = bookBottom - marginY;
-
-          if (customization.logoPreviewUrl) {
-            const logoImg = new window.Image();
-            logoImg.src = customization.logoPreviewUrl;
-            await new Promise(r => { logoImg.onload = r; logoImg.onerror = r; });
-
-            const posLabel = customization.logoPosition?.label || 'center';
-            let boxLeft = 50 - 12.5;
-            let boxTop = 50 - 12.5;
-
-            if (posLabel === 'top-left') { boxLeft = safeLeft; boxTop = safeTop; }
-            else if (posLabel === 'top-center') { boxLeft = 50 - 12.5; boxTop = safeTop; }
-            else if (posLabel === 'top-right') { boxLeft = safeRight - 25; boxTop = safeTop; }
-            else if (posLabel === 'center-left') { boxLeft = safeLeft; boxTop = 50 - 12.5; }
-            else if (posLabel === 'center-right') { boxLeft = safeRight - 25; boxTop = 50 - 12.5; }
-            else if (posLabel === 'bottom-left') { boxLeft = safeLeft; boxTop = safeBottom - 25; }
-            else if (posLabel === 'bottom-center') { boxLeft = 50 - 12.5; boxTop = safeBottom - 25; }
-            else if (posLabel === 'bottom-right') { boxLeft = safeRight - 25; boxTop = safeBottom - 25; }
-
-            const scaledBoxWidth = 25 * (customization.logoScale || 1);
-            const scaledBoxHeight = 25 * (customization.logoScale || 1);
-            
-            if (posLabel.includes('right')) boxLeft = boxLeft + 25 - scaledBoxWidth;
-            else if (!posLabel.includes('left')) boxLeft = boxLeft + 12.5 - scaledBoxWidth / 2;
-
-            if (posLabel.includes('bottom')) boxTop = boxTop + 25 - scaledBoxHeight;
-            else if (!posLabel.includes('top')) boxTop = boxTop + 12.5 - scaledBoxHeight / 2;
-
-            const logoImgAspect = logoImg.width / logoImg.height;
-            let drawLogoW = scaledBoxWidth;
-            let drawLogoH = scaledBoxHeight;
-            if (logoImgAspect > 1) {
-              drawLogoH = scaledBoxWidth / logoImgAspect;
-            } else {
-              drawLogoW = scaledBoxHeight * logoImgAspect;
-            }
-
-            let logoDrawXPercent = boxLeft;
-            let logoDrawYPercent = boxTop;
-            
-            if (posLabel.includes('right')) logoDrawXPercent = boxLeft + scaledBoxWidth - drawLogoW;
-            else if (!posLabel.includes('left')) logoDrawXPercent = boxLeft + (scaledBoxWidth - drawLogoW) / 2;
-
-            if (posLabel.includes('bottom')) logoDrawYPercent = boxTop + scaledBoxHeight - drawLogoH;
-            else if (!posLabel.includes('top')) logoDrawYPercent = boxTop + (scaledBoxHeight - drawLogoH) / 2;
-            
-            leftPercent = logoDrawXPercent + (drawLogoW / 2);
-            topPercent = logoDrawYPercent + (drawLogoH / 2);
-            widthPercent = drawLogoW;
-
-            const logoX = CANVAS_SIZE * (logoDrawXPercent / 100);
-            const logoY = CANVAS_SIZE * (logoDrawYPercent / 100);
-            const logoW = CANVAS_SIZE * (drawLogoW / 100);
-            const logoH = CANVAS_SIZE * (drawLogoH / 100);
-
-            if (customization.blockingType === 'Foil blocked') {
-              const tintCanvas = document.createElement('canvas');
-              tintCanvas.width = logoW;
-              tintCanvas.height = logoH;
-              const tCtx = tintCanvas.getContext('2d');
-              if (tCtx) {
-                tCtx.drawImage(logoImg, 0, 0, logoW, logoH);
-                tCtx.globalCompositeOperation = 'source-in';
-                tCtx.fillStyle = customization.foilColor === 'Gold' ? '#D4AF37' : '#C0C0C0';
-                tCtx.fillRect(0, 0, logoW, logoH);
-                ctx.drawImage(tintCanvas, logoX, logoY, logoW, logoH);
-              }
-            } else if (customization.blockingType === 'UV Print') {
-              ctx.drawImage(logoImg, logoX, logoY, logoW, logoH);
-            } else if (customization.blockingType === 'Embossed') {
-              const darkEdge = document.createElement('canvas');
-              darkEdge.width = logoW; darkEdge.height = logoH;
-              const dCtx = darkEdge.getContext('2d');
-              if (dCtx) {
-                dCtx.drawImage(logoImg, 0, 0, logoW, logoH);
-                dCtx.globalCompositeOperation = 'source-in';
-                dCtx.fillStyle = 'rgba(0,0,0,0.5)';
-                dCtx.fillRect(0, 0, logoW, logoH);
-                dCtx.globalCompositeOperation = 'destination-out';
-                dCtx.drawImage(logoImg, 1, 1, logoW, logoH);
-
-                ctx.save();
-                ctx.filter = 'blur(0.5px)';
-                ctx.globalCompositeOperation = 'multiply';
-                ctx.drawImage(darkEdge, logoX, logoY, logoW, logoH);
-                ctx.restore();
-              }
-
-              const lightEdge = document.createElement('canvas');
-              lightEdge.width = logoW; lightEdge.height = logoH;
-              const lCtx = lightEdge.getContext('2d');
-              if (lCtx) {
-                lCtx.drawImage(logoImg, 0, 0, logoW, logoH);
-                lCtx.globalCompositeOperation = 'source-in';
-                lCtx.fillStyle = 'rgba(255,255,255,0.3)';
-                lCtx.fillRect(0, 0, logoW, logoH);
-                lCtx.globalCompositeOperation = 'destination-out';
-                lCtx.drawImage(logoImg, -1, -1, logoW, logoH);
-
-                ctx.save();
-                ctx.filter = 'blur(0.5px)';
-                ctx.globalCompositeOperation = 'screen';
-                ctx.drawImage(lightEdge, logoX, logoY, logoW, logoH);
-                ctx.restore();
-              }
-            } else {
-              ctx.drawImage(logoImg, logoX, logoY, logoW, logoH);
-            }
-          }
-
-          if (customization.cornerEdges && customization.cornerEdges !== 'None') {
-            try {
-              if (finalBounds) {
-                const offset = CANVAS_SIZE * 0.004;
-                const clipW = CANVAS_SIZE * 0.08; // Increased from 0.06 to match 8% visual size
-                const clipH = clipW;
-                
-                const bookRightPx = drawX + (finalBounds.right / 100) * drawW;
-                const bookTopPx = drawY + (finalBounds.top / 100) * drawH;
-                const bookBottomPx = drawY + (finalBounds.bottom / 100) * drawH;
-
-                const isCurved = product.name?.toLowerCase().includes('lewes smoothgrain') || product.slug?.toLowerCase().includes('lewes-smoothgrain');
-
-                const drawCorner = (x: number, y: number, rotation: number) => {
-                  ctx.save();
-                  ctx.translate(x, y);
-                  
-                  // Drop shadow
-                  ctx.shadowColor = 'rgba(0,0,0,0.4)';
-                  ctx.shadowBlur = 4;
-                  ctx.shadowOffsetX = -1;
-                  ctx.shadowOffsetY = 2;
-                  
-                  ctx.translate(clipW/2, clipH/2);
-                  ctx.rotate(rotation * Math.PI / 180);
-                  ctx.translate(-clipW/2, -clipH/2);
-                  
-                  ctx.scale(clipW/40, clipH/40);
-                  
-                  // Main Body
-                  const mainPathStr = isCurved 
-                    ? 'M 8 0 L 20 0 Q 40 0 40 20 L 40 32 L 34 32 L 34 20 Q 34 6 20 6 L 8 6 Z' 
-                    : 'M 0 0 L 36 0 Q 40 0 40 4 L 40 40 L 34 40 L 34 10 Q 34 6 30 6 L 0 6 Z';
-                  const mainPath = new Path2D(mainPathStr);
-                  
-                  const grad = ctx.createLinearGradient(0, 0, 40, 40);
-                  if (customization.cornerEdges === 'Gold') {
-                    grad.addColorStop(0, '#D4AF37');
-                    grad.addColorStop(0.15, '#FFF4D0');
-                    grad.addColorStop(0.35, '#AA7C11');
-                    grad.addColorStop(0.65, '#F9E596');
-                    grad.addColorStop(1, '#8A6311');
-                  } else {
-                    grad.addColorStop(0, '#A0A0A0');
-                    grad.addColorStop(0.15, '#FFFFFF');
-                    grad.addColorStop(0.35, '#707070');
-                    grad.addColorStop(0.65, '#E0E0E0');
-                    grad.addColorStop(1, '#505050');
-                  }
-                  ctx.fillStyle = grad;
-                  ctx.fill(mainPath);
-                  
-                  // Clear drop shadow so strokes don't have it
-                  ctx.shadowColor = 'transparent';
-                  ctx.shadowBlur = 0;
-                  ctx.shadowOffsetX = 0;
-                  ctx.shadowOffsetY = 0;
-
-                  // Dark inner shadow line
-                  ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-                  ctx.lineWidth = 0.75;
-                  ctx.stroke(new Path2D(isCurved ? 'M 8 6 L 20 6 Q 34 6 34 20 L 34 32' : 'M 0 6 L 30 6 Q 34 6 34 10 L 34 40'));
-
-                  // Dark outer edge line
-                  ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-                  ctx.lineWidth = 0.5;
-                  ctx.stroke(new Path2D(isCurved ? 'M 8 0 L 20 0 Q 40 0 40 20 L 40 32' : 'M 0 0 L 36 0 Q 40 0 40 4 L 40 40'));
-                  
-                  // Primary highlight
-                  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-                  ctx.lineWidth = 1.2;
-                  ctx.shadowColor = 'rgba(255,255,255,0.9)';
-                  ctx.shadowBlur = 2; // Simulates the SVG blur filter
-                  ctx.stroke(new Path2D(isCurved ? 'M 8 1.5 L 20 1.5 Q 38.5 1.5 38.5 20 L 38.5 32' : 'M 0 1.5 L 35 1.5 Q 38.5 1.5 38.5 5 L 38.5 40'));
-                  
-                  // Secondary highlight
-                  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-                  ctx.lineWidth = 2;
-                  ctx.shadowBlur = 4;
-                  ctx.stroke(new Path2D(isCurved ? 'M 8 3 L 20 3 Q 37 3 37 20 L 37 32' : 'M 0 3 L 34 3 Q 37 3 37 6 L 37 40'));
-                  
-                  // Dark shadow inner rim
-                  ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-                  ctx.lineWidth = 1;
-                  ctx.shadowColor = 'rgba(0,0,0,0.3)';
-                  ctx.stroke(new Path2D(isCurved ? 'M 8 5 L 20 5 Q 35 5 35 20 L 35 32' : 'M 0 5 L 31 5 Q 35 5 35 9 L 35 40'));
-                  
-                  ctx.shadowColor = 'transparent';
-                  ctx.shadowBlur = 0;
-
-                  // Crimps
-                  ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-                  ctx.lineWidth = 0.5;
-                  ctx.stroke(new Path2D('M 12 0 L 12 6 M 14 0 L 14 6 M 34 26 L 40 26 M 34 28 L 40 28'));
-                  
-                  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-                  ctx.stroke(new Path2D('M 12.5 0 L 12.5 6 M 14.5 0 L 14.5 6 M 34 26.5 L 40 26.5 M 34 28.5 L 40 28.5'));
-
-                  ctx.restore();
-                };
-
-                drawCorner(bookRightPx + offset - clipW, bookTopPx - offset, 0);
-                drawCorner(bookRightPx + offset - clipW, bookBottomPx + offset - clipH, 90);
-              }
-            } catch (e) {
-              console.error('Failed to draw corners on canvas', e);
-            }
-          }
-
-          fullPreviewUrl = canvas.toDataURL('image/png', 0.9);
-        }
+    const result = await composeProof({
+      productImageUrl: activeSrc,
+      branding: {
+        blockingType: customization.blockingType || '',
+        foilColor: customization.foilColor,
+        cornerEdges: customization.cornerEdges,
+        positionLabel: customization.logoPosition?.label || 'center',
+        logoScale: customization.logoScale ?? 1,
+        logoPreviewUrl: customization.logoPreviewUrl,
+      },
+      geometry: {
+        widthMm: width,
+        heightMm: height,
+        isDiary,
+        isCurved,
       }
-    } catch (e) {
-      console.error('Native canvas composition failed', e);
-    }
+    });
 
-    return {
-      fullPreviewUrl,
-      imageBounds: finalBounds,
-      leftPercent,
-      topPercent,
-      widthPercent
-    };
+    return result;
   };
   const lenis = useLenis();
   const handleAddToCart = async () => {
@@ -698,22 +461,17 @@ export const ProductDetailClient = ({
         }
       } // closing the if(customization.enabled) block!
 
-      await addItem({
-        productId: String(product.id),
-        slug: product.slug,
-        name: product.name,
-        image: product.images[0]?.thumbnail || product.images[0]?.src || '',
-        price: priceDetails.unitPrice,
-        quantity,
-        attributes,
-        customization:
-          customizationActive
+      const activeColour = colorVariants.find(c => c.slug === product.slug);
+      
+      const cartItemCustomization = customizationActive
             ? {
-              enabled: true,
-              choice: customization.blockingType,
+              enabled: true as const,
+              choice: customization.blockingType || '',
               foilColor: customization.blockingType === 'Foil blocked' ? customization.foilColor : undefined,
-              cornerEdges: customization.cornerEdges,
+              cornerEdges: customization.cornerEdges || 'None',
               position: (customization.logoPosition?.label || 'center').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+              positionLabel: customization.logoPosition?.label || 'center',
+              logoScale: customization.logoScale ?? 1,
               fileName: customization.logoFile?.name,
               logoFile: customization.logoFile,
               logoPreviewUrl: customization.logoPreviewUrl,
@@ -723,7 +481,54 @@ export const ProductDetailClient = ({
               widthPercent,
               imageBounds: finalBounds || undefined,
             }
-            : undefined,
+            : undefined;
+
+      if (amendKey) {
+        await updateItem(amendKey, {
+          quantity,
+          price: priceDetails.unitPrice,
+          customization: cartItemCustomization,
+          proofStatus: 'ready'
+        });
+        
+        const amendItem = items.find(i => i.key === amendKey);
+        const groupId = amendItem?.colourGroupId ?? amendKey;
+        const siblingsCount = items.filter(i => i.key !== amendKey && (i.colourGroupId === groupId || i.key === groupId)).length;
+        
+        if (customizationActive && siblingsCount > 0) {
+          setPendingPropagate({ amendKey, customization: cartItemCustomization!, siblingsCount });
+          return;
+        }
+        
+        sessionStorage.removeItem(`abbeygate-amend-${amendKey}`);
+        window.location.href = '/cart';
+        return;
+      }
+
+      await addItem({
+        productId: String(product.id),
+        slug: product.slug,
+        name: product.name,
+        image: product.images[0]?.thumbnail || product.images[0]?.src || '',
+        price: priceDetails.unitPrice,
+        quantity,
+        attributes,
+        colour: activeColour ? { name: activeColour.name, slug: product.slug, hex: activeColour.hex } : undefined,
+        colourOptions: colorVariants.length > 1 ? colorVariants : undefined,
+        basePrice,
+        priceTiers: tiers,
+        isGifts,
+        proofGeometry: (() => {
+          const { width, height } = getProductPhysicalDimensionsMm(product);
+          return {
+            widthMm: width,
+            heightMm: height,
+            isDiary: product.categories?.some(c =>
+              c.name.toLowerCase().includes('diar') || c.slug.toLowerCase().includes('diar')) ?? false,
+          };
+        })(),
+        proofStatus: 'ready',
+        customization: cartItemCustomization,
         categorySlugs: product.categories.map((c) => c.slug),
       });
     } finally {
@@ -959,7 +764,7 @@ export const ProductDetailClient = ({
             })()}
 
             <button type="button" onClick={handleAddToCart} disabled={isAdding} className="mt-3 flex h-[46px] w-full items-center justify-center rounded-lg bg-[#4a346e] text-[15px] font-bold text-white transition-colors hover:bg-[#392657] disabled:opacity-50">
-              {isAdding ? 'Processing...' : 'Add to Basket →'}
+              {isAdding ? 'Processing...' : (amendKey ? 'Update Basket →' : 'Add to Basket →')}
             </button>
             <p className="mt-3 text-[12px] leading-relaxed text-gray-500">All prices shown exclude VAT. Applicable VAT is calculated at checkout. A final digital proof is provided for approval before production.</p>
 
@@ -1297,9 +1102,49 @@ export const ProductDetailClient = ({
 
         </div>
       </div>
+      {pendingPropagate && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Apply to all colours?</h3>
+            <p className="text-gray-600 mb-8">
+              Would you like to apply these branding changes to all {pendingPropagate.siblingsCount} other {pendingPropagate.siblingsCount === 1 ? 'colour' : 'colours'} in this group?
+            </p>
+            <div className="flex flex-col w-full gap-3">
+              <button
+                type="button"
+                disabled={isPropagating}
+                onClick={async () => {
+                  setIsPropagating(true);
+                  const { propagateAmendToGroup } = await import('@/features/cart/utils/amend-group');
+                  await propagateAmendToGroup(pendingPropagate.amendKey, pendingPropagate.customization, items, updateItem);
+                  sessionStorage.removeItem(`abbeygate-amend-${pendingPropagate.amendKey}`);
+                  window.location.href = '/cart';
+                }}
+                className="w-full h-12 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isPropagating ? (
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : null}
+                Yes, apply to all
+              </button>
+              <button
+                type="button"
+                disabled={isPropagating}
+                onClick={() => {
+                  sessionStorage.removeItem(`abbeygate-amend-${pendingPropagate.amendKey}`);
+                  window.location.href = '/cart';
+                }}
+                className="w-full h-12 bg-gray-100 text-gray-900 font-medium rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                No, just this one
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-
-
-
