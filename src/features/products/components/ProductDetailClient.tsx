@@ -54,6 +54,7 @@ type ProductDetailClientProps = {
   basePrice: number;
   colorVariants?: ColorVariant[];
   customTabs?: CustomTab[];
+  amendKey?: string;
 };
 
 export const ProductDetailClient = ({
@@ -62,6 +63,7 @@ export const ProductDetailClient = ({
   basePrice,
   colorVariants = [],
   customTabs = [],
+  amendKey,
 }: ProductDetailClientProps) => {
   useEffect(() => {
     // Silently preload variant images to warm up Next.js optimization cache and browser cache
@@ -82,7 +84,7 @@ export const ProductDetailClient = ({
     return () => clearTimeout(timeout);
   }, [colorVariants, product.slug]);
 
-  const { addItem } = useCart();
+  const { addItem, updateItem, items } = useCart();
   const isGifts = isGiftsProduct(product);
   const activeColorHex = colorVariants.find(c => c.slug === product.slug)?.hex;
 
@@ -110,9 +112,22 @@ export const ProductDetailClient = ({
     cornerEdges: 'None',
   });
 
+  // Rehydrate logoFile from cart if amending
+  useEffect(() => {
+    if (amendKey && items.length > 0) {
+      const cartItem = items.find(i => i.key === amendKey);
+      if (cartItem?.customization?.logoFile) {
+        setCustomization(prev => ({ ...prev, logoFile: cartItem.customization!.logoFile }));
+      }
+      if (cartItem?.customization) {
+        setIsCustomizingStarted(true);
+      }
+    }
+  }, [amendKey, items]);
+
   // Rehydrate customization state from localStorage on mount
   useEffect(() => {
-    if (!product || !product.slug || isGifts) return;
+    if (!product || !product.slug || isGifts || amendKey) return;
     try {
       const draftStr = localStorage.getItem(`customization_draft_${product.slug}`);
       if (draftStr) {
@@ -143,7 +158,7 @@ export const ProductDetailClient = ({
 
   // Persist customization state to localStorage on change
   useEffect(() => {
-    if (!product || !product.slug || isGifts || !isCustomizingStarted) return;
+    if (!product || !product.slug || isGifts || !isCustomizingStarted || amendKey) return;
     
     const isDefault = 
       customization.blockingType === 'Embossed' &&
@@ -693,34 +708,51 @@ export const ProductDetailClient = ({
         }
       } // closing the if(customization.enabled) block!
 
-      await addItem({
-        productId: String(product.id),
-        slug: product.slug,
-        name: product.name,
-        image: product.images[0]?.thumbnail || product.images[0]?.src || '',
-        price: priceDetails.unitPrice,
-        quantity,
-        attributes,
-        customization:
-          customizationActive
-            ? {
-              enabled: true,
-              choice: customization.blockingType,
-              foilColor: customization.blockingType === 'Foil blocked' ? customization.foilColor : undefined,
-              cornerEdges: customization.cornerEdges,
-              position: (customization.logoPosition?.label || 'center').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
-              fileName: customization.logoFile?.name,
-              logoFile: customization.logoFile,
-              logoPreviewUrl: customization.logoPreviewUrl,
-              fullPreviewUrl: fullPreviewUrl,
-              leftPercent,
-              topPercent,
-              widthPercent,
-              imageBounds: finalBounds || undefined,
-            }
-            : undefined,
-        categorySlugs: product.categories.map((c) => c.slug),
-      });
+      const finalCustomization = customizationActive
+        ? {
+          enabled: true,
+          choice: customization.blockingType,
+          foilColor: customization.blockingType === 'Foil blocked' ? customization.foilColor : undefined,
+          cornerEdges: customization.cornerEdges,
+          position: (customization.logoPosition?.label || 'center').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+          fileName: customization.logoFile?.name,
+          logoFile: customization.logoFile,
+          logoPreviewUrl: customization.logoPreviewUrl,
+          fullPreviewUrl: fullPreviewUrl,
+          leftPercent,
+          topPercent,
+          widthPercent,
+          imageBounds: finalBounds || undefined,
+        }
+        : undefined;
+
+      if (amendKey) {
+        await updateItem(amendKey, {
+          quantity,
+          price: priceDetails.unitPrice,
+          customization: finalCustomization,
+          attributes,
+          proofStatus: 'ready' as const
+        });
+
+        // Trigger event to notify the drawer to re-open if needed
+        window.dispatchEvent(new CustomEvent('cart-updated'));
+
+        // Send back to cart or drawer
+        window.location.href = '/cart';
+      } else {
+        await addItem({
+          productId: String(product.id),
+          slug: product.slug,
+          name: product.name,
+          image: product.images[0]?.thumbnail || product.images[0]?.src || '',
+          price: priceDetails.unitPrice,
+          quantity,
+          attributes,
+          customization: finalCustomization,
+          categorySlugs: product.categories.map((c) => c.slug),
+        });
+      }
     } finally {
       try {
         localStorage.removeItem(`customization_draft_${product.slug}`);
@@ -846,6 +878,7 @@ export const ProductDetailClient = ({
                 onGenerateProof={generateProof}
                 onAddToCart={handleAddToCart}
                 isAdding={isAdding}
+                amendKey={amendKey}
               />
             </div>
           )}

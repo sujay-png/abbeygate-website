@@ -144,7 +144,7 @@ export default function CartPage() {
                 <div key={item.key} className={`flex gap-4 border-b border-gray-100 pb-6 ${isGrouped ? 'border-l-4 border-l-gray-200 pl-4 rounded-l' : ''}`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <div className="w-24 h-24 relative bg-gray-50 shrink-0 rounded">
-                    <Image src={item.image} alt={item.name} fill sizes="96px" className="object-cover rounded" />
+                    <Image src={item.image || '/images/logo/abbeygate-logo.png'} alt={item.name} fill sizes="96px" className="object-cover rounded" />
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between gap-4">

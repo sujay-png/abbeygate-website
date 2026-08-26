@@ -51,10 +51,12 @@ type ProductCustomizerProps = {
   onCustomizationChange: (state: CustomizationState) => void;
   onPriceChange: (result: ReturnType<typeof calculateProductPrice>) => void;
   activeColorHex?: string;
+  activeColorName?: string;
   activeImageUrl?: string;
   onGenerateProof?: () => Promise<Partial<CustomizationState> | null>;
   onAddToCart?: () => void;
   isAdding?: boolean;
+  amendKey?: string | null;
 };
 
 export const ProductCustomizer = ({
@@ -66,17 +68,19 @@ export const ProductCustomizer = ({
   onCustomizationChange,
   onPriceChange,
   activeColorHex,
+  activeColorName,
   activeImageUrl,
   onGenerateProof,
   onAddToCart,
   isAdding,
+  amendKey,
 }: ProductCustomizerProps) => {
   const isGifts = isGiftsProduct(product);
   const isFoil = isFoilBlockedProduct(product);
 
   const [collapseOpen, setCollapseOpen] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(amendKey ? 4 : 1);
   const [isGeneratingProof, setIsGeneratingProof] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -234,7 +238,14 @@ export const ProductCustomizer = ({
               
               {/* Foil Blocked Card */}
               <div 
-                onClick={() => onCustomizationChange({ ...customization, blockingType: 'Foil blocked', foilColor: customization.foilColor || 'Gold' })}
+                onClick={() => {
+                  const newFoil = customization.foilColor || 'Gold';
+                  const newCustomization = { ...customization, blockingType: 'Foil blocked', foilColor: newFoil };
+                  if (customization.cornerEdges === 'Gold' || customization.cornerEdges === 'Silver') {
+                    newCustomization.cornerEdges = newFoil as 'Gold' | 'Silver';
+                  }
+                  onCustomizationChange(newCustomization);
+                }}
                 className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'Foil blocked' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
               >
                   <div 
@@ -280,7 +291,13 @@ export const ProductCustomizer = ({
                             <button
                               key={color}
                               type="button"
-                              onClick={() => onCustomizationChange({ ...customization, foilColor: color })}
+                              onClick={() => {
+                                const newCustomization = { ...customization, foilColor: color };
+                                if (customization.cornerEdges === 'Gold' || customization.cornerEdges === 'Silver') {
+                                  newCustomization.cornerEdges = color as 'Gold' | 'Silver';
+                                }
+                                onCustomizationChange(newCustomization);
+                              }}
                               title={color}
                               className={`w-7 h-7 rounded-full border-2 transition-transform hover:scale-110 ${customization.foilColor === color ? 'border-gray-800 scale-110 shadow-md' : 'border-transparent shadow-sm'}`}
                               style={{ background: color === 'Gold' ? 'linear-gradient(135deg, #F3E5AB, #D4AF37, #AA7C11)' : 'linear-gradient(135deg, #F5F5F5, #C0C0C0, #808080)' }}
@@ -688,7 +705,7 @@ export const ProductCustomizer = ({
                                 blockingType: customization.blockingType,
                                 isGifts: false,
                             });
-                            const pdfBuffer = await generateDigitalProof(product, customization, quantity, priceDetails.unitPrice);
+                            const pdfBuffer = await generateDigitalProof(product, customization, quantity, priceDetails.unitPrice, activeColorName);
                             const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
@@ -733,7 +750,7 @@ export const ProductCustomizer = ({
                   disabled={isAdding || isGeneratingProof || !customization.fullPreviewUrl}
                   className="w-full flex-1 py-3 bg-brand-primary text-white font-bold rounded-lg hover:bg-brand-primary-dark transition-colors disabled:opacity-50 whitespace-nowrap text-center"
                >
-                  {isAdding ? 'Processing...' : 'Add to Basket'}
+                  {isAdding ? 'Processing...' : (amendKey ? 'Update Basket' : 'Add to Basket')}
                </button>
              )}
           </div>

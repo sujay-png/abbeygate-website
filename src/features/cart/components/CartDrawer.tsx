@@ -8,6 +8,9 @@ import { useCart } from '@/features/cart/context/CartContext';
 import { useState } from 'react';
 import { ImagePreviewModal } from '@/components/ui/ImagePreviewModal';
 import { validateCustomisationMinimums } from '@/features/cart/utils/colour-group';
+import { ColourPickerRow } from '@/features/cart/components/ColourPickerRow';
+import { retryProof } from '@/features/cart/utils/add-colour-variant';
+import { downloadCartItemProof, canDownloadProof } from '@/features/cart/utils/download-proof';
 
 const OPEN_TRANSITION: Transition = { duration: 0.5, ease: [0.16, 1, 0.3, 1] };
 const CLOSE_TRANSITION: Transition = { duration: 0.35, ease: [0.7, 0, 0.84, 0] };
@@ -16,8 +19,9 @@ const formatPrice = (value: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
 
 export const CartDrawer = () => {
-  const { items: rawItems, pricedItems: items, isOpen, isLoading, subtotal, shippingCost, shippingLabel, vatCost, total, closeCart, removeItem, updateQuantity } = useCart();
+  const { items: rawItems, pricedItems: items, isOpen, isLoading, subtotal, shippingCost, shippingLabel, vatCost, total, closeCart, removeItem, updateQuantity, updateItem } = useCart();
   const [previewItem, setPreviewItem] = useState<any | null>(null);
+  const [pickerFor, setPickerFor] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
   const shortfalls = validateCustomisationMinimums(rawItems);
@@ -150,7 +154,7 @@ export const CartDrawer = () => {
                     <li key={item.key} className={`flex gap-4 ${isGrouped ? 'border-l-2 border-l-gray-200 pl-3 rounded-l -ml-3' : ''}`}>
                       <div className="w-20 h-20 relative shrink-0 bg-gray-50 rounded">
                         <Image
-                          src={item.image}
+                          src={item.image || '/images/logo/abbeygate-logo.png'}
                           alt={item.name}
                           fill
                           sizes="80px"
@@ -193,13 +197,24 @@ export const CartDrawer = () => {
                                 <a href={item.customization.logoFile ? URL.createObjectURL(item.customization.logoFile) : '#'} target="_blank" rel="noopener noreferrer" className="text-brand-primary-dark underline hover:text-gray-600">View file</a>
                               </p>
                             )}
-                            {item.customization.logoPreviewUrl && (
-                              <p className="text-[12px] text-gray-600">
+                            {(item.proofStatus || 'ready') === 'pending' ? (
+                              <p className="text-[12px] text-gray-600 flex items-center gap-1.5 mt-1">
+                                <span className="font-medium">Preview:</span>
+                                <Loader2 className="w-3 h-3 animate-spin" /> Generating...
+                              </p>
+                            ) : item.proofStatus === 'failed' ? (
+                              <p className="text-[12px] text-red-600 flex items-center gap-1.5 mt-1">
+                                <span className="font-medium">Preview:</span>
+                                Preview unavailable 
+                                <button type="button" className="underline hover:text-red-800 ml-1" onClick={() => retryProof(item, updateItem)}>Retry</button>
+                              </p>
+                            ) : item.customization.logoPreviewUrl ? (
+                              <p className="text-[12px] text-gray-600 mt-1">
                                 <span className="font-medium">Preview:</span>{' '}
                                 <button type="button" onClick={() => setPreviewItem(item)} className="text-brand-primary-dark underline hover:text-gray-600">View preview</button>
                               </p>
-                            )}
-                            <p className="text-[12px] text-gray-600"><span className="font-medium">Position:</span> {item.customization.position}</p>
+                            ) : null}
+                            <p className="text-[12px] text-gray-600 mt-1"><span className="font-medium">Position:</span> {item.customization.position}</p>
                           </div>
                         )}
 
@@ -240,6 +255,54 @@ export const CartDrawer = () => {
                             )}
                           </div>
                         </div>
+
+                        {item.customization?.enabled && (
+                          <div className="flex flex-wrap items-center gap-2 mt-3 text-[12px] font-medium text-brand-body">
+                            <button 
+                              type="button" 
+                              onClick={() => {
+                                if (!item.customization?.enabled) return;
+                                sessionStorage.setItem(`abbeygate-amend-${item.key}`, JSON.stringify({
+                                  ...item.customization,
+                                  quantity: item.quantity,
+                                  logoFile: undefined,
+                                }));
+                                window.location.href = `/product/${item.slug}?amend=${item.key}`;
+                                closeCart();
+                              }}
+                              className="hover:underline text-brand-primary-dark"
+                            >
+                              Amend customisation
+                            </button>
+                            
+                            {(item.colourOptions?.length ?? 0) > 1 && (
+                              <>
+                                <span className="text-gray-300">|</span>
+                                <button 
+                                  type="button" 
+                                  onClick={() => setPickerFor(pickerFor === item.key ? null : item.key)}
+                                  className="hover:underline text-brand-primary-dark whitespace-nowrap"
+                                >
+                                  + Order in another colour
+                                </button>
+                              </>
+                            )}
+                            
+                            {canDownloadProof(item) && (
+                              <>
+                                <span className="text-gray-300">|</span>
+                                <button type="button" onClick={() => downloadCartItemProof(item)} className="hover:underline text-brand-primary-dark whitespace-nowrap">
+                                  Download proof
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                        {pickerFor === item.key && (
+                          <div className="mt-3">
+                            <ColourPickerRow item={item} onPick={() => setPickerFor(null)} />
+                          </div>
+                        )}
                       </div>
                     </li>
                   )})}

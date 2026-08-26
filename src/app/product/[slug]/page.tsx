@@ -12,6 +12,7 @@ import type { Metadata } from 'next';
 
 type PageProps = {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -31,8 +32,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-export default async function ProductPage({ params }: PageProps) {
+export default async function ProductPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const amendKey = typeof resolvedSearchParams?.amend === 'string' ? resolvedSearchParams.amend : undefined;
 
   let product;
   try {
@@ -117,6 +120,8 @@ export default async function ProductPage({ params }: PageProps) {
         }
         
         return {
+          productId: String(sibling.id),
+          productName: sibling.name,
           name: colorName,
           slug: sibling.slug,
           hex: COLOR_HEX_MAP[colorSlug] || '#cccccc',
@@ -180,6 +185,7 @@ export default async function ProductPage({ params }: PageProps) {
           basePrice={pricing.basePrice}
           colorVariants={colorVariants}
           customTabs={customTabs}
+          amendKey={amendKey}
         />
       </Container>
       <RelatedProducts categoryId={product.categories[0]?.id} />
