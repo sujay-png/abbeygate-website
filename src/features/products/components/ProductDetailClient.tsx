@@ -90,6 +90,7 @@ export const ProductDetailClient = ({
   const { addItem } = useCart();
   const isGifts = isGiftsProduct(product);
   const activeColorHex = colorVariants.find(c => c.slug === product.slug)?.hex;
+  const activeColorName = colorVariants.find(c => c.slug === product.slug)?.name;
 
   const [isAdding, setIsAdding] = useState(false);
   const [pendingPropagate, setPendingPropagate] = useState<{ amendKey: string, customization: any, siblingsCount: number } | null>(null);
@@ -653,6 +654,7 @@ export const ProductDetailClient = ({
                 onCustomizationChange={handleCustomizationChange}
                 onPriceChange={handlePriceChange}
                 activeColorHex={activeColorHex}
+                activeColorName={activeColorName}
                 activeImageUrl={activeSrc}
                 onGenerateProof={generateProof}
                 onAddToCart={handleAddToCart}

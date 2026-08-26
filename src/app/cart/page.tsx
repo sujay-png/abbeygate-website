@@ -11,6 +11,7 @@ import { ImagePreviewModal } from '@/components/ui/ImagePreviewModal';
 import { ColourPickerRow } from '@/features/cart/components/ColourPickerRow';
 import { retryProof } from '@/features/cart/utils/add-colour-variant';
 import { validateCustomisationMinimums } from '@/features/cart/utils/colour-group';
+import { downloadCartItemProof, canDownloadProof } from '@/features/cart/utils/download-proof';
 
 const formatPrice = (value: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
@@ -239,6 +240,15 @@ export default function CartPage() {
                               className="hover:underline"
                             >
                               + Order in another colour
+                            </button>
+                          </>
+                        )}
+                        
+                        {canDownloadProof(item) && (
+                          <>
+                            <span className="text-gray-300">|</span>
+                            <button type="button" onClick={() => downloadCartItemProof(item)} className="hover:underline">
+                              Download proof (PDF)
                             </button>
                           </>
                         )}

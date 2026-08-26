@@ -18,7 +18,8 @@ export const generateDigitalProof = async (
   product: StoreProduct,
   customization: CustomizationState,
   quantity: number,
-  unitPrice: number
+  unitPrice: number,
+  colourName?: string
 ) => {
   // A4 size: 210 x 297 mm
   const doc = new jsPDF({
@@ -102,8 +103,9 @@ export const generateDigitalProof = async (
     specY += 8;
   };
 
-  // Color is just "Black" for now or pull from product
-  addSpecRow('Colour', 'Black');
+  if (colourName && colourName.trim()) {
+    addSpecRow('Colour', colourName.trim());
+  }
   addSpecRow('SKU', product.sku || 'N/A');
   addSpecRow('Branding', customization.blockingType);
   if (customization.blockingType === 'Foil blocked' && customization.foilColor) {

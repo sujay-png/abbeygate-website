@@ -55,6 +55,7 @@ type ProductCustomizerProps = {
   onGenerateProof?: () => Promise<Partial<CustomizationState> | null>;
   onAddToCart?: () => void;
   isAdding?: boolean;
+  activeColorName?: string;
 };
 
 export const ProductCustomizer = ({
@@ -70,6 +71,7 @@ export const ProductCustomizer = ({
   onGenerateProof,
   onAddToCart,
   isAdding,
+  activeColorName,
 }: ProductCustomizerProps) => {
   const isGifts = isGiftsProduct(product);
   const isFoil = isFoilBlockedProduct(product);
@@ -688,7 +690,7 @@ export const ProductCustomizer = ({
                                 blockingType: customization.blockingType,
                                 isGifts: false,
                             });
-                            const pdfBuffer = await generateDigitalProof(product, customization, quantity, priceDetails.unitPrice);
+                            const pdfBuffer = await generateDigitalProof(product, customization, quantity, priceDetails.unitPrice, activeColorName);
                             const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
