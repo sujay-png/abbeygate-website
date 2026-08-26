@@ -489,6 +489,7 @@ export const ProductDetailClient = ({
           quantity,
           price: priceDetails.unitPrice,
           customization: cartItemCustomization,
+          attributes,
           proofStatus: 'ready'
         });
         

@@ -142,6 +142,7 @@ export type PriceCalculationInput = {
   tiers?: PriceTier[];
   customizationEnabled: boolean;
   blockingType?: string;
+  cornerEdges?: string;
   isGifts: boolean;
 };
 
@@ -177,9 +178,19 @@ export function calculateProductPrice(
   }
 
   let customizationFee = 0;
-  if (!isGifts && customizationEnabled && blockingType) {
-    customizationFee =
-      LOGO_BLOCKING_PRICES[blockingType.toLowerCase()] ?? LOGO_CUSTOMIZATION_FEE;
+  if (!isGifts && customizationEnabled) {
+    if (blockingType) {
+      customizationFee = LOGO_BLOCKING_PRICES[blockingType.toLowerCase()] ?? LOGO_CUSTOMIZATION_FEE;
+      const extraBlockingFee = customizationFee - LOGO_CUSTOMIZATION_FEE;
+      if (extraBlockingFee > 0) {
+        unitPrice += extraBlockingFee;
+      }
+    }
+    
+    if (input.cornerEdges && input.cornerEdges !== 'None') {
+      // Future logic for corner edge pricing can be added here
+      // e.g., unitPrice += 0.24; 
+    }
   }
   
   if (!isGifts && !customizationEnabled) {

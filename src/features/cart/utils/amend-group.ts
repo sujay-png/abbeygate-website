@@ -30,8 +30,24 @@ export const propagateAmendToGroup = async (
       imageBounds: undefined,
     };
 
+    const newAttributes = sibling.attributes?.filter(a => !['Custom Logo', 'Blocking', 'Foil Colour', 'Logo', 'Corner Edges', 'Logo Scale'].includes(a.name)) || [];
+    newAttributes.push({ name: 'Custom Logo', value: '' });
+    if (newCustomization.choice) {
+      newAttributes.push({ name: 'Blocking', value: newCustomization.choice.replace(' blocked', '') });
+    }
+    if (newCustomization.choice === 'Foil blocked' && newCustomization.foilColor) {
+      newAttributes.push({ name: 'Foil Colour', value: newCustomization.foilColor });
+    }
+    if (newCustomization.fileName) {
+      newAttributes.push({ name: 'Logo', value: newCustomization.fileName });
+    }
+    if (newCustomization.cornerEdges && newCustomization.cornerEdges !== 'None') {
+      newAttributes.push({ name: 'Corner Edges', value: newCustomization.cornerEdges });
+    }
+
     await updateItem(sibling.key, {
       customization: siblingCustomization,
+      attributes: newAttributes,
       proofStatus: 'pending'
     });
 

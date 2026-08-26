@@ -87,6 +87,10 @@ export async function POST(request: NextRequest) {
         if (item.customization.foilColor) {
            payload.append('custom_foil_colour', item.customization.foilColor);
         }
+        
+        if (item.customization.cornerEdges && item.customization.cornerEdges !== 'None') {
+           payload.append('custom_corner_edges', item.customization.cornerEdges);
+        }
 
         if (item.customization.hasLogo) {
           const logoFile = formData.get(`logo_${index}`);

@@ -128,6 +128,7 @@ export const ProductCustomizer = ({
       tiers,
       customizationEnabled: !isGifts,
       blockingType: isFoil ? 'Foil blocked' : 'Embossed',
+      cornerEdges: customization.cornerEdges,
       isGifts,
     }),
   );
@@ -150,6 +151,7 @@ export const ProductCustomizer = ({
       tiers,
       customizationEnabled: effectiveEnabled,
       blockingType: customization.blockingType,
+      cornerEdges: customization.cornerEdges,
       isGifts,
     });
 
@@ -547,7 +549,7 @@ export const ProductCustomizer = ({
                     </div>
                  </div>
                  <div className="font-bold text-[#1F2124]">Gold</div>
-                 <div className="text-[12px] text-gray-500 mt-1">+£0.24 per unit</div>
+                 <div className="text-[12px] text-gray-500 mt-1">Included</div>
               </div>
 
               {/* Silver Card */}
@@ -593,7 +595,7 @@ export const ProductCustomizer = ({
                     </div>
                  </div>
                  <div className="font-bold text-[#1F2124]">Silver</div>
-                 <div className="text-[12px] text-gray-500 mt-1">+£0.24 per unit</div>
+                 <div className="text-[12px] text-gray-500 mt-1">Included</div>
               </div>
 
             </div>
@@ -688,6 +690,7 @@ export const ProductCustomizer = ({
                                 tiers,
                                 customizationEnabled: customization.enabled,
                                 blockingType: customization.blockingType,
+                                cornerEdges: customization.cornerEdges,
                                 isGifts: false,
                             });
                             const pdfBuffer = await generateDigitalProof(product, customization, quantity, priceDetails.unitPrice, activeColorName);

@@ -73,6 +73,7 @@ export default function CartPage() {
             blockingType: item.customization.choice,
             position: item.customization.position,
             foilColor: item.customization.foilColor,
+            cornerEdges: item.customization.cornerEdges,
           };
           if (item.customization.logoFile) {
             formData.append(`logo_${index}`, item.customization.logoFile);
@@ -151,7 +152,7 @@ export default function CartPage() {
                         <Link href={item.slug ? `/product/${item.slug}` : '#'} className="font-medium text-gray-900 hover:underline">
                           {item.name}
                         </Link>
-                        {item.attributes?.filter(attr => !['Custom Logo', 'Blocking', 'Foil Colour', 'Logo Scale', 'Logo'].includes(attr.name)).map((attr) => (
+                        {item.attributes?.filter(attr => !['Custom Logo', 'Blocking', 'Foil Colour', 'Logo Scale', 'Logo', 'Corner Edges'].includes(attr.name)).map((attr) => (
                           <p key={attr.name} className="text-sm text-gray-500 mt-1">
                             {attr.name}{attr.value ? `: ${attr.value}` : ''}
                           </p>
@@ -162,6 +163,9 @@ export default function CartPage() {
                             <p className="text-sm text-gray-600"><span className="font-medium">Blocking:</span> {item.customization.choice.replace(' blocked', '')}</p>
                             {item.customization.foilColor && (
                               <p className="text-sm text-gray-600"><span className="font-medium">Foil Colour:</span> {item.customization.foilColor}</p>
+                            )}
+                            {item.customization.cornerEdges && item.customization.cornerEdges !== 'None' && (
+                              <p className="text-sm text-gray-600"><span className="font-medium">Corner Edges:</span> {item.customization.cornerEdges}</p>
                             )}
                             {item.customization.fileName && (
                               <p className="text-sm text-gray-600">
