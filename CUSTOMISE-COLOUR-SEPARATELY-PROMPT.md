@@ -3,10 +3,12 @@
 > Companion to `ORDER-IN-ANOTHER-COLOUR-PROMPT.md`, which is **already implemented**. Read that
 > first for the data model; this prompt adds one capability on top of it.
 >
-> **Status: ready to build. Design decided.** The separate-customisation path is the **restored
-> "No, just this one" button** in the amend dialog, wired to **detach + reprice** (pricing model A1
-> below). The only still-open item is whether the client *also* wants an explicit fixed fee on top of
-> the emergent price change (§3.1, A2) — not required to ship this.
+> **STATUS: FUTURE — ON HOLD. Do NOT implement.** (Updated 2026-08-26.) For now the decision is the
+> *opposite* of this document: amend is **apply-to-all only**, and the "No, just this one" option is
+> being **removed** — see `REMOVE-JUST-THIS-ONE-PROMPT.md`. Per-colour divergence is not built yet.
+> This doc describes how divergence *would* work — turning a colour into a **separate product** that
+> re-prices on its own quantity (and, if a set-up cost ever exists, changes that too) — **only if the
+> client later confirms they want it.** Read for clarity; build nothing here until sign-off.
 
 ---
 

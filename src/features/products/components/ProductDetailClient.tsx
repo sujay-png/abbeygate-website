@@ -1105,9 +1105,9 @@ export const ProductDetailClient = ({
       {pendingPropagate && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Apply to all colours?</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Update all colours</h3>
             <p className="text-gray-600 mb-8">
-              Would you like to apply these branding changes to all {pendingPropagate.siblingsCount} other {pendingPropagate.siblingsCount === 1 ? 'colour' : 'colours'} in this group?
+              These branding changes will be applied to all {pendingPropagate.siblingsCount} other {pendingPropagate.siblingsCount === 1 ? 'colour' : 'colours'} in this group, so every colour matches.
             </p>
             <div className="flex flex-col w-full gap-3">
               <button
@@ -1128,18 +1128,7 @@ export const ProductDetailClient = ({
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 ) : null}
-                Yes, apply to all
-              </button>
-              <button
-                type="button"
-                disabled={isPropagating}
-                onClick={() => {
-                  sessionStorage.removeItem(`abbeygate-amend-${pendingPropagate.amendKey}`);
-                  window.location.href = '/cart';
-                }}
-                className="w-full h-12 bg-gray-100 text-gray-900 font-medium rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
-              >
-                No, just this one
+                Apply to all colours
               </button>
             </div>
           </div>
