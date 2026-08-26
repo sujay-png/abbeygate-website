@@ -25,6 +25,67 @@ export type ProofResult = {
   widthPercent: number;
 };
 
+/** Load `src` into an <img> and resolve once decoded (rejects on error/empty). */
+function loadImg(src: string, crossOrigin?: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    if (crossOrigin) img.crossOrigin = crossOrigin;
+    img.onload = () =>
+      img.width > 0 && img.height > 0 ? resolve(img) : reject(new Error('empty image'));
+    img.onerror = () => reject(new Error('image failed to load'));
+    img.src = src;
+  });
+}
+
+/** Fetch any URL through our server-side proxy, returning a base64 data: URL. */
+async function fetchAsDataUrl(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(`/api/proxy-image?url=${encodeURIComponent(url)}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json?.dataUrl ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Robustly load the product image for canvas compositing.
+ * 1) /api/proxy-image -> data: URL. Same-origin (never taints toDataURL) and
+ *    independent of next.config images.remotePatterns/qualities. Preferred.
+ * 2) /_next/image      -> Next optimizer (allow-listed hosts only). Fallback.
+ * 3) direct URL with crossOrigin='anonymous'. Last resort.
+ * Throws only if every strategy fails.
+ */
+async function loadProductImageElement(url: string): Promise<HTMLImageElement> {
+  const dataUrl = await fetchAsDataUrl(url);
+  if (dataUrl) {
+    try { return await loadImg(dataUrl); } catch { /* try next */ }
+  }
+  try {
+    const res = await fetch(`/_next/image?url=${encodeURIComponent(url)}&w=828&q=75`);
+    if (res.ok && (res.headers.get('content-type') || '').startsWith('image/')) {
+      const objectUrl = URL.createObjectURL(await res.blob());
+      try { return await loadImg(objectUrl); } finally { URL.revokeObjectURL(objectUrl); }
+    }
+  } catch { /* try next */ }
+  return await loadImg(url, 'anonymous');
+}
+
+/**
+ * Load the logo without tainting the canvas. Data URLs load directly; remote
+ * (http) logos are pulled through the proxy so the composited canvas stays
+ * exportable via toDataURL().
+ */
+async function loadLogoImageElement(url: string): Promise<HTMLImageElement> {
+  if (url.startsWith('data:')) return await loadImg(url);
+  const dataUrl = await fetchAsDataUrl(url);
+  if (dataUrl) {
+    try { return await loadImg(dataUrl); } catch { /* try next */ }
+  }
+  return await loadImg(url, 'anonymous');
+}
+
 export async function composeProof(args: {
   productImageUrl: string;
   branding: BrandingSpec;
@@ -49,16 +110,9 @@ export async function composeProof(args: {
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-      const res = await fetch(`/_next/image?url=${encodeURIComponent(productImageUrl)}&w=828&q=75`);
-      const blob = await res.blob();
-      const objectUrl = URL.createObjectURL(blob);
+      const productImg = await loadProductImageElement(productImageUrl);
 
-      if (objectUrl) {
-        const productImg = new window.Image();
-        productImg.src = objectUrl;
-        await new Promise(r => { productImg.onload = r; productImg.onerror = r; });
-        URL.revokeObjectURL(objectUrl);
-
+      {
         const imgAspect = productImg.width / productImg.height;
         if (Number.isNaN(imgAspect) || productImg.width === 0) {
           throw new Error('Failed to load product image for canvas');
@@ -98,9 +152,7 @@ export async function composeProof(args: {
         const safeBottom = bookBottom - marginY;
 
         if (branding.logoPreviewUrl) {
-          const logoImg = new window.Image();
-          logoImg.src = branding.logoPreviewUrl;
-          await new Promise(r => { logoImg.onload = r; logoImg.onerror = r; });
+          const logoImg = await loadLogoImageElement(branding.logoPreviewUrl);
 
           const posLabel = branding.positionLabel || 'center';
           let boxLeft = 50 - 12.5;

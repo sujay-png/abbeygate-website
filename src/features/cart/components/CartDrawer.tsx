@@ -49,6 +49,7 @@ export const CartDrawer = () => {
             blockingType: item.customization.choice,
             position: item.customization.position,
             foilColor: item.customization.foilColor,
+            cornerEdges: item.customization.cornerEdges,
           };
           if (item.customization.logoFile) {
             formData.append(`logo_${index}`, item.customization.logoFile);
