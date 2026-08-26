@@ -5,25 +5,64 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Container } from '@/components/ui/Container';
 import { Breadcrumb } from '@/components/content/Breadcrumb';
-import { useCart } from '@/features/cart/context/CartContext';
+import { useCart, type CartItem } from '@/features/cart/context/CartContext';
 import { Minus, Plus, X, Loader2 } from 'lucide-react';
 import { ImagePreviewModal } from '@/components/ui/ImagePreviewModal';
+import { ColourPickerRow } from '@/features/cart/components/ColourPickerRow';
+import { retryProof } from '@/features/cart/utils/add-colour-variant';
+import { validateCustomisationMinimums } from '@/features/cart/utils/colour-group';
+import { downloadCartItemProof, canDownloadProof } from '@/features/cart/utils/download-proof';
 
 const formatPrice = (value: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
 
 export default function CartPage() {
-  const { items, subtotal, shippingCost, shippingLabel, vatCost, total, removeItem, updateQuantity } = useCart();
+  const { items: rawItems, pricedItems: items, isLoading, removeItem, updateQuantity, subtotal, shippingCost, vatCost, total, shippingLabel, updateItem } = useCart();
   const [isSyncing, setIsSyncing] = useState(false);
+  const [pickerFor, setPickerFor] = useState<string | null>(null);
   const [previewItem, setPreviewItem] = useState<any | null>(null);
 
+  const amendLine = (item: CartItem) => {
+    if (!item.customization?.enabled) return;
+    sessionStorage.setItem(`abbeygate-amend-${item.key}`, JSON.stringify({
+      ...item.customization,
+      quantity: item.quantity,
+      logoFile: undefined, // Don't try to stringify the File
+    }));
+    window.location.href = `/product/${item.slug}?amend=${item.key}`;
+  };
+
+  const shortfalls = validateCustomisationMinimums(rawItems);
+  const hasShortfalls = shortfalls.length > 0;
+
   const handleCheckout = async () => {
+    if (hasShortfalls) {
+      alert("Please resolve the minimum quantity requirements before checking out.");
+      return;
+    }
+
     try {
       setIsSyncing(true);
       
+      const idb = await import('@/lib/idb');
+      let currentCart = await idb.get<any[]>('abbeygate-cart') || [];
+      let attempt = 0;
+      while (currentCart.some(i => i.proofStatus === 'pending') && attempt < 20) {
+        await new Promise(r => setTimeout(r, 500));
+        currentCart = await idb.get<any[]>('abbeygate-cart') || [];
+        attempt++;
+      }
+
+      if (currentCart.some(i => i.proofStatus === 'failed')) {
+        if (!window.confirm("Some items could not generate a visual proof. Your order details are still complete. Proceed to checkout?")) {
+          setIsSyncing(false);
+          return;
+        }
+      }
+      
       const formData = new FormData();
       
-      const payload = items.map((item, index) => {
+      const payload = currentCart.map((item: any, index: number) => {
         const outItem: any = {
           productId: item.productId,
           quantity: item.quantity
@@ -40,9 +79,9 @@ export default function CartPage() {
             formData.append(`logo_${index}`, item.customization.logoFile);
             outItem.customization.hasLogo = true;
           }
-          if (item.customization.fullPreviewUrl || item.customization.logoPreviewUrl) {
+          if (item.customization.fullPreviewUrl) {
             try {
-              const previewDataUrl = item.customization.fullPreviewUrl || item.customization.logoPreviewUrl!;
+              const previewDataUrl = item.customization.fullPreviewUrl;
               const byteString = atob(previewDataUrl.split(',')[1]);
               const mimeString = previewDataUrl.split(',')[0].split(':')[1].split(';')[0];
               const ab = new ArrayBuffer(byteString.length);
@@ -96,8 +135,13 @@ export default function CartPage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             <div className="lg:col-span-2 space-y-6">
-              {items.map((item) => (
-                <div key={item.key} className="flex gap-4 border-b border-gray-100 pb-6">
+              {items.map((item) => {
+                const groupSize = rawItems.filter(i => (i.colourGroupId ?? i.key) === (item.colourGroupId ?? item.key)).length;
+                const isGrouped = groupSize > 1;
+                const shortfallData = shortfalls.find(s => s.groupId === (item.colourGroupId ?? item.key));
+                
+                return (
+                <div key={item.key} className={`flex gap-4 border-b border-gray-100 pb-6 ${isGrouped ? 'border-l-4 border-l-gray-200 pl-4 rounded-l' : ''}`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <div className="w-24 h-24 relative bg-gray-50 shrink-0 rounded">
                     <Image src={item.image} alt={item.name} fill sizes="96px" className="object-cover rounded" />
@@ -129,13 +173,24 @@ export default function CartPage() {
                                 <a href={item.customization.logoFile ? URL.createObjectURL(item.customization.logoFile) : '#'} target="_blank" rel="noopener noreferrer" className="text-brand-primary-dark underline hover:text-gray-600">View file</a>
                               </p>
                             )}
-                            {item.customization.logoPreviewUrl && (
-                              <p className="text-sm text-gray-600">
+                            {(item.proofStatus || 'ready') === 'pending' ? (
+                              <p className="text-sm text-gray-600 flex items-center gap-1.5 mt-1">
+                                <span className="font-medium">Preview:</span>
+                                <Loader2 className="w-3 h-3 animate-spin" /> Generating preview...
+                              </p>
+                            ) : item.proofStatus === 'failed' ? (
+                              <p className="text-sm text-red-600 flex items-center gap-1.5 mt-1">
+                                <span className="font-medium">Preview:</span>
+                                Preview unavailable 
+                                <button type="button" className="underline hover:text-red-800 ml-1" onClick={() => retryProof(item, updateItem)}>Retry</button>
+                              </p>
+                            ) : item.customization.logoPreviewUrl ? (
+                              <p className="text-sm text-gray-600 mt-1">
                                 <span className="font-medium">Preview:</span>{' '}
                                 <button type="button" onClick={() => setPreviewItem(item)} className="text-brand-primary-dark underline hover:text-gray-600">View preview</button>
                               </p>
-                            )}
-                            <p className="text-sm text-gray-600"><span className="font-medium">Position:</span> {item.customization.position}</p>
+                            ) : null}
+                            <p className="text-sm text-gray-600 mt-1"><span className="font-medium">Position:</span> {item.customization.position}</p>
                           </div>
                         )}
                       </div>
@@ -143,6 +198,13 @@ export default function CartPage() {
                         <X className="w-5 h-5" />
                       </button>
                     </div>
+                    
+                    {shortfallData && (
+                      <div className="mt-3 text-[13px] text-red-600 font-medium bg-red-50 px-3 py-2 rounded">
+                        This group needs {shortfallData.shortfall} more units to meet the minimum for customisation.
+                      </div>
+                    )}
+                    
                     <div className="flex items-center justify-between mt-4">
                       <div className="flex items-center border border-gray-200 rounded">
                         <button type="button" onClick={() => updateQuantity(item.key, item.quantity - 1)} className="w-8 h-8 flex items-center justify-center">
@@ -153,11 +215,53 @@ export default function CartPage() {
                           <Plus className="w-3 h-3" />
                         </button>
                       </div>
-                      <span className="font-semibold">{formatPrice(item.price * item.quantity)}</span>
+                      <div className="text-right">
+                        <div className="font-semibold">{formatPrice(item.lineTotal)}</div>
+                        {item.groupQuantity > item.quantity && (
+                          <div className="text-[12px] text-gray-500 mt-0.5">
+                            Priced at your {item.groupQuantity}-unit total across {groupSize} colours
+                          </div>
+                        )}
+                      </div>
                     </div>
+
+                    {item.customization?.enabled && (
+                      <div className="flex items-center gap-3 mt-3 text-sm font-medium text-brand-primary-dark">
+                        <button 
+                          type="button" 
+                          onClick={() => amendLine(item)}
+                          className="hover:underline"
+                        >
+                          Amend customisation
+                        </button>
+                        
+                        {(item.colourOptions?.length ?? 0) > 1 && (
+                          <>
+                            <span className="text-gray-300">|</span>
+                            <button 
+                              type="button" 
+                              onClick={() => setPickerFor(pickerFor === item.key ? null : item.key)}
+                              className="hover:underline"
+                            >
+                              + Order in another colour
+                            </button>
+                          </>
+                        )}
+                        
+                        {canDownloadProof(item) && (
+                          <>
+                            <span className="text-gray-300">|</span>
+                            <button type="button" onClick={() => downloadCartItemProof(item)} className="hover:underline">
+                              Download proof (PDF)
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
+                    {pickerFor === item.key && <ColourPickerRow item={item} onPick={() => setPickerFor(null)} />}
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
 
             <div className="bg-gray-50 rounded-xl p-6 h-fit">
@@ -182,7 +286,7 @@ export default function CartPage() {
               </div>
               <button
                 onClick={handleCheckout}
-                disabled={isSyncing}
+                disabled={isSyncing || hasShortfalls}
                 className="w-full flex items-center justify-center gap-2 bg-brand-primary text-white py-4 rounded-md font-medium mt-6 hover:bg-brand-primary-dark transition-colors disabled:bg-gray-400"
               >
                 {isSyncing ? (
@@ -190,6 +294,8 @@ export default function CartPage() {
                     <Loader2 className="w-5 h-5 animate-spin" />
                     Syncing Cart...
                   </>
+                ) : hasShortfalls ? (
+                  'Minimum requirement not met'
                 ) : (
                   'Proceed to Checkout'
                 )}

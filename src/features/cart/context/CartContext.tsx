@@ -2,11 +2,22 @@
 
 import { createContext, useContext, useState, useCallback, useMemo, useEffect, ReactNode } from 'react';
 import type { LogoCustomization } from '@/features/products/types/store-product';
-import type { StoreProduct } from '@/features/products/types/store-product';
+import type { StoreProduct, PriceTier } from '@/features/products/types/store-product';
 import { calculateShipping } from '@/features/products/utils/shipping';
-import { VAT_RATE } from '@/features/products/utils/pricing';
+import { VAT_RATE, calculateProductPrice, CUSTOMIZATION_MIN_QTY } from '@/features/products/utils/pricing';
 import * as idb from '@/lib/idb';
 import toast from 'react-hot-toast';
+
+export type CartColourOption = {
+  productId: string;
+  productName: string;
+  name: string;
+  slug: string;
+  hex: string;
+  imageSrc?: string;
+};
+
+export type ProofStatus = 'ready' | 'pending' | 'failed';
 
 export interface CartItem {
   key: string;
@@ -20,10 +31,28 @@ export interface CartItem {
   attributes?: { name: string; value: string }[];
   customization?: LogoCustomization;
   categorySlugs?: string[];
+  
+  colourGroupId?: string;
+  colour?: { name: string; slug: string; hex: string };
+  colourOptions?: CartColourOption[];
+  proofStatus?: ProofStatus;
+  
+  basePrice?: number;
+  priceTiers?: PriceTier[];
+  isGifts?: boolean;
+  
+  proofGeometry?: { widthMm: number; heightMm: number; isDiary: boolean };
 }
+
+export type PricedItem = CartItem & {
+  unitPrice: number;
+  lineTotal: number;
+  groupQuantity: number;
+};
 
 interface CartContextValue {
   items: CartItem[];
+  pricedItems: PricedItem[];
   isOpen: boolean;
   isLoading: boolean;
   itemCount: number;
@@ -37,6 +66,8 @@ interface CartContextValue {
   addItem: (item: Omit<CartItem, 'key'> & { key?: string }) => Promise<void>;
   removeItem: (key: string) => Promise<void>;
   updateQuantity: (key: string, quantity: number) => Promise<void>;
+  updateItem: (key: string, patch: Partial<CartItem>) => Promise<void>;
+  insertItemAfter: (afterKey: string, item: Omit<CartItem, 'key'> & { key?: string }) => Promise<string>;
   clearCart: () => void;
 }
 
@@ -85,8 +116,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         item.key ??
         `${item.productId}${item.variationId ? `-${item.variationId}` : ''}${customKey}-${Date.now()}`;
 
-      const safeItem = { ...item, key };
-      setItems((prev) => [...prev, safeItem]);
+      const safeItem = { ...item, key, colourGroupId: item.colourGroupId ?? key };
+      setItems((prev) => [...prev, safeItem as CartItem]);
       toast.success(`${item.quantity}x ${item.name} added to basket`);
       openCart();
     } finally {
@@ -100,7 +131,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const itemToRemove = items.find((i) => i.key === key);
       if (itemToRemove) {
         toast.success(`${itemToRemove.name} removed from basket`, {
-          style: { background: '#341a3d', color: '#fff' }
+          style: { background: '#333', color: '#fff' }
         });
       }
       setItems((prev) => prev.filter((i) => i.key !== key));
@@ -119,10 +150,69 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [removeItem]);
 
+  const updateItem = useCallback(async (key: string, patch: Partial<CartItem>) => {
+    setIsLoading(true);
+    try {
+      setItems((prev) => prev.map((i) => (i.key === key ? { ...i, ...patch } : i)));
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const insertItemAfter = useCallback(async (afterKey: string, item: Omit<CartItem, 'key'> & { key?: string }) => {
+    setIsLoading(true);
+    try {
+      const customKey = item.customization?.enabled ? '-custom' : '';
+      const newKey =
+        item.key ??
+        `${item.productId}${item.variationId ? `-${item.variationId}` : ''}${customKey}-${Date.now()}`;
+
+      const safeItem = { ...item, key: newKey, colourGroupId: item.colourGroupId ?? newKey };
+      
+      setItems((prev) => {
+        const index = prev.findIndex(i => i.key === afterKey);
+        if (index === -1) return [...prev, safeItem as CartItem];
+        const next = [...prev];
+        next.splice(index + 1, 0, safeItem as CartItem);
+        return next;
+      });
+      return newKey;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const clearCart = useCallback(() => setItems([]), []);
 
+  const pricedItems = useMemo<PricedItem[]>(() => {
+    return items.map(item => {
+      const groupQuantity = item.colourGroupId
+        ? items.filter(i => (i.colourGroupId ?? i.key) === (item.colourGroupId ?? item.key)).reduce((sum, i) => sum + i.quantity, 0)
+        : item.quantity;
+      
+      let unitPrice = item.price;
+      if (item.basePrice !== undefined) {
+        unitPrice = calculateProductPrice({
+          quantity: groupQuantity,
+          basePrice: item.basePrice,
+          tiers: item.priceTiers ?? [],
+          customizationEnabled: !(item.isGifts ?? false) && item.quantity >= CUSTOMIZATION_MIN_QTY && !!item.customization?.enabled,
+          blockingType: item.customization?.choice,
+          isGifts: item.isGifts ?? false,
+        }).unitPrice;
+      }
+      
+      return {
+        ...item,
+        unitPrice,
+        lineTotal: unitPrice * item.quantity,
+        groupQuantity
+      };
+    });
+  }, [items]);
+
   const itemCount = useMemo(() => items.reduce((sum, i) => sum + i.quantity, 0), [items]);
-  const subtotal = useMemo(() => items.reduce((sum, i) => sum + i.price * i.quantity, 0), [items]);
+  const subtotal = useMemo(() => pricedItems.reduce((sum, i) => sum + i.lineTotal, 0), [pricedItems]);
 
   const { cost: shippingCost, label: shippingLabel } = useMemo(() => {
     const shippingItems = items.map((item) => ({
@@ -144,6 +234,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const value: CartContextValue = {
     items,
+    pricedItems,
     isOpen,
     isLoading,
     itemCount,
@@ -157,6 +248,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     addItem,
     removeItem,
     updateQuantity,
+    updateItem,
+    insertItemAfter,
     clearCart,
   };
 

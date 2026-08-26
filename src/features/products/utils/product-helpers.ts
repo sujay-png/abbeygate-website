@@ -133,9 +133,8 @@ export function getProductDisplayPrice(product: StoreProduct): string {
   }).format(price);
 }
 
-export function getLogoAnchors(product: StoreProduct) {
-  const { width, height } = getProductPhysicalDimensionsMm(product);
-  const aspectRatio = width / Math.max(height, 1);
+export function getLogoAnchorsFromMm(widthMm: number, heightMm: number) {
+  const aspectRatio = widthMm / Math.max(heightMm, 1);
   
   // Most product photos seem to have the book fill ~85% of the height
   const visualHeight = 85;
@@ -157,6 +156,11 @@ export function getLogoAnchors(product: StoreProduct) {
     bookTop: whiteSpaceY,
     bookBottom: 100 - whiteSpaceY,
   };
+}
+
+export function getLogoAnchors(product: StoreProduct) {
+  const { width, height } = getProductPhysicalDimensionsMm(product);
+  return getLogoAnchorsFromMm(width, height);
 }
 
 export async function getImageBoundingBox(imageUrl: string): Promise<{ top: number, bottom: number, left: number, right: number } | null> {
