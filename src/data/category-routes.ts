@@ -133,7 +133,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
   { path: "/collection/harrogate", categoryId: 51, title: "Harrogate Collection", filterConfig: { disableCollection: true } },
   { path: "/collection/lewes", categoryId: 52, title: "Lewes Collection", filterConfig: { disableCollection: true } },
   { path: "/collection/richmond", categoryId: 53, title: "Richmond Collection", filterConfig: { disableCollection: true } },
-  { path: "/collection/windsor", categoryId: 140, title: "Windsor Collection", filterConfig: { disableCollection: true } },
+  { path: "/collection/windsor", categoryId: 140, title: "Windsor Collection", description: "<p>The smart Windsor Collection is inspired by Sir Ranulph Fiennes the world's greatest living explorer, adventurer and writer, born in Windsor. His journals and written works inspired our real leather notebook and diary collection.</p>", filterConfig: { disableCollection: true } },
   { path: "/collection/conscious", categoryId: 55, title: "Conscious Collection", filterConfig: { disableCollection: true } },
   { path: "/collection/all", categoryId: 49, title: "All Collections", filterConfig: { disableCollection: true } },
 ];
