@@ -96,10 +96,10 @@ export type ProductFilters = {
 };
 
 export const FILTER_TAXONOMY_MAP = {
-  filter_collection: "pa_collection",
+  filter_size: "pa_size",
   filter_colour: "pa_colour",
   filter_layout: "pa_layout",
-  filter_size: "pa_size",
+  filter_collection: "pa_collection",
 } as const;
 
 export type FilterParamKey = keyof typeof FILTER_TAXONOMY_MAP;

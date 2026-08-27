@@ -17,10 +17,10 @@ type ProductFiltersProps = {
 };
 
 const FILTER_LABELS: Record<FilterParamKey, string> = {
-  filter_collection: 'Collection',
+  filter_size: 'Size',
   filter_colour: 'Colour',
   filter_layout: 'Layout',
-  filter_size: 'Size',
+  filter_collection: 'Collection',
 };
 
 export const ProductFilters = (props: ProductFiltersProps) => (
@@ -215,6 +215,7 @@ const ProductFiltersInner = ({
           <div
             className="max-h-[300px] overflow-y-auto border-b border-brand-border bg-white shadow-[0_8px_18px_rgba(0,0,0,0.08)]"
             onClick={(event) => event.stopPropagation()}
+            data-lenis-prevent
           >
             <div className="flex flex-col gap-3 p-4">
               {mobileTerms.map((term) => {
@@ -297,7 +298,7 @@ const ProductFiltersInner = ({
               </button>
 
               {openDropdown === key && !disabled && (
-                <div className="absolute top-full left-[-1px] w-[calc(100%+2px)] bg-white border border-brand-border border-t-0 z-50 max-h-[300px] overflow-y-auto shadow-[0_4px_10px_rgba(0,0,0,0.08)]">
+                <div className="absolute top-full left-[-1px] w-[calc(100%+2px)] bg-white border border-brand-border border-t-0 z-50 max-h-[300px] overflow-y-auto shadow-[0_4px_10px_rgba(0,0,0,0.08)]" data-lenis-prevent>
                   <div className="p-4 flex flex-col gap-2.5">
                     {terms.map((term) => {
                       const count = countProductsForTerm(

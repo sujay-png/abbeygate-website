@@ -121,6 +121,7 @@ export const Footer = () => {
                   width={220}
                   height={78}
                   className="w-[180px] h-auto object-contain"
+                  style={{ height: "auto" }}
                 />
               </Link>
               <p className="text-brand-grey text-[15px] font-josefin leading-7">
