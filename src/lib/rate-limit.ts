@@ -3,12 +3,19 @@ import { Redis } from '@upstash/redis';
 
 // A placeholder Redis client that fails safely if env variables are missing
 const getRedisClient = () => {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  
+  if (!url || !token || url === 'https://placeholder.upstash.io' || token === 'placeholder') {
+    return null;
+  }
+  
   try {
     return new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL || 'https://placeholder.upstash.io',
-      token: process.env.UPSTASH_REDIS_REST_TOKEN || 'placeholder',
+      url,
+      token,
     });
-  } catch {
+  } catch (error) {
     console.error('Failed to initialize Redis. Ensure UPSTASH variables are set.');
     return null;
   }
