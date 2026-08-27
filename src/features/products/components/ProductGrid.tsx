@@ -29,12 +29,6 @@ export const ProductGrid = ({ products }: ProductGridProps) => {
             className="group flex flex-col"
           >
             <div className="relative aspect-square w-full bg-white overflow-hidden mb-4">
-              <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex items-center justify-center">
-                <span className="text-white border border-white px-5 py-2 text-xs font-bold tracking-wider uppercase">
-                  View Details
-                </span>
-              </div>
-
               {imageSrc ? (
                 <Image
                   src={imageSrc}

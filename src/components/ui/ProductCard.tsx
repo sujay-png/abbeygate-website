@@ -19,15 +19,8 @@ export const ProductCard = ({
   href = "#",
 }: ProductCardProps) => {
   return (
-    <div className="mt-10 group flex flex-col bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+    <Link href={href} className="mt-10 group flex flex-col bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
       <div className="h-[280px] w-full flex items-center justify-center p-8 relative overflow-hidden">
-        {/* Overlay for hover effect */}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex items-center justify-center">
-          <Link href={href} className="text-white border border-white px-6 py-2 text-sm font-bold tracking-wider hover:bg-white hover:text-brand-primary-dark transition-colors duration-300 cursor-pointer">
-            VIEW DETAILS
-          </Link>
-        </div>
-
         {imageUrl ? (
           <Image
             src={imageUrl}
@@ -61,6 +54,6 @@ export const ProductCard = ({
           <span className="text-gray-500 font-medium">{price}</span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };

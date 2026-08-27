@@ -107,7 +107,7 @@ const NAV_ITEMS: NavItem[] = [
   {
     id: 'bespoke',
     label: 'BESPOKE',
-    href: '/bespoke',
+    href: '/quote',
     megaMenu: {
       columns: [
         {
