@@ -97,6 +97,7 @@ const NAV_ITEMS: NavItem[] = [
             { id: 'harrogate', label: 'Harrogate', href: '/collection/harrogate' },
             { id: 'lewes', label: 'Lewes', href: '/collection/lewes' },
             { id: 'richmond', label: 'Richmond', href: '/collection/richmond' },
+            { id: 'windsor', label: 'Windsor', href: '/collection/windsor' },
             { id: 'conscious', label: 'Conscious', href: '/collection/conscious' },
             { id: 'all-collections', label: 'All Collections', href: '/collection/all' },
           ],
