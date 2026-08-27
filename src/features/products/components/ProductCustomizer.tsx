@@ -80,7 +80,7 @@ export const ProductCustomizer = ({
 
   const [collapseOpen, setCollapseOpen] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(amendKey ? 4 : 1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [isGeneratingProof, setIsGeneratingProof] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 

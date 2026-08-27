@@ -43,6 +43,8 @@ const ImageWithFallback = ({ src, fallbackSrc = '/images/logo/abbeygate-logo.png
 };
 
 export type ColorVariant = {
+  productId: string;
+  productName: string;
   name: string;
   slug: string;
   hex: string;
@@ -113,6 +115,31 @@ export const ProductDetailClient = ({
     logoPosition: { x: 0, y: 0 },
     cornerEdges: 'None',
   });
+
+  // Hydrate the full branding spec (choice, position, foil, corner edges,
+  // logoPreviewUrl, fullPreviewUrl, quantity) stashed by the cart before
+  // navigating here to amend. Without this the Review step opens with an
+  // empty customization -> no proof ("Failed to generate proof") and a
+  // disabled Update Basket button. logoFile is rehydrated separately below.
+  useEffect(() => {
+    if (amendKey) {
+      const sessionData = sessionStorage.getItem(`abbeygate-amend-${amendKey}`);
+      if (sessionData) {
+        try {
+          const parsed = JSON.parse(sessionData);
+          setCustomization(prev => ({
+            ...prev,
+            ...parsed,
+            logoFile: undefined, // Will be hydrated from CartContext once loaded
+          }));
+          if (parsed.quantity) setQuantity(parsed.quantity);
+          setIsCustomizingStarted(true);
+        } catch (e) {
+          console.error('Failed to parse amend data from sessionStorage', e);
+        }
+      }
+    }
+  }, [amendKey]);
 
   // Rehydrate logoFile from cart if amending
   useEffect(() => {
@@ -495,13 +522,7 @@ export const ProductDetailClient = ({
           colour: activeColour
             ? { name: activeColour.name, slug: product.slug, hex: activeColour.hex }
             : undefined,
-          colourOptions: colorVariants.length > 1 ? colorVariants.map(cv => ({
-            productId: String(product.id), // using same productId base
-            productName: product.name,
-            name: cv.name,
-            slug: cv.slug,
-            hex: cv.hex
-          })) : undefined,
+          colourOptions: colorVariants.length > 1 ? colorVariants : undefined,
           basePrice,
           priceTiers: tiers,
           isGifts,
@@ -752,7 +773,7 @@ export const ProductDetailClient = ({
             })()}
 
             <button type="button" onClick={handleAddToCart} disabled={isAdding} className="mt-3 flex h-[46px] w-full items-center justify-center rounded-lg bg-brand-primary text-[15px] font-bold text-white transition-colors hover:bg-brand-primary-dark disabled:opacity-50">
-              {isAdding ? 'Processing...' : 'Add to Basket →'}
+              {isAdding ? 'Processing...' : (amendKey ? 'Update Basket →' : 'Add to Basket →')}
             </button>
             <p className="mt-3 text-[12px] leading-relaxed text-gray-500">All prices shown exclude VAT. Applicable VAT is calculated at checkout. A final digital proof is provided for approval before production.</p>
 
@@ -976,9 +997,11 @@ export const ProductDetailClient = ({
             >
               {isAdding 
                 ? 'Processing...' 
-                : (!customizationActive || isCustomizingStarted || isGifts)
-                  ? 'Add to Basket \u2192' 
-                  : 'Start customising \u2192'}
+                : amendKey
+                  ? 'Update Basket \u2192'
+                  : (!customizationActive || isCustomizingStarted || isGifts)
+                    ? 'Add to Basket \u2192' 
+                    : 'Start customising \u2192'}
             </button>
           </div>
 
