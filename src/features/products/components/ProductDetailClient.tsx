@@ -105,6 +105,13 @@ export const ProductDetailClient = ({
           setCustomization(prev => ({
             ...prev,
             ...parsed,
+            blockingType: parsed.choice || prev.blockingType,
+            logoPosition: {
+              ...prev.logoPosition,
+              label: parsed.positionLabel || prev.logoPosition?.label,
+              leftPercent: parsed.leftPercent !== undefined ? parsed.leftPercent : prev.logoPosition?.leftPercent,
+              topPercent: parsed.topPercent !== undefined ? parsed.topPercent : prev.logoPosition?.topPercent,
+            },
             logoFile: undefined, // Will be hydrated from CartContext once loaded
           }));
           if (parsed.quantity) setQuantity(parsed.quantity);
