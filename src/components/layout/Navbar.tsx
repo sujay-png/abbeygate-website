@@ -98,20 +98,23 @@ export const Navbar = () => {
   }, [isMobileMenuOpen]);
 
   const handleSearchToggle = () => {
-    if (isSearchOpen && searchQuery.trim()) {
-      handleSearch();
-    } else {
-      setIsSearchOpen(!isSearchOpen);
-      if (!isSearchOpen) {
-        setTimeout(() => inputRef.current?.focus(), 100);
+    if (isSearchOpen) {
+      if (searchQuery.trim()) {
+        handleSearch();
+      } else {
+        // If it's already open and empty, just focus the input instead of closing it.
+        // This prevents the confusing behavior of hover opening it and a subsequent click closing it.
+        inputRef.current?.focus();
       }
+    } else {
+      setIsSearchOpen(true);
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   };
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setIsSearchOpen(false);
     }
   };
 

@@ -133,6 +133,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
   { path: "/collection/harrogate", categoryId: 51, title: "Harrogate Collection", filterConfig: { disableCollection: true } },
   { path: "/collection/lewes", categoryId: 52, title: "Lewes Collection", filterConfig: { disableCollection: true } },
   { path: "/collection/richmond", categoryId: 53, title: "Richmond Collection", filterConfig: { disableCollection: true } },
+  { path: "/collection/windsor", categoryId: 140, title: "Windsor Collection", filterConfig: { disableCollection: true } },
   { path: "/collection/conscious", categoryId: 55, title: "Conscious Collection", filterConfig: { disableCollection: true } },
   { path: "/collection/all", categoryId: 49, title: "All Collections", filterConfig: { disableCollection: true } },
 ];
@@ -148,7 +149,7 @@ export function getFilterConfigForPath(path: string): FilterConfig {
 
   const pathLower = path.toLowerCase();
 
-  const disableCollection = ["collection", "chelsea", "dorchester", "harrogate", "lewes", "richmond", "conscious"].some(
+  const disableCollection = ["collection", "chelsea", "dorchester", "harrogate", "lewes", "richmond", "conscious", "windsor"].some(
     (term) => pathLower.includes(term),
   );
 
