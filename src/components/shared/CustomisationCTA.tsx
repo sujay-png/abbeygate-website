@@ -17,7 +17,7 @@ export const CustomisationCTA = () => {
             </p>
             <div className="flex flex-wrap gap-4">
               <Button href="/quote" variant="primary" className="uppercase text-[13px] tracking-wider px-8 font-bold">
-                Customize Yours Today
+                Customise Yours Today
               </Button>
               <Button href="/contact" variant="outline" className="uppercase text-[13px] tracking-wider px-8 font-bold">
                 Request A Sample
