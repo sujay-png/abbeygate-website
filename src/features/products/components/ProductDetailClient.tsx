@@ -105,6 +105,17 @@ export const ProductDetailClient = ({
   });
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isZooming, setIsZooming] = useState(false);
+  const [zoomOrigin, setZoomOrigin] = useState('center center');
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!previewContainerRef.current) return;
+    const { left, top, width, height } = previewContainerRef.current.getBoundingClientRect();
+    const x = ((e.clientX - left) / width) * 100;
+    const y = ((e.clientY - top) / height) * 100;
+    setZoomOrigin(`${x}% ${y}%`);
+  }, []);
+
   const [activeTab, setActiveTab] = useState('Description');
   const [isCustomizingStarted, setIsCustomizingStarted] = useState(false);
   const [customizerStep, setCustomizerStep] = useState<1 | 2 | 3 | 4>(1);
@@ -660,25 +671,55 @@ export const ProductDetailClient = ({
             )}
 
             <div
-              className="relative w-full max-w-[500px] mx-auto flex-1 overflow-hidden rounded-xl border border-gray-100 flex items-center justify-center p-4 group order-1 md:order-2"
+              className="relative w-full max-w-[650px] mx-auto flex-1 overflow-hidden rounded-xl border border-gray-100 flex items-center justify-center p-4 group order-1 md:order-2 cursor-zoom-in"
               style={{ aspectRatio: imageAspectRatio, backgroundColor: 'var(--brand-cream)' }}
+              onClick={() => setIsPreviewOpen(true)}
             >
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsPreviewOpen(true);
-                }}
-                className="absolute top-4 right-4 z-[30] p-2.5 rounded-full bg-white/90 backdrop-blur shadow-sm text-gray-600 hover:text-brand-primary-dark hover:bg-white transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 border border-gray-200"
-                title="Fullscreen Preview"
-              >
-                <ZoomIn className="w-5 h-5" />
-              </button>
+              {/* Image Navigation Arrows */}
+              {product.images && product.images.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setActiveImageIndex((prev) => (prev > 0 ? prev - 1 : product.images.length - 1));
+                    }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 z-[30] w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm text-gray-700 hover:text-brand-primary-dark hover:bg-gray-50 transition-colors border border-gray-200"
+                    title="Previous Image"
+                  >
+                    <ChevronLeft className="w-5 h-5 ml-[-1px]" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setActiveImageIndex((prev) => (prev < product.images.length - 1 ? prev + 1 : 0));
+                    }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 z-[30] w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm text-gray-700 hover:text-brand-primary-dark hover:bg-gray-50 transition-colors border border-gray-200"
+                    title="Next Image"
+                  >
+                    <ChevronRight className="w-5 h-5 mr-[-1px]" />
+                  </button>
+                </>
+              )}
 
               {product.images && product.images.length > 0 ? (
-                <div className="absolute inset-0 bg-gray-50" ref={previewContainerRef}>
-                  <div className="absolute inset-0 p-4 scale-105">
+                <div 
+                  className="absolute inset-0 bg-transparent overflow-hidden" 
+                  ref={previewContainerRef}
+                  onMouseEnter={() => setIsZooming(true)}
+                  onMouseLeave={() => { setIsZooming(false); setZoomOrigin('center center'); }}
+                  onMouseMove={handleMouseMove}
+                >
+                  <div 
+                    className="absolute inset-0 p-4 transition-transform duration-300 ease-out"
+                    style={{
+                      transformOrigin: zoomOrigin,
+                      transform: isZooming ? 'scale(2.2)' : 'scale(1.05)'
+                    }}
+                  >
                     <div className="relative w-full h-full">
                       {product.images.map((img, idx) => {
                         const isActive = img.src === activeSrc;
@@ -694,13 +735,15 @@ export const ProductDetailClient = ({
                           />
                         );
                       })}
-                      {isCustomizationSurface && isCustomizingStarted && customizationActive && (
-                        <ProductCustomizationOverlay
-                          product={product}
-                          customization={customization}
-                          onPositionChange={handlePositionChange}
-                          imageBounds={imageBounds}
-                        />
+                      {isCustomizingStarted && customizationActive && (
+                        <div className={`absolute inset-0 transition-opacity duration-500 z-20 ${isCustomizationSurface ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+                          <ProductCustomizationOverlay
+                            product={product}
+                            customization={customization}
+                            onPositionChange={handlePositionChange}
+                            imageBounds={imageBounds}
+                          />
+                        </div>
                       )}
                     </div>
                   </div>
@@ -742,44 +785,50 @@ export const ProductDetailClient = ({
 
         {/* Image Preview Modal */}
         {isPreviewOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/95 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[var(--brand-cream)]">
             <button
               onClick={() => setIsPreviewOpen(false)}
-              className="absolute top-6 right-6 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-[110]"
+              className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors z-[110]"
             >
-              <X className="w-6 h-6 text-brand-primary-dark" />
+              <X className="w-5 h-5 text-gray-700" />
             </button>
 
             {product.images.length > 1 && (
               <>
                 <button
-                  onClick={handlePrevImage}
-                  className="absolute left-6 p-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-[110]"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveImageIndex((prev) => (prev > 0 ? prev - 1 : product.images.length - 1));
+                  }}
+                  className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors z-[110]"
                 >
-                  <ChevronLeft className="w-6 h-6 text-brand-primary-dark" />
+                  <ChevronLeft className="w-5 h-5 ml-[-1px] text-gray-700" />
                 </button>
                 <button
-                  onClick={handleNextImage}
-                  className="absolute right-6 p-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-[110]"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveImageIndex((prev) => (prev < product.images.length - 1 ? prev + 1 : 0));
+                  }}
+                  className="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors z-[110]"
                 >
-                  <ChevronRight className="w-6 h-6 text-brand-primary-dark" />
+                  <ChevronRight className="w-5 h-5 mr-[-1px] text-gray-700" />
                 </button>
               </>
             )}
 
-            <div className="relative w-[90vw] h-[90vh] flex items-center justify-center p-4">
+            <div className="relative w-full max-w-[80vw] flex items-center justify-center mb-8">
               <div 
                 className="relative"
                 style={{ 
                   aspectRatio: imageAspectRatio,
-                  width: `min(100%, calc((90vh - 32px) * ${imageAspectRatio}))`
+                  width: `min(100%, calc(70vh * ${imageAspectRatio}))`
                 }}
               >
                 <ImageWithFallback
-                  src={activeImage?.src || activeSrc}
-                  alt={activeImage?.alt || product.name}
+                  src={product.images[activeImageIndex]?.src || activeSrc}
+                  alt={product.images[activeImageIndex]?.alt || product.name}
                   fill
-                  sizes="90vw"
+                  sizes="80vw"
                   className="object-contain"
                 />
                 {isCustomizationSurface && isCustomizingStarted && customizationActive && (
@@ -790,6 +839,16 @@ export const ProductDetailClient = ({
                     imageBounds={imageBounds}
                   />
                 )}
+              </div>
+            </div>
+
+            <div className="text-center flex flex-col gap-2 z-[110]">
+              <div className="text-[16px] font-bold text-brand-primary font-josefin">
+                {product.name.split(',')[0]}
+              </div>
+              <div className="text-[11px] font-bold text-gray-500 uppercase tracking-[0.15em]">
+                {activeColorName ? `${activeColorName} - ` : ''}
+                {activeImageIndex === 0 ? 'FRONT COVER' : activeImageIndex === 1 ? 'INSIDE VIEW' : 'ADDITIONAL VIEW'}
               </div>
             </div>
           </div>
@@ -936,8 +995,8 @@ export const ProductDetailClient = ({
           </div>
 
           {/* Description Accordion */}
-          <details className="group border border-gray-200 rounded-lg bg-transparent overflow-hidden mb-2">
-            <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body hover:bg-gray-50">
+          <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mb-2">
+            <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
               <span>Description</span>
               <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
             </summary>
@@ -960,31 +1019,36 @@ export const ProductDetailClient = ({
 
           {/* Available Colours Section */}
           {colorVariants.length > 0 && (
-            <div className="mt-2 mb-2">
-              <span className="text-[14px] font-bold text-brand-body block mb-3">Colour: {product.name.split(', ').pop() || 'Selected'}</span>
-              <div className="flex flex-wrap items-center gap-2">
-                {colorVariants.map((color) => {
-                  const isActive = product.slug === color.slug;
-                  return (
-                    <Link
-                      key={color.slug}
-                      href={`/product/${color.slug}`}
-                      title={color.name}
-                      className={`w-7 h-7 rounded-full shadow-sm transition-transform hover:scale-110 ${isActive ? 'ring-2 ring-offset-2 ring-black scale-110' : 'border border-gray-300'
-                        }`}
-                      style={{ backgroundColor: color.hex }}
-                    />
-                  );
-                })}
+            <>
+              <hr className="border-gray-200" />
+              <div className="mt-2 mb-2">
+                <span className="text-[14px] font-bold text-brand-body block mb-3">Colour: {product.name.split(', ').pop() || 'Selected'}</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  {colorVariants.map((color) => {
+                    const isActive = product.slug === color.slug;
+                    return (
+                      <Link
+                        key={color.slug}
+                        href={`/product/${color.slug}`}
+                        title={color.name}
+                        className={`w-8 h-8 rounded-full shadow-sm transition-transform hover:scale-110 ${isActive ? 'ring-2 ring-offset-2 ring-brand-body scale-110' : 'border border-gray-300'
+                          }`}
+                        style={{ backgroundColor: color.hex }}
+                      />
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            </>
           )}
 
-          {/* Quantity Box */}
-          <div className="bg-transparent border border-gray-200 rounded-lg px-4 py-4 flex flex-col gap-3">
+          <hr className="border-gray-200" />
+
+          {/* Quantity & Actions (Unwrapped) */}
+          <div className="flex flex-col gap-4 mt-2">
             <div className="flex justify-between items-start">
-              <label className="text-[14px] font-bold text-brand-body mt-1">Quantity</label>
-              <div className="flex flex-col items-end gap-1.5">
+              <label className="text-[14px] font-bold text-brand-body mt-2">Quantity</label>
+              <div className="flex flex-col items-end gap-2">
                 <div className="flex items-center border border-gray-300 bg-white rounded-md overflow-hidden h-[36px]">
                   <button type="button" className="px-3 hover:bg-gray-100 text-gray-600 transition" onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
                   <input
@@ -999,8 +1063,8 @@ export const ProductDetailClient = ({
                   />
                   <button type="button" className="px-3 hover:bg-gray-100 text-gray-600 transition" onClick={() => setQuantity(quantity + 1)}>+</button>
                 </div>
-                <div className="text-[15px] font-bold text-brand-body">
-                  {formatGBP(priceDetails.unitPrice)} <span className="text-[13px] font-normal text-gray-500">per unit (ex VAT)</span>
+                <div className="text-[14px] font-bold text-brand-body mt-1">
+                  {formatGBP(priceDetails.unitPrice)} <span className="font-normal text-gray-500">per unit (ex VAT)</span>
                 </div>
               </div>
             </div>
@@ -1013,10 +1077,7 @@ export const ProductDetailClient = ({
 
             {!isGifts && customizationAllowed && (
               <label
-                className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${!customization.enabled
-                    ? 'border-gray-300 bg-white'
-                    : 'border-gray-200 bg-gray-50'
-                  }`}
+                className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors bg-white ${!customization.enabled ? 'border-gray-300' : 'border-gray-200'}`}
               >
                 <div className="pt-0.5">
                   <input
@@ -1052,13 +1113,13 @@ export const ProductDetailClient = ({
                 const potentialSavings = (priceDetails.unitPrice - nextTier.price) * nextTier.min;
                 if (potentialSavings > 0) {
                   return (
-                    <div className="bg-brand-tint rounded-lg px-4 py-3 mt-1 border border-brand-soft">
-                      <div className="font-bold text-brand-accent text-[14px]">You could save {formatGBP(potentialSavings)}</div>
-                      <div className="text-[13px] text-gray-600 mb-2">by ordering {nextTier.min} units ({formatGBP(nextTier.price)} per unit, ex VAT)</div>
+                    <div className="bg-[#e9f2f2] rounded-lg px-5 py-5 border border-[#c2dede]">
+                      <div className="font-bold text-[#355a5a] text-[15px] mb-1">You could save {formatGBP(potentialSavings)}</div>
+                      <div className="text-[13px] text-gray-500 font-medium mb-4">by ordering {nextTier.min} units ({formatGBP(nextTier.price)} per unit, ex VAT)</div>
                       <button
                         type="button"
                         onClick={() => setQuantity(nextTier.min)}
-                        className="w-full py-1.5 bg-white rounded-md border border-brand-accent text-brand-accent text-[13px] font-bold hover:bg-brand-soft/50 transition"
+                        className="w-full py-2.5 bg-white rounded-md border border-[#355a5a] text-[#355a5a] text-[13px] font-bold hover:bg-[#e9f2f2] transition"
                       >
                         Increase to {nextTier.min} units &rarr;
                       </button>
@@ -1073,7 +1134,7 @@ export const ProductDetailClient = ({
               type="button"
               onClick={handleAddToCart}
               disabled={isAdding}
-              className="w-full h-[54px] text-[16px] font-bold rounded-lg text-white transition-all disabled:opacity-50 flex items-center justify-center bg-brand-primary hover:bg-brand-primary-dark mt-2"
+              className="w-full h-[54px] text-[16px] font-bold rounded-lg text-white transition-all disabled:opacity-50 flex items-center justify-center bg-brand-primary-dark hover:bg-opacity-90 mt-2 shadow-sm"
             >
               {isAdding 
                 ? 'Processing...' 
@@ -1083,10 +1144,6 @@ export const ProductDetailClient = ({
                     ? 'Add to Basket \u2192' 
                     : 'Start customising \u2192'}
             </button>
-          </div>
-
-          <div className="text-[14px] text-gray-600 mt-2">
-            Prices below {customizationActive ? 'include logo branding' : 'exclude logo branding'}.
           </div>
 
           {/* VOLUME PRICING TABLE */}
@@ -1129,8 +1186,8 @@ export const ProductDetailClient = ({
           )}
 
           {/* Specifications Accordion */}
-          <details className="group border border-gray-200 rounded-lg bg-transparent overflow-hidden mt-4">
-            <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body hover:bg-gray-50">
+          <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
+            <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
               <span>Specifications</span>
               <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
             </summary>
@@ -1157,8 +1214,8 @@ export const ProductDetailClient = ({
               if (!deliveryTab) return null;
 
               return (
-                <details className="group border border-gray-200 rounded-lg bg-transparent overflow-hidden mt-4">
-                  <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body hover:bg-gray-50">
+                <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
+                  <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
                     <span>Delivery</span>
                     <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
                   </summary>
@@ -1177,8 +1234,8 @@ export const ProductDetailClient = ({
               const title = t.title.trim().toLowerCase();
               return title !== 'description' && title !== 'shipping' && title !== 'delivery';
             }).map((tab, idx) => (
-              <details key={idx} className="group border border-gray-200 rounded-lg bg-transparent overflow-hidden mt-4">
-                <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body hover:bg-gray-50">
+              <details key={idx} className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
+                <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
                   <span>{tab.title}</span>
                   <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
                 </summary>
