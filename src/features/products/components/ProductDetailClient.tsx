@@ -12,7 +12,7 @@ import { getLogoAnchors, getImageBoundingBox, getProductPhysicalDimensionsMm } f
 import { getConfiguredImageBounds } from '../utils/product-image-bounds';
 import { composeProof } from '../utils/generate-proof';
 import { TrustIndicators } from '@/components/home/TrustIndicators';
-import { Send, X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
+import { Send, X, ChevronLeft, ChevronRight, ZoomIn, Check } from 'lucide-react';
 import Link from 'next/link';
 
 import type { CustomTab } from '@/features/products/services/store-products';
@@ -107,11 +107,12 @@ export const ProductDetailClient = ({
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('Description');
   const [isCustomizingStarted, setIsCustomizingStarted] = useState(false);
+  const [customizerStep, setCustomizerStep] = useState<1 | 2 | 3 | 4>(1);
   const isCustomizationSurface = activeImageIndex === 0;
   const [customization, setCustomization] = useState<CustomizationState>({
     enabled: !isGifts,
     blockingType: 'Embossed',
-    logoScale: 0.8,
+    logoScale: 1.0,
     logoPosition: { x: 0, y: 0 },
     cornerEdges: 'None',
   });
@@ -198,7 +199,7 @@ export const ProductDetailClient = ({
     
     const isDefault = 
       customization.blockingType === 'Embossed' &&
-      customization.logoScale === 0.8 &&
+      customization.logoScale === 1.0 &&
       customization.cornerEdges === 'None' &&
       !customization.logoPreviewUrl;
 
@@ -558,21 +559,79 @@ export const ProductDetailClient = ({
 
   return (
     <div className="flex flex-col gap-12 lg:gap-16">
-      {isCustomizingStarted && (
-        <style>{`
-          @media (min-width: 1024px) {
-            #customizer-grid {
-              zoom: 0.8;
-            }
-          }
-        `}</style>
-      )}
+      {/* Zoom scale removed per user request */}
       <div
         id="customizer-grid"
         className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] xl:grid-cols-[1.5fr_0.8fr] gap-10 lg:gap-16 lg:items-start transition-all duration-500 text-brand-body"
       >
         {/* Left: gallery and customizer */}
         <div id="product-gallery-container" className={`relative z-10 self-start flex flex-col gap-4 w-full scroll-mt-[120px] ${!isCustomizingStarted ? 'lg:sticky lg:top-[120px]' : ''}`}>
+          
+          {/* STEPPER AND HEADING */}
+          {!isGifts && isCustomizingStarted && customizationActive && (
+            <div className="mb-6 animate-in fade-in duration-500 w-full">
+              {/* Stepper Navigation */}
+              <div className="flex items-center justify-between w-full max-w-2xl mx-auto mb-10">
+                {[
+                  { num: 1, label: 'Branding' },
+                  { num: 2, label: 'Position' },
+                  { num: 3, label: 'Extras' },
+                  { num: 4, label: 'Review' },
+                ].map((s, index) => {
+                  const isCompleted = customizerStep > s.num;
+                  const isCurrent = customizerStep === s.num;
+                  const isFuture = customizerStep < s.num;
+
+                  return (
+                    <div key={s.num} className="flex items-center flex-1 last:flex-none">
+                      <div className="flex items-center gap-2 lg:gap-3 cursor-pointer" onClick={() => { if (isCompleted || isCurrent) setCustomizerStep(s.num as any); }}>
+                        {isCompleted ? (
+                          <div className="w-6 h-6 rounded-full bg-brand-primary flex items-center justify-center text-white shrink-0">
+                            <Check size={14} strokeWidth={3} />
+                          </div>
+                        ) : isCurrent ? (
+                          <div className="w-6 h-6 rounded-full border border-brand-primary flex items-center justify-center text-brand-body text-[12px] font-bold shrink-0">
+                            {s.num}
+                          </div>
+                        ) : (
+                          <div className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-gray-400 text-[12px] font-bold shrink-0">
+                            {s.num}
+                          </div>
+                        )}
+                        <span className={`text-[12px] lg:text-[13px] font-josefin font-semibold hidden sm:inline-block ${isFuture ? 'text-gray-400' : 'text-brand-body'}`}>
+                          {s.label}
+                        </span>
+                      </div>
+                      
+                      {/* Connecting Line */}
+                      {index < 3 && (
+                        <div className="flex-1 mx-2 lg:mx-4">
+                          <div className={`border-t ${isCompleted ? 'border-brand-primary border-solid' : 'border-gray-300 border-dashed'} w-full`}></div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Step Header */}
+              <div className="mb-4">
+                <h1 className="text-[22px] lg:text-2xl font-bold font-josefin text-brand-body mb-1">
+                  {customizerStep === 1 ? 'Choose your branding' :
+                   customizerStep === 2 ? 'Position your logo' :
+                   customizerStep === 3 ? 'Add finishing touches' :
+                   'Review your customisation'}
+                </h1>
+                <p className="text-[13px] lg:text-[14px] text-gray-500 font-work">
+                  {customizerStep === 1 ? "Upload your logo, then select how you'd like it applied to the cover." :
+                   customizerStep === 2 ? "Select the placement and size of your logo on the product." :
+                   customizerStep === 3 ? "Select any optional extras like metal corner edges." :
+                   "Check the digital proof before adding to your basket."}
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-col md:flex-row gap-4 lg:gap-6 w-full">
             {product.images.length > 1 && (
               <div className="flex md:flex-col gap-4 overflow-x-auto md:overflow-y-auto md:max-h-[600px] pb-2 md:pb-0 scrollbar-hide shrink-0 order-2 md:order-1">
@@ -673,6 +732,8 @@ export const ProductDetailClient = ({
                 onAddToCart={handleAddToCart}
                 isAdding={isAdding}
                 amendKey={amendKey}
+                step={customizerStep}
+                onStepChange={setCustomizerStep}
               />
             </div>
           )}
@@ -734,33 +795,40 @@ export const ProductDetailClient = ({
           </div>
         )}
 
-        {/* Customisation order sidebar: replaces the product-detail panel once
-            the customer starts the multi-step customisation flow. */}
         {isCustomizingStarted && customizationActive && (
-          <aside className="relative z-20 flex h-fit flex-col gap-3">
-            <div>
-              <p className="text-[13px] font-bold uppercase tracking-widest text-brand-primary">{product.categories?.[0]?.name ? `${product.categories[0].name} collection` : 'Collection'}</p>
-              <h2 className="mt-1 text-2xl font-bold leading-tight text-brand-body lg:text-[28px]">{product.name}</h2>
-              {product.sku && <p className="mt-0.5 text-[12px] text-gray-500">SKU: {product.sku}</p>}
-            </div>
-
-            <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-transparent px-3 py-2.5">
-              <span className="text-[14px] font-bold text-brand-body">Quantity</span>
-              <div className="flex h-9 items-center overflow-hidden rounded-md border border-gray-300 bg-white">
-                <button type="button" aria-label="Decrease quantity" className="px-3 text-gray-600 hover:bg-gray-100" onClick={() => setQuantity(Math.max(CUSTOMIZATION_MIN_QTY, quantity - 1))}>−</button>
-                <span className="w-10 text-center text-[14px] font-bold text-brand-body">{quantity}</span>
-                <button type="button" aria-label="Increase quantity" className="px-3 text-gray-600 hover:bg-gray-100" onClick={() => setQuantity(quantity + 1)}>+</button>
+          <aside className="relative z-20 flex h-fit flex-col gap-4">
+            
+            {/* Quantity */}
+            <div className="flex flex-col gap-1 mb-2">
+              <div className="flex justify-between items-center w-full">
+                <span className="text-[14px] font-bold text-brand-body">Quantity</span>
+                <div className="flex h-9 items-center overflow-hidden rounded-md border border-gray-200 bg-white shadow-sm">
+                  <button type="button" aria-label="Decrease quantity" className="px-3 text-gray-600 hover:bg-gray-50" onClick={() => setQuantity(Math.max(CUSTOMIZATION_MIN_QTY, quantity - 1))}>−</button>
+                  <span className="w-12 text-center text-[13px] font-bold text-brand-body">{quantity}</span>
+                  <button type="button" aria-label="Increase quantity" className="px-3 text-gray-600 hover:bg-gray-50" onClick={() => setQuantity(quantity + 1)}>+</button>
+                </div>
+              </div>
+              <div className="text-right text-[12px] font-bold text-gray-500">
+                {formatGBP(priceDetails.unitPrice)} per unit (ex VAT)
               </div>
             </div>
 
-            <dl className="rounded-lg border border-gray-200 bg-transparent px-3 py-2.5 space-y-1 text-[13px] text-gray-600">
-              <div className="flex justify-between gap-4"><dt>Unit price (ex VAT)</dt><dd className="font-medium text-brand-body">{formatGBP(priceDetails.unitPrice)}</dd></div>
-              <div className="flex justify-between gap-4"><dt>Branding</dt><dd className="text-right font-medium text-brand-body">{customization.blockingType}</dd></div>
-              <div className="flex justify-between gap-4"><dt>Corner edges</dt><dd className="font-medium text-brand-body">{customization.cornerEdges}</dd></div>
-              <div className="flex justify-between gap-4 border-t border-gray-200 pt-1.5 mt-1.5"><dt>Subtotal (ex VAT)</dt><dd className="font-semibold text-brand-body">{formatGBP(priceDetails.totalPrice)}</dd></div>
-              <div className="flex justify-between gap-4 bg-brand-tint -mx-3 -mb-2.5 mt-2 px-3 py-2.5 rounded-b-lg border-t border-gray-200"><dt className="font-bold text-brand-body">Including VAT (20%)</dt><dd className="font-bold text-brand-body">{formatGBP(priceDetails.totalPrice * (1 + VAT_RATE))}</dd></div>
-            </dl>
+            {/* Order Summary Box */}
+            <div className="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm">
+              <div className="p-4 space-y-3 text-[13px] text-gray-600">
+                <div className="flex justify-between gap-4 font-bold text-brand-body"><dt>Products total</dt><dd>{formatGBP(priceDetails.unitPrice * quantity)}</dd></div>
+                <div className="flex justify-between gap-4 font-bold text-gray-400"><dt>Branding</dt><dd>{customization.blockingType}</dd></div>
+                <div className="flex justify-between gap-4 font-bold text-gray-400"><dt>Corner edges</dt><dd>{customization.cornerEdges}</dd></div>
+              </div>
+              <div className="px-4 py-3 border-t border-gray-200 flex justify-between gap-4 font-bold text-brand-body text-[14px]">
+                <dt>Subtotal (ex VAT)</dt><dd>{formatGBP(priceDetails.totalPrice)}</dd>
+              </div>
+              <div className="px-4 py-3 bg-brand-tint flex justify-between gap-4 font-bold text-brand-body text-[14px]">
+                <dt>Including VAT (20%)</dt><dd>{formatGBP(priceDetails.totalPrice * (1 + VAT_RATE))}</dd>
+              </div>
+            </div>
 
+            {/* Next Tier Savings */}
             {!isGifts && tiers.length > 0 && (() => {
               const activeTierIndex = tiers.findIndex(tier => quantity >= tier.min && (tier.max === null || quantity <= tier.max));
               const nextTier = activeTierIndex >= 0 ? tiers[activeTierIndex + 1] : null;
@@ -769,44 +837,49 @@ export const ProductDetailClient = ({
               if (!nextTier || savings <= 0) return null;
 
               return (
-                <div className="mt-1 rounded-lg border border-brand-soft bg-brand-tint px-3 py-2.5">
-                  <p className="text-[13px] font-bold text-brand-accent">You could save {formatGBP(savings)}</p>
-                  <p className="text-[11px] text-gray-600 mb-1.5">by ordering {nextTier.min} units ({formatGBP(nextTier.price)} per unit, ex VAT)</p>
-                  <button type="button" onClick={() => setQuantity(nextTier.min)} className="w-full rounded-md border border-brand-accent bg-white px-2 py-1 text-[11px] font-bold text-brand-accent transition-colors hover:bg-brand-soft/50">
+                <div className="rounded-lg border border-brand-soft bg-brand-tint px-4 py-4 shadow-sm">
+                  <p className="text-[14px] font-bold text-brand-accent mb-1">You could save {formatGBP(savings)}</p>
+                  <p className="text-[12px] text-gray-500 font-bold mb-4">by ordering {nextTier.min} units ({formatGBP(nextTier.price)} per unit, ex VAT)</p>
+                  <button type="button" onClick={() => setQuantity(nextTier.min)} className="w-full rounded-md border border-brand-accent bg-white px-2 py-2 text-[12px] font-bold text-brand-accent transition-colors">
                     Increase to {nextTier.min} units →
                   </button>
                 </div>
               );
             })()}
 
-            <button type="button" onClick={handleAddToCart} disabled={isAdding} className="mt-3 flex h-[46px] w-full items-center justify-center rounded-lg bg-brand-primary text-[15px] font-bold text-white transition-colors hover:bg-brand-primary-dark disabled:opacity-50">
-              {isAdding ? 'Processing...' : (amendKey ? 'Update Basket →' : 'Add to Basket →')}
+            {/* Proceed Button */}
+            <button type="button" onClick={handleAddToCart} disabled={isAdding} className="flex h-12 w-full items-center justify-center rounded-lg bg-brand-primary-dark text-[15px] font-bold text-white transition-colors hover:bg-brand-primary disabled:opacity-50 shadow-sm mt-2">
+              {isAdding ? 'Processing...' : (amendKey ? 'Update Basket →' : 'Proceed →')}
             </button>
-            <p className="mt-3 text-[12px] leading-relaxed text-gray-500">All prices shown exclude VAT. Applicable VAT is calculated at checkout. A final digital proof is provided for approval before production.</p>
 
+            {/* Free digital proof */}
+            <div className="rounded-lg border border-gray-200 bg-white px-4 py-4 shadow-sm mt-2">
+              <p className="text-[14px] font-bold text-brand-body mb-1">Free digital proof</p>
+              <p className="text-[12px] text-gray-500 font-medium">Final artwork proof provided via email before production for your approval.</p>
+            </div>
+
+            {/* Price Breaks Table */}
             {!isGifts && tiers.length > 0 && (
-              <div className="mt-1 border border-gray-200 rounded-lg bg-transparent overflow-hidden">
-                <div className="flex justify-between items-center font-bold px-4 py-3 text-[12px] tracking-widest text-brand-body uppercase bg-transparent border-b border-gray-200">
-                  <span>PRICE BREAKS (PER UNIT)</span>
+              <div className="mt-4">
+                <div className="font-bold text-[13px] tracking-wider text-brand-body uppercase mb-3">
+                  PRICE BREAKS (PER UNIT)
                 </div>
-                <div>
-                  <table className="w-full text-left text-[12px]">
-                    <thead className="bg-transparent text-gray-500">
-                      <tr><th className="px-4 py-2 font-medium">Quantity</th><th className="px-4 py-2 text-right font-medium">Price (ex VAT)</th></tr>
-                    </thead>
-                    <tbody>
-                      {tiers.map(tier => {
-                        const active = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
-                        return (
-                          <tr key={tier.min} onClick={() => setQuantity(tier.min)} className={`cursor-pointer border-t border-gray-200 ${active ? 'bg-brand-primary font-bold text-white' : 'text-brand-body hover:bg-gray-50'}`}>
-                            <td className="px-4 py-2.5">{tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}</td>
-                            <td className="px-4 py-2.5 text-right">{formatGBP(tier.price)}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                <table className="w-full text-left text-[12px]">
+                  <thead className="text-gray-400">
+                    <tr><th className="py-2 font-medium">Quantity</th><th className="py-2 text-right font-medium">Price per unit (ex VAT)</th></tr>
+                  </thead>
+                  <tbody>
+                    {tiers.map(tier => {
+                      const active = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
+                      return (
+                        <tr key={tier.min} onClick={() => setQuantity(tier.min)} className={`cursor-pointer border-t border-gray-200 font-bold ${active ? 'text-brand-body' : 'text-gray-500 hover:text-brand-body'}`}>
+                          <td className="py-3">{tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}</td>
+                          <td className="py-3 text-right">{formatGBP(tier.price)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
           </aside>

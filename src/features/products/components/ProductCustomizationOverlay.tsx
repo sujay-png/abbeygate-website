@@ -21,10 +21,21 @@ export const ProductCustomizationOverlay = ({
 
   const anchors = getLogoAnchors(product);
   
-  const bookLeft = imageBounds ? imageBounds.left : anchors.bookLeft;
-  const bookRight = imageBounds ? imageBounds.right : anchors.bookRight;
-  const bookTop = imageBounds ? imageBounds.top : anchors.bookTop;
-  const bookBottom = imageBounds ? imageBounds.bottom : anchors.bookBottom;
+  let bookLeft = imageBounds ? imageBounds.left : anchors.bookLeft;
+  let bookRight = imageBounds ? imageBounds.right : anchors.bookRight;
+  let bookTop = imageBounds ? imageBounds.top : anchors.bookTop;
+  let bookBottom = imageBounds ? imageBounds.bottom : anchors.bookBottom;
+
+  // The heavy drop shadow on this specific product image throws off the edge detection,
+  // making the book height seem huge and pushing the diaryTopOffset too far down.
+  // Because the shadow is so large on the right/bottom, the book is off-center, 
+  // so we must hand-calibrate the bounds to strictly cover the book face.
+  if (product.name?.toLowerCase().includes('richmond finegrain quarto')) {
+    bookLeft = 16.8;
+    bookRight = 84.4;
+    bookTop = 9.8;
+    bookBottom = 90.8;
+  }
 
   const bookWidth = bookRight - bookLeft;
   const bookHeight = bookBottom - bookTop;

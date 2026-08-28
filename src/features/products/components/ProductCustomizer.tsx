@@ -57,6 +57,8 @@ type ProductCustomizerProps = {
   onAddToCart?: () => void;
   isAdding?: boolean;
   amendKey?: string | null;
+  step: 1 | 2 | 3 | 4;
+  onStepChange: (step: 1 | 2 | 3 | 4) => void;
 };
 
 export const ProductCustomizer = ({
@@ -74,13 +76,14 @@ export const ProductCustomizer = ({
   onAddToCart,
   isAdding,
   amendKey,
+  step,
+  onStepChange,
 }: ProductCustomizerProps) => {
   const isGifts = isGiftsProduct(product);
   const isFoil = isFoilBlockedProduct(product);
 
   const [collapseOpen, setCollapseOpen] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [isGeneratingProof, setIsGeneratingProof] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -171,17 +174,6 @@ export const ProductCustomizer = ({
 
   return (
     <div className="mt-0 mb-6 animate-in fade-in slide-in-from-top-2 duration-300">
-      {/* STEP TRACKER (Optional visual flair) */}
-      <div className="flex items-center gap-2 mb-4">
-        <div className={`text-[12px] font-bold ${step === 1 ? 'text-brand-primary' : 'text-gray-400 hidden sm:block'}`}>1. Branding</div>
-        <div className="h-px bg-gray-200 flex-1 hidden sm:block" />
-        <div className={`text-[12px] font-bold ${step === 2 ? 'text-brand-primary' : 'text-gray-400 hidden sm:block'}`}>2. Position</div>
-        <div className="h-px bg-gray-200 flex-1 hidden sm:block" />
-        <div className={`text-[12px] font-bold ${step === 3 ? 'text-brand-primary' : 'text-gray-400 hidden sm:block'}`}>3. Extras</div>
-        <div className="h-px bg-gray-200 flex-1 hidden sm:block" />
-        <div className={`text-[12px] font-bold ${step === 4 ? 'text-brand-primary' : 'text-gray-400 hidden sm:block'}`}>4. Review</div>
-      </div>
-
       {step === 1 && (
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
           <div>
@@ -403,14 +395,14 @@ export const ProductCustomizer = ({
           </div>
 
           <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-end mt-4">
-             <button
-                type="button"
-                onClick={() => setStep(2)}
-                disabled={!customization.logoPreviewUrl}
-                className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-brand-primary-dark text-white font-bold rounded-lg hover:bg-brand-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-center"
-             >
-                Proceed to Position &rarr;
-             </button>
+            <button
+              type="button"
+              onClick={() => onStepChange(2)}
+              disabled={!customization.logoPreviewUrl}
+              className="h-12 text-[14px] font-bold px-8 bg-brand-primary-dark text-white rounded-lg hover:bg-brand-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next Step: Position &rarr;
+            </button>
           </div>
         </div>
       )}
@@ -469,27 +461,27 @@ export const ProductCustomizer = ({
               <input
                 type="range"
                 min="0.5"
-                max="2"
+                max="1.5"
                 step="0.1"
                 value={customization.logoScale}
                 onChange={(e) => onCustomizationChange({ ...customization, logoScale: parseFloat(e.target.value) })}
                 className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-primary"
               />
-              <span className="text-[13px] text-gray-500 font-medium w-10 text-right">200%</span>
+              <span className="text-[13px] text-gray-500 font-medium w-10 text-right">150%</span>
             </div>
           </div>
 
           <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-between gap-3 mt-4">
              <button
                 type="button"
-                onClick={() => setStep(1)}
+                onClick={() => onStepChange(1)}
                 className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-gray-100 text-brand-body font-bold rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap text-center"
              >
                 &larr; Back to Branding
              </button>
              <button
                 type="button"
-                onClick={() => setStep(3)}
+                onClick={() => onStepChange(3)}
                 className="w-full sm:w-auto px-4 sm:px-8 py-3 bg-brand-primary text-white font-bold rounded-lg hover:bg-brand-primary-dark transition-colors whitespace-nowrap text-center"
              >
                 Proceed to Extras &rarr;
@@ -619,7 +611,7 @@ export const ProductCustomizer = ({
           <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-between gap-3 mt-4">
              <button
                 type="button"
-                onClick={() => setStep(2)}
+                onClick={() => onStepChange(2)}
                 className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-gray-100 text-brand-body font-bold rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap text-center"
              >
                 &larr; Back to Position
@@ -627,7 +619,7 @@ export const ProductCustomizer = ({
              <button
                 type="button"
                 onClick={async () => {
-                  setStep(4);
+                  onStepChange(4);
                   if (onGenerateProof) {
                     setIsGeneratingProof(true);
                     try {
@@ -671,7 +663,7 @@ export const ProductCustomizer = ({
                </div>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-6 items-center p-6 bg-transparent rounded-xl border border-gray-200 min-h-[160px] shadow-sm">
+            <div className="flex flex-col sm:flex-row gap-6 items-center p-6 bg-white rounded-xl border border-gray-200 min-h-[160px] shadow-sm">
               {isGeneratingProof ? (
                  <div className="flex w-full items-center justify-center gap-4 py-8">
                    <div className="w-8 h-8 border-4 border-brand-primary/30 border-t-brand-primary rounded-full animate-spin" />
@@ -679,7 +671,7 @@ export const ProductCustomizer = ({
                  </div>
               ) : customization.fullPreviewUrl ? (
                  <>
-                   <div className="w-24 h-auto shrink-0 bg-[#f5f5f5] rounded overflow-hidden shadow border border-black/5">
+                   <div className="w-24 h-auto shrink-0 bg-white rounded overflow-hidden">
                      <img 
                        src={customization.fullPreviewUrl} 
                        alt="Digital Proof" 
@@ -741,7 +733,7 @@ export const ProductCustomizer = ({
           <div className="pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 mt-4">
              <button
                 type="button"
-                onClick={() => setStep(3)}
+                onClick={() => onStepChange(3)}
                 className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-white border border-gray-300 text-brand-body font-bold rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap text-center"
              >
                 &larr; Back: Extras
