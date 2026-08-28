@@ -1,7 +1,7 @@
 'use client';
 
 import { X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import type { CartItem } from '@/features/cart/context/CartContext';
 import { getImageBoundingBox } from '@/features/products/utils/product-helpers';
@@ -15,9 +15,15 @@ type ImagePreviewModalProps = {
 };
 
 export const ImagePreviewModal = ({ isOpen, onClose, item, title = 'Customization Preview' }: ImagePreviewModalProps) => {
+  const onCloseRef = useRef(onClose);
+  
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') onCloseRef.current();
     };
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
@@ -27,7 +33,7 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, title = 'Customizatio
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   const [imageBounds, setImageBounds] = useState<{ top: number, bottom: number, left: number, right: number } | null>(null);
   // New cart items include an exact, composited snapshot generated on the product

@@ -35,6 +35,7 @@ export default function ModernSlaveryPage() {
                 src={imgSrc}
                 alt="Factory image"
                 fill
+                quality={75}
                 unoptimized={imgSrc.includes('unsplash.com')}
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 50vw"

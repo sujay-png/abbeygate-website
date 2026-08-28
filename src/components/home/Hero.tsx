@@ -108,7 +108,7 @@ export const Hero = () => {
   }, [emblaApi, onSelect]);
 
   return (
-    <section className="relative w-full h-screen overflow-hidden bg-brand-cream">
+    <section className="relative w-full h-screen -mt-[80px] lg:-mt-[194px] overflow-hidden bg-brand-cream">
       <div className="overflow-hidden w-full h-full touch-pan-y" ref={emblaRef}>
 
         <div
@@ -125,12 +125,12 @@ export const Hero = () => {
                 alt=""
                 fill
                 priority
-                quality={95}
+                quality={75}
                 sizes="100vw"
                 className="object-cover object-center"
               />
 
-              <div className="absolute top-0 left-0 h-full w-full md:w-[50%] lg:w-[45%] xl:w-[40%] bg-gradient-to-r from-white/95 via-white/80 to-transparent flex flex-col justify-center px-8 md:px-12 z-10 pointer-events-none">
+              <div className="absolute top-0 left-0 h-full w-full md:w-[50%] lg:w-[45%] xl:w-[40%] bg-gradient-to-r from-white/95 via-white/80 to-transparent flex flex-col justify-center px-8 md:px-12 pt-[80px] lg:pt-[194px] z-10 pointer-events-none">
                 <p className="text-[21px] font-didact font-normal text-brand-primary-dark mb-6">
                   {slide.category}
                 </p>

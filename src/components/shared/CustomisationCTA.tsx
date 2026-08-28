@@ -32,7 +32,7 @@ export const CustomisationCTA = () => {
                 src="/images/banners/customisation-cta.webp"
                 alt="Customised Leather Goods"
                 fill
-                unoptimized={true}
+                quality={75}
                 className="object-contain object-center md:object-right"
                 sizes="(max-width: 768px) 100vw, 50vw"
               />

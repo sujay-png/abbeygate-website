@@ -22,7 +22,7 @@ export function CategoryCard({
           alt={title}
           fill
           priority={priority}
-          unoptimized={true}
+          quality={75}
           className="object-cover transition duration-500 group-hover:scale-105"
           sizes="(max-width: 768px) 100vw, 46vw"
         />

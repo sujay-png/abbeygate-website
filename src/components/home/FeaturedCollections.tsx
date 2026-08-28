@@ -117,7 +117,7 @@ export const FeaturedCollections = () => {
               src="/images/collections/collectionlanding.png"
               alt="Harrogate Collection"
               fill
-              unoptimized={true}
+              quality={75}
               className="object-cover rounded-t-sm md:rounded-l-sm md:rounded-tr-none"
               sizes="(max-width: 768px) 100vw, 50vw"
             />

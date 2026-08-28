@@ -58,7 +58,7 @@ export const LatestBlog = () => {
                   src={post.image}
                   alt={post.title}
                   fill
-                  unoptimized={true}
+                  quality={75}
                   sizes="(max-width: 768px) 100vw, 33vw"
                   className="rounded-md object-cover transition-transform duration-500 group-hover:scale-105"
                 />
