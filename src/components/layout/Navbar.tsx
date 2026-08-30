@@ -207,7 +207,7 @@ export const Navbar = () => {
         <div className="flex h-20 items-center justify-between">
           
           {/* Mobile Hamburger & Empty Left spacer for Desktop (to keep logo perfectly centered) */}
-          <div className={`lg:flex-1 flex items-center justify-start transition-opacity duration-300 ${isSearchOpen ? 'opacity-0 w-0 overflow-hidden lg:opacity-100 lg:w-auto lg:overflow-visible' : 'opacity-100'}`}>
+          <div className="lg:flex-1 flex items-center justify-start">
             <button
               aria-label="Open menu"
               onClick={() => setIsMobileMenuOpen(true)}
@@ -218,7 +218,7 @@ export const Navbar = () => {
           </div>
 
           {/* Center Logo */}
-          <div className={`flex-shrink-0 flex items-center justify-center transition-all duration-300 ${isSearchOpen ? 'opacity-0 w-0 overflow-hidden lg:opacity-100 lg:w-auto lg:overflow-visible' : 'opacity-100'}`}>
+          <div className={`flex-shrink-0 flex items-center justify-center transition-all duration-500 ease-in-out ${isSearchOpen ? 'opacity-0 max-w-0 overflow-hidden lg:opacity-100 lg:max-w-[250px] lg:overflow-visible' : 'opacity-100 max-w-[250px]'}`}>
             <Link href="/" className="block">
               <Image
                 src="/images/logo/abbeygate-logo.png"
