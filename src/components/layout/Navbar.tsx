@@ -218,7 +218,7 @@ export const Navbar = () => {
           </div>
 
           {/* Center Logo */}
-          <div className={`flex-shrink-0 flex items-center justify-center transition-all duration-500 ease-in-out ${isSearchOpen ? 'opacity-0 max-w-0 overflow-hidden lg:opacity-100 lg:max-w-[250px] lg:overflow-visible' : 'opacity-100 max-w-[250px]'}`}>
+          <div className={`flex-shrink-0 flex items-center justify-center transition-all duration-500 ease-in-out ${isSearchOpen ? 'opacity-0 max-w-0 min-w-0 overflow-hidden lg:opacity-100 lg:max-w-[250px] lg:overflow-visible' : 'opacity-100 max-w-[250px]'}`}>
             <Link href="/" className="block">
               <Image
                 src="/images/logo/abbeygate-logo.png"
