@@ -204,7 +204,7 @@ export const Navbar = () => {
 
       <div className="w-full px-6 lg:px-10 xl:px-16">
         {/* Row 1: Logo & Actions */}
-        <div className="flex h-20 items-center lg:justify-between">
+        <div className="flex h-20 lg:h-16 items-center lg:justify-between">
           
           {/* Mobile Hamburger & Empty Left spacer for Desktop (to keep logo perfectly centered) */}
           <div className="flex items-center justify-start lg:flex-1">
