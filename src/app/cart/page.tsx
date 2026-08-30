@@ -17,7 +17,7 @@ const formatPrice = (value: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
 
 export default function CartPage() {
-  const { items: rawItems, pricedItems: items, isLoading, removeItem, updateQuantity, subtotal, shippingCost, vatCost, total, shippingLabel, updateItem } = useCart();
+  const { items: rawItems, pricedItems: items, isLoading, removeItem, updateQuantity, subtotal, shippingCost, vatCost, total, shippingLabel, updateItem, clearCart } = useCart();
   const [isSyncing, setIsSyncing] = useState(false);
   const [pickerFor, setPickerFor] = useState<string | null>(null);
   const [previewItem, setPreviewItem] = useState<any | null>(null);
@@ -133,173 +133,279 @@ export default function CartPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            <div className="lg:col-span-2 space-y-6">
-              {items.map((item) => {
-                const groupSize = rawItems.filter(i => (i.colourGroupId ?? i.key) === (item.colourGroupId ?? item.key)).length;
-                const isGrouped = groupSize > 1;
-                const shortfallData = shortfalls.find(s => s.groupId === (item.colourGroupId ?? item.key));
-                
-                return (
-                <div key={item.key} className={`flex gap-4 border-b border-gray-100 pb-6 ${isGrouped ? 'border-l-4 border-l-gray-200 pl-4 rounded-l' : ''}`}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <div className="w-24 h-24 relative bg-gray-50 shrink-0 rounded">
-                    <Image src={item.image || '/images/logo/abbeygate-logo.png'} alt={item.name} fill sizes="96px" className="object-cover rounded" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between gap-4">
-                      <div>
-                        <Link href={item.slug ? `/product/${item.slug}` : '#'} className="font-medium text-gray-900 hover:underline">
+          <div className="grid grid-cols-1 lg:grid-cols-[2.4fr_1fr] gap-8 lg:gap-10">
+            <div className="flex flex-col space-y-0">
+              {/* Header for Desktop */}
+              <div className="hidden lg:grid grid-cols-[1.5fr_1.5fr_0.8fr_0.8fr_0.8fr] gap-4 pb-3 border-b border-[var(--brand-border)] text-[11px] font-bold tracking-widest text-gray-500 uppercase">
+                <div>Item</div>
+                <div>Customisation summary</div>
+                <div>Unit price</div>
+                <div>Quantity</div>
+                <div className="text-right pr-2">Total</div>
+              </div>
+
+              {/* Rows */}
+              <div className="flex flex-col w-full">
+                {items.map((item) => {
+                  const groupSize = rawItems.filter(i => (i.colourGroupId ?? i.key) === (item.colourGroupId ?? item.key)).length;
+                  const isGrouped = groupSize > 1;
+                  const shortfallData = shortfalls.find(s => s.groupId === (item.colourGroupId ?? item.key));
+                  const unitPrice = item.lineTotal / item.quantity;
+                  
+                  return (
+                  <div key={item.key} className={`py-6 border-b border-[var(--brand-border)] flex flex-col lg:grid lg:grid-cols-[1.5fr_1.5fr_0.8fr_0.8fr_0.8fr] gap-6 lg:gap-4 lg:items-start ${isGrouped ? 'border-l-4 border-l-gray-200 pl-4 lg:pl-0 lg:border-l-0' : ''}`}>
+                    
+                    {/* 1. Item */}
+                    <div className="flex gap-4">
+                      <div className="w-[84px] h-[116px] relative shrink-0 overflow-hidden">
+                        <Image src={item.image || '/images/logo/abbeygate-logo.png'} alt={item.name} fill sizes="84px" className="object-cover" />
+                      </div>
+                      <div className="flex-1 flex flex-col">
+                        <Link href={item.slug ? `/product/${item.slug}` : '#'} className="font-josefin font-bold text-[18px] text-brand-primary-dark leading-tight hover:underline">
                           {item.name}
                         </Link>
-                        {item.attributes?.filter(attr => !['Custom Logo', 'Blocking', 'Foil Colour', 'Logo Scale', 'Logo', 'Corner Edges'].includes(attr.name)).map((attr) => (
-                          <p key={attr.name} className="text-sm text-gray-500 mt-1">
-                            {attr.name}{attr.value ? `: ${attr.value}` : ''}
-                          </p>
-                        ))}
-                        {item.customization?.enabled && (
-                          <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                            <p className="text-sm font-semibold text-gray-900 mb-2">Custom Logo</p>
-                            <p className="text-sm text-gray-600"><span className="font-medium">Blocking:</span> {item.customization.choice.replace(' blocked', '')}</p>
-                            {item.customization.foilColor && (
-                              <p className="text-sm text-gray-600"><span className="font-medium">Foil Colour:</span> {item.customization.foilColor}</p>
-                            )}
-                            {item.customization.cornerEdges && item.customization.cornerEdges !== 'None' && (
-                              <p className="text-sm text-gray-600"><span className="font-medium">Corner Edges:</span> {item.customization.cornerEdges}</p>
-                            )}
-                            {item.customization.fileName && (
-                              <p className="text-sm text-gray-600">
-                                <span className="font-medium">Logo:</span> {item.customization.fileName} —{' '}
-                                <a href={item.customization.logoFile ? URL.createObjectURL(item.customization.logoFile) : '#'} target="_blank" rel="noopener noreferrer" className="text-brand-primary-dark underline hover:text-gray-600">View file</a>
-                              </p>
-                            )}
-                            {(item.proofStatus || 'ready') === 'pending' ? (
-                              <p className="text-sm text-gray-600 flex items-center gap-1.5 mt-1">
-                                <span className="font-medium">Preview:</span>
-                                <Loader2 className="w-3 h-3 animate-spin" /> Generating preview...
-                              </p>
-                            ) : item.proofStatus === 'failed' ? (
-                              <p className="text-sm text-red-600 flex items-center gap-1.5 mt-1">
-                                <span className="font-medium">Preview:</span>
-                                Preview unavailable 
-                                <button type="button" className="underline hover:text-red-800 ml-1" onClick={() => retryProof(item, updateItem)}>Retry</button>
-                              </p>
-                            ) : item.customization.logoPreviewUrl ? (
-                              <p className="text-sm text-gray-600 mt-1">
-                                <span className="font-medium">Preview:</span>{' '}
-                                <button type="button" onClick={() => setPreviewItem(item)} className="text-brand-primary-dark underline hover:text-gray-600">View preview</button>
-                              </p>
-                            ) : null}
-                            <p className="text-sm text-gray-600 mt-1"><span className="font-medium">Position:</span> {item.customization.position}</p>
-                          </div>
-                        )}
+                        <div className="text-[12px] text-gray-500 mt-1.5 space-y-0.5">
+                          {item.attributes?.filter(attr => !['Custom Logo', 'Blocking', 'Foil Colour', 'Logo Scale', 'Logo', 'Corner Edges'].includes(attr.name)).map((attr) => (
+                            <p key={attr.name}>{attr.value}</p>
+                          ))}
+                          <p className="pt-1 uppercase">SKU: {item.productId}</p>
+                        </div>
+
+                        <div className="flex flex-col gap-1 mt-4 text-[12px] font-semibold text-brand-primary-dark tracking-wide">
+                          {item.customization?.enabled && (
+                            <button type="button" onClick={() => amendLine(item)} className="text-left hover:underline w-fit">
+                              Amend customisation
+                            </button>
+                          )}
+                          {canDownloadProof(item) && (
+                            <button type="button" onClick={() => downloadCartItemProof(item)} className="text-left hover:underline w-fit">
+                              Download proof
+                            </button>
+                          )}
+                          {(item.colourOptions?.length ?? 0) > 1 && (
+                            <button type="button" onClick={() => setPickerFor(pickerFor === item.key ? null : item.key)} className="text-left hover:underline w-fit">
+                              + Order in another colour
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <button type="button" onClick={() => removeItem(item.key)} className="text-gray-400 hover:text-gray-600 shrink-0">
-                        <X className="w-5 h-5" />
-                      </button>
                     </div>
                     
-                    {shortfallData && (
-                      <div className="mt-3 text-[13px] text-red-600 font-medium bg-red-50 px-3 py-2 rounded">
-                        This group needs {shortfallData.shortfall} more units to meet the minimum for customisation.
-                      </div>
-                    )}
+                    {/* 2. Customisation */}
+                    <div className="text-[13px] text-brand-body leading-relaxed">
+                      {item.customization?.enabled ? (
+                        <>
+                          <div className="grid grid-cols-[90px_1fr] gap-x-2 gap-y-1 items-start">
+                            <span className="font-bold text-gray-900">Branding</span>
+                            <span>{item.customization.choice.replace(' blocked', ' blocking')}</span>
+                            
+                            {item.customization.foilColor && (
+                              <>
+                                <span className="font-bold text-gray-900">Foil colour</span>
+                                <span>{item.customization.foilColor}</span>
+                              </>
+                            )}
+                            
+                            <span className="font-bold text-gray-900">Position</span>
+                            <span>{item.customization.position}</span>
+                            
+                            {item.customization.cornerEdges && item.customization.cornerEdges !== 'None' && (
+                              <>
+                                <span className="font-bold text-gray-900">Corner edges</span>
+                                <span>{item.customization.cornerEdges}</span>
+                              </>
+                            )}
+                            
+                            {item.customization.fileName && (
+                              <>
+                                <span className="font-bold text-gray-900">Logo</span>
+                                <span className="break-all pr-4">
+                                  {item.customization.fileName} —{' '}
+                                  <a href={item.customization.logoFile ? URL.createObjectURL(item.customization.logoFile) : '#'} target="_blank" rel="noopener noreferrer" className="text-brand-primary-dark underline hover:text-gray-600 font-semibold inline-block">
+                                    View file
+                                  </a>
+                                </span>
+                              </>
+                            )}
+                            
+                            {(item.proofStatus || 'ready') === 'pending' ? (
+                              <>
+                                <span className="font-bold text-gray-900">Preview</span>
+                                <span className="flex items-center gap-1.5"><Loader2 className="w-3 h-3 animate-spin" /> Generating...</span>
+                              </>
+                            ) : item.proofStatus === 'failed' ? (
+                              <>
+                                <span className="font-bold text-red-600">Preview</span>
+                                <span className="text-red-600">Failed <button type="button" className="underline ml-1" onClick={() => retryProof(item, updateItem)}>Retry</button></span>
+                              </>
+                            ) : item.customization.logoPreviewUrl ? (
+                              <>
+                                <span className="font-bold text-gray-900">Preview</span>
+                                <button type="button" onClick={() => setPreviewItem(item)} className="text-brand-primary-dark underline hover:text-gray-600 w-fit text-left">View preview</button>
+                              </>
+                            ) : null}
+                          </div>
+                          <p className="mt-5 text-[11px] text-gray-500 max-w-[200px]">
+                            Includes branding set-up (£0.00), branding application (£0.00) and extras (£0.00)
+                          </p>
+                        </>
+                      ) : (
+                        <span className="text-gray-400 italic">No customisation</span>
+                      )}
+                    </div>
                     
-                    <div className="flex items-center justify-between mt-4">
-                      <div className="flex items-center border border-gray-200 rounded">
-                        <button type="button" onClick={() => updateQuantity(item.key, item.quantity - 1)} className="w-8 h-8 flex items-center justify-center">
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <span className="w-10 text-center">{item.quantity}</span>
-                        <button type="button" onClick={() => updateQuantity(item.key, item.quantity + 1)} className="w-8 h-8 flex items-center justify-center">
-                          <Plus className="w-3 h-3" />
+                    {/* 3. Unit Price */}
+                    <div className="flex justify-between lg:block">
+                      <span className="lg:hidden font-bold text-[13px]">Unit Price</span>
+                      <div>
+                        <div className="font-bold text-[14px] text-gray-900">{formatPrice(unitPrice)}</div>
+                        <div className="text-[11px] text-gray-500">ex VAT</div>
+                      </div>
+                    </div>
+                    
+                    {/* 4. Quantity */}
+                    <div className="flex justify-between lg:block">
+                      <span className="lg:hidden font-bold text-[13px]">Quantity</span>
+                      <div className="flex flex-col items-start lg:items-center w-fit">
+                        <div className="flex items-center border border-[var(--brand-border)] rounded overflow-hidden">
+                          <button type="button" onClick={() => updateQuantity(item.key, item.quantity - 1)} className="w-[26px] h-[26px] flex items-center justify-center bg-[var(--brand-cream)] hover:bg-gray-100 transition-colors border-r border-[var(--brand-border)] shrink-0">
+                            <Minus className="w-3 h-3" strokeWidth={3} />
+                          </button>
+                          <input 
+                            type="number" 
+                            value={item.quantity}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value);
+                              if (!isNaN(val)) updateQuantity(item.key, val);
+                            }}
+                            onBlur={(e) => {
+                              const val = parseInt(e.target.value);
+                              if (isNaN(val) || val < 1) updateQuantity(item.key, 1);
+                            }}
+                            className="w-12 text-center text-[13px] font-bold bg-transparent outline-none focus:ring-1 focus:ring-brand-primary p-0 h-[26px]"
+                          />
+                          <button type="button" onClick={() => updateQuantity(item.key, item.quantity + 1)} className="w-[26px] h-[26px] flex items-center justify-center bg-[var(--brand-cream)] hover:bg-gray-100 transition-colors border-l border-[var(--brand-border)] shrink-0">
+                            <Plus className="w-3 h-3" strokeWidth={3} />
+                          </button>
+                        </div>
+                        <button type="button" onClick={() => removeItem(item.key)} className="text-[12px] text-brand-primary-dark font-semibold hover:underline mt-3 w-full text-center">
+                          Remove
                         </button>
                       </div>
-                      <div className="text-right">
-                        <div className="font-semibold">{formatPrice(item.lineTotal)}</div>
+                    </div>
+                    
+                    {/* 5. Total */}
+                    <div className="flex justify-between lg:block lg:text-right pr-2">
+                      <span className="lg:hidden font-bold text-[13px]">Total</span>
+                      <div>
+                        <div className="font-bold text-[14px] text-gray-900">{formatPrice(item.lineTotal)}</div>
+                        <div className="text-[11px] text-gray-500 whitespace-nowrap">incl. branding &<br/>extras</div>
                         {item.groupQuantity > item.quantity && (
-                          <div className="text-[12px] text-gray-500 mt-0.5">
+                          <div className="text-[10px] text-gray-400 mt-2 max-w-[120px] ml-auto leading-tight">
                             Priced at your {item.groupQuantity}-unit total across {groupSize} colours
                           </div>
                         )}
                       </div>
                     </div>
 
-                    {item.customization?.enabled && (
-                      <div className="flex items-center gap-3 mt-3 text-sm font-medium text-brand-primary-dark">
-                        <button 
-                          type="button" 
-                          onClick={() => amendLine(item)}
-                          className="hover:underline"
-                        >
-                          Amend customisation
-                        </button>
-                        
-                        {(item.colourOptions?.length ?? 0) > 1 && (
-                          <>
-                            <span className="text-gray-300">|</span>
-                            <button 
-                              type="button" 
-                              onClick={() => setPickerFor(pickerFor === item.key ? null : item.key)}
-                              className="hover:underline"
-                            >
-                              + Order in another colour
-                            </button>
-                          </>
-                        )}
-                        
-                        {canDownloadProof(item) && (
-                          <>
-                            <span className="text-gray-300">|</span>
-                            <button type="button" onClick={() => downloadCartItemProof(item)} className="hover:underline">
-                              Download proof (PDF)
-                            </button>
-                          </>
-                        )}
+                    {shortfallData && (
+                      <div className="lg:col-span-5 mt-3 text-[13px] text-red-600 font-medium bg-red-50 px-3 py-2 rounded">
+                        This group needs {shortfallData.shortfall} more units to meet the minimum for customisation.
                       </div>
                     )}
-                    {pickerFor === item.key && <ColourPickerRow item={item} onPick={() => setPickerFor(null)} />}
+                    
+                    {pickerFor === item.key && (
+                      <div className="lg:col-span-5 mt-4">
+                        <ColourPickerRow item={item} onPick={() => setPickerFor(null)} />
+                      </div>
+                    )}
                   </div>
+                )})}
+              </div>
+              
+              {/* Table Footer Actions */}
+              {items.length > 0 && (
+                <div className="flex justify-between items-center pt-8">
+                  <button type="button" onClick={clearCart} className="px-5 py-2.5 rounded-md border border-[var(--brand-border)] bg-white text-brand-primary-dark font-semibold text-[14px] tracking-wide hover:bg-gray-50 transition-colors">
+                    Clear basket
+                  </button>
+                  <button type="button" className="px-5 py-2.5 rounded-md border border-[var(--brand-border)] bg-white text-brand-primary-dark font-semibold text-[14px] tracking-wide hover:bg-gray-50 transition-colors">
+                    Save basket
+                  </button>
                 </div>
-              )})}
+              )}
+              
+              {/* Trust Indicators */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-12 mt-8 border-t border-[var(--brand-border)]">
+                <div>
+                  <h4 className="text-[13px] font-bold text-brand-primary-dark mb-1">Manufactured in the UK</h4>
+                  <p className="text-[12px] text-gray-500 leading-tight">Every piece made to order</p>
+                </div>
+                <div>
+                  <h4 className="text-[13px] font-bold text-brand-primary-dark mb-1">Premium materials</h4>
+                  <p className="text-[12px] text-gray-500 leading-tight">Soft-touch vegan leather</p>
+                </div>
+                <div>
+                  <h4 className="text-[13px] font-bold text-brand-primary-dark mb-1">Low minimum order</h4>
+                  <p className="text-[12px] text-gray-500 leading-tight">From 250 units</p>
+                </div>
+                <div>
+                  <h4 className="text-[13px] font-bold text-brand-primary-dark mb-1">Reliable lead times</h4>
+                  <p className="text-[12px] text-gray-500 leading-tight">2-3 weeks production</p>
+                </div>
+              </div>
             </div>
 
-            <div className="bg-gray-50 rounded-xl p-6 h-fit">
-              <h2 className="text-lg font-bold mb-4">Order Summary</h2>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
+            <div className="border border-[var(--brand-border)] rounded-xl p-6 bg-white h-fit sticky top-[200px]">
+              <h3 className="text-[15px] text-brand-primary-dark uppercase tracking-wide font-josefin font-semibold mb-4">
+                Order Summary (ex VAT)
+              </h3>
+              
+              <div className="flex flex-col mb-5">
+                {items.map((item) => (
+                  <div key={item.key} className="flex justify-between items-start py-2.5 border-b border-[var(--brand-border)] text-[14px] text-gray-500">
+                    <span className="flex-1 pr-4">
+                      {item.name}
+                      <span className="block text-[11px] mt-0.5">(incl. branding & extras)</span>
+                    </span>
+                    <span className="font-medium shrink-0">{formatPrice(item.lineTotal)}</span>
+                  </div>
+                ))}
+                
+                <div className="flex justify-between font-bold text-gray-900 pt-4 pb-2 text-[14px]">
                   <span>Subtotal (ex VAT)</span>
-                  <span className="font-medium text-gray-900">{formatPrice(subtotal)}</span>
+                  <span>{formatPrice(subtotal)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>{shippingLabel}</span>
-                  <span className="font-medium text-gray-900">{formatPrice(shippingCost)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>VAT (20%)</span>
-                  <span className="font-medium text-gray-900">{formatPrice(vatCost)}</span>
-                </div>
-                <div className="flex justify-between text-base font-bold pt-3 border-t border-gray-200">
-                  <span>Total (inc. VAT)</span>
+                
+                <div className="flex justify-between font-bold text-gray-900 bg-brand-tint px-3.5 py-3 rounded-md mt-2 text-[14px]">
+                  <span>Including VAT (20%)</span>
                   <span>{formatPrice(total)}</span>
                 </div>
               </div>
+
               <button
                 onClick={handleCheckout}
                 disabled={isSyncing || hasShortfalls}
-                className="w-full flex items-center justify-center gap-2 bg-brand-primary text-white py-4 rounded-md font-medium mt-6 hover:bg-brand-primary-dark transition-colors disabled:bg-gray-400"
+                className="w-full flex items-center justify-center bg-brand-primary text-white py-3 rounded font-medium hover:bg-brand-primary-dark transition-colors disabled:bg-gray-400 text-[15px]"
               >
                 {isSyncing ? (
                   <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
                     Syncing Cart...
                   </>
                 ) : hasShortfalls ? (
                   'Minimum requirement not met'
                 ) : (
-                  'Proceed to Checkout'
+                  'Proceed to checkout'
                 )}
               </button>
+              
+              <Link
+                href="/notebooks"
+                className="w-full flex items-center justify-center border border-gray-300 text-gray-700 bg-white py-3 rounded font-medium mt-3 hover:bg-gray-50 transition-colors text-[15px]"
+              >
+                Continue shopping
+              </Link>
             </div>
           </div>
         )}
