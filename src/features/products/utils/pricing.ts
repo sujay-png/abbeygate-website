@@ -189,10 +189,10 @@ export function calculateProductPrice(
   }
 
   let cornerEdgesFee = 0;
-  if (!isGifts && customizationEnabled && cornerEdges && (cornerEdges === 'Gold' || cornerEdges === 'Silver')) {
-    cornerEdgesFee = 0.24;
-    unitPrice += cornerEdgesFee;
-  }
+  // if (!isGifts && customizationEnabled && cornerEdges && (cornerEdges === 'Gold' || cornerEdges === 'Silver')) {
+  //   cornerEdgesFee = 0.24;
+  //   unitPrice += cornerEdgesFee;
+  // }
 
   if (!isGifts && !customizationEnabled) {
     unitPrice = Math.max(0, unitPrice - LOGO_CUSTOMIZATION_FEE);
