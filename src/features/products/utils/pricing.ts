@@ -166,6 +166,7 @@ export function calculateProductPrice(
     customizationEnabled,
     blockingType,
     isGifts,
+    cornerEdges,
   } = input;
 
   let unitPrice = tiers.length

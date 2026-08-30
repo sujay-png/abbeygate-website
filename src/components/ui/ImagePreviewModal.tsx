@@ -57,10 +57,6 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, title = 'Customizatio
     item?.name?.toLowerCase().includes('lewes smoothgrain') || item?.slug?.toLowerCase().includes('lewes-smoothgrain')
   );
 
-  const isNotebook = Boolean(
-    item?.name?.toLowerCase().includes('lewes smoothgrain') || item?.slug?.toLowerCase().includes('lewes-smoothgrain')
-  );
-
   useEffect(() => {
     if (isOpen && item && cornerEdges && cornerEdges !== 'None') {
       if (item.customization?.imageBounds) {
