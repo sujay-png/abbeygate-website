@@ -222,7 +222,7 @@ export const ProductCustomizer = ({
                   reader.readAsDataURL(file);
                 }
               }}
-              className="block w-full text-[14px] text-brand-body file:mr-4 file:py-2.5 file:px-5 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-brand-primary/10 file:text-brand-primary hover:file:bg-brand-primary/20 cursor-pointer transition-colors border border-gray-200 rounded-lg p-1"
+              className="block w-full text-[14px] text-brand-body file:mr-4 file:py-2.5 file:px-5 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-brand-primary/10 file:text-brand-primary hover:file:bg-brand-primary/20 cursor-pointer transition-colors border border-[var(--brand-border)] hover:border-gray-400 rounded-lg p-1"
             />
           </div>
 
@@ -240,7 +240,7 @@ export const ProductCustomizer = ({
                   }
                   onCustomizationChange(newCustomization);
                 }}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'Foil blocked' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'Foil blocked' ? 'border-brand-primary bg-brand-tint' : 'border-[var(--brand-border)] hover:border-gray-400 bg-transparent'}`}
               >
                   <div 
                     className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative bg-center"
@@ -305,7 +305,7 @@ export const ProductCustomizer = ({
               {/* Blind Debossed Card */}
               <div 
                 onClick={() => onCustomizationChange({ ...customization, blockingType: 'Embossed', foilColor: undefined })}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'Embossed' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'Embossed' ? 'border-brand-primary bg-brand-tint' : 'border-[var(--brand-border)] hover:border-gray-400 bg-transparent'}`}
               >
                   <div 
                     className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative bg-center"
@@ -366,7 +366,7 @@ export const ProductCustomizer = ({
               {/* UV Print Card */}
               <div 
                 onClick={() => onCustomizationChange({ ...customization, blockingType: 'UV Print', foilColor: undefined })}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'UV Print' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'UV Print' ? 'border-brand-primary bg-brand-tint' : 'border-[var(--brand-border)] hover:border-gray-400 bg-transparent'}`}
               >
                   <div 
                     className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative bg-center"
@@ -396,6 +396,7 @@ export const ProductCustomizer = ({
 
           <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-end mt-4">
             <button
+              id="customizer-btn-step-1"
               type="button"
               onClick={() => onStepChange(2)}
               disabled={!customization.logoPreviewUrl}
@@ -434,7 +435,7 @@ export const ProductCustomizer = ({
                         logoPosition: { x: 0, y: 0, label: pos.id }
                       });
                     }}
-                    className={`px-4 py-3 rounded-lg border-2 text-[13px] font-bold transition-all flex flex-col items-center justify-center gap-1 min-w-[100px] flex-1 ${isSelected ? 'border-brand-primary bg-brand-tint text-brand-primary' : 'border-gray-200 bg-[#f8f7f5] text-brand-body hover:border-gray-300'}`}
+                    className={`px-4 py-3 rounded-lg border-2 text-[13px] font-bold transition-all flex flex-col items-center justify-center gap-1 min-w-[100px] flex-1 ${isSelected ? 'border-brand-primary bg-brand-tint text-brand-primary' : 'border-[var(--brand-border)] bg-[#f8f7f5] text-brand-body hover:border-gray-400'}`}
                   >
                     <div className={`relative w-[22px] h-[30px] border-[1.5px] rounded-[3px] mb-1.5 transition-colors ${isSelected ? 'border-brand-primary bg-white' : 'border-gray-400 bg-white'}`}>
                       <div className={`absolute w-[4px] h-[4px] rounded-full transition-colors ${isSelected ? 'bg-brand-primary' : 'bg-gray-400'} ${
@@ -480,6 +481,7 @@ export const ProductCustomizer = ({
                 &larr; Back to Branding
              </button>
              <button
+                id="customizer-btn-step-2"
                 type="button"
                 onClick={() => onStepChange(3)}
                 className="w-full sm:w-auto px-4 sm:px-8 py-3 bg-brand-primary text-white font-bold rounded-lg hover:bg-brand-primary-dark transition-colors whitespace-nowrap text-center"
@@ -499,7 +501,7 @@ export const ProductCustomizer = ({
               {/* None Card */}
               <div 
                 onClick={() => onCustomizationChange({ ...customization, cornerEdges: 'None' })}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'None' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'None' ? 'border-brand-primary bg-brand-tint' : 'border-[var(--brand-border)] hover:border-gray-400 bg-transparent'}`}
               >
                  <div 
                    className="w-10 h-10 rounded mb-3 shadow-sm border border-black/10 bg-center" 
@@ -516,7 +518,7 @@ export const ProductCustomizer = ({
               {/* Gold Card */}
               <div 
                 onClick={() => onCustomizationChange({ ...customization, cornerEdges: 'Gold' })}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'Gold' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'Gold' ? 'border-brand-primary bg-brand-tint' : 'border-[var(--brand-border)] hover:border-gray-400 bg-transparent'}`}
               >
                  <div 
                    className="w-10 h-10 rounded mb-3 relative shadow-sm border border-black/10 bg-center"
@@ -562,7 +564,7 @@ export const ProductCustomizer = ({
               {/* Silver Card */}
               <div 
                 onClick={() => onCustomizationChange({ ...customization, cornerEdges: 'Silver' })}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'Silver' ? 'border-brand-primary bg-brand-tint' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
+                className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'Silver' ? 'border-brand-primary bg-brand-tint' : 'border-[var(--brand-border)] hover:border-gray-400 bg-transparent'}`}
               >
                  <div 
                    className="w-10 h-10 rounded mb-3 relative shadow-sm border border-black/10 bg-center"
@@ -617,6 +619,7 @@ export const ProductCustomizer = ({
                 &larr; Back to Position
              </button>
              <button
+                id="customizer-btn-step-3"
                 type="button"
                 onClick={async () => {
                   onStepChange(4);

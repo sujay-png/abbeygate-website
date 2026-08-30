@@ -605,6 +605,35 @@ export const ProductDetailClient = ({
     }
   };
 
+  const handleSummaryAction = () => {
+    if (!isCustomizingStarted || !customizationActive || isGifts || customizerStep === 4) {
+      handleAddToCart();
+      return;
+    }
+    const btn = document.getElementById(`customizer-btn-step-${customizerStep}`);
+    if (btn) btn.click();
+  };
+
+  const getSummaryButtonText = () => {
+    if (isAdding) return 'Processing...';
+    if (amendKey && (!isCustomizingStarted || !customizationActive || customizerStep === 4)) return 'Update Basket \u2192';
+    if (!isCustomizingStarted && customizationActive && !isGifts) return 'Start customising \u2192';
+    if (!isCustomizingStarted || !customizationActive || isGifts) return 'Add to Basket \u2192';
+    
+    if (customizerStep === 1) return 'Proceed to Position \u2192';
+    if (customizerStep === 2) return 'Proceed to Extras \u2192';
+    if (customizerStep === 3) return 'Proceed to Review \u2192';
+    if (customizerStep === 4) return amendKey ? 'Update Basket \u2192' : 'Add to Basket \u2192';
+    
+    return 'Proceed \u2192';
+  };
+
+  const isSummaryButtonDisabled = () => {
+    if (isAdding) return true;
+    if (isCustomizingStarted && customizationActive && customizerStep === 1 && !customization.logoPreviewUrl) return true;
+    return false;
+  };
+
   return (
     <div className="flex flex-col gap-12 lg:gap-16">
       {/* Zoom scale removed per user request */}
@@ -944,8 +973,8 @@ export const ProductDetailClient = ({
             })()}
 
             {/* Proceed Button */}
-            <button type="button" onClick={handleAddToCart} disabled={isAdding} className="flex h-12 w-full items-center justify-center rounded-lg bg-brand-primary text-[15px] font-bold text-white transition-colors hover:bg-brand-primary-dark disabled:opacity-50 shadow-sm mt-2">
-              {isAdding ? 'Processing...' : (amendKey ? 'Update Basket →' : 'Proceed →')}
+            <button type="button" onClick={handleSummaryAction} disabled={isSummaryButtonDisabled()} className="flex h-12 w-full items-center justify-center rounded-lg bg-brand-primary text-[15px] font-bold text-white transition-colors hover:bg-brand-primary-dark disabled:opacity-50 shadow-sm mt-2">
+              {getSummaryButtonText()}
             </button>
 
             {/* Free digital proof */}
@@ -961,16 +990,16 @@ export const ProductDetailClient = ({
                   PRICE BREAKS (PER UNIT)
                 </div>
                 <table className="w-full text-left text-[12px]">
-                  <thead className="text-gray-400">
+                  <thead className="text-brand-grey border-b border-[var(--brand-border)]">
                     <tr><th className="py-2 font-medium">Quantity</th><th className="py-2 text-right font-medium">Price per unit (ex VAT)</th></tr>
                   </thead>
                   <tbody>
                     {tiers.map(tier => {
                       const active = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
                       return (
-                        <tr key={tier.min} onClick={() => setQuantity(tier.min)} className={`cursor-pointer border-t border-gray-200 font-bold ${active ? 'text-brand-body' : 'text-gray-500 hover:text-brand-body'}`}>
-                          <td className="py-3">{tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}</td>
-                          <td className="py-3 text-right">{formatGBP(tier.price)}</td>
+                        <tr key={tier.min} onClick={() => setQuantity(tier.min)} className={`cursor-pointer border-b transition-colors ${active ? 'border-brand-primary bg-brand-primary text-white font-bold' : 'border-[var(--brand-border)] text-brand-body hover:bg-brand-tint'}`}>
+                          <td className="py-3 px-2">{tier.min}{tier.max ? ` - ${tier.max}` : '+'}</td>
+                          <td className="py-3 px-2 text-right">{formatGBP(tier.price)}</td>
                         </tr>
                       );
                     })}
@@ -1169,17 +1198,11 @@ export const ProductDetailClient = ({
 
             <button
               type="button"
-              onClick={handleAddToCart}
-              disabled={isAdding}
+              onClick={handleSummaryAction}
+              disabled={isSummaryButtonDisabled()}
               className="w-full h-[54px] text-[16px] font-bold rounded-lg text-white transition-all disabled:opacity-50 flex items-center justify-center bg-brand-primary hover:bg-brand-primary-dark mt-2 shadow-sm"
             >
-              {isAdding 
-                ? 'Processing...' 
-                : amendKey
-                  ? 'Update Basket \u2192'
-                  : (!customizationActive || isCustomizingStarted || isGifts)
-                    ? 'Add to Basket \u2192' 
-                    : 'Start customising \u2192'}
+              {getSummaryButtonText()}
             </button>
           </div>
 
@@ -1191,10 +1214,10 @@ export const ProductDetailClient = ({
               </div>
               <div>
                 <table className="w-full text-left text-[13px]">
-                  <thead className="bg-transparent text-gray-500">
+                  <thead className="bg-transparent text-brand-grey border-b border-[var(--brand-border)]">
                     <tr>
                       <th className="py-2.5 px-4 font-medium w-1/2">Quantity</th>
-                      <th className="py-2.5 px-4 font-medium w-1/2 text-right">Price (ex VAT)</th>
+                      <th className="py-2.5 px-4 font-medium w-1/2 text-right">Price per unit (ex VAT)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1204,7 +1227,7 @@ export const ProductDetailClient = ({
                         <tr
                           key={tier.min}
                           onClick={() => setQuantity(tier.min)}
-                          className={`border-t border-gray-200 cursor-pointer transition-colors ${isActive ? 'bg-brand-primary text-white font-bold' : 'hover:bg-gray-100 text-brand-body'
+                          className={`border-b cursor-pointer transition-colors ${isActive ? 'border-brand-primary bg-brand-primary text-white font-bold' : 'border-[var(--brand-border)] hover:bg-brand-tint text-brand-body'
                             }`}
                         >
                           <td className="py-2.5 px-4">
