@@ -204,10 +204,10 @@ export const Navbar = () => {
 
       <div className="w-full px-6 lg:px-10 xl:px-16">
         {/* Row 1: Logo & Actions */}
-        <div className="flex h-20 items-center justify-between">
+        <div className="flex h-20 items-center lg:justify-between">
           
           {/* Mobile Hamburger & Empty Left spacer for Desktop (to keep logo perfectly centered) */}
-          <div className="lg:flex-1 flex items-center justify-start">
+          <div className="flex items-center justify-start lg:flex-1">
             <button
               aria-label="Open menu"
               onClick={() => setIsMobileMenuOpen(true)}
@@ -218,7 +218,7 @@ export const Navbar = () => {
           </div>
 
           {/* Center Logo */}
-          <div className={`flex-shrink-0 flex items-center justify-center transition-all duration-500 ease-in-out ${isSearchOpen ? 'opacity-0 max-w-0 min-w-0 overflow-hidden lg:opacity-100 lg:max-w-[250px] lg:overflow-visible' : 'opacity-100 max-w-[250px]'}`}>
+          <div className="flex items-center justify-center mx-auto lg:mx-0 lg:flex-shrink-0">
             <Link href="/" className="block">
               <Image
                 src="/images/logo/abbeygate-logo.png"
@@ -232,7 +232,7 @@ export const Navbar = () => {
           </div>
 
           {/* Right Actions */}
-          <div className={`flex items-center justify-end gap-4 lg:gap-8 ${isSearchOpen ? 'flex-1 lg:flex-1' : 'lg:flex-1'}`}>
+          <div className="flex items-center justify-end gap-4 lg:gap-8 lg:flex-1">
             <div
               ref={searchContainerRef}
               className="relative flex items-center justify-end h-10"
