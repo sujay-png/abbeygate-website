@@ -399,9 +399,9 @@ export const ProductCustomizer = ({
               type="button"
               onClick={() => onStepChange(2)}
               disabled={!customization.logoPreviewUrl}
-              className="h-12 text-[14px] font-bold px-8 bg-brand-primary-dark text-white rounded-lg hover:bg-brand-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto px-4 sm:px-8 py-3 bg-brand-primary text-white font-bold rounded-lg hover:bg-brand-primary-dark transition-colors disabled:opacity-50 whitespace-nowrap text-center"
             >
-              Next Step: Position &rarr;
+              Proceed to Position &rarr;
             </button>
           </div>
         </div>
@@ -475,7 +475,7 @@ export const ProductCustomizer = ({
              <button
                 type="button"
                 onClick={() => onStepChange(1)}
-                className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-gray-100 text-brand-body font-bold rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap text-center"
+                className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-white border border-gray-300 text-brand-body font-bold rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap text-center"
              >
                 &larr; Back to Branding
              </button>
@@ -612,7 +612,7 @@ export const ProductCustomizer = ({
              <button
                 type="button"
                 onClick={() => onStepChange(2)}
-                className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-gray-100 text-brand-body font-bold rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap text-center"
+                className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-white border border-gray-300 text-brand-body font-bold rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap text-center"
              >
                 &larr; Back to Position
              </button>
@@ -736,7 +736,7 @@ export const ProductCustomizer = ({
                 onClick={() => onStepChange(3)}
                 className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-white border border-gray-300 text-brand-body font-bold rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap text-center"
              >
-                &larr; Back: Extras
+                &larr; Back to Extras
              </button>
              {onAddToCart && (
                <button

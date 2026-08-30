@@ -43,6 +43,14 @@ export const Navbar = () => {
 
   useEffect(() => {
     setIsMounted(true);
+    
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -93,7 +101,14 @@ export const Navbar = () => {
     };
   }, []);
 
+  const isInitialMount = useRef(true);
+
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
     if (isMobileMenuOpen) {
       scrollPositionRef.current = window.scrollY;
       document.body.style.position = 'fixed';

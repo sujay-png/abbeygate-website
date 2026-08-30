@@ -93,6 +93,7 @@ export const ProductDetailClient = ({
   const activeColorName = colorVariants.find(c => c.slug === product.slug)?.name;
 
   const previewContainerRef = useRef<HTMLDivElement>(null);
+  const imageElementRef = useRef<HTMLDivElement>(null);
   const customizerSectionRef = useRef<HTMLDivElement>(null);
   const [quantity, setQuantity] = useState(isGifts ? 1 : CUSTOMIZATION_MIN_QTY);
   const [priceDetails, setPriceDetails] = useState({
@@ -107,13 +108,49 @@ export const ProductDetailClient = ({
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isZooming, setIsZooming] = useState(false);
   const [zoomOrigin, setZoomOrigin] = useState('center center');
+  const zoomTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!previewContainerRef.current) return;
+    
+    // Only trigger if entering the inner image element, not the padded container bounds
+    if (imageElementRef.current?.contains(e.target as Node)) {
+      if (!isZooming && !zoomTimeoutRef.current) {
+        zoomTimeoutRef.current = setTimeout(() => {
+          setIsZooming(true);
+        }, 200);
+      }
+    } else {
+      // If moving outside the inner image element but still inside the container, clear the timeout
+      if (zoomTimeoutRef.current && !isZooming) {
+        clearTimeout(zoomTimeoutRef.current);
+        zoomTimeoutRef.current = null;
+      }
+    }
+    
     const { left, top, width, height } = previewContainerRef.current.getBoundingClientRect();
     const x = ((e.clientX - left) / width) * 100;
     const y = ((e.clientY - top) / height) * 100;
     setZoomOrigin(`${x}% ${y}%`);
+  }, [isZooming]);
+
+  const handleMouseEnter = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (imageElementRef.current?.contains(e.target as Node)) {
+      if (!isZooming && !zoomTimeoutRef.current) {
+        zoomTimeoutRef.current = setTimeout(() => {
+          setIsZooming(true);
+        }, 300);
+      }
+    }
+  }, [isZooming]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (zoomTimeoutRef.current) {
+      clearTimeout(zoomTimeoutRef.current);
+      zoomTimeoutRef.current = null;
+    }
+    setIsZooming(false);
+    setZoomOrigin('center center');
   }, []);
 
   const [activeTab, setActiveTab] = useState('Description');
@@ -355,11 +392,11 @@ export const ProductDetailClient = ({
       document.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = '';
     }
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = '';
     };
   }, [isPreviewOpen]);
 
@@ -671,7 +708,7 @@ export const ProductDetailClient = ({
             )}
 
             <div
-              className="relative w-full max-w-[650px] mx-auto flex-1 overflow-hidden rounded-xl border border-gray-100 flex items-center justify-center p-4 group order-1 md:order-2 cursor-zoom-in"
+              className="relative w-full max-w-[650px] mx-auto flex-1 overflow-hidden rounded-xl flex items-center justify-center p-4 group order-1 md:order-2 cursor-zoom-in"
               style={{ aspectRatio: imageAspectRatio, backgroundColor: 'var(--brand-cream)' }}
               onClick={() => setIsPreviewOpen(true)}
             >
@@ -709,8 +746,8 @@ export const ProductDetailClient = ({
                 <div 
                   className="absolute inset-0 bg-transparent overflow-hidden" 
                   ref={previewContainerRef}
-                  onMouseEnter={() => setIsZooming(true)}
-                  onMouseLeave={() => { setIsZooming(false); setZoomOrigin('center center'); }}
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
                   onMouseMove={handleMouseMove}
                 >
                   <div 
@@ -720,7 +757,7 @@ export const ProductDetailClient = ({
                       transform: isZooming ? 'scale(2.2)' : 'scale(1.05)'
                     }}
                   >
-                    <div className="relative w-full h-full">
+                    <div className="relative w-full h-full" ref={imageElementRef}>
                       {product.images.map((img, idx) => {
                         const isActive = img.src === activeSrc;
                         return (
@@ -907,7 +944,7 @@ export const ProductDetailClient = ({
             })()}
 
             {/* Proceed Button */}
-            <button type="button" onClick={handleAddToCart} disabled={isAdding} className="flex h-12 w-full items-center justify-center rounded-lg bg-brand-primary-dark text-[15px] font-bold text-white transition-colors hover:bg-brand-primary disabled:opacity-50 shadow-sm mt-2">
+            <button type="button" onClick={handleAddToCart} disabled={isAdding} className="flex h-12 w-full items-center justify-center rounded-lg bg-brand-primary text-[15px] font-bold text-white transition-colors hover:bg-brand-primary-dark disabled:opacity-50 shadow-sm mt-2">
               {isAdding ? 'Processing...' : (amendKey ? 'Update Basket →' : 'Proceed →')}
             </button>
 
@@ -1134,7 +1171,7 @@ export const ProductDetailClient = ({
               type="button"
               onClick={handleAddToCart}
               disabled={isAdding}
-              className="w-full h-[54px] text-[16px] font-bold rounded-lg text-white transition-all disabled:opacity-50 flex items-center justify-center bg-brand-primary-dark hover:bg-opacity-90 mt-2 shadow-sm"
+              className="w-full h-[54px] text-[16px] font-bold rounded-lg text-white transition-all disabled:opacity-50 flex items-center justify-center bg-brand-primary hover:bg-brand-primary-dark mt-2 shadow-sm"
             >
               {isAdding 
                 ? 'Processing...' 

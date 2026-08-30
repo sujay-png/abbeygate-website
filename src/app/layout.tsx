@@ -72,12 +72,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${didactGothic.variable} ${workSans.variable} ${josefinSans.variable} h-full antialiased bg-brand-cream`}
+      className={`${didactGothic.variable} ${workSans.variable} ${josefinSans.variable} antialiased bg-brand-cream`}
       style={{ colorScheme: "light" }}
       suppressHydrationWarning
     >
       <body
-        className="min-h-full flex flex-col bg-brand-cream text-brand-body"
+        className="min-h-screen flex flex-col bg-brand-cream text-brand-body"
         suppressHydrationWarning
       >
         <LenisProvider>
