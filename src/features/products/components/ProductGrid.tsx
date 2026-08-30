@@ -17,7 +17,7 @@ export const ProductGrid = ({ products }: ProductGridProps) => {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
       {products.map((product) => {
         const image = product.images[0];
         const imageSrc = image?.thumbnail || image?.src;
@@ -34,7 +34,7 @@ export const ProductGrid = ({ products }: ProductGridProps) => {
                   src={imageSrc}
                   alt={image?.alt || product.name}
                   fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
                 />
               ) : (

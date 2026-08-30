@@ -35,8 +35,8 @@ export const CategoryPageSkeleton = () => {
           </div>
 
           <div className="lg:w-2/3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
-              {[...Array(8)].map((_, i) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+              {[...Array(6)].map((_, i) => (
                 <div key={i} className="flex flex-col">
                   <div className="aspect-square w-full bg-[#f5f5f5] animate-pulse mb-4" />
                   <div className="h-5 w-3/4 bg-gray-200 animate-pulse rounded mb-2" />
