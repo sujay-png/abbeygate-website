@@ -8,6 +8,9 @@ import { useCart } from '@/features/cart/context/CartContext';
 import { useState } from 'react';
 import { ImagePreviewModal } from '@/components/ui/ImagePreviewModal';
 import { validateCustomisationMinimums } from '@/features/cart/utils/colour-group';
+import { ColourPickerRow } from '@/features/cart/components/ColourPickerRow';
+import { retryProof } from '@/features/cart/utils/add-colour-variant';
+import { downloadCartItemProof, canDownloadProof } from '@/features/cart/utils/download-proof';
 
 const OPEN_TRANSITION: Transition = { duration: 0.5, ease: [0.16, 1, 0.3, 1] };
 const CLOSE_TRANSITION: Transition = { duration: 0.35, ease: [0.7, 0, 0.84, 0] };
@@ -16,8 +19,9 @@ const formatPrice = (value: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
 
 export const CartDrawer = () => {
-  const { items: rawItems, pricedItems: items, isOpen, isLoading, subtotal, shippingCost, shippingLabel, vatCost, total, closeCart, removeItem, updateQuantity } = useCart();
+  const { items: rawItems, pricedItems: items, isOpen, isLoading, subtotal, shippingCost, shippingLabel, vatCost, total, closeCart, removeItem, updateQuantity, updateItem } = useCart();
   const [previewItem, setPreviewItem] = useState<any | null>(null);
+  const [pickerFor, setPickerFor] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
   const shortfalls = validateCustomisationMinimums(rawItems);
@@ -45,6 +49,7 @@ export const CartDrawer = () => {
             blockingType: item.customization.choice,
             position: item.customization.position,
             foilColor: item.customization.foilColor,
+            cornerEdges: item.customization.cornerEdges,
           };
           if (item.customization.logoFile) {
             formData.append(`logo_${index}`, item.customization.logoFile);
@@ -102,7 +107,7 @@ export const CartDrawer = () => {
             animate={{ opacity: 1, transition: { duration: 0.4 } }}
             exit={{ opacity: 0, transition: { duration: 0.3 } }}
             onClick={closeCart}
-            className="fixed inset-0 z-[70] bg-black/40"
+            className="fixed inset-0 z-[70] bg-brand-primary/40"
           />
 
           {/* Panel */}
@@ -120,7 +125,7 @@ export const CartDrawer = () => {
           >
             {/* Header */}
             <div className="flex items-center justify-between h-20 px-6 border-b border-gray-100 shrink-0">
-              <h2 className="text-[15px] font-bold tracking-wide uppercase text-[#1F2124]">
+              <h2 className="text-[15px] font-bold tracking-wide uppercase text-brand-body">
                 Your Bag {items.length > 0 && `(${items.length})`}
               </h2>
               <button
@@ -148,9 +153,9 @@ export const CartDrawer = () => {
                     
                     return (
                     <li key={item.key} className={`flex gap-4 ${isGrouped ? 'border-l-2 border-l-gray-200 pl-3 rounded-l -ml-3' : ''}`}>
-                      <div className="w-20 h-20 relative shrink-0 bg-gray-50 rounded">
+                      <div className="w-20 h-20 relative shrink-0 rounded">
                         <Image
-                          src={item.image}
+                          src={item.image || '/images/logo/abbeygate-logo.png'}
                           alt={item.name}
                           fill
                           sizes="80px"
@@ -160,7 +165,7 @@ export const CartDrawer = () => {
 
                       <div className="flex-1 flex flex-col min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-[15px] text-[#1F2124] font-medium leading-snug">{item.name}</p>
+                          <p className="text-[15px] text-brand-body font-medium leading-snug">{item.name}</p>
                           <button
                             aria-label={`Remove ${item.name}`}
                             onClick={() => removeItem(item.key)}
@@ -181,7 +186,7 @@ export const CartDrawer = () => {
                         )}
                         
                         {item.customization?.enabled && (
-                          <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                          <div className="mt-3 p-3 rounded-lg border border-gray-100">
                             <p className="text-[13px] font-semibold text-gray-900 mb-1">Custom Logo</p>
                             <p className="text-[12px] text-gray-600"><span className="font-medium">Blocking:</span> {item.customization.choice.replace(' blocked', '')}</p>
                             {item.customization.foilColor && (
@@ -190,16 +195,33 @@ export const CartDrawer = () => {
                             {item.customization.fileName && (
                               <p className="text-[12px] text-gray-600">
                                 <span className="font-medium">Logo:</span> {item.customization.fileName} —{' '}
-                                <a href={item.customization.logoFile ? URL.createObjectURL(item.customization.logoFile) : '#'} target="_blank" rel="noopener noreferrer" className="text-black underline hover:text-gray-600">View file</a>
+                                <a href={item.customization.logoFile ? URL.createObjectURL(item.customization.logoFile) : '#'} target="_blank" rel="noopener noreferrer" className="text-brand-primary-dark underline hover:text-gray-600">View file</a>
                               </p>
                             )}
-                            {item.customization.logoPreviewUrl && (
-                              <p className="text-[12px] text-gray-600">
+                            {(item.proofStatus || 'ready') === 'pending' ? (
+                              <p className="text-[12px] text-gray-600 flex items-center gap-1.5 mt-1">
+                                <span className="font-medium">Preview:</span>
+                                <Loader2 className="w-3 h-3 animate-spin" /> Generating...
+                              </p>
+                            ) : item.proofStatus === 'failed' ? (
+                              <p className="text-[12px] text-red-600 flex items-center gap-1.5 mt-1">
+                                <span className="font-medium">Preview:</span>
+                                Preview unavailable 
+                                <button type="button" className="underline hover:text-red-800 ml-1" onClick={() => retryProof(item, updateItem)}>Retry</button>
+                              </p>
+                            ) : item.customization.logoPreviewUrl ? (
+                              <p className="text-[12px] text-gray-600 mt-1">
                                 <span className="font-medium">Preview:</span>{' '}
-                                <button type="button" onClick={() => setPreviewItem(item)} className="text-black underline hover:text-gray-600">View preview</button>
+                                <button type="button" onClick={() => setPreviewItem(item)} className="text-brand-primary-dark underline hover:text-gray-600">View preview</button>
                               </p>
-                            )}
-                            <p className="text-[12px] text-gray-600"><span className="font-medium">Position:</span> {item.customization.position}</p>
+                            ) : null}
+                            <p className="text-[12px] text-gray-600 mt-1"><span className="font-medium">Position:</span> {item.customization.position}</p>
+                          </div>
+                        )}
+
+                        {shortfallData && (
+                          <div className="mt-2 text-[12px] text-red-600 font-medium bg-red-50 px-2 py-1.5 rounded">
+                            Needs {shortfallData.shortfall} more units for customisation.
                           </div>
                         )}
 
@@ -215,22 +237,22 @@ export const CartDrawer = () => {
                               aria-label="Decrease quantity"
                               onClick={() => updateQuantity(item.key, item.quantity - 1)}
                               disabled={isLoading}
-                              className="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-black transition-colors disabled:opacity-40"
+                              className="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-brand-primary-dark transition-colors disabled:opacity-40"
                             >
                               <Minus className="w-3 h-3" strokeWidth={2} />
                             </button>
-                            <span className="w-8 text-center text-[14px] text-[#1F2124]">{item.quantity}</span>
+                            <span className="w-8 text-center text-[14px] text-brand-body">{item.quantity}</span>
                             <button
                               aria-label="Increase quantity"
                               onClick={() => updateQuantity(item.key, item.quantity + 1)}
                               disabled={isLoading}
-                              className="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-black transition-colors disabled:opacity-40"
+                              className="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-brand-primary-dark transition-colors disabled:opacity-40"
                             >
                               <Plus className="w-3 h-3" strokeWidth={2} />
                             </button>
                           </div>
                           <div className="text-right">
-                            <p className="text-[15px] text-[#1F2124] font-medium">
+                            <p className="text-[15px] text-brand-body font-medium">
                               {formatPrice(item.lineTotal)}
                             </p>
                             {item.groupQuantity > item.quantity && (
@@ -240,6 +262,54 @@ export const CartDrawer = () => {
                             )}
                           </div>
                         </div>
+
+                        {item.customization?.enabled && (
+                          <div className="flex flex-wrap items-center gap-2 mt-3 text-[12px] font-medium text-brand-body">
+                            <button 
+                              type="button" 
+                              onClick={() => {
+                                if (!item.customization?.enabled) return;
+                                sessionStorage.setItem(`abbeygate-amend-${item.key}`, JSON.stringify({
+                                  ...item.customization,
+                                  quantity: item.quantity,
+                                  logoFile: undefined,
+                                }));
+                                window.location.href = `/product/${item.slug}?amend=${item.key}`;
+                                closeCart();
+                              }}
+                              className="hover:underline text-brand-primary-dark"
+                            >
+                              Amend customisation
+                            </button>
+                            
+                            {(item.colourOptions?.length ?? 0) > 1 && (
+                              <>
+                                <span className="text-gray-300">|</span>
+                                <button 
+                                  type="button" 
+                                  onClick={() => setPickerFor(pickerFor === item.key ? null : item.key)}
+                                  className="hover:underline text-brand-primary-dark whitespace-nowrap"
+                                >
+                                  + Order in another colour
+                                </button>
+                              </>
+                            )}
+                            
+                            {canDownloadProof(item) && (
+                              <>
+                                <span className="text-gray-300">|</span>
+                                <button type="button" onClick={() => downloadCartItemProof(item)} className="hover:underline text-brand-primary-dark whitespace-nowrap">
+                                  Download proof
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                        {pickerFor === item.key && (
+                          <div className="mt-3">
+                            <ColourPickerRow item={item} onPick={() => setPickerFor(null)} />
+                          </div>
+                        )}
                       </div>
                     </li>
                   )})}
@@ -251,25 +321,25 @@ export const CartDrawer = () => {
             {items.length > 0 && (
               <div className="border-t border-gray-100 px-6 py-6 shrink-0 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[15px] text-[#1F2124] font-work">Subtotal (ex VAT)</span>
-                  <span className="text-[17px] text-[#1F2124] font-bold">{formatPrice(subtotal)}</span>
+                  <span className="text-[15px] text-brand-body font-work">Subtotal (ex VAT)</span>
+                  <span className="text-[17px] text-brand-body font-bold">{formatPrice(subtotal)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[14px] text-gray-600">{shippingLabel}</span>
-                  <span className="text-[15px] text-[#1F2124] font-medium">{formatPrice(shippingCost)}</span>
+                  <span className="text-[15px] text-brand-body font-medium">{formatPrice(shippingCost)}</span>
                 </div>
                 <div className="flex items-center justify-between pt-2">
                   <span className="text-[14px] text-gray-600">VAT (20%)</span>
-                  <span className="text-[15px] text-[#1F2124] font-medium">{formatPrice(vatCost)}</span>
+                  <span className="text-[15px] text-brand-body font-medium">{formatPrice(vatCost)}</span>
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                  <span className="text-[15px] text-[#1F2124] font-bold">Total (inc. VAT)</span>
-                  <span className="text-[17px] text-[#1F2124] font-bold">{formatPrice(total)}</span>
+                  <span className="text-[15px] text-brand-body font-bold">Total (inc. VAT)</span>
+                  <span className="text-[17px] text-brand-body font-bold">{formatPrice(total)}</span>
                 </div>
                 <button
                   onClick={handleCheckout}
                   disabled={isSyncing || hasShortfalls}
-                  className="flex items-center justify-center gap-2 w-full text-center bg-black text-white text-[15px] font-medium py-4 rounded-md hover:bg-gray-800 transition-colors disabled:bg-gray-400"
+                  className="flex items-center justify-center gap-2 w-full text-center bg-brand-primary text-white text-[15px] font-medium py-4 rounded-md hover:bg-brand-primary-dark transition-colors disabled:bg-gray-400"
                 >
                   {isSyncing ? (
                     <>
@@ -285,7 +355,7 @@ export const CartDrawer = () => {
                 <Link
                   href="/cart"
                   onClick={closeCart}
-                  className="block w-full text-center text-[14px] text-gray-600 hover:text-black transition-colors mt-3 underline underline-offset-4"
+                  className="block w-full text-center text-[14px] text-gray-600 hover:text-brand-primary-dark transition-colors mt-3 underline underline-offset-4"
                 >
                   View full cart
                 </Link>

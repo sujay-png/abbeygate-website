@@ -178,21 +178,21 @@ export function calculateProductPrice(
   }
 
   let customizationFee = 0;
-  if (!isGifts && customizationEnabled) {
-    if (blockingType) {
-      customizationFee = LOGO_BLOCKING_PRICES[blockingType.toLowerCase()] ?? LOGO_CUSTOMIZATION_FEE;
-      const extraBlockingFee = customizationFee - LOGO_CUSTOMIZATION_FEE;
-      if (extraBlockingFee > 0) {
-        unitPrice += extraBlockingFee;
-      }
-    }
-    
-    if (input.cornerEdges && input.cornerEdges !== 'None') {
-      // Future logic for corner edge pricing can be added here
-      // e.g., unitPrice += 0.24; 
-    }
+  let extraBlockingFee = 0;
+
+  if (!isGifts && customizationEnabled && blockingType) {
+    customizationFee =
+      LOGO_BLOCKING_PRICES[blockingType.toLowerCase()] ?? LOGO_CUSTOMIZATION_FEE;
+    extraBlockingFee = Math.max(0, customizationFee - LOGO_CUSTOMIZATION_FEE);
+    unitPrice += extraBlockingFee;
   }
-  
+
+  let cornerEdgesFee = 0;
+  if (!isGifts && customizationEnabled && cornerEdges && (cornerEdges === 'Gold' || cornerEdges === 'Silver')) {
+    cornerEdgesFee = 0.24;
+    unitPrice += cornerEdgesFee;
+  }
+
   if (!isGifts && !customizationEnabled) {
     unitPrice = Math.max(0, unitPrice - LOGO_CUSTOMIZATION_FEE);
   }

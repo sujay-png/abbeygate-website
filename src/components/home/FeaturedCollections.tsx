@@ -37,7 +37,7 @@ const testimonials = [
 
 const StarRating = ({ rating }: { rating: number }) => {
   return (
-    <div className="flex gap-1 text-[#E5A744] mb-4">
+    <div className="flex gap-1 text-brand-gold mb-4">
       {[...Array(rating)].map((_, i) => (
         <svg
           key={i}
@@ -71,10 +71,10 @@ export const FeaturedCollections = () => {
   }, [emblaApi]);
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-16 bg-brand-cream">
       <Container>
         <div className="relative inline-block mb-20">
-          <h2 className="font-josefin text-[26px] font-bold tracking-tight text-black lg:text-[32px]">
+          <h2 className="font-josefin text-[26px] font-bold tracking-tight text-brand-primary-dark lg:text-[32px]">
             Our Collections
           </h2>
           <ArrowIcon className="absolute -right-22 -top-1 hidden md:block" />
@@ -84,10 +84,10 @@ export const FeaturedCollections = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-0 mb-8">
           {/* Left Heading */}
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-black mb-2 font-sans">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-brand-primary-dark mb-2 font-sans">
               Featured Collection
             </p>
-            <h3 className="text-xl md:text-2xl font-bold font-sans text-black mb-4">
+            <h3 className="text-xl md:text-2xl font-bold font-sans text-brand-primary-dark mb-4">
               Harrogate Collection
             </h3>
             <Button href="/collection/harrogate" variant="primary">
@@ -97,10 +97,10 @@ export const FeaturedCollections = () => {
 
           {/* Right Heading */}
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-black mb-2 font-sans">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-brand-primary-dark mb-2 font-sans">
               Featured Collection
             </p>
-            <h3 className="text-xl md:text-2xl font-bold font-sans text-black mb-4">
+            <h3 className="text-xl md:text-2xl font-bold font-sans text-brand-primary-dark mb-4">
               Dorchester Collection
             </h3>
             <Button href="/collection/dorchester" variant="primary">
@@ -117,14 +117,14 @@ export const FeaturedCollections = () => {
               src="/images/collections/collectionlanding.png"
               alt="Harrogate Collection"
               fill
-              unoptimized={true}
+              quality={75}
               className="object-cover rounded-t-sm md:rounded-l-sm md:rounded-tr-none"
               sizes="(max-width: 768px) 100vw, 50vw"
             />
           </div>
 
           {/* Right Feedback Box */}
-          <div className="bg-[#DFEDED] p-8 lg:p-12 flex flex-col justify-center rounded-b-sm md:rounded-r-sm md:rounded-bl-none text-[#333333] relative">
+          <div className="bg-brand-soft p-8 lg:p-12 flex flex-col justify-center rounded-b-sm md:rounded-r-sm md:rounded-bl-none text-brand-body relative">
             <p className="text-sm text-gray-600 mb-1 font-sans">Reviews</p>
             <h3 className="text-3xl font-bold font-josefin mb-2">Customer Feedback</h3>
             <p className="text-xs text-gray-500 mb-6 font-sans">4.8 Out of 5 Stars from Over 325 Reviews</p>
@@ -154,7 +154,7 @@ export const FeaturedCollections = () => {
                   key={index}
                   onClick={() => emblaApi?.scrollTo(index)}
                   className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                    index === selectedIndex ? "bg-black" : "bg-gray-400/50"
+                    index === selectedIndex ? "bg-brand-primary" : "bg-brand-grey/50"
                   }`}
                   aria-label={`Go to slide ${index + 1}`}
                 />

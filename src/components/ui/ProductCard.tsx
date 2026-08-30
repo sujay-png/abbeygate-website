@@ -19,20 +19,14 @@ export const ProductCard = ({
   href = "#",
 }: ProductCardProps) => {
   return (
-    <div className="mt-10 group flex flex-col bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+    <Link href={href} className="mt-10 group flex flex-col bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
       <div className="h-[280px] w-full flex items-center justify-center p-8 relative overflow-hidden">
-        {/* Overlay for hover effect */}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex items-center justify-center">
-          <Link href={href} className="text-white border border-white px-6 py-2 text-sm font-bold tracking-wider hover:bg-white hover:text-black transition-colors duration-300 cursor-pointer">
-            VIEW DETAILS
-          </Link>
-        </div>
-
         {imageUrl ? (
           <Image
             src={imageUrl}
             alt={title}
             fill
+            quality={75}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-contain scale-110 transition-transform duration-500 group-hover:scale-125"
           />
@@ -51,7 +45,7 @@ export const ProductCard = ({
       </div>
 
       <div className="p-6 flex flex-col flex-grow">
-        <h3 className="text-base font-bold text-gray-900 leading-snug mb-3 group-hover:text-black transition-colors duration-300">
+        <h3 className="text-base font-bold text-gray-900 leading-snug mb-3 group-hover:text-brand-primary-dark transition-colors duration-300">
           {title}
         </h3>
         <p className="text-sm text-gray-500 leading-relaxed line-clamp-3 mb-6 flex-grow">
@@ -61,6 +55,6 @@ export const ProductCard = ({
           <span className="text-gray-500 font-medium">{price}</span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };

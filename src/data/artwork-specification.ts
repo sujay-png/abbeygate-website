@@ -91,17 +91,17 @@ export const artworkData = {
     imageAlignment: "left" as const,
   },
   guidelinesBox: `
-    <h3 class="font-bold text-lg mb-2 text-black">Trim Marks:</h3>
+    <h3 class="font-bold text-lg mb-2 text-brand-primary-dark">Trim Marks:</h3>
     <p class="mb-6">All special matter page artwork should have a document / page size with crop marks set to the 'trimmed page size', Ex. Set page size to 160 x 80 mm for a standard pocket diary. Keep all text within the 'maximum printed area' to ensure no text or detail is cut off once printed and cropped to insert into the diary. If your artwork has a bleed off the edge of the pages, please be aware that during cropping it may move slightly, so check the position of any crucial text or image to avoid losing detail when cropped. An image that prints off the edge of the paper must have a 3 mm bleed on all sides where the bleed is present.</p>
     
-    <h3 class="font-bold text-lg mb-2 text-black">Blocking / Debossing:</h3>
+    <h3 class="font-bold text-lg mb-2 text-brand-primary-dark">Blocking / Debossing:</h3>
     <p class="mb-4">Front or back cover artwork for blocking or debossing must be supplied as a solid black and white vector graphic file (eps), or high resolution (1200dpi minimum) PSD IE. No colours or tints. The final artwork must be set to the required size IE 100%. Please note: Enlarging the artwork reduces the final quality unless it is a true, vector eps graphic.</p>
     <p class="mb-6">Please note that artwork supplied for blocking or debossing that is of poor quality, as it contains colour or tints, will either be returned or will incur additional charges to be reset as Illustrator eps files. Please note that this delay may impact on your planned production slot and so may adversely affect your estimated delivery date.</p>
 
-    <h3 class="font-bold text-lg mb-2 text-black">Positional Guide:</h3>
+    <h3 class="font-bold text-lg mb-2 text-brand-primary-dark">Positional Guide:</h3>
     <p class="mb-6">For new and repeat orders, please supply a clear positional guide or accurate measurements for the logo position.</p>
 
-    <h3 class="font-bold text-lg mb-2 text-black">Maximum blocking sizes:</h3>
+    <h3 class="font-bold text-lg mb-2 text-brand-primary-dark">Maximum blocking sizes:</h3>
     <p class="mb-4">The blocking or debossing area may vary slightly depending on the covering material or product dimensions. Our recommended dimensions for diaries and notebooks are:</p>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
       <div>
@@ -130,7 +130,7 @@ export const artworkData = {
     </div>
     <p class="mb-6">Please note that additional blocking charges will be due if any blocking die is over 10sq cm</p>
 
-    <h3 class="font-bold text-lg mb-2 text-black">Printing of diary pages:</h3>
+    <h3 class="font-bold text-lg mb-2 text-brand-primary-dark">Printing of diary pages:</h3>
     <p class="mb-2">The following Pantone Colours are used for the printing of the standard diary pages.</p>
     <ul class="list-disc pl-5 text-sm">
       <li>White Paper: Blue 294 and Grey 431</li>

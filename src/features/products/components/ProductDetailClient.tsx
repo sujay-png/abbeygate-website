@@ -12,7 +12,7 @@ import { getLogoAnchors, getImageBoundingBox, getProductPhysicalDimensionsMm } f
 import { getConfiguredImageBounds } from '../utils/product-image-bounds';
 import { composeProof } from '../utils/generate-proof';
 import { TrustIndicators } from '@/components/home/TrustIndicators';
-import { Send, X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
+import { Send, X, ChevronLeft, ChevronRight, ZoomIn, Check } from 'lucide-react';
 import Link from 'next/link';
 
 import type { CustomTab } from '@/features/products/services/store-products';
@@ -87,15 +87,89 @@ export const ProductDetailClient = ({
     return () => clearTimeout(timeout);
   }, [colorVariants, product.slug]);
 
-  const { addItem } = useCart();
+  const { addItem, updateItem, items } = useCart();
   const isGifts = isGiftsProduct(product);
   const activeColorHex = colorVariants.find(c => c.slug === product.slug)?.hex;
   const activeColorName = colorVariants.find(c => c.slug === product.slug)?.name;
 
-  const [isAdding, setIsAdding] = useState(false);
-  const [pendingPropagate, setPendingPropagate] = useState<{ amendKey: string, customization: any, siblingsCount: number } | null>(null);
-  const [isPropagating, setIsPropagating] = useState(false);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+  const imageElementRef = useRef<HTMLDivElement>(null);
+  const customizerSectionRef = useRef<HTMLDivElement>(null);
+  const [quantity, setQuantity] = useState(isGifts ? 1 : CUSTOMIZATION_MIN_QTY);
+  const [priceDetails, setPriceDetails] = useState({
+    unitPrice: basePrice,
+    totalPrice: basePrice * (isGifts ? 1 : CUSTOMIZATION_MIN_QTY),
+    statusText: '',
+    statusColor: '',
+    discountRate: 0,
+    discountLabel: ''
+  });
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isZooming, setIsZooming] = useState(false);
+  const [zoomOrigin, setZoomOrigin] = useState('center center');
+  const zoomTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!previewContainerRef.current) return;
+    
+    // Only trigger if entering the inner image element, not the padded container bounds
+    if (imageElementRef.current?.contains(e.target as Node)) {
+      if (!isZooming && !zoomTimeoutRef.current) {
+        zoomTimeoutRef.current = setTimeout(() => {
+          setIsZooming(true);
+        }, 200);
+      }
+    } else {
+      // If moving outside the inner image element but still inside the container, clear the timeout
+      if (zoomTimeoutRef.current && !isZooming) {
+        clearTimeout(zoomTimeoutRef.current);
+        zoomTimeoutRef.current = null;
+      }
+    }
+    
+    const { left, top, width, height } = previewContainerRef.current.getBoundingClientRect();
+    const x = ((e.clientX - left) / width) * 100;
+    const y = ((e.clientY - top) / height) * 100;
+    setZoomOrigin(`${x}% ${y}%`);
+  }, [isZooming]);
+
+  const handleMouseEnter = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (imageElementRef.current?.contains(e.target as Node)) {
+      if (!isZooming && !zoomTimeoutRef.current) {
+        zoomTimeoutRef.current = setTimeout(() => {
+          setIsZooming(true);
+        }, 300);
+      }
+    }
+  }, [isZooming]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (zoomTimeoutRef.current) {
+      clearTimeout(zoomTimeoutRef.current);
+      zoomTimeoutRef.current = null;
+    }
+    setIsZooming(false);
+    setZoomOrigin('center center');
+  }, []);
+
+  const [activeTab, setActiveTab] = useState('Description');
+  const [isCustomizingStarted, setIsCustomizingStarted] = useState(false);
+  const [customizerStep, setCustomizerStep] = useState<1 | 2 | 3 | 4>(1);
+  const isCustomizationSurface = activeImageIndex === 0;
+  const [customization, setCustomization] = useState<CustomizationState>({
+    enabled: !isGifts,
+    blockingType: 'Embossed',
+    logoScale: 1.0,
+    logoPosition: { x: 0, y: 0 },
+    cornerEdges: 'None',
+  });
+
+  // Hydrate the full branding spec (choice, position, foil, corner edges,
+  // logoPreviewUrl, fullPreviewUrl, quantity) stashed by the cart before
+  // navigating here to amend. Without this the Review step opens with an
+  // empty customization -> no proof ("Failed to generate proof") and a
+  // disabled Update Basket button. logoFile is rehydrated separately below.
   useEffect(() => {
     if (amendKey) {
       const sessionData = sessionStorage.getItem(`abbeygate-amend-${amendKey}`);
@@ -116,47 +190,25 @@ export const ProductDetailClient = ({
           }));
           if (parsed.quantity) setQuantity(parsed.quantity);
           setIsCustomizingStarted(true);
-        } catch(e) {
+        } catch (e) {
           console.error('Failed to parse amend data from sessionStorage', e);
         }
       }
     }
   }, [amendKey]);
 
-  const { items, updateItem } = useCart();
-
+  // Rehydrate logoFile from cart if amending
   useEffect(() => {
     if (amendKey && items.length > 0) {
       const cartItem = items.find(i => i.key === amendKey);
       if (cartItem?.customization?.logoFile) {
         setCustomization(prev => ({ ...prev, logoFile: cartItem.customization!.logoFile }));
       }
+      if (cartItem?.customization) {
+        setIsCustomizingStarted(true);
+      }
     }
   }, [amendKey, items]);
-
-  const previewContainerRef = useRef<HTMLDivElement>(null);
-  const customizerSectionRef = useRef<HTMLDivElement>(null);
-  const [quantity, setQuantity] = useState(isGifts ? 1 : CUSTOMIZATION_MIN_QTY);
-  const [priceDetails, setPriceDetails] = useState({
-    unitPrice: basePrice,
-    totalPrice: basePrice * (isGifts ? 1 : CUSTOMIZATION_MIN_QTY),
-    statusText: '',
-    statusColor: '',
-    discountRate: 0,
-    discountLabel: ''
-  });
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('Description');
-  const [isCustomizingStarted, setIsCustomizingStarted] = useState(false);
-  const isCustomizationSurface = activeImageIndex === 0;
-  const [customization, setCustomization] = useState<CustomizationState>({
-    enabled: !isGifts,
-    blockingType: 'Embossed',
-    logoScale: 0.8,
-    logoPosition: { x: 0, y: 0 },
-    cornerEdges: 'None',
-  });
 
   // Rehydrate customization state from localStorage on mount
   useEffect(() => {
@@ -195,7 +247,7 @@ export const ProductDetailClient = ({
     
     const isDefault = 
       customization.blockingType === 'Embossed' &&
-      customization.logoScale === 0.8 &&
+      customization.logoScale === 1.0 &&
       customization.cornerEdges === 'None' &&
       !customization.logoPreviewUrl;
 
@@ -217,6 +269,9 @@ export const ProductDetailClient = ({
     }
   }, [customization, product, isGifts, isCustomizingStarted, amendKey]);
 
+  const [isAdding, setIsAdding] = useState(false);
+  const [pendingPropagate, setPendingPropagate] = useState<{ amendKey: string; customization: any; siblingsCount: number } | null>(null);
+  const [isPropagating, setIsPropagating] = useState(false);
   const [imageBounds, setImageBounds] = useState<{top: number, bottom: number, left: number, right: number} | null>(null);
   const [imageAspectRatio, setImageAspectRatio] = useState<number>(1);
 
@@ -336,11 +391,11 @@ export const ProductDetailClient = ({
       document.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = '';
     }
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = '';
     };
   }, [isPreviewOpen]);
 
@@ -349,10 +404,11 @@ export const ProductDetailClient = ({
     if (!activeSrc || !customization.enabled || isGifts) return null;
 
     const { width, height } = getProductPhysicalDimensionsMm(product);
-    const isDiary = product.categories?.some(c => 
+    const isDiary = product.categories?.some(c =>
       c.name.toLowerCase().includes('diar') || c.slug.toLowerCase().includes('diar')
     ) ?? false;
-    const isCurved = product.name?.toLowerCase().includes('lewes smoothgrain') || product.slug?.toLowerCase().includes('lewes-smoothgrain');
+    const isCurved = product.name?.toLowerCase().includes('lewes smoothgrain')
+      || product.slug?.toLowerCase().includes('lewes-smoothgrain');
 
     const result = await composeProof({
       productImageUrl: activeSrc,
@@ -364,15 +420,9 @@ export const ProductDetailClient = ({
         logoScale: customization.logoScale ?? 1,
         logoPreviewUrl: customization.logoPreviewUrl,
       },
-      geometry: {
-        widthMm: width,
-        heightMm: height,
-        isDiary,
-        isCurved,
-      }
+      geometry: { widthMm: width, heightMm: height, isDiary, isCurved },
     });
-
-    return result;
+    return result; // { fullPreviewUrl, imageBounds, leftPercent, topPercent, widthPercent }
   };
   const lenis = useLenis();
   const handleAddToCart = async () => {
@@ -469,27 +519,25 @@ export const ProductDetailClient = ({
         }
       } // closing the if(customization.enabled) block!
 
-      const activeColour = colorVariants.find(c => c.slug === product.slug);
-      
       const cartItemCustomization = customizationActive
-            ? {
-              enabled: true as const,
-              choice: customization.blockingType || '',
-              foilColor: customization.blockingType === 'Foil blocked' ? customization.foilColor : undefined,
-              cornerEdges: customization.cornerEdges || 'None',
-              position: (customization.logoPosition?.label || 'center').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
-              positionLabel: customization.logoPosition?.label || 'center',
-              logoScale: customization.logoScale ?? 1,
-              fileName: customization.logoFile?.name,
-              logoFile: customization.logoFile,
-              logoPreviewUrl: customization.logoPreviewUrl,
-              fullPreviewUrl: fullPreviewUrl,
-              leftPercent,
-              topPercent,
-              widthPercent,
-              imageBounds: finalBounds || undefined,
-            }
-            : undefined;
+        ? {
+          enabled: true as const,
+          choice: customization.blockingType || '',
+          foilColor: customization.blockingType === 'Foil blocked' ? customization.foilColor : undefined,
+          cornerEdges: customization.cornerEdges || 'None',
+          position: (customization.logoPosition?.label || 'center').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+          positionLabel: customization.logoPosition?.label || 'center',
+          logoScale: customization.logoScale ?? 1,
+          fileName: customization.logoFile?.name,
+          logoFile: customization.logoFile,
+          logoPreviewUrl: customization.logoPreviewUrl,
+          fullPreviewUrl: fullPreviewUrl,
+          leftPercent,
+          topPercent,
+          widthPercent,
+          imageBounds: finalBounds || undefined,
+        }
+        : undefined;
 
       if (amendKey) {
         await updateItem(amendKey, {
@@ -497,49 +545,55 @@ export const ProductDetailClient = ({
           price: priceDetails.unitPrice,
           customization: cartItemCustomization,
           attributes,
-          proofStatus: 'ready'
+          proofStatus: 'ready' as const
         });
-        
+
         const amendItem = items.find(i => i.key === amendKey);
         const groupId = amendItem?.colourGroupId ?? amendKey;
-        const siblingsCount = items.filter(i => i.key !== amendKey && (i.colourGroupId === groupId || i.key === groupId)).length;
-        
-        if (customizationActive && siblingsCount > 0) {
-          setPendingPropagate({ amendKey, customization: cartItemCustomization!, siblingsCount });
+        const siblings = items.filter(i =>
+          i.key !== amendKey && (i.colourGroupId === groupId || i.key === groupId)
+        );
+
+        if (customizationActive && siblings.length > 0) {
+          setPendingPropagate({ amendKey, customization: cartItemCustomization, siblingsCount: siblings.length });
           return;
         }
-        
-        sessionStorage.removeItem(`abbeygate-amend-${amendKey}`);
-        window.location.href = '/cart';
-        return;
-      }
 
-      await addItem({
-        productId: String(product.id),
-        slug: product.slug,
-        name: product.name,
-        image: product.images[0]?.thumbnail || product.images[0]?.src || '',
-        price: priceDetails.unitPrice,
-        quantity,
-        attributes,
-        colour: activeColour ? { name: activeColour.name, slug: product.slug, hex: activeColour.hex } : undefined,
-        colourOptions: colorVariants.length > 1 ? colorVariants : undefined,
-        basePrice,
-        priceTiers: tiers,
-        isGifts,
-        proofGeometry: (() => {
-          const { width, height } = getProductPhysicalDimensionsMm(product);
-          return {
-            widthMm: width,
-            heightMm: height,
-            isDiary: product.categories?.some(c =>
-              c.name.toLowerCase().includes('diar') || c.slug.toLowerCase().includes('diar')) ?? false,
-          };
-        })(),
-        proofStatus: 'ready',
-        customization: cartItemCustomization,
-        categorySlugs: product.categories.map((c) => c.slug),
-      });
+        sessionStorage.removeItem(`abbeygate-amend-${amendKey}`);
+        window.dispatchEvent(new CustomEvent('cart-updated'));
+        window.location.href = '/cart';
+      } else {
+        const activeColour = colorVariants.find(c => c.slug === product.slug);
+        await addItem({
+          productId: String(product.id),
+          slug: product.slug,
+          name: product.name,
+          image: product.images[0]?.thumbnail || product.images[0]?.src || '',
+          price: priceDetails.unitPrice,
+          quantity,
+          attributes,
+          categorySlugs: product.categories.map((c) => c.slug),
+          customization: cartItemCustomization,
+          colour: activeColour
+            ? { name: activeColour.name, slug: product.slug, hex: activeColour.hex }
+            : undefined,
+          colourOptions: colorVariants.length > 1 ? colorVariants : undefined,
+          basePrice,
+          priceTiers: tiers,
+          isGifts,
+          proofGeometry: (() => {
+            const { width, height } = getProductPhysicalDimensionsMm(product);
+            return {
+              widthMm: width,
+              heightMm: height,
+              isDiary: product.categories?.some(c =>
+                c.name.toLowerCase().includes('diar') || c.slug.toLowerCase().includes('diar')
+              ) ?? false,
+            };
+          })(),
+          proofStatus: 'ready',
+        });
+      }
     } finally {
       try {
         localStorage.removeItem(`customization_draft_${product.slug}`);
@@ -550,24 +604,110 @@ export const ProductDetailClient = ({
     }
   };
 
+  const handleSummaryAction = () => {
+    if (!isCustomizingStarted || !customizationActive || isGifts || customizerStep === 4) {
+      handleAddToCart();
+      return;
+    }
+    const btn = document.getElementById(`customizer-btn-step-${customizerStep}`);
+    if (btn) btn.click();
+  };
+
+  const getSummaryButtonText = () => {
+    if (isAdding) return 'Processing...';
+    if (amendKey && (!isCustomizingStarted || !customizationActive || customizerStep === 4)) return 'Update Basket \u2192';
+    if (!isCustomizingStarted && customizationActive && !isGifts) return 'Start customising \u2192';
+    if (!isCustomizingStarted || !customizationActive || isGifts) return 'Add to Basket \u2192';
+    
+    if (customizerStep === 1) return 'Proceed to Position \u2192';
+    if (customizerStep === 2) return 'Proceed to Extras \u2192';
+    if (customizerStep === 3) return 'Proceed to Review \u2192';
+    if (customizerStep === 4) return amendKey ? 'Update Basket \u2192' : 'Add to Basket \u2192';
+    
+    return 'Proceed \u2192';
+  };
+
+  const isSummaryButtonDisabled = () => {
+    if (isAdding) return true;
+    if (isCustomizingStarted && customizationActive && customizerStep === 1 && !customization.logoPreviewUrl) return true;
+    return false;
+  };
+
   return (
     <div className="flex flex-col gap-12 lg:gap-16">
-      {isCustomizingStarted && (
-        <style>{`
-          @media (min-width: 1024px) {
-            #customizer-grid {
-              zoom: 0.8;
-            }
-          }
-        `}</style>
-      )}
+      {/* Zoom scale removed per user request */}
       <div
         id="customizer-grid"
-        className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] xl:grid-cols-[1.5fr_0.8fr] gap-10 lg:gap-16 lg:items-start transition-all duration-500"
-        style={{ backgroundColor: '#ffffff', color: '#1F2124' }}
+        className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] xl:grid-cols-[1.5fr_0.8fr] gap-10 lg:gap-16 lg:items-start transition-all duration-500 text-brand-body"
       >
         {/* Left: gallery and customizer */}
         <div id="product-gallery-container" className={`relative z-10 self-start flex flex-col gap-4 w-full scroll-mt-[120px] ${!isCustomizingStarted ? 'lg:sticky lg:top-[120px]' : ''}`}>
+          
+          {/* STEPPER AND HEADING */}
+          {!isGifts && isCustomizingStarted && customizationActive && (
+            <div className="mb-6 animate-in fade-in duration-500 w-full">
+              {/* Stepper Navigation */}
+              <div className="flex items-center justify-between w-full max-w-2xl mx-auto mb-10">
+                {[
+                  { num: 1, label: 'Branding' },
+                  { num: 2, label: 'Position' },
+                  { num: 3, label: 'Extras' },
+                  { num: 4, label: 'Review' },
+                ].map((s, index) => {
+                  const isCompleted = customizerStep > s.num;
+                  const isCurrent = customizerStep === s.num;
+                  const isFuture = customizerStep < s.num;
+
+                  return (
+                    <div key={s.num} className="flex items-center flex-1 last:flex-none">
+                      <div className="flex items-center gap-2 lg:gap-3 cursor-pointer" onClick={() => { if (isCompleted || isCurrent) setCustomizerStep(s.num as any); }}>
+                        {isCompleted ? (
+                          <div className="w-6 h-6 rounded-full bg-brand-primary flex items-center justify-center text-white shrink-0">
+                            <Check size={14} strokeWidth={3} />
+                          </div>
+                        ) : isCurrent ? (
+                          <div className="w-6 h-6 rounded-full border border-brand-primary flex items-center justify-center text-brand-body text-[12px] font-bold shrink-0">
+                            {s.num}
+                          </div>
+                        ) : (
+                          <div className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-gray-400 text-[12px] font-bold shrink-0">
+                            {s.num}
+                          </div>
+                        )}
+                        <span className={`text-[12px] lg:text-[13px] font-josefin font-semibold hidden sm:inline-block ${isFuture ? 'text-gray-400' : 'text-brand-body'}`}>
+                          {s.label}
+                        </span>
+                      </div>
+                      
+                      {/* Connecting Line */}
+                      {index < 3 && (
+                        <div className="flex-1 mx-2 lg:mx-4">
+                          <div className={`border-t ${isCompleted ? 'border-brand-primary border-solid' : 'border-gray-300 border-dashed'} w-full`}></div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Step Header */}
+              <div className="mb-4">
+                <h1 className="text-[22px] lg:text-2xl font-bold font-josefin text-brand-body mb-1">
+                  {customizerStep === 1 ? 'Choose your branding' :
+                   customizerStep === 2 ? 'Position your logo' :
+                   customizerStep === 3 ? 'Add finishing touches' :
+                   'Review your customisation'}
+                </h1>
+                <p className="text-[13px] lg:text-[14px] text-gray-500 font-work">
+                  {customizerStep === 1 ? "Upload your logo, then select how you'd like it applied to the cover." :
+                   customizerStep === 2 ? "Select the placement and size of your logo on the product." :
+                   customizerStep === 3 ? "Select any optional extras like metal corner edges." :
+                   "Check the digital proof before adding to your basket."}
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-col md:flex-row gap-4 lg:gap-6 w-full">
             {product.images.length > 1 && (
               <div className="flex md:flex-col gap-4 overflow-x-auto md:overflow-y-auto md:max-h-[600px] pb-2 md:pb-0 scrollbar-hide shrink-0 order-2 md:order-1">
@@ -578,7 +718,7 @@ export const ProductDetailClient = ({
                       key={img.id}
                       type="button"
                       onClick={() => setActiveImageIndex(index)}
-                      className={`relative h-20 w-20 lg:h-24 lg:w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${index === activeImageIndex ? 'border-[#4a346e]' : 'border-gray-200 hover:border-gray-300'
+                      className={`relative h-20 w-20 lg:h-24 lg:w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${index === activeImageIndex ? 'border-brand-primary' : 'border-gray-200 hover:border-gray-300'
                         }`}
                       style={{ backgroundColor: '#f9f9f9' }}
                     >
@@ -596,26 +736,56 @@ export const ProductDetailClient = ({
             )}
 
             <div
-              className="relative w-full max-w-[500px] mx-auto flex-1 overflow-hidden rounded-xl border border-gray-100 flex items-center justify-center p-4 group order-1 md:order-2"
-              style={{ aspectRatio: imageAspectRatio, backgroundColor: '#ffffff' }}
+              className="relative w-full max-w-[650px] mx-auto flex-1 overflow-hidden rounded-xl flex items-center justify-center p-4 group order-1 md:order-2 cursor-zoom-in"
+              style={{ aspectRatio: imageAspectRatio, backgroundColor: 'var(--brand-cream)' }}
+              onClick={() => setIsPreviewOpen(true)}
             >
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsPreviewOpen(true);
-                }}
-                className="absolute top-4 right-4 z-[30] p-2.5 rounded-full bg-white/90 backdrop-blur shadow-sm text-gray-600 hover:text-black hover:bg-white transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 border border-gray-200"
-                title="Fullscreen Preview"
-              >
-                <ZoomIn className="w-5 h-5" />
-              </button>
+              {/* Image Navigation Arrows */}
+              {product.images && product.images.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setActiveImageIndex((prev) => (prev > 0 ? prev - 1 : product.images.length - 1));
+                    }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 z-[30] w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm text-gray-700 hover:text-brand-primary-dark hover:bg-gray-50 transition-colors border border-gray-200"
+                    title="Previous Image"
+                  >
+                    <ChevronLeft className="w-5 h-5 ml-[-1px]" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setActiveImageIndex((prev) => (prev < product.images.length - 1 ? prev + 1 : 0));
+                    }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 z-[30] w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm text-gray-700 hover:text-brand-primary-dark hover:bg-gray-50 transition-colors border border-gray-200"
+                    title="Next Image"
+                  >
+                    <ChevronRight className="w-5 h-5 mr-[-1px]" />
+                  </button>
+                </>
+              )}
 
               {product.images && product.images.length > 0 ? (
-                <div className="absolute inset-0 bg-gray-50" ref={previewContainerRef}>
-                  <div className="absolute inset-0 p-4 scale-105">
-                    <div className="relative w-full h-full">
+                <div 
+                  className="absolute inset-0 bg-transparent overflow-hidden" 
+                  ref={previewContainerRef}
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                  onMouseMove={handleMouseMove}
+                >
+                  <div 
+                    className="absolute inset-0 p-4 transition-transform duration-300 ease-out"
+                    style={{
+                      transformOrigin: zoomOrigin,
+                      transform: isZooming ? 'scale(2.2)' : 'scale(1.05)'
+                    }}
+                  >
+                    <div className="relative w-full h-full" ref={imageElementRef}>
                       {product.images.map((img, idx) => {
                         const isActive = img.src === activeSrc;
                         return (
@@ -630,13 +800,15 @@ export const ProductDetailClient = ({
                           />
                         );
                       })}
-                      {isCustomizationSurface && isCustomizingStarted && customizationActive && (
-                        <ProductCustomizationOverlay
-                          product={product}
-                          customization={customization}
-                          onPositionChange={handlePositionChange}
-                          imageBounds={imageBounds}
-                        />
+                      {isCustomizingStarted && customizationActive && (
+                        <div className={`absolute inset-0 transition-opacity duration-500 z-20 ${isCustomizationSurface ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+                          <ProductCustomizationOverlay
+                            product={product}
+                            customization={customization}
+                            onPositionChange={handlePositionChange}
+                            imageBounds={imageBounds}
+                          />
+                        </div>
                       )}
                     </div>
                   </div>
@@ -667,6 +839,9 @@ export const ProductDetailClient = ({
                 onGenerateProof={generateProof}
                 onAddToCart={handleAddToCart}
                 isAdding={isAdding}
+                amendKey={amendKey}
+                step={customizerStep}
+                onStepChange={setCustomizerStep}
               />
             </div>
           )}
@@ -675,44 +850,50 @@ export const ProductDetailClient = ({
 
         {/* Image Preview Modal */}
         {isPreviewOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/95 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[var(--brand-cream)]">
             <button
               onClick={() => setIsPreviewOpen(false)}
-              className="absolute top-6 right-6 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-[110]"
+              className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors z-[110]"
             >
-              <X className="w-6 h-6 text-black" />
+              <X className="w-5 h-5 text-gray-700" />
             </button>
 
             {product.images.length > 1 && (
               <>
                 <button
-                  onClick={handlePrevImage}
-                  className="absolute left-6 p-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-[110]"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveImageIndex((prev) => (prev > 0 ? prev - 1 : product.images.length - 1));
+                  }}
+                  className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors z-[110]"
                 >
-                  <ChevronLeft className="w-6 h-6 text-black" />
+                  <ChevronLeft className="w-5 h-5 ml-[-1px] text-gray-700" />
                 </button>
                 <button
-                  onClick={handleNextImage}
-                  className="absolute right-6 p-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-[110]"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveImageIndex((prev) => (prev < product.images.length - 1 ? prev + 1 : 0));
+                  }}
+                  className="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors z-[110]"
                 >
-                  <ChevronRight className="w-6 h-6 text-black" />
+                  <ChevronRight className="w-5 h-5 mr-[-1px] text-gray-700" />
                 </button>
               </>
             )}
 
-            <div className="relative w-[90vw] h-[90vh] flex items-center justify-center p-4">
+            <div className="relative w-full max-w-[80vw] flex items-center justify-center mb-8">
               <div 
                 className="relative"
                 style={{ 
                   aspectRatio: imageAspectRatio,
-                  width: `min(100%, calc((90vh - 32px) * ${imageAspectRatio}))`
+                  width: `min(100%, calc(70vh * ${imageAspectRatio}))`
                 }}
               >
                 <ImageWithFallback
-                  src={activeImage?.src || activeSrc}
-                  alt={activeImage?.alt || product.name}
+                  src={product.images[activeImageIndex]?.src || activeSrc}
+                  alt={product.images[activeImageIndex]?.alt || product.name}
                   fill
-                  sizes="90vw"
+                  sizes="80vw"
                   className="object-contain"
                 />
                 {isCustomizationSurface && isCustomizingStarted && customizationActive && (
@@ -725,36 +906,53 @@ export const ProductDetailClient = ({
                 )}
               </div>
             </div>
+
+            <div className="text-center flex flex-col gap-2 z-[110]">
+              <div className="text-[16px] font-bold text-brand-primary font-josefin">
+                {product.name.split(',')[0]}
+              </div>
+              <div className="text-[11px] font-bold text-gray-500 uppercase tracking-[0.15em]">
+                {activeColorName ? `${activeColorName} - ` : ''}
+                {activeImageIndex === 0 ? 'FRONT COVER' : activeImageIndex === 1 ? 'INSIDE VIEW' : 'ADDITIONAL VIEW'}
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Customisation order sidebar: replaces the product-detail panel once
-            the customer starts the multi-step customisation flow. */}
         {isCustomizingStarted && customizationActive && (
-          <aside className="relative z-20 flex h-fit flex-col gap-3">
-            <div>
-              <p className="text-[13px] font-bold uppercase tracking-widest text-[#4a346e]">{product.categories?.[0]?.name ? `${product.categories[0].name} collection` : 'Collection'}</p>
-              <h2 className="mt-1 text-2xl font-bold leading-tight text-[#1F2124] lg:text-[28px]">{product.name}</h2>
-              {product.sku && <p className="mt-0.5 text-[12px] text-gray-500">SKU: {product.sku}</p>}
-            </div>
-
-            <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-transparent px-3 py-2.5">
-              <span className="text-[14px] font-bold text-[#1F2124]">Quantity</span>
-              <div className="flex h-9 items-center overflow-hidden rounded-md border border-gray-300 bg-white">
-                <button type="button" aria-label="Decrease quantity" className="px-3 text-gray-600 hover:bg-gray-100" onClick={() => setQuantity(Math.max(CUSTOMIZATION_MIN_QTY, quantity - 1))}>−</button>
-                <span className="w-10 text-center text-[14px] font-bold text-[#1F2124]">{quantity}</span>
-                <button type="button" aria-label="Increase quantity" className="px-3 text-gray-600 hover:bg-gray-100" onClick={() => setQuantity(quantity + 1)}>+</button>
+          <aside className="relative z-20 flex h-fit flex-col gap-4">
+            
+            {/* Quantity */}
+            <div className="flex flex-col gap-1 mb-2">
+              <div className="flex justify-between items-center w-full">
+                <span className="text-[14px] font-bold text-brand-body">Quantity</span>
+                <div className="flex h-9 items-center overflow-hidden rounded-md border border-gray-200 bg-white shadow-sm">
+                  <button type="button" aria-label="Decrease quantity" className="px-3 text-gray-600 hover:bg-gray-50" onClick={() => setQuantity(Math.max(CUSTOMIZATION_MIN_QTY, quantity - 1))}>−</button>
+                  <span className="w-12 text-center text-[13px] font-bold text-brand-body">{quantity}</span>
+                  <button type="button" aria-label="Increase quantity" className="px-3 text-gray-600 hover:bg-gray-50" onClick={() => setQuantity(quantity + 1)}>+</button>
+                </div>
+              </div>
+              <div className="text-right text-[12px] font-bold text-gray-500">
+                {formatGBP(priceDetails.unitPrice)} per unit (ex VAT)
               </div>
             </div>
 
-            <dl className="rounded-lg border border-gray-200 bg-transparent px-3 py-2.5 space-y-1 text-[13px] text-gray-600">
-              <div className="flex justify-between gap-4"><dt>Unit price (ex VAT)</dt><dd className="font-medium text-[#1F2124]">{formatGBP(priceDetails.unitPrice)}</dd></div>
-              <div className="flex justify-between gap-4"><dt>Branding</dt><dd className="text-right font-medium text-[#1F2124]">{customization.blockingType}</dd></div>
-              <div className="flex justify-between gap-4"><dt>Corner edges</dt><dd className="font-medium text-[#1F2124]">{customization.cornerEdges}</dd></div>
-              <div className="flex justify-between gap-4 border-t border-gray-200 pt-1.5 mt-1.5"><dt>Subtotal (ex VAT)</dt><dd className="font-semibold text-[#1F2124]">{formatGBP(priceDetails.totalPrice)}</dd></div>
-              <div className="flex justify-between gap-4 bg-[#eff5f4] -mx-3 -mb-2.5 mt-2 px-3 py-2.5 rounded-b-lg border-t border-gray-200"><dt className="font-bold text-[#1F2124]">Including VAT (20%)</dt><dd className="font-bold text-[#1F2124]">{formatGBP(priceDetails.totalPrice * (1 + VAT_RATE))}</dd></div>
-            </dl>
+            {/* Order Summary Box */}
+            <div className="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm">
+              <div className="p-4 space-y-3 text-[13px] text-gray-600">
+                <div className="flex justify-between gap-4 font-bold text-brand-body"><dt>Products total</dt><dd>{formatGBP(priceDetails.unitPrice * quantity)}</dd></div>
+                <div className="flex justify-between gap-4 font-bold text-gray-400"><dt>Branding</dt><dd>{customization.blockingType}</dd></div>
+                <div className="flex justify-between gap-4 font-bold text-gray-400"><dt>Corner edges</dt><dd>{customization.cornerEdges}</dd></div>
+              </div>
+              <div className="px-4 py-3 border-t border-gray-200 flex justify-between gap-4 font-bold text-brand-body text-[14px]">
+                <dt>Subtotal (ex VAT)</dt><dd>{formatGBP(priceDetails.totalPrice)}</dd>
+              </div>
+              <div className="px-4 py-3 bg-brand-tint flex justify-between gap-4 font-bold text-brand-body text-[14px]">
+                <dt>Including VAT (20%)</dt><dd>{formatGBP(priceDetails.totalPrice * (1 + VAT_RATE))}</dd>
+              </div>
+            </div>
 
+            {/* Next Tier Savings */}
             {!isGifts && tiers.length > 0 && (() => {
               const activeTierIndex = tiers.findIndex(tier => quantity >= tier.min && (tier.max === null || quantity <= tier.max));
               const nextTier = activeTierIndex >= 0 ? tiers[activeTierIndex + 1] : null;
@@ -763,66 +961,71 @@ export const ProductDetailClient = ({
               if (!nextTier || savings <= 0) return null;
 
               return (
-                <div className="mt-1 rounded-lg border border-[#d2e0de] bg-[#e6f0ef] px-3 py-2.5">
-                  <p className="text-[13px] font-bold text-[#1f6d63]">You could save {formatGBP(savings)}</p>
-                  <p className="text-[11px] text-gray-600 mb-1.5">by ordering {nextTier.min} units ({formatGBP(nextTier.price)} per unit, ex VAT)</p>
-                  <button type="button" onClick={() => setQuantity(nextTier.min)} className="w-full rounded-md border border-[#1f6d63] bg-white px-2 py-1 text-[11px] font-bold text-[#1f6d63] transition-colors hover:bg-[#d2e0de]">
+                <div className="rounded-lg border border-brand-soft bg-brand-tint px-4 py-4 shadow-sm">
+                  <p className="text-[14px] font-bold text-brand-accent mb-1">You could save {formatGBP(savings)}</p>
+                  <p className="text-[12px] text-gray-500 font-bold mb-4">by ordering {nextTier.min} units ({formatGBP(nextTier.price)} per unit, ex VAT)</p>
+                  <button type="button" onClick={() => setQuantity(nextTier.min)} className="w-full rounded-md border border-brand-accent bg-white px-2 py-2 text-[12px] font-bold text-brand-accent transition-colors">
                     Increase to {nextTier.min} units →
                   </button>
                 </div>
               );
             })()}
 
-            <button type="button" onClick={handleAddToCart} disabled={isAdding} className="mt-3 flex h-[46px] w-full items-center justify-center rounded-lg bg-[#4a346e] text-[15px] font-bold text-white transition-colors hover:bg-[#392657] disabled:opacity-50">
-              {isAdding ? 'Processing...' : (amendKey ? 'Update Basket →' : 'Add to Basket →')}
+            {/* Proceed Button */}
+            <button type="button" onClick={handleSummaryAction} disabled={isSummaryButtonDisabled()} className="flex h-12 w-full items-center justify-center rounded-lg bg-brand-primary text-[15px] font-bold text-white transition-colors hover:bg-brand-primary-dark disabled:opacity-50 shadow-sm mt-2">
+              {getSummaryButtonText()}
             </button>
-            <p className="mt-3 text-[12px] leading-relaxed text-gray-500">All prices shown exclude VAT. Applicable VAT is calculated at checkout. A final digital proof is provided for approval before production.</p>
 
+            {/* Free digital proof */}
+            <div className="rounded-lg border border-gray-200 bg-white px-4 py-4 shadow-sm mt-2">
+              <p className="text-[14px] font-bold text-brand-body mb-1">Free digital proof</p>
+              <p className="text-[12px] text-gray-500 font-medium">Final artwork proof provided via email before production for your approval.</p>
+            </div>
+
+            {/* Price Breaks Table */}
             {!isGifts && tiers.length > 0 && (
-              <div className="mt-1 border border-gray-200 rounded-lg bg-white overflow-hidden">
-                <div className="flex justify-between items-center font-bold px-4 py-3 text-[12px] tracking-widest text-[#1F2124] uppercase bg-gray-50 border-b border-gray-200">
-                  <span>PRICE BREAKS (PER UNIT)</span>
+              <div className="mt-4">
+                <div className="font-bold text-[13px] tracking-wider text-brand-body uppercase mb-3">
+                  PRICE BREAKS (PER UNIT)
                 </div>
-                <div>
-                  <table className="w-full text-left text-[12px]">
-                    <thead className="bg-white text-gray-500">
-                      <tr><th className="px-4 py-2 font-medium">Quantity</th><th className="px-4 py-2 text-right font-medium">Price (ex VAT)</th></tr>
-                    </thead>
-                    <tbody>
-                      {tiers.map(tier => {
-                        const active = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
-                        return (
-                          <tr key={tier.min} onClick={() => setQuantity(tier.min)} className={`cursor-pointer border-t border-gray-200 ${active ? 'bg-[#4a346e] font-bold text-white' : 'text-[#1F2124] hover:bg-gray-50'}`}>
-                            <td className="px-4 py-2.5">{tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}</td>
-                            <td className="px-4 py-2.5 text-right">{formatGBP(tier.price)}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                <table className="w-full text-left text-[12px]">
+                  <thead className="text-brand-grey border-b border-[var(--brand-border)]">
+                    <tr><th className="py-2 font-medium">Quantity</th><th className="py-2 text-right font-medium">Price per unit (ex VAT)</th></tr>
+                  </thead>
+                  <tbody>
+                    {tiers.map(tier => {
+                      const active = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
+                      return (
+                        <tr key={tier.min} onClick={() => setQuantity(tier.min)} className={`cursor-pointer border-b transition-colors ${active ? 'border-brand-primary bg-brand-primary text-white font-bold' : 'border-[var(--brand-border)] text-brand-body hover:bg-brand-tint'}`}>
+                          <td className="py-3 px-2">{tier.min}{tier.max ? ` - ${tier.max}` : '+'}</td>
+                          <td className="py-3 px-2 text-right">{formatGBP(tier.price)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
           </aside>
         )}
 
         {/* Right: normal product details */}
-        <div className={`relative z-20 flex flex-col gap-4 ${isCustomizingStarted && customizationActive ? 'hidden' : ''}`} style={{ backgroundColor: '#ffffff' }}>
+        <div className={`relative z-20 flex flex-col gap-4 ${isCustomizingStarted && customizationActive ? 'hidden' : ''}`}>
 
           <div>
-            <div className="text-[13px] font-bold tracking-widest text-[#4a346e] uppercase mb-2">
+            <div className="text-[13px] font-bold tracking-widest text-brand-primary uppercase mb-2">
               {product.categories?.[0]?.name ? `${product.categories[0].name} COLLECTION` : 'COLLECTION'}
             </div>
             <h1
               className="text-2xl lg:text-[32px] font-bold leading-tight mb-2"
-              style={{ color: '#1F2124' }}
+              style={{ color: 'var(--brand-body)' }}
             >
               {product.name}
             </h1>
 
             {product.short_description && (
               <div
-                className="text-[15px] text-[#1F2124] mb-3"
+                className="text-[15px] text-brand-body mb-3"
                 dangerouslySetInnerHTML={{ __html: product.short_description }}
               />
             )}
@@ -830,7 +1033,7 @@ export const ProductDetailClient = ({
 
           {/* PRICE BLOCK */}
           <div>
-            <div className="text-[20px] font-bold text-[#1F2124] mb-1">
+            <div className="text-[20px] font-bold text-brand-body mb-1">
               {formatGBP(priceDetails.unitPrice)} <span className="text-[14px] font-normal text-gray-500">(ex VAT)</span>
             </div>
 
@@ -858,7 +1061,7 @@ export const ProductDetailClient = ({
 
           {/* Description Accordion */}
           <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mb-2">
-            <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-[#1F2124] hover:bg-gray-50">
+            <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
               <span>Description</span>
               <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
             </summary>
@@ -869,7 +1072,7 @@ export const ProductDetailClient = ({
                   if (descHtml) {
                     return (
                       <div 
-                        className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-black hover:prose-a:text-gray-600"
+                        className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
                         dangerouslySetInnerHTML={{ __html: descHtml }} 
                       />
                     );
@@ -881,31 +1084,36 @@ export const ProductDetailClient = ({
 
           {/* Available Colours Section */}
           {colorVariants.length > 0 && (
-            <div className="mt-2 mb-2">
-              <span className="text-[14px] font-bold text-[#1F2124] block mb-3">Colour: {product.name.split(', ').pop() || 'Selected'}</span>
-              <div className="flex flex-wrap items-center gap-2">
-                {colorVariants.map((color) => {
-                  const isActive = product.slug === color.slug;
-                  return (
-                    <Link
-                      key={color.slug}
-                      href={`/product/${color.slug}`}
-                      title={color.name}
-                      className={`w-7 h-7 rounded-full shadow-sm transition-transform hover:scale-110 ${isActive ? 'ring-2 ring-offset-2 ring-black scale-110' : 'border border-gray-300'
-                        }`}
-                      style={{ backgroundColor: color.hex }}
-                    />
-                  );
-                })}
+            <>
+              <hr className="border-gray-200" />
+              <div className="mt-2 mb-2">
+                <span className="text-[14px] font-bold text-brand-body block mb-3">Colour: {product.name.split(', ').pop() || 'Selected'}</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  {colorVariants.map((color) => {
+                    const isActive = product.slug === color.slug;
+                    return (
+                      <Link
+                        key={color.slug}
+                        href={`/product/${color.slug}`}
+                        title={color.name}
+                        className={`w-8 h-8 rounded-full shadow-sm transition-transform hover:scale-110 ${isActive ? 'ring-2 ring-offset-2 ring-brand-body scale-110' : 'border border-gray-300'
+                          }`}
+                        style={{ backgroundColor: color.hex }}
+                      />
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            </>
           )}
 
-          {/* Quantity Box */}
-          <div className="bg-transparent border border-gray-200 rounded-lg px-4 py-4 flex flex-col gap-3">
+          <hr className="border-gray-200" />
+
+          {/* Quantity & Actions (Unwrapped) */}
+          <div className="flex flex-col gap-4 mt-2">
             <div className="flex justify-between items-start">
-              <label className="text-[14px] font-bold text-[#1F2124] mt-1">Quantity</label>
-              <div className="flex flex-col items-end gap-1.5">
+              <label className="text-[14px] font-bold text-brand-body mt-2">Quantity</label>
+              <div className="flex flex-col items-end gap-2">
                 <div className="flex items-center border border-gray-300 bg-white rounded-md overflow-hidden h-[36px]">
                   <button type="button" className="px-3 hover:bg-gray-100 text-gray-600 transition" onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
                   <input
@@ -916,12 +1124,12 @@ export const ProductDetailClient = ({
                       const val = parseInt(e.target.value, 10);
                       if (!Number.isNaN(val) && val >= 1) setQuantity(val);
                     }}
-                    className="w-[50px] text-center font-bold text-[#1F2124] focus:outline-none"
+                    className="w-[50px] text-center font-bold text-brand-body focus:outline-none"
                   />
                   <button type="button" className="px-3 hover:bg-gray-100 text-gray-600 transition" onClick={() => setQuantity(quantity + 1)}>+</button>
                 </div>
-                <div className="text-[15px] font-bold text-[#1F2124]">
-                  {formatGBP(priceDetails.unitPrice)} <span className="text-[13px] font-normal text-gray-500">per unit (ex VAT)</span>
+                <div className="text-[14px] font-bold text-brand-body mt-1">
+                  {formatGBP(priceDetails.unitPrice)} <span className="font-normal text-gray-500">per unit (ex VAT)</span>
                 </div>
               </div>
             </div>
@@ -934,10 +1142,7 @@ export const ProductDetailClient = ({
 
             {!isGifts && customizationAllowed && (
               <label
-                className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${!customization.enabled
-                    ? 'border-gray-300 bg-white'
-                    : 'border-gray-200 bg-gray-50'
-                  }`}
+                className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors bg-white ${!customization.enabled ? 'border-gray-300' : 'border-gray-200'}`}
               >
                 <div className="pt-0.5">
                   <input
@@ -950,11 +1155,11 @@ export const ProductDetailClient = ({
                         setIsCustomizingStarted(false);
                       }
                     }}
-                    className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
+                    className="w-4 h-4 rounded border-gray-300 text-brand-primary-dark focus:ring-black"
                   />
                 </div>
                 <div className="flex-1">
-                  <span className="block font-bold text-[14px] text-[#4a346e]">
+                  <span className="block font-bold text-[14px] text-brand-primary">
                     No customisation required
                   </span>
                   <span className="block text-[13px] text-gray-500 mt-1">
@@ -973,13 +1178,13 @@ export const ProductDetailClient = ({
                 const potentialSavings = (priceDetails.unitPrice - nextTier.price) * nextTier.min;
                 if (potentialSavings > 0) {
                   return (
-                    <div className="bg-[#e6f0ef] rounded-lg px-4 py-3 mt-1 border border-[#d2e0de]">
-                      <div className="font-bold text-[#1f6d63] text-[14px]">You could save {formatGBP(potentialSavings)}</div>
-                      <div className="text-[13px] text-gray-600 mb-2">by ordering {nextTier.min} units ({formatGBP(nextTier.price)} per unit, ex VAT)</div>
+                    <div className="bg-[#e9f2f2] rounded-lg px-5 py-5 border border-[#c2dede]">
+                      <div className="font-bold text-[#355a5a] text-[15px] mb-1">You could save {formatGBP(potentialSavings)}</div>
+                      <div className="text-[13px] text-gray-500 font-medium mb-4">by ordering {nextTier.min} units ({formatGBP(nextTier.price)} per unit, ex VAT)</div>
                       <button
                         type="button"
                         onClick={() => setQuantity(nextTier.min)}
-                        className="w-full py-1.5 bg-white rounded-md border border-[#1f6d63] text-[#1f6d63] text-[13px] font-bold hover:bg-[#d2e0de] transition"
+                        className="w-full py-2.5 bg-white rounded-md border border-[#355a5a] text-[#355a5a] text-[13px] font-bold hover:bg-[#e9f2f2] transition"
                       >
                         Increase to {nextTier.min} units &rarr;
                       </button>
@@ -992,34 +1197,26 @@ export const ProductDetailClient = ({
 
             <button
               type="button"
-              onClick={handleAddToCart}
-              disabled={isAdding}
-              className="w-full h-[54px] text-[16px] font-bold rounded-lg text-white transition-all disabled:opacity-50 flex items-center justify-center bg-[#4a346e] hover:bg-[#392657] mt-2"
+              onClick={handleSummaryAction}
+              disabled={isSummaryButtonDisabled()}
+              className="w-full h-[54px] text-[16px] font-bold rounded-lg text-white transition-all disabled:opacity-50 flex items-center justify-center bg-brand-primary hover:bg-brand-primary-dark mt-2 shadow-sm"
             >
-              {isAdding 
-                ? 'Processing...' 
-                : (!customizationActive || isCustomizingStarted || isGifts)
-                  ? 'Add to Basket \u2192' 
-                  : 'Start customising \u2192'}
+              {getSummaryButtonText()}
             </button>
-          </div>
-
-          <div className="text-[14px] text-gray-600 mt-2">
-            Prices below {customizationActive ? 'include logo branding' : 'exclude logo branding'}.
           </div>
 
           {/* VOLUME PRICING TABLE */}
           {!isGifts && tiers.length > 0 && (
-            <div className="mt-1 border border-gray-200 rounded-lg bg-white overflow-hidden">
-              <div className="flex justify-between items-center font-bold px-4 py-3 text-[13px] tracking-widest text-[#1F2124] uppercase bg-gray-50 border-b border-gray-200">
+            <div className="mt-1 border border-gray-200 rounded-lg bg-transparent overflow-hidden">
+              <div className="flex justify-between items-center font-bold px-4 py-3 text-[13px] tracking-widest text-brand-body uppercase bg-transparent border-b border-gray-200">
                 <span>PRICE BREAKS (PER UNIT)</span>
               </div>
               <div>
                 <table className="w-full text-left text-[13px]">
-                  <thead className="bg-white text-gray-500">
+                  <thead className="bg-transparent text-brand-grey border-b border-[var(--brand-border)]">
                     <tr>
                       <th className="py-2.5 px-4 font-medium w-1/2">Quantity</th>
-                      <th className="py-2.5 px-4 font-medium w-1/2 text-right">Price (ex VAT)</th>
+                      <th className="py-2.5 px-4 font-medium w-1/2 text-right">Price per unit (ex VAT)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1029,7 +1226,7 @@ export const ProductDetailClient = ({
                         <tr
                           key={tier.min}
                           onClick={() => setQuantity(tier.min)}
-                          className={`border-t border-gray-200 cursor-pointer transition-colors ${isActive ? 'bg-[#4a346e] text-white font-bold' : 'hover:bg-gray-100 text-[#1F2124]'
+                          className={`border-b cursor-pointer transition-colors ${isActive ? 'border-brand-primary bg-brand-primary text-white font-bold' : 'border-[var(--brand-border)] hover:bg-brand-tint text-brand-body'
                             }`}
                         >
                           <td className="py-2.5 px-4">
@@ -1049,7 +1246,7 @@ export const ProductDetailClient = ({
 
           {/* Specifications Accordion */}
           <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
-            <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-[#1F2124] hover:bg-gray-50">
+            <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
               <span>Specifications</span>
               <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
             </summary>
@@ -1077,13 +1274,13 @@ export const ProductDetailClient = ({
 
               return (
                 <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
-                  <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-[#1F2124] hover:bg-gray-50">
+                  <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
                     <span>Delivery</span>
                     <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
                   </summary>
                   <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
                     <div 
-                      className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-black hover:prose-a:text-gray-600"
+                      className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
                       dangerouslySetInnerHTML={{ __html: deliveryTab.content }} 
                     />
                   </div>
@@ -1097,13 +1294,13 @@ export const ProductDetailClient = ({
               return title !== 'description' && title !== 'shipping' && title !== 'delivery';
             }).map((tab, idx) => (
               <details key={idx} className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
-                <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-[#1F2124] hover:bg-gray-50">
+                <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
                   <span>{tab.title}</span>
                   <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
                 </summary>
                 <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
                   <div 
-                    className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-black hover:prose-a:text-gray-600"
+                    className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
                     dangerouslySetInnerHTML={{ __html: tab.content }} 
                   />
                 </div>
@@ -1112,38 +1309,40 @@ export const ProductDetailClient = ({
 
         </div>
       </div>
-      {pendingPropagate && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Update all colours</h3>
-            <p className="text-gray-600 mb-8">
-              These branding changes will be applied to all {pendingPropagate.siblingsCount} other {pendingPropagate.siblingsCount === 1 ? 'colour' : 'colours'} in this group, so every colour matches.
-            </p>
-            <div className="flex flex-col w-full gap-3">
-              <button
-                type="button"
-                disabled={isPropagating}
-                onClick={async () => {
-                  setIsPropagating(true);
-                  const { propagateAmendToGroup } = await import('@/features/cart/utils/amend-group');
-                  await propagateAmendToGroup(pendingPropagate.amendKey, pendingPropagate.customization, items, updateItem);
-                  sessionStorage.removeItem(`abbeygate-amend-${pendingPropagate.amendKey}`);
-                  window.location.href = '/cart';
-                }}
-                className="w-full h-12 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {isPropagating ? (
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                ) : null}
-                Apply to all colours
-              </button>
+
+        {pendingPropagate && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full flex flex-col items-center text-center animate-in zoom-in-95 duration-200 border border-brand-primary/20">
+              <h3 className="text-xl font-bold text-brand-body mb-2">Update all colours</h3>
+              <p className="text-gray-600 mb-8">
+                These branding changes will be applied to all {pendingPropagate.siblingsCount} other {pendingPropagate.siblingsCount === 1 ? 'colour' : 'colours'} in this group, so every colour matches.
+              </p>
+              <div className="flex flex-col w-full gap-3">
+                <button
+                  type="button"
+                  disabled={isPropagating}
+                  onClick={async () => {
+                    setIsPropagating(true);
+                    const { propagateAmendToGroup } = await import('@/features/cart/utils/amend-group');
+                    await propagateAmendToGroup(pendingPropagate.amendKey, pendingPropagate.customization, items, updateItem);
+                    sessionStorage.removeItem(`abbeygate-amend-${pendingPropagate.amendKey}`);
+                    window.location.href = '/cart';
+                  }}
+                  className="w-full h-12 bg-brand-primary text-white font-medium rounded-lg hover:bg-brand-primary-dark transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {isPropagating ? (
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : null}
+                  Apply to all colours
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
     </div>
   );
 };

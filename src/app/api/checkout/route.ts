@@ -163,11 +163,11 @@ export async function POST(request: NextRequest) {
         if (part.toLowerCase().startsWith('samesite=')) options.sameSite = part.substring(9).toLowerCase();
       }
 
-      // ENFORCE cross-subdomain sharing ONLY if we are on the abbeygate domain.
-      // If we are testing on vercel.app, we must NOT set the domain attribute to .abbeygate-england.com,
-      // otherwise the browser will strictly reject the cookie.
-      const host = request.headers.get('host') || '';
-      if (host.includes('abbeygate-england.com')) {
+      // ENFORCE cross-subdomain sharing ONLY if running on the actual production domain.
+      // If we are on Vercel preview (e.g. abbeygate-website.vercel.app), forcing domain='.abbeygate-england.com'
+      // will cause the browser to reject the cookie completely.
+      const origin = request.headers.get('origin') || '';
+      if (origin.includes('abbeygate-england.com')) {
         options.domain = '.abbeygate-england.com';
       }
 

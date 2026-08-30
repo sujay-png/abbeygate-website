@@ -22,13 +22,13 @@ export function CategoryCard({
           alt={title}
           fill
           priority={priority}
-          unoptimized={true}
+          quality={75}
           className="object-cover transition duration-500 group-hover:scale-105"
           sizes="(max-width: 768px) 100vw, 46vw"
         />
       </div>
 
-      <h3 className="mt-4 text-center font-josefin text-[19px] font-semibold text-black">
+      <h3 className="mt-4 text-center font-josefin text-[19px] font-semibold text-brand-primary-dark">
         {title}
       </h3>
     </Link>

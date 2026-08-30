@@ -21,10 +21,21 @@ export const ProductCustomizationOverlay = ({
 
   const anchors = getLogoAnchors(product);
   
-  const bookLeft = imageBounds ? imageBounds.left : anchors.bookLeft;
-  const bookRight = imageBounds ? imageBounds.right : anchors.bookRight;
-  const bookTop = imageBounds ? imageBounds.top : anchors.bookTop;
-  const bookBottom = imageBounds ? imageBounds.bottom : anchors.bookBottom;
+  let bookLeft = imageBounds ? imageBounds.left : anchors.bookLeft;
+  let bookRight = imageBounds ? imageBounds.right : anchors.bookRight;
+  let bookTop = imageBounds ? imageBounds.top : anchors.bookTop;
+  let bookBottom = imageBounds ? imageBounds.bottom : anchors.bookBottom;
+
+  // The heavy drop shadow on this specific product image throws off the edge detection,
+  // making the book height seem huge and pushing the diaryTopOffset too far down.
+  // Because the shadow is so large on the right/bottom, the book is off-center, 
+  // so we must hand-calibrate the bounds to strictly cover the book face.
+  if (product.name?.toLowerCase().includes('richmond finegrain quarto')) {
+    bookLeft = 16.8;
+    bookRight = 84.4;
+    bookTop = 9.8;
+    bookBottom = 90.8;
+  }
 
   const bookWidth = bookRight - bookLeft;
   const bookHeight = bookBottom - bookTop;
@@ -191,6 +202,7 @@ export const ProductCustomizationOverlay = ({
             >
               <svg width="100%" height="100%" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ overflow: 'visible' }}>
                 <defs>
+                  {/* Base Metallic Gradient */}
                   <linearGradient id={`metalBase-${i}`} x1="0%" y1="0%" x2="100%" y2="100%">
                     {customization.cornerEdges === 'Gold' ? (
                       <>
@@ -211,25 +223,75 @@ export const ProductCustomizationOverlay = ({
                     )}
                   </linearGradient>
                   
+                  {/* Drop Shadow filter */}
                   <filter id={`shadow-${i}`} x="-20%" y="-20%" width="150%" height="150%">
                     <feDropShadow dx="-1" dy="2" stdDeviation="1.5" floodColor="#000000" floodOpacity="0.4" />
                   </filter>
                 </defs>
                 
                 <g filter={`url(#shadow-${i})`}>
+                  {/* Main Body (Thinner) */}
                   <path
                     d={isNotebook ? "M 8 0 L 20 0 Q 40 0 40 20 L 40 32 L 34 32 L 34 20 Q 34 6 20 6 L 8 6 Z" : "M 0 0 L 36 0 Q 40 0 40 4 L 40 40 L 34 40 L 34 10 Q 34 6 30 6 L 0 6 Z"}
                     fill={`url(#metalBase-${i})`}
                   />
-                  <path d={isNotebook ? "M 8 6 L 20 6 Q 34 6 34 20 L 34 32" : "M 0 6 L 30 6 Q 34 6 34 10 L 34 40"} stroke="rgba(0,0,0,0.6)" strokeWidth="0.75" fill="none" />
-                  <path d={isNotebook ? "M 8 0 L 20 0 Q 40 0 40 20 L 40 32" : "M 0 0 L 36 0 Q 40 0 40 4 L 40 40"} stroke="rgba(0,0,0,0.3)" strokeWidth="0.5" fill="none" />
-                  <path d={isNotebook ? "M 8 1.5 L 20 1.5 Q 38.5 1.5 38.5 20 L 38.5 32" : "M 0 1.5 L 35 1.5 Q 38.5 1.5 38.5 5 L 38.5 40"} stroke="rgba(255,255,255,0.9)" strokeWidth="1.2" fill="none" style={{ filter: 'blur(0.5px)' }} />
-                  <path d={isNotebook ? "M 8 3 L 20 3 Q 37 3 37 20 L 37 32" : "M 0 3 L 34 3 Q 37 3 37 6 L 37 40"} stroke="rgba(255,255,255,0.4)" strokeWidth="2" fill="none" style={{ filter: 'blur(1px)' }} />
-                  <path d={isNotebook ? "M 8 5 L 20 5 Q 35 5 35 20 L 35 32" : "M 0 5 L 31 5 Q 35 5 35 9 L 35 40"} stroke="rgba(0,0,0,0.3)" strokeWidth="1" fill="none" style={{ filter: 'blur(1px)' }} />
-                  <path d="M 12 0 L 12 6 M 14 0 L 14 6" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
-                  <path d="M 12.5 0 L 12.5 6 M 14.5 0 L 14.5 6" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
-                  <path d="M 34 26 L 40 26 M 34 28 L 40 28" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
-                  <path d="M 34 26.5 L 40 26.5 M 34 28.5 L 40 28.5" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
+                  
+                  {/* Dark inner shadow line (contacts the book) */}
+                  <path
+                    d={isNotebook ? "M 8 6 L 20 6 Q 34 6 34 20 L 34 32" : "M 0 6 L 30 6 Q 34 6 34 10 L 34 40"}
+                    stroke="rgba(0,0,0,0.6)"
+                    strokeWidth="0.75"
+                    fill="none"
+                  />
+                  
+                  {/* Dark outer edge line */}
+                  <path
+                    d={isNotebook ? "M 8 0 L 20 0 Q 40 0 40 20 L 40 32" : "M 0 0 L 36 0 Q 40 0 40 4 L 40 40"}
+                    stroke="rgba(0,0,0,0.3)"
+                    strokeWidth="0.5"
+                    fill="none"
+                  />
+                  
+                  {/* Primary bright highlight running along the ridge of the metal tube */}
+                  <path
+                    d={isNotebook ? "M 8 1.5 L 20 1.5 Q 38.5 1.5 38.5 20 L 38.5 32" : "M 0 1.5 L 35 1.5 Q 38.5 1.5 38.5 5 L 38.5 40"}
+                    stroke="rgba(255,255,255,0.9)"
+                    strokeWidth="1.2"
+                    fill="none"
+                    style={{ filter: 'blur(0.5px)' }}
+                  />
+                  
+                  {/* Secondary soft highlight */}
+                  <path
+                    d={isNotebook ? "M 8 3 L 20 3 Q 37 3 37 20 L 37 32" : "M 0 3 L 34 3 Q 37 3 37 6 L 37 40"}
+                    stroke="rgba(255,255,255,0.4)"
+                    strokeWidth="2"
+                    fill="none"
+                    style={{ filter: 'blur(1px)' }}
+                  />
+                  
+                  {/* Dark shadow inner rim */}
+                  <path
+                    d={isNotebook ? "M 8 5 L 20 5 Q 35 5 35 20 L 35 32" : "M 0 5 L 31 5 Q 35 5 35 9 L 35 40"}
+                    stroke="rgba(0,0,0,0.3)"
+                    strokeWidth="1"
+                    fill="none"
+                    style={{ filter: 'blur(1px)' }}
+                  />
+
+                  {/* Crimps / Indentations (Top Arm) */}
+                  <path d="M 12 0 L 12 6" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
+                  <path d="M 12.5 0 L 12.5 6" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
+                  
+                  <path d="M 14 0 L 14 6" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
+                  <path d="M 14.5 0 L 14.5 6" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
+                  
+                  {/* Crimps / Indentations (Right Arm) */}
+                  <path d="M 34 26 L 40 26" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
+                  <path d="M 34 26.5 L 40 26.5" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
+                  
+                  <path d="M 34 28 L 40 28" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
+                  <path d="M 34 28.5 L 40 28.5" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
                 </g>
               </svg>
             </div>

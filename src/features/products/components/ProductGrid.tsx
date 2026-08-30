@@ -17,7 +17,7 @@ export const ProductGrid = ({ products }: ProductGridProps) => {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10 bg-white">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
       {products.map((product) => {
         const image = product.images[0];
         const imageSrc = image?.thumbnail || image?.src;
@@ -26,15 +26,9 @@ export const ProductGrid = ({ products }: ProductGridProps) => {
           <Link
             key={product.id}
             href={`/product/${product.slug}`}
-            className="group flex flex-col bg-white"
+            className="group flex flex-col"
           >
-            <div className="relative aspect-square w-full bg-[#f5f5f5] overflow-hidden mb-4">
-              <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex items-center justify-center">
-                <span className="text-white border border-white px-5 py-2 text-xs font-bold tracking-wider uppercase">
-                  View Details
-                </span>
-              </div>
-
+            <div className="relative aspect-square w-full bg-white overflow-hidden mb-4">
               {imageSrc ? (
                 <Image
                   src={imageSrc}
@@ -50,7 +44,7 @@ export const ProductGrid = ({ products }: ProductGridProps) => {
               )}
             </div>
 
-            <h3 className="text-[15px] font-semibold text-[#1F2124] leading-snug mb-2 group-hover:text-[#6F4086] transition-colors line-clamp-2">
+            <h3 className="text-[15px] font-semibold text-brand-body leading-snug mb-2 group-hover:text-brand-primary transition-colors line-clamp-2">
               {product.name}
             </h3>
 
@@ -60,7 +54,7 @@ export const ProductGrid = ({ products }: ProductGridProps) => {
               </p>
             )}
 
-            <span className="text-[15px] font-bold text-[#1F2124] mt-auto">
+            <span className="text-[15px] font-bold text-brand-body mt-auto">
               {getProductDisplayPrice(product)}
             </span>
           </Link>

@@ -12,7 +12,7 @@ import type { Metadata } from 'next';
 
 type PageProps = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ProductPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
-  const resolvedSearchParams = await searchParams;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const amendKey = typeof resolvedSearchParams?.amend === 'string' ? resolvedSearchParams.amend : undefined;
 
   let product;
@@ -91,7 +91,7 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
         'violet': '#7F00FF',
         'lime': '#32CD32',
         'aqua': '#00FFFF',
-        'full-colour': '#ffffff',
+        'full-colour': '#fff',
       };
 
       const tagId = product.tags[0].id; // The grouping tag
@@ -176,7 +176,7 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
   const customTabs = await getProductCustomTabs(product.id);
 
   return (
-    <div style={{ backgroundColor: '#ffffff', minHeight: '100vh' }}>
+    <div className="min-h-screen bg-brand-cream">
       <Breadcrumb paths={breadcrumbPaths} />
       <Container className="py-8 md:py-10">
         <ProductDetailClient

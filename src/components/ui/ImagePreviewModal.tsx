@@ -1,7 +1,7 @@
 'use client';
 
 import { X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import type { CartItem } from '@/features/cart/context/CartContext';
 import { getImageBoundingBox } from '@/features/products/utils/product-helpers';
@@ -15,9 +15,15 @@ type ImagePreviewModalProps = {
 };
 
 export const ImagePreviewModal = ({ isOpen, onClose, item, title = 'Customization Preview' }: ImagePreviewModalProps) => {
+  const onCloseRef = useRef(onClose);
+  
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') onCloseRef.current();
     };
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
@@ -27,7 +33,7 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, title = 'Customizatio
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   const [imageBounds, setImageBounds] = useState<{ top: number, bottom: number, left: number, right: number } | null>(null);
   const [imageAspectRatio, setImageAspectRatio] = useState<number>(1);
@@ -45,6 +51,10 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, title = 'Customizatio
   // match the main product page's logic. Composed canvas corners can sometimes drift.
   const useComposedPreview = Boolean(
     fullPreviewUrl && !hasCornerEdges,
+  );
+
+  const isNotebook = Boolean(
+    item?.name?.toLowerCase().includes('lewes smoothgrain') || item?.slug?.toLowerCase().includes('lewes-smoothgrain')
   );
 
   const isNotebook = Boolean(
@@ -228,6 +238,7 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, title = 'Customizatio
                     >
                       <svg width="100%" height="100%" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ overflow: 'visible' }}>
                         <defs>
+                          {/* Base Metallic Gradient */}
                           <linearGradient id={`modalGrad-${i}`} x1="0%" y1="0%" x2="100%" y2="100%">
                             {cornerEdges === 'Gold' ? (
                               <>
@@ -248,25 +259,75 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, title = 'Customizatio
                             )}
                           </linearGradient>
                           
+                          {/* Drop Shadow filter */}
                           <filter id={`modalShadow-${i}`} x="-20%" y="-20%" width="150%" height="150%">
                             <feDropShadow dx="-1" dy="2" stdDeviation="1.5" floodColor="#000000" floodOpacity="0.4" />
                           </filter>
                         </defs>
                         
                         <g filter={`url(#modalShadow-${i})`}>
+                          {/* Main Body (Thinner) */}
                           <path
                             d={isNotebook ? "M 8 0 L 20 0 Q 40 0 40 20 L 40 32 L 34 32 L 34 20 Q 34 6 20 6 L 8 6 Z" : "M 0 0 L 36 0 Q 40 0 40 4 L 40 40 L 34 40 L 34 10 Q 34 6 30 6 L 0 6 Z"}
                             fill={`url(#modalGrad-${i})`}
                           />
-                          <path d={isNotebook ? "M 8 6 L 20 6 Q 34 6 34 20 L 34 32" : "M 0 6 L 30 6 Q 34 6 34 10 L 34 40"} stroke="rgba(0,0,0,0.6)" strokeWidth="0.75" fill="none" />
-                          <path d={isNotebook ? "M 8 0 L 20 0 Q 40 0 40 20 L 40 32" : "M 0 0 L 36 0 Q 40 0 40 4 L 40 40"} stroke="rgba(0,0,0,0.3)" strokeWidth="0.5" fill="none" />
-                          <path d={isNotebook ? "M 8 1.5 L 20 1.5 Q 38.5 1.5 38.5 20 L 38.5 32" : "M 0 1.5 L 35 1.5 Q 38.5 1.5 38.5 5 L 38.5 40"} stroke="rgba(255,255,255,0.9)" strokeWidth="1.2" fill="none" style={{ filter: 'blur(0.5px)' }} />
-                          <path d={isNotebook ? "M 8 3 L 20 3 Q 37 3 37 20 L 37 32" : "M 0 3 L 34 3 Q 37 3 37 6 L 37 40"} stroke="rgba(255,255,255,0.4)" strokeWidth="2" fill="none" style={{ filter: 'blur(1px)' }} />
-                          <path d={isNotebook ? "M 8 5 L 20 5 Q 35 5 35 20 L 35 32" : "M 0 5 L 31 5 Q 35 5 35 9 L 35 40"} stroke="rgba(0,0,0,0.3)" strokeWidth="1" fill="none" style={{ filter: 'blur(1px)' }} />
-                          <path d="M 12 0 L 12 6 M 14 0 L 14 6" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
-                          <path d="M 12.5 0 L 12.5 6 M 14.5 0 L 14.5 6" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
-                          <path d="M 34 26 L 40 26 M 34 28 L 40 28" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
-                          <path d="M 34 26.5 L 40 26.5 M 34 28.5 L 40 28.5" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
+                          
+                          {/* Dark inner shadow line (contacts the book) */}
+                          <path
+                            d={isNotebook ? "M 8 6 L 20 6 Q 34 6 34 20 L 34 32" : "M 0 6 L 30 6 Q 34 6 34 10 L 34 40"}
+                            stroke="rgba(0,0,0,0.6)"
+                            strokeWidth="0.75"
+                            fill="none"
+                          />
+                          
+                          {/* Dark outer edge line */}
+                          <path
+                            d={isNotebook ? "M 8 0 L 20 0 Q 40 0 40 20 L 40 32" : "M 0 0 L 36 0 Q 40 0 40 4 L 40 40"}
+                            stroke="rgba(0,0,0,0.3)"
+                            strokeWidth="0.5"
+                            fill="none"
+                          />
+                          
+                          {/* Primary bright highlight running along the ridge of the metal tube */}
+                          <path
+                            d={isNotebook ? "M 8 1.5 L 20 1.5 Q 38.5 1.5 38.5 20 L 38.5 32" : "M 0 1.5 L 35 1.5 Q 38.5 1.5 38.5 5 L 38.5 40"}
+                            stroke="rgba(255,255,255,0.9)"
+                            strokeWidth="1.2"
+                            fill="none"
+                            style={{ filter: 'blur(0.5px)' }}
+                          />
+                          
+                          {/* Secondary soft highlight */}
+                          <path
+                            d={isNotebook ? "M 8 3 L 20 3 Q 37 3 37 20 L 37 32" : "M 0 3 L 34 3 Q 37 3 37 6 L 37 40"}
+                            stroke="rgba(255,255,255,0.4)"
+                            strokeWidth="2"
+                            fill="none"
+                            style={{ filter: 'blur(1px)' }}
+                          />
+                          
+                          {/* Dark shadow inner rim */}
+                          <path
+                            d={isNotebook ? "M 8 5 L 20 5 Q 35 5 35 20 L 35 32" : "M 0 5 L 31 5 Q 35 5 35 9 L 35 40"}
+                            stroke="rgba(0,0,0,0.3)"
+                            strokeWidth="1"
+                            fill="none"
+                            style={{ filter: 'blur(1px)' }}
+                          />
+
+                          {/* Crimps / Indentations (Top Arm) */}
+                          <path d="M 12 0 L 12 6" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
+                          <path d="M 12.5 0 L 12.5 6" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
+                          
+                          <path d="M 14 0 L 14 6" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
+                          <path d="M 14.5 0 L 14.5 6" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
+                          
+                          {/* Crimps / Indentations (Right Arm) */}
+                          <path d="M 34 26 L 40 26" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
+                          <path d="M 34 26.5 L 40 26.5" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
+                          
+                          <path d="M 34 28 L 40 28" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
+                          <path d="M 34 28.5 L 40 28.5" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
                         </g>
                       </svg>
                     </div>

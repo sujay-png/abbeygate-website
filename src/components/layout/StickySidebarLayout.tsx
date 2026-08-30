@@ -58,7 +58,7 @@ export function StickySidebarLayout({ sections }: StickySidebarLayoutProps) {
   };
 
   return (
-    <section className="py-16 md:py-24 bg-white">
+    <section className="py-16 md:py-24 bg-brand-cream">
       <Container maxWidthClass="max-w-[1400px]">
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-24 relative">
           
@@ -72,8 +72,8 @@ export function StickySidebarLayout({ sections }: StickySidebarLayoutProps) {
                     onClick={() => scrollToSection(section.id)}
                     className={`text-left text-[15px] font-work transition-colors ${
                       activeSection === section.id 
-                        ? 'text-black font-bold' 
-                        : 'text-[#1F2124]/60 hover:text-black'
+                        ? 'text-brand-primary-dark font-bold' 
+                        : 'text-brand-body/60 hover:text-brand-primary-dark'
                     }`}
                   >
                     {section.title}
@@ -87,7 +87,7 @@ export function StickySidebarLayout({ sections }: StickySidebarLayoutProps) {
           <div className="w-full lg:w-2/3 flex flex-col gap-20">
             {sections.map((section, idx) => (
               <div key={section.id} id={section.id} className="scroll-mt-32">
-                <h3 className="text-2xl md:text-[30px] font-bold text-black font-sans tracking-tight mb-8">
+                <h3 className="text-2xl md:text-[30px] font-bold text-brand-primary-dark font-sans tracking-tight mb-8">
                   {section.title}
                 </h3>
                 
@@ -116,11 +116,11 @@ export function StickySidebarLayout({ sections }: StickySidebarLayoutProps) {
                 {section.cards && section.cards.length > 0 && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
                     {section.cards.map((card, cardIdx) => (
-                      <div key={cardIdx} className="bg-[#ECF5F5] p-6 rounded-sm">
-                        <h4 className="font-bold text-[#1F2124] text-[15px] mb-3 font-work">
+                      <div key={cardIdx} className="bg-brand-tint p-6 rounded-sm">
+                        <h4 className="font-bold text-brand-body text-[15px] mb-3 font-work">
                           {card.title}
                         </h4>
-                        <p className="text-[#1F2124] text-[14px] font-work leading-snug">
+                        <p className="text-brand-body text-[14px] font-work leading-snug">
                           {card.description}
                         </p>
                       </div>

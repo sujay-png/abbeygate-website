@@ -33,12 +33,12 @@ const BLOG_POSTS = [
 
 export const LatestBlog = () => {
   return (
-    <section className="py-16 md:py-24 bg-white">
+    <section className="py-16 md:py-24 bg-brand-cream">
       <Container>
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12 gap-6">
           <div className="relative inline-block">
-            <h2 className="font-josefin text-[26px] font-bold tracking-tight text-black lg:text-[37px]">
+            <h2 className="font-josefin text-[26px] font-bold tracking-tight text-brand-primary-dark lg:text-[37px]">
               Latest From Our Blog
             </h2>
             <ArrowIcon className="absolute -right-22 -top-1 hidden md:block" />
@@ -58,14 +58,14 @@ export const LatestBlog = () => {
                   src={post.image}
                   alt={post.title}
                   fill
-                  unoptimized={true}
+                  quality={75}
                   sizes="(max-width: 768px) 100vw, 33vw"
                   className="rounded-md object-cover transition-transform duration-500 group-hover:scale-105"
                 />
               </Link>
               
               <Link href={post.link} className="hover:text-gray-600 transition-colors">
-                <h3 className="font-bold text-[18px] font-sans text-black leading-snug mb-1">
+                <h3 className="font-bold text-[18px] font-sans text-brand-primary-dark leading-snug mb-1">
                   {post.title}
                 </h3>
               </Link>

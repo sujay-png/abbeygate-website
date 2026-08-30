@@ -9,18 +9,18 @@ export async function GET(request: Request) {
   }
 
   try {
-    let urlToFetch = imageUrl;
-    if (urlToFetch.startsWith('/')) {
-      const proto = request.headers.get('x-forwarded-proto') || 'http';
-      const host = request.headers.get('host') || 'localhost:3000';
-      urlToFetch = `${proto}://${host}${urlToFetch}`;
+    let finalUrl = imageUrl;
+    if (imageUrl.startsWith('/')) {
+      // In Vercel, x-forwarded-host can be used, but NEXT_PUBLIC_SITE_URL is safer
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+      finalUrl = `${baseUrl}${imageUrl}`;
     }
-
-    const response = await fetch(urlToFetch, {
+    const response = await fetch(finalUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
-      }
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+        Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+      },
     });
     if (!response.ok) {
       throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);

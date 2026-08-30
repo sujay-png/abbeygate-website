@@ -32,16 +32,16 @@ const TRADE_BROCHURE_URL = "https://simplebooklet.com/abbeygatetradebrochure2027
 
 const TradeBrochure = () => {
   return (
-    <section className="bg-brand-light border-t border-black border-b border-[#D0DADA] pt-8 pb-8 overflow-hidden">
+    <section className="bg-brand-tint border-t border-brand-border border-b border-brand-soft pt-8 pb-8 overflow-hidden">
       <Container>
         <div className="flex flex-col md:flex-row items-center md:items-start justify-center gap-10 md:gap-16 lg:gap-20">
           <div className="flex flex-col md:flex-row items-center justify-between gap-16 xl:gap-24">
             <div className="flex-1 max-w-[720px]">
-              <h3 className="text-black text-[30px] font-bold mb-2 font-josefin">
+              <h3 className="text-brand-primary-dark text-[30px] font-bold mb-2 font-josefin">
                 View our trade brochure
               </h3>
 
-              <p className="text-[#1F2124] text-[15px] leading-8 mb-8 font-work lg:whitespace-nowrap">
+              <p className="text-brand-body text-[15px] leading-8 mb-8 lg:whitespace-nowrap">
                 Click the link below to view or download a PDF of our complete diary and
                 notebook range.
               </p>
@@ -50,7 +50,7 @@ const TradeBrochure = () => {
                 href={TRADE_BROCHURE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block w-full sm:w-fit text-center bg-[#C8DCDC] border border-black text-black text-[14px] sm:text-[15px] font-work font-medium px-6 sm:px-10 py-4 rounded-md hover:bg-[#C8DCDC] shadow-[0_6px_16px_rgba(0,0,0,0.12)] hover:shadow-[0_10px_24px_rgba(0,0,0,0.22)] transition-shadow duration-500 ease-out"
+                className="inline-block w-full sm:w-fit text-center bg-brand-tint border border-brand-accent text-brand-body text-[14px] sm:text-[15px] font-josefin font-medium px-6 sm:px-10 py-4 rounded-md hover:bg-brand-soft shadow-[0_10px_24px_rgba(0,0,0,0.22)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.12)] transition-all duration-500 ease-out"
               >
                 Abbeygate Manufacturing Trade Brochure
               </a>
@@ -108,7 +108,7 @@ export const Footer = () => {
   return (
     <>
       <TradeBrochure />
-      <footer className="bg-brand-light pt-20 pb-8 overflow-x-hidden">
+      <footer className="bg-brand-cream pt-20 pb-8 overflow-x-hidden">
         <Container>
           {/* Top Grid Section */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-y-12 gap-x-8 lg:gap-x-10 mb-14">
@@ -124,7 +124,7 @@ export const Footer = () => {
                   style={{ height: "auto" }}
                 />
               </Link>
-              <p className="text-[#666666] text-[15px] font-work leading-7">
+              <p className="text-brand-grey text-[15px] font-josefin leading-7">
                 The Home of Quality Diaries,<br />Notebooks and Leather Gifts
               </p>
               <div className="flex flex-wrap items-center gap-4 mt-2">
@@ -137,11 +137,11 @@ export const Footer = () => {
 
             {/* Company Links */}
             <div className="lg:col-span-1">
-              <h4 className="font-bold text-black font-josefin text-sm tracking-wide mb-3 uppercase">Company</h4>
+              <h4 className="font-bold text-brand-primary-dark font-josefin text-sm tracking-wide mb-3 uppercase">Company</h4>
               <ul className="flex flex-col gap-2">
                 {FOOTER_LINKS.company.map((link) => (
                   <li key={link.label}>
-                    <Link href={link.href} className="text-[#1F2124] text-[15px] hover:text-gray-500 transition-colors font-work">
+                    <Link href={link.href} className="text-brand-body text-[15px] hover:text-brand-grey transition-colors">
                       {link.label}
                     </Link>
                   </li>
@@ -151,11 +151,11 @@ export const Footer = () => {
 
             {/* Help Links */}
             <div className="lg:col-span-1">
-              <h4 className="font-bold text-black font-josefin text-sm tracking-wide mb-3 uppercase">Help</h4>
+              <h4 className="font-bold text-brand-primary-dark font-josefin text-sm tracking-wide mb-3 uppercase">Help</h4>
               <ul className="flex flex-col gap-2">
                 {FOOTER_LINKS.help.map((link) => (
                   <li key={link.label}>
-                    <Link href={link.href} className="text-[#1F2124] text-[15px] hover:text-gray-500 transition-colors font-work">
+                    <Link href={link.href} className="text-brand-body text-[15px] hover:text-brand-grey transition-colors">
                       {link.label}
                     </Link>
                   </li>
@@ -165,11 +165,11 @@ export const Footer = () => {
 
             {/* Information Links */}
             <div className="lg:col-span-1">
-              <h4 className="font-bold text-black font-josefin text-sm tracking-wide mb-3 uppercase">Information</h4>
+              <h4 className="font-bold text-brand-primary-dark font-josefin text-sm tracking-wide mb-3 uppercase">Information</h4>
               <ul className="flex flex-col gap-2">
                 {FOOTER_LINKS.information.map((link) => (
                   <li key={link.label}>
-                    <Link href={link.href} className="text-[#1F2124] text-[15px] hover:text-gray-500 transition-colors font-work">
+                    <Link href={link.href} className="text-brand-body text-[15px] hover:text-brand-grey transition-colors">
                       {link.label}
                     </Link>
                   </li>
@@ -179,8 +179,8 @@ export const Footer = () => {
 
             {/* Address */}
             <div className="lg:col-span-1">
-              <h4 className="font-bold text-black font-josefin text-sm tracking-wide mb-3 uppercase">Address</h4>
-              <address className="not-italic text-[#1F2124] text-[15px] leading-relaxed font-work">
+              <h4 className="font-bold text-brand-primary-dark font-josefin text-sm tracking-wide mb-3 uppercase">Address</h4>
+              <address className="not-italic text-brand-body text-[15px] leading-relaxed">
                 Abbeygate<br />
                 Graphic House<br />
                 Portland Street<br />
@@ -190,16 +190,16 @@ export const Footer = () => {
             </div>
           </div>
           {/* Divider */}
-          <div className="border-t border-[#D0DADA] w-full" />
+          <div className="border-t border-brand-border w-full" />
 
           {/* Bottom Section */}
           <div className="flex flex-col lg:flex-row items-center justify-between gap-6 pt-8">
-            <p className="text-[14px] text-black font-work">
+            <p className="text-[14px] text-brand-primary-dark">
               Abbeygate England © 2026
             </p>
 
             <div className="flex flex-col items-center gap-2">
-              <span className="text-[14px] text-black font-work">We accept</span>
+              <span className="text-[14px] text-brand-primary-dark">We accept</span>
               <div className="flex flex-wrap items-center justify-center gap-2">
                 <Image src="/images/icons/pay-visa.png" alt="Visa" width={44} height={26} className="h-7 w-auto object-contain" />
                 <Image src="/images/icons/pay-mastercard.png" alt="MasterCard" width={44} height={26} className="h-7 w-auto object-contain" />
@@ -210,9 +210,9 @@ export const Footer = () => {
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-              <Link href="/privacy" className="text-[14px] text-black hover:text-gray-600 transition-colors font-work underline underline-offset-4">Privacy Policy</Link>
-              <Link href="/terms" className="text-[14px] text-black hover:text-gray-600 transition-colors font-work underline underline-offset-4">Terms & Conditions</Link>
-              <Link href="/cookies" className="text-[14px] text-black hover:text-gray-600 transition-colors font-work underline underline-offset-4">Cookies Policy</Link>
+              <Link href="/privacy" className="text-[14px] text-brand-primary-dark hover:text-brand-grey transition-colors underline underline-offset-4">Privacy Policy</Link>
+              <Link href="/terms" className="text-[14px] text-brand-primary-dark hover:text-brand-grey transition-colors underline underline-offset-4">Terms & Conditions</Link>
+              <Link href="/cookies" className="text-[14px] text-brand-primary-dark hover:text-brand-grey transition-colors underline underline-offset-4">Cookies Policy</Link>
             </div>
           </div>
         </Container>

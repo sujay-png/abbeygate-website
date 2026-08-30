@@ -5,7 +5,7 @@ import { artworkData } from '@/data/artwork-specification';
 
 export default function ArtworkSpecificationPage() {
   return (
-    <main className="flex flex-col min-h-screen bg-white">
+    <main className="flex flex-col min-h-screen bg-brand-cream">
       <Breadcrumb paths={[{ label: 'Home', href: '/' }, { label: 'Artwork Specification' }]} />
       
       <PageHero 
@@ -38,7 +38,7 @@ export default function ArtworkSpecificationPage() {
       <section className="py-12">
         <Container maxWidthClass="max-w-[1400px]">
           <div 
-            className="bg-[#ECF5F5] rounded-xl p-8 md:p-12 text-[#1F2124]/90 text-[15px] font-work leading-relaxed"
+            className="bg-brand-tint rounded-xl p-8 md:p-12 text-brand-body/90 text-[15px] leading-relaxed"
             dangerouslySetInnerHTML={{ __html: artworkData.guidelinesBox }}
           />
         </Container>

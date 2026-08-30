@@ -5,7 +5,7 @@ import { internalPageLayoutsData } from '@/data/internal-page-layouts';
 
 export default function InternalPageLayoutsPage() {
   return (
-    <main className="flex flex-col min-h-screen bg-white">
+    <main className="flex flex-col min-h-screen bg-brand-cream">
       <Breadcrumb paths={[{ label: 'Home', href: '/' }, { label: 'Internal Page Layouts' }]} />
       
       <PageHero 

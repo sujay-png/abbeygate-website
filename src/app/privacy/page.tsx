@@ -4,7 +4,7 @@ import { privacyData } from '@/data/privacy';
 
 export default function PrivacyPolicyPage() {
   return (
-    <main className="flex flex-col min-h-screen bg-white">
+    <main className="flex flex-col min-h-screen bg-brand-cream">
       <Breadcrumb paths={[{ label: 'Home', href: '/' }, { label: 'Privacy Policy' }]} />
       
       <Container maxWidthClass="max-w-[1500px]" className="py-12 md:py-16">
@@ -12,16 +12,16 @@ export default function PrivacyPolicyPage() {
           
           {/* Header Area */}
           <div className="mb-10">
-            <h1 className="text-3xl md:text-4xl lg:text-[40px] font-bold text-black font-sans tracking-tight mb-4">
+            <h1 className="text-3xl md:text-4xl lg:text-[40px] font-bold text-brand-primary-dark font-sans tracking-tight mb-4">
               {privacyData.title}
             </h1>
-            <p className="text-[14px] md:text-[15px] text-[#1F2124] mb-8">
+            <p className="text-[14px] md:text-[15px] text-brand-body mb-8">
               {privacyData.lastUpdated}
             </p>
             
             {/* Intro */}
             <div 
-              className="text-[14px] md:text-[15px] font-sans text-black leading-relaxed [&>p]:mb-4"
+              className="text-[14px] md:text-[15px] font-sans text-brand-primary-dark leading-relaxed [&>p]:mb-4"
               dangerouslySetInnerHTML={{ __html: privacyData.intro }}
             />
           </div>
@@ -29,8 +29,8 @@ export default function PrivacyPolicyPage() {
           {/* Sections */}
           <div className="space-y-12">
             {privacyData.sections.map((section, index) => (
-              <div key={index} className="text-[14px] md:text-[15px] font-sans text-black leading-relaxed">
-                <h2 className="text-xl md:text-2xl font-bold text-black tracking-tight mb-6">
+              <div key={index} className="text-[14px] md:text-[15px] font-sans text-brand-primary-dark leading-relaxed">
+                <h2 className="text-xl md:text-2xl font-bold text-brand-primary-dark tracking-tight mb-6">
                   {section.title}
                 </h2>
                 <div 

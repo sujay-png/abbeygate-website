@@ -17,7 +17,7 @@ export function FeatureCards({ title, items, className = '' }: FeatureCardsProps
   return (
     <section className={`py-12 md:py-20 ${className}`}>
       <Container maxWidthClass="max-w-[1400px]">
-        <h2 className="text-2xl md:text-3xl font-bold text-black font-sans tracking-tight mb-8">
+        <h2 className="text-2xl md:text-3xl font-bold text-brand-primary-dark font-sans tracking-tight mb-8">
           {title}
         </h2>
         
@@ -34,10 +34,10 @@ export function FeatureCards({ title, items, className = '' }: FeatureCardsProps
                   sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 />
               </div>
-              <h3 className="font-bold text-lg font-sans text-black mb-2 leading-snug">
+              <h3 className="font-bold text-lg font-sans text-brand-primary-dark mb-2 leading-snug">
                 {item.title}
               </h3>
-              <p className="text-[13px] text-[#1F2124]/80 font-work leading-relaxed">
+              <p className="text-[13px] text-brand-body/80 font-work leading-relaxed">
                 {item.content}
               </p>
             </div>

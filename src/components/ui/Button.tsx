@@ -15,13 +15,14 @@ export const Button = ({
   href,
   ...props
 }: ButtonProps) => {
-  const baseStyles = "inline-flex items-center justify-center px-6 py-3 text-sm font-medium whitespace-nowrap text-center transition-colors duration-200 ease-in-out cursor-pointer rounded-sm";
+  const baseStyles =
+    "inline-flex items-center justify-center px-6 py-3 text-sm font-medium whitespace-nowrap text-center transition-colors duration-200 ease-in-out cursor-pointer rounded-sm tracking-wide";
 
   const variants = {
-    primary: "bg-black text-white hover:bg-neutral-800",
-    secondary: "bg-gray-100 text-black hover:bg-gray-200",
-    outline: "border-2 border-black text-black",
-    white: "bg-white text-black hover:bg-gray-100",
+    primary: "bg-brand-primary text-white hover:bg-brand-primary-dark",
+    secondary: "bg-brand-tint text-brand-body hover:bg-brand-soft/60",
+    outline: "border-2 border-brand-primary text-brand-primary hover:bg-brand-tint",
+    white: "bg-white text-brand-body hover:bg-brand-tint border border-brand-border",
   };
 
   if (href) {

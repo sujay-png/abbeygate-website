@@ -21,12 +21,12 @@ export function TextWithImageGrid({
         {/* Top Text Section */}
         <div className="flex flex-col md:flex-row gap-8 lg:gap-16 mb-10">
           <div className="md:w-1/3">
-            <h2 className="text-2xl md:text-3xl font-bold text-black font-sans tracking-tight">
+            <h2 className="text-2xl md:text-3xl font-bold text-brand-primary-dark font-sans tracking-tight">
               {title}
             </h2>
           </div>
           <div className="md:w-2/3">
-            <div className="prose prose-gray font-work max-w-none text-[#1F2124]/80 text-[15px] leading-relaxed">
+            <div className="prose prose-gray font-work max-w-none text-brand-body/80 text-[15px] leading-relaxed">
               {typeof content === 'string' ? <div dangerouslySetInnerHTML={{ __html: content }} /> : content}
             </div>
           </div>
@@ -44,6 +44,7 @@ export function TextWithImageGrid({
                   src={img}
                   alt={`${title} image ${idx + 1}`}
                   fill
+                  quality={75}
                   unoptimized={img.includes('unsplash.com')}
                   className="object-cover rounded-lg"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

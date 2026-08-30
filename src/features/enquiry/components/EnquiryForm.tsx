@@ -26,7 +26,7 @@ export function EnquiryForm() {
       width: 100px;
       padding-left: 1rem;
       padding-right: 1rem;
-      border-right: 1px solid #E5E7EB;
+      border-right: 1px solid var(--brand-border);
       margin-right: 1rem;
       display: flex;
       justify-content: space-between;
@@ -88,11 +88,11 @@ export function EnquiryForm() {
     }
   };
 
-  const labelClass = "block text-[13px] font-bold text-black uppercase tracking-wide mb-3";
-  const inputClass = "w-full h-[52px] bg-white border border-gray-200 rounded-md px-4 text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all duration-200 text-[14px]";
-  const selectClass = "appearance-none w-full h-[52px] bg-white border border-gray-200 rounded-md px-4 pr-10 text-black focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all duration-200 text-[14px]";
-  const textareaClass = "w-full bg-white border border-gray-200 rounded-md p-4 text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all duration-200 text-[14px] min-h-[120px] resize-y";
-  const sectionTitleClass = "text-[18px] font-bold font-sans text-black mb-6 pb-2 border-b border-gray-100";
+  const labelClass = "block text-[13px] font-bold text-brand-primary-dark uppercase tracking-wide mb-3";
+  const inputClass = "w-full h-[52px] bg-white border border-gray-200 rounded-md px-4 text-brand-primary-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all duration-200 text-[14px]";
+  const selectClass = "appearance-none w-full h-[52px] bg-white border border-gray-200 rounded-md px-4 pr-10 text-brand-primary-dark focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all duration-200 text-[14px]";
+  const textareaClass = "w-full bg-white border border-gray-200 rounded-md p-4 text-brand-primary-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all duration-200 text-[14px] min-h-[120px] resize-y";
+  const sectionTitleClass = "text-[18px] font-bold font-sans text-brand-primary-dark mb-6 pb-2 border-b border-gray-100";
 
   if (submitStatus === 'success') {
     return (
@@ -100,7 +100,7 @@ export function EnquiryForm() {
         <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 text-green-600 rounded-full mb-6">
           <CheckCircle className="w-8 h-8" />
         </div>
-        <h3 className="text-2xl font-bold font-sans text-black mb-4">Enquiry Submitted Successfully</h3>
+        <h3 className="text-2xl font-bold font-sans text-brand-primary-dark mb-4">Enquiry Submitted Successfully</h3>
         <p className="text-gray-600 text-[15px] mb-8 max-w-md mx-auto">
           Thank you for reaching out! We have received your quote request and a member of our team will get back to you within 1 business day.
         </p>
@@ -221,7 +221,7 @@ export function EnquiryForm() {
         <button 
           type="submit" 
           disabled={isSubmitting}
-          className="w-full md:w-auto px-10 h-14 bg-black text-white text-[14px] font-bold tracking-wide rounded-md hover:bg-gray-900 hover:shadow-md hover:-translate-y-[1px] transition-all duration-200 uppercase disabled:opacity-70 disabled:hover:translate-y-0 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+          className="w-full md:w-auto px-10 h-14 bg-brand-primary text-white text-[14px] font-bold tracking-wide rounded-md hover:bg-brand-primary-dark hover:shadow-md hover:-translate-y-[1px] transition-all duration-200 uppercase disabled:opacity-70 disabled:hover:translate-y-0 disabled:cursor-not-allowed flex items-center justify-center gap-3"
         >
           {isSubmitting ? (
             <>

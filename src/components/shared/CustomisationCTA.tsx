@@ -4,12 +4,12 @@ import { Button } from "../ui/Button";
 
 export const CustomisationCTA = () => {
   return (
-    <section className="py-16 md:py-24 bg-white">
+    <section className="py-16 md:py-24 bg-brand-cream">
       <Container>
-        <div className="bg-brand-light relative flex flex-col md:flex-row items-center justify-between rounded-md">
+        <div className="bg-brand-tint relative flex flex-col md:flex-row items-center justify-between rounded-md">
           {/* Left Text Content */}
           <div className="p-10 md:p-16 lg:p-20 flex-1 max-w-2xl z-10">
-            <h2 className="font-josefin text-[26px] font-bold tracking-tight text-black lg:text-[39px] mb-6">
+            <h2 className="font-josefin text-[26px] font-bold tracking-tight text-brand-primary-dark lg:text-[39px] mb-6">
               Tailored to Perfection
             </h2>
             <p className="text-gray-700 text-[15px] font-work leading-relaxed mb-10">
@@ -17,7 +17,7 @@ export const CustomisationCTA = () => {
             </p>
             <div className="flex flex-wrap gap-4">
               <Button href="/quote" variant="primary" className="uppercase text-[13px] tracking-wider px-8 font-bold">
-                Customize Yours Today
+                Customise Yours Today
               </Button>
               <Button href="/contact" variant="outline" className="uppercase text-[13px] tracking-wider px-8 font-bold">
                 Request A Sample
@@ -32,7 +32,7 @@ export const CustomisationCTA = () => {
                 src="/images/banners/customisation-cta.webp"
                 alt="Customised Leather Goods"
                 fill
-                unoptimized={true}
+                quality={75}
                 className="object-contain object-center md:object-right"
                 sizes="(max-width: 768px) 100vw, 50vw"
               />

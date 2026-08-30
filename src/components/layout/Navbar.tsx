@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Search, Menu, X, ChevronDown } from 'lucide-react';
+import { Search, Menu, X, ChevronDown, User } from 'lucide-react';
 import { AnimatePresence, motion, Variants, Transition } from 'framer-motion';
 import { NAV_ITEMS } from '@/data/navigation';
 import { useCart } from '@/features/cart/context/CartContext';
@@ -32,15 +32,35 @@ export const Navbar = () => {
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mobileExpandedId, setMobileExpandedId] = useState<string | null>(null);
+  const [activeItemOffset, setActiveItemOffset] = useState(0);
   const { itemCount, openCart } = useCart();
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollPositionRef = useRef(0);
+  const navRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
+    
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    if (activeMenuId) {
+      const activeIndex = NAV_ITEMS.findIndex(item => item.id === activeMenuId);
+      if (activeIndex !== -1 && navRefs.current[activeIndex]) {
+        setActiveItemOffset(navRefs.current[activeIndex]?.offsetLeft || 0);
+      }
+    }
+  }, [activeMenuId]);
 
   useEffect(() => {
     if (pathname === '/search') {
@@ -57,18 +77,38 @@ export const Navbar = () => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
         setIsSearchOpen(false);
       }
+      if (headerRef.current && !headerRef.current.contains(event.target as Node)) {
+        setActiveMenuId(null);
+      }
     };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setActiveMenuId(null);
+        setIsSearchOpen(false);
+      }
+    };
+
     document.addEventListener('mousedown', handleClickOutside, true);
     document.addEventListener('touchstart', handleClickOutside, { capture: true, passive: true } as AddEventListenerOptions);
     document.addEventListener('pointerdown', handleClickOutside, true);
+    document.addEventListener('keydown', handleEscape, true);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside, true);
       document.removeEventListener('touchstart', handleClickOutside, true);
       document.removeEventListener('pointerdown', handleClickOutside, true);
+      document.removeEventListener('keydown', handleEscape, true);
     };
   }, []);
 
+  const isInitialMount = useRef(true);
+
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
     if (isMobileMenuOpen) {
       scrollPositionRef.current = window.scrollY;
       document.body.style.position = 'fixed';
@@ -131,7 +171,7 @@ export const Navbar = () => {
 
   const scheduleClose = useCallback(() => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
-    closeTimer.current = setTimeout(() => setActiveMenuId(null), CLOSE_DELAY);
+    closeTimer.current = setTimeout(() => setActiveMenuId(null), 150);
   }, []);
 
   useEffect(() => () => {
@@ -147,38 +187,38 @@ export const Navbar = () => {
 
   return (
     <header
-      className="sticky top-0 z-50 w-full bg-white border-b border-gray-100 shadow-sm relative"
+      ref={headerRef}
+      className="sticky top-0 z-50 w-full bg-white relative"
       onMouseLeave={scheduleClose}
     >
-      <div className="w-full max-w-[1600px] mx-auto px-6 lg:px-10 xl:px-16">
-        <div className="flex h-20 items-center">
+      {/* Contact Strip (Desktop Only) */}
+      <div className="hidden lg:flex w-full bg-brand-cream border-b border-gray-100 h-10 items-center">
+        <div className="w-full px-6 lg:px-10 xl:px-16 flex justify-between items-center text-[10px] font-bold tracking-[0.15em] text-gray-700 uppercase">
+          <div>Bespoke Leather Manufacturers of Diaries, Notebooks & Accessories</div>
+          <div className="flex items-center gap-6">
+            <span>0121 236 2534</span>
+            <Link href="/contact" className="hover:text-brand-primary-dark transition-colors">Contact Us</Link>
+          </div>
+        </div>
+      </div>
 
-          {/* Mobile Hamburger */}
-          <button
-            aria-label="Open menu"
-            onClick={() => setIsMobileMenuOpen(true)}
-            className="lg:hidden text-gray-800 hover:text-gray-500 transition-colors -ml-1 p-1"
-          >
-            <Menu className="w-6 h-6" strokeWidth={2} />
-          </button>
+      <div className="w-full px-6 lg:px-10 xl:px-16">
+        {/* Row 1: Logo & Actions */}
+        <div className="flex h-20 lg:h-24 items-center justify-between">
+          
+          {/* Mobile Hamburger & Empty Left spacer for Desktop (to keep logo perfectly centered) */}
+          <div className="flex-1 flex items-center justify-start">
+            <button
+              aria-label="Open menu"
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="lg:hidden text-gray-800 hover:text-gray-500 transition-colors -ml-1 p-1"
+            >
+              <Menu className="w-6 h-6" strokeWidth={2} />
+            </button>
+          </div>
 
-          {/* Left Navigation (desktop) */}
-          <nav className="hidden lg:flex items-center gap-4 xl:gap-8">
-            {NAV_ITEMS.map((item) => (
-              <div key={item.id} className="h-20 flex items-center" onMouseEnter={() => openMenu(item.id)}>
-                <Link
-                  href={item.href}
-                  className={`text-[16px] tracking-wide whitespace-nowrap transition-colors duration-300 ${
-                    activeMenuId === item.id ? 'text-black' : 'text-gray-600 hover:text-black'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              </div>
-            ))}
-          </nav>
-
-          <div className="flex items-center justify-center px-6 xl:px-10 mx-auto lg:mx-0">
+          {/* Center Logo */}
+          <div className="flex-shrink-0 flex items-center justify-center">
             <Link href="/" className="block">
               <Image
                 src="/images/logo/abbeygate-logo.png"
@@ -191,10 +231,8 @@ export const Navbar = () => {
             </Link>
           </div>
 
-          <div className="flex-1 hidden lg:block" />
-
           {/* Right Actions */}
-          <div className="flex items-center gap-6">
+          <div className="flex-1 flex items-center justify-end gap-8">
             <div
               ref={searchContainerRef}
               className="relative flex items-center justify-end h-10"
@@ -207,7 +245,7 @@ export const Navbar = () => {
             >
               <div
                 className={`flex items-center justify-end transition-all duration-700 ease-in-out rounded overflow-hidden ${
-                  isSearchOpen ? 'bg-[#F0F0F0] w-60' : 'bg-transparent w-10'
+                  isSearchOpen ? 'bg-brand-tint w-60' : 'bg-transparent w-10'
                 }`}
               >
                 <input
@@ -226,7 +264,7 @@ export const Navbar = () => {
                   aria-label="Search"
                   onClick={handleSearchToggle}
                   className={`w-10 h-10 shrink-0 transition-colors flex items-center justify-center cursor-pointer ${
-                    isSearchOpen ? 'text-black' : 'text-gray-800'
+                    isSearchOpen ? 'text-brand-primary-dark' : 'text-gray-800'
                   }`}
                 >
                   <Search className="w-[18px] h-[18px]" strokeWidth={2.5} />
@@ -234,16 +272,24 @@ export const Navbar = () => {
               </div>
             </div>
 
+            <Link
+              href="/account"
+              aria-label="Account"
+              className="relative text-gray-800 hover:text-gray-500 transition-colors flex items-center justify-center"
+            >
+              <User className="w-[18px] h-[18px]" strokeWidth={2.2} />
+            </Link>
+
             <button
               aria-label="Shopping Bag"
               onClick={openCart}
-              className="relative text-gray-800 hover:text-gray-500 transition-colors"
+              className="relative text-gray-800 hover:text-gray-500 transition-colors flex items-center justify-center"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" className="w-[15px] h-[17px] fill-current">
                 <path d="M352 160v-32C352 57.42 294.579 0 224 0 153.42 0 96 57.42 96 128v32H0v272c0 44.183 35.817 80 80 80h288c44.183 0 80-35.817 80-80V160h-96zm-192-32c0-35.29 28.71-64 64-64s64 28.71 64 64v32H160v-32zm160 120c-13.255 0-24-10.745-24-24s10.745-24 24-24 24 10.745 24 24-10.745 24-24 24zm-192 0c-13.255 0-24-10.745-24-24s10.745-24 24-24 24 10.745 24 24-10.745 24-24 24z" />
               </svg>
               {isMounted && itemCount > 0 && (
-                <span className="absolute -top-2 -right-2 w-4 h-4 bg-black text-white text-[10px] rounded-full flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 w-4 h-4 bg-brand-gold text-brand-primary-dark text-[10px] font-semibold rounded-full flex items-center justify-center">
                   {itemCount}
                 </span>
               )}
@@ -252,26 +298,66 @@ export const Navbar = () => {
         </div>
       </div>
 
+      {/* Full Width Border Separator */}
+      <div className="w-full border-y border-[#E5E5E5]">
+        <div className="w-full px-6 lg:px-10 xl:px-16">
+          {/* Row 2: Desktop Navigation Links */}
+          <nav className="hidden lg:flex items-center justify-center gap-8 xl:gap-12 relative h-14">
+            {NAV_ITEMS.map((item, index) => {
+              const hasSubmenu = Boolean(item.megaMenu?.columns?.length);
+              const isOpen = activeMenuId === item.id;
+              
+              return (
+                <div 
+                  key={item.id} 
+                  className="h-full flex items-center" 
+                  ref={el => { navRefs.current[index] = el; }}
+                  onMouseEnter={() => openMenu(item.id)}
+                >
+                  <Link
+                    href={item.href}
+                    onClick={() => setActiveMenuId(null)}
+                    aria-expanded={isOpen}
+                    aria-haspopup={hasSubmenu ? 'true' : undefined}
+                    className={`font-josefin font-bold uppercase tracking-widest text-[14px] whitespace-nowrap transition-colors duration-300 relative group py-2 ${
+                    isOpen ? 'text-brand-primary-dark' : 'text-brand-grey hover:text-brand-primary-dark'
+                    }`}
+                  >
+                    {item.label}
+                    <span className={`absolute left-0 bottom-0 w-full h-[3px] bg-brand-primary-dark transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
+                  </Link>
+                </div>
+              );
+            })}
+          </nav>
+        </div>
+      </div>
+
       {/* Desktop Mega Menu Panel */}
-      <div
+      <div 
+        className="hidden lg:block absolute left-0 top-full w-full"
         onMouseEnter={() => activeMenuId && openMenu(activeMenuId)}
-        className="hidden lg:block absolute left-0 top-full w-full overflow-hidden"
       >
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
-              key={activeItem?.id}
-              initial={{ height: 0 }}
-              animate={{ height: 'auto', transition: OPEN_TRANSITION }}
-              exit={{ height: 0, transition: CLOSE_TRANSITION }}
-              className="w-full bg-white border-b border-gray-100 shadow-[0_18px_40px_rgba(0,0,0,0.08)] overflow-hidden"
+              key="mega-menu"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } }}
+              exit={{ opacity: 0, transition: { duration: 0.15, ease: 'easeIn' } }}
+              className="w-full bg-white border-b border-gray-100 shadow-[0_18px_40px_rgba(0,0,0,0.08)]"
             >
-              <div className="w-full max-w-[1600px] mx-auto px-6 lg:px-10 xl:px-16 py-10">
-                <div className="flex flex-wrap gap-x-16 gap-y-8">
+              <div className="w-full px-6 lg:px-10 xl:px-16 py-10">
+                <div 
+                  className={`flex flex-wrap divide-x divide-gray-200 transition-[padding] duration-300 ease-out ${
+                    activeItem?.megaMenu?.columns?.length === 1 ? 'justify-start' : 'justify-center'
+                  }`}
+                  style={{ paddingLeft: activeItem?.megaMenu?.columns?.length === 1 ? activeItemOffset : 0 }}
+                >
                   {activeItem?.megaMenu?.columns?.map((column) => (
-                    <div key={column.id} className="min-w-[180px]">
+                    <div key={column.id} className="min-w-[180px] px-8 first:pl-0">
                       {column.title && (
-                        <h4 className="text-xs font-bold tracking-wider text-gray-400 uppercase mb-4">
+                        <h4 className="text-[11px] font-bold tracking-widest text-gray-400 uppercase mb-4">
                           {column.title}
                         </h4>
                       )}
@@ -280,7 +366,7 @@ export const Navbar = () => {
                           <li key={link.id}>
                             <Link
                               href={link.href}
-                              className="text-[15px] text-[#1F2124] hover:text-gray-500 transition-colors duration-300"
+                              className="text-[14px] text-brand-body hover:text-gray-500 transition-colors duration-300 block"
                             >
                               {link.label}
                             </Link>
@@ -345,7 +431,7 @@ export const Navbar = () => {
                   <path d="M352 160v-32C352 57.42 294.579 0 224 0 153.42 0 96 57.42 96 128v32H0v272c0 44.183 35.817 80 80 80h288c44.183 0 80-35.817 80-80V160h-96zm-192-32c0-35.29 28.71-64 64-64s64 28.71 64 64v32H160v-32zm160 120c-13.255 0-24-10.745-24-24s10.745-24 24-24 24 10.745 24 24-10.745 24-24 24zm-192 0c-13.255 0-24-10.745-24-24s10.745-24 24-24 24 10.745 24 24-10.745 24-24 24z" />
                 </svg>
                 {isMounted && itemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-black text-white text-[10px] rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-gold text-brand-primary-dark text-[10px] font-semibold rounded-full flex items-center justify-center">
                     {itemCount}
                   </span>
                 )}
@@ -370,7 +456,7 @@ export const Navbar = () => {
                       <Link
                         href={item.href}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="text-[15px] font-medium tracking-wide text-[#1F2124] uppercase"
+                        className="text-[15px] font-medium tracking-wide text-brand-body uppercase"
                       >
                         {item.label}
                       </Link>
@@ -421,7 +507,7 @@ export const Navbar = () => {
                                         <Link
                                           href={link.href}
                                           onClick={() => setIsMobileMenuOpen(false)}
-                                          className="text-[15px] text-[#1F2124]"
+                                          className="text-[15px] text-brand-body"
                                         >
                                           {link.label}
                                         </Link>
