@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { enquiryRateLimit } from '@/lib/rate-limit';
+import { enquiryRateLimit } from '@/lib/rate-limit'; // We can reuse the same rate limit or create a new one
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,20 +7,19 @@ export async function POST(req: NextRequest) {
     const { success } = await enquiryRateLimit.limit(ip);
     
     if (!success) {
-      return NextResponse.json({ error: 'Too many enquiry attempts, please try again later.' }, { status: 429 });
+      return NextResponse.json({ error: 'Too many contact attempts, please try again later.' }, { status: 429 });
     }
 
     const formData = await req.formData();
     
     // Add form_type for WP
-    formData.append('form_type', 'quote');
+    formData.append('form_type', 'contact');
 
     const name = formData.get('name') as string;
     const email = formData.get('email') as string;
-    const material = formData.get('material') as string;
-    const quantity = formData.get('quantity') as string;
+    const comments = formData.get('comments') as string;
 
-    if (!name || !email || !material || !quantity) {
+    if (!name || !email || !comments) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -49,18 +48,18 @@ export async function POST(req: NextRequest) {
     try {
       data = JSON.parse(text);
     } catch (e) {
-      console.error('WP API Error (Enquiry Non-JSON):', text);
+      console.error('WP API Error (Contact Non-JSON):', text);
       return NextResponse.json({ error: 'Invalid response from backend.' }, { status: 500 });
     }
 
     if (!response.ok) {
-      console.error('WP API Error (Enquiry):', data);
+      console.error('WP API Error (Contact):', data);
       return NextResponse.json({ error: data.message || 'Failed to submit form to backend.' }, { status: response.status });
     }
 
     return NextResponse.json({ success: true, message: data.message });
   } catch (error: any) {
-    console.error('Enquiry API Error:', error);
+    console.error('Contact API Error:', error);
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }
