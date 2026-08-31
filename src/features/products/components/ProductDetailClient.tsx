@@ -633,6 +633,96 @@ export const ProductDetailClient = ({
     return false;
   };
 
+  const renderAccordions = () => (
+    <>
+      {/* Description Accordion */}
+      <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
+        <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
+          <span>Description</span>
+          <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
+        </summary>
+        <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
+          {(() => {
+              const customDesc = customTabs.find(t => t.title.trim().toLowerCase() === 'description');
+              const descHtml = customDesc ? customDesc.content : product.description;
+              if (descHtml) {
+                return (
+                  <div 
+                    className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
+                    dangerouslySetInnerHTML={{ __html: descHtml }} 
+                  />
+                );
+              }
+              return <p className="italic">No description available.</p>;
+            })()}
+        </div>
+      </details>
+
+      {/* Specifications Accordion */}
+      <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
+        <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
+          <span>Specifications</span>
+          <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
+        </summary>
+        <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
+          {product.attributes.length > 0 ? (
+            <ul className="list-disc pl-5 space-y-1">
+              {product.attributes.map(attr => (
+                <li key={attr.id}><span className="font-semibold">{attr.name}:</span> {attr.terms.map(t => t.name).join(', ')}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="italic">No additional specifications available.</p>
+          )}
+        </div>
+      </details>
+
+      {/* Delivery Accordion */}
+      {(() => {
+        const deliveryTab = customTabs.find(t => 
+          t.title.trim().toLowerCase() === 'shipping' || 
+          t.title.trim().toLowerCase() === 'delivery'
+        );
+        
+        if (!deliveryTab) return null;
+
+        return (
+          <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
+            <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
+              <span>Delivery</span>
+              <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
+            </summary>
+            <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
+              <div 
+                className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
+                dangerouslySetInnerHTML={{ __html: deliveryTab.content }} 
+              />
+            </div>
+          </details>
+        );
+      })()}
+
+      {/* Other Custom Tabs Accordions */}
+      {customTabs.filter(t => {
+        const title = t.title.trim().toLowerCase();
+        return title !== 'description' && title !== 'shipping' && title !== 'delivery';
+      }).map((tab, idx) => (
+        <details key={idx} className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
+          <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
+            <span>{tab.title}</span>
+            <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
+          </summary>
+          <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
+            <div 
+              className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
+              dangerouslySetInnerHTML={{ __html: tab.content }} 
+            />
+          </div>
+        </details>
+      ))}
+    </>
+  );
+
   return (
     <div className="flex flex-col gap-12 lg:gap-16">
       {/* Zoom scale removed per user request */}
@@ -1006,6 +1096,11 @@ export const ProductDetailClient = ({
                 </table>
               </div>
             )}
+            
+            {/* Accordions in Customisation Aside */}
+            <div className="mt-2">
+              {renderAccordions()}
+            </div>
           </aside>
         )}
 
@@ -1244,68 +1339,12 @@ export const ProductDetailClient = ({
             </div>
           )}
 
-          {/* Specifications Accordion */}
-          <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
-            <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
-              <span>Specifications</span>
-              <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
-            </summary>
-            <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
-              {product.attributes.length > 0 ? (
-                <ul className="list-disc pl-5 space-y-1">
-                  {product.attributes.map(attr => (
-                    <li key={attr.id}><span className="font-semibold">{attr.name}:</span> {attr.terms.map(t => t.name).join(', ')}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="italic">No additional specifications available.</p>
-              )}
-            </div>
-          </details>
+          <hr className="border-gray-200" />
 
-                      {/* Delivery Accordion */}
-            {(() => {
-              const deliveryTab = customTabs.find(t => 
-                t.title.trim().toLowerCase() === 'shipping' || 
-                t.title.trim().toLowerCase() === 'delivery'
-              );
-              
-              if (!deliveryTab) return null;
-
-              return (
-                <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
-                  <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
-                    <span>Delivery</span>
-                    <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
-                  </summary>
-                  <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
-                    <div 
-                      className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
-                      dangerouslySetInnerHTML={{ __html: deliveryTab.content }} 
-                    />
-                  </div>
-                </details>
-              );
-            })()}
-
-            {/* Other Custom Tabs Accordions */}
-            {customTabs.filter(t => {
-              const title = t.title.trim().toLowerCase();
-              return title !== 'description' && title !== 'shipping' && title !== 'delivery';
-            }).map((tab, idx) => (
-              <details key={idx} className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
-                <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
-                  <span>{tab.title}</span>
-                  <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
-                </summary>
-                <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
-                  <div 
-                    className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
-                    dangerouslySetInnerHTML={{ __html: tab.content }} 
-                  />
-                </div>
-              </details>
-            ))}
+          {/* Accordions in Normal View */}
+          <div className="mt-2">
+            {renderAccordions()}
+          </div>
 
         </div>
       </div>
