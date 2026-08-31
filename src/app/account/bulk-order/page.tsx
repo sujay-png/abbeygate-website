@@ -36,7 +36,8 @@ export default async function BulkOrderPage({ searchParams }: Props) {
         productName: item.productName,
         sku: item.sku,
         price: item.price,
-        qty: item.qty
+        qty: item.qty,
+        image: item.image || ''
       }));
     }
   }

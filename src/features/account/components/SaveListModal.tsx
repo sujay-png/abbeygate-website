@@ -37,7 +37,8 @@ export function SaveListModal({ isOpen, onClose, rows }: Props) {
       productName: r.productName,
       sku: r.sku,
       price: r.price,
-      qty: r.qty
+      qty: r.qty,
+      image: r.image
     }));
 
     const res = await savePurchaseList(name.trim(), items);

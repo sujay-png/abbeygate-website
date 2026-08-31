@@ -13,6 +13,7 @@ export type BulkOrderRow = {
   sku: string;
   price: number;
   qty: number;
+  image: string;
 };
 
 type Props = {
@@ -23,11 +24,11 @@ export function BulkOrderForm({ initialRows }: Props) {
   const { addItem } = useCart();
   const [rows, setRows] = useState<BulkOrderRow[]>(
     initialRows || [
-      { id: '1', productId: null, productName: '', sku: '', price: 0, qty: 0 },
-      { id: '2', productId: null, productName: '', sku: '', price: 0, qty: 0 },
-      { id: '3', productId: null, productName: '', sku: '', price: 0, qty: 0 },
-      { id: '4', productId: null, productName: '', sku: '', price: 0, qty: 0 },
-      { id: '5', productId: null, productName: '', sku: '', price: 0, qty: 0 },
+      { id: '1', productId: null, productName: '', sku: '', price: 0, qty: 0, image: '' },
+      { id: '2', productId: null, productName: '', sku: '', price: 0, qty: 0, image: '' },
+      { id: '3', productId: null, productName: '', sku: '', price: 0, qty: 0, image: '' },
+      { id: '4', productId: null, productName: '', sku: '', price: 0, qty: 0, image: '' },
+      { id: '5', productId: null, productName: '', sku: '', price: 0, qty: 0, image: '' },
     ]
   );
   
@@ -37,20 +38,21 @@ export function BulkOrderForm({ initialRows }: Props) {
   const total = rows.reduce((acc, row) => acc + (row.price * (row.qty || 0)), 0);
 
   const handleAddRow = () => {
-    setRows([...rows, { id: Math.random().toString(36).substring(2), productId: null, productName: '', sku: '', price: 0, qty: 0 }]);
+    setRows([...rows, { id: Math.random().toString(36).substring(2), productId: null, productName: '', sku: '', price: 0, qty: 0, image: '' }]);
   };
 
   const handleQtyChange = (id: string, qty: number) => {
     setRows(rows.map(r => r.id === id ? { ...r, qty } : r));
   };
 
-  const handleProductSelect = (id: string, product: { id: number, name: string, sku: string, price: string }) => {
+  const handleProductSelect = (id: string, product: { id: number, name: string, sku: string, price: string, image: string }) => {
     setRows(rows.map(r => r.id === id ? { 
       ...r, 
       productId: product.id, 
       productName: product.name,
       sku: product.sku,
-      price: parseFloat(product.price || '0')
+      price: parseFloat(product.price || '0'),
+      image: product.image
     } : r));
   };
 
@@ -66,7 +68,7 @@ export function BulkOrderForm({ initialRows }: Props) {
         await addItem({
           productId: String(row.productId),
           name: row.productName,
-          image: '', // We don't have the image here, but that's okay for bulk orders
+          image: row.image,
           price: row.price,
           quantity: row.qty
         });

@@ -11,6 +11,7 @@ export type PurchaseListItem = {
   sku: string;
   qty: number;
   price: number;
+  image?: string;
 };
 
 export type PurchaseList = {
@@ -129,6 +130,7 @@ export type ProductSearchResult = {
   name: string;
   sku: string;
   price: string;
+  image: string;
 };
 
 export async function searchProductsForBulkOrder(query: string, searchBy: 'name' | 'sku'): Promise<ProductSearchResult[]> {
@@ -148,7 +150,7 @@ export async function searchProductsForBulkOrder(query: string, searchBy: 'name'
       params.search = query;
     }
 
-    const products = await woocommerceApi.request<Array<{ id: number, name: string, sku: string, price: string }>>('/products', {
+    const products = await woocommerceApi.request<Array<{ id: number, name: string, sku: string, price: string, images: Array<{ src: string }> }>>('/products', {
       params
     });
 
@@ -157,6 +159,7 @@ export async function searchProductsForBulkOrder(query: string, searchBy: 'name'
       name: p.name,
       sku: p.sku || '',
       price: p.price || '0',
+      image: p.images?.[0]?.src || '',
     }));
   } catch (error) {
     console.error('Error searching products', error);
