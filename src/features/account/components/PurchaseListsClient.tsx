@@ -2,6 +2,7 @@
 import { PurchaseList, deletePurchaseList } from '@/features/account/services/purchase-lists';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import Link from 'next/link';
 
 export function PurchaseListsClient({ initialLists }: { initialLists: PurchaseList[] }) {
   const [lists, setLists] = useState(initialLists);
@@ -59,7 +60,11 @@ export function PurchaseListsClient({ initialLists }: { initialLists: PurchaseLi
             ) : (
               lists.map(list => (
                 <tr key={list.id} className="hover:bg-gray-50/50">
-                  <td className="px-4 py-4 font-medium text-brand-primary-dark">{list.name}</td>
+                  <td className="px-4 py-4 font-medium text-brand-primary-dark">
+                    <Link href={`/account/bulk-order?list=${list.id}`} className="hover:underline hover:text-brand-primary">
+                      {list.name}
+                    </Link>
+                  </td>
                   <td className="px-4 py-4 text-center">{list.items.reduce((sum, item) => sum + item.qty, 0)} items</td>
                   <td className="px-4 py-4 text-center">{list.user}</td>
                   <td className="px-4 py-4 text-right">

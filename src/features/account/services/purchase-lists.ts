@@ -28,7 +28,7 @@ async function getCustomerMeta() {
   if (!session) return null;
 
   try {
-    const customer = await woocommerceApi.request<{ meta_data: Array<{ key: string, value: any }> }>(
+    const customer = await woocommerceApi.request<{ meta_data: Array<{ key: string, value: any }>; first_name?: string; last_name?: string; username?: string; }>(
       `/customers/${session.userId}`,
       { revalidate: 0 }
     );
@@ -71,7 +71,9 @@ export async function savePurchaseList(name: string, items: PurchaseListItem[]):
     name,
     items,
     createdAt: new Date().toISOString(),
-    user: data.session.email.split('@')[0], // Extract username from email
+    user: data.customer.first_name && data.customer.last_name 
+      ? `${data.customer.first_name} ${data.customer.last_name}` 
+      : data.customer.first_name || data.customer.username || data.session.email.split('@')[0], // Extract username from email as fallback
   };
 
   const updatedLists = [...currentLists, newList];
