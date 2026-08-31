@@ -317,40 +317,58 @@ export const ProductCustomizer = ({
                  >
                     {customization.logoPreviewUrl ? (
                       <>
+                        {/* Debossed Shadow Edge (Top-Left Inner Edge) */}
                         <div
                           className="absolute inset-0 pointer-events-none m-6"
                           style={{
                             maskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
                             WebkitMaskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
-                            maskPosition: 'calc(50% - 1px) calc(50% - 1px), center',
-                            WebkitMaskPosition: 'calc(50% - 1px) calc(50% - 1px), center',
+                            maskPosition: 'center, calc(50% + 1.5px) calc(50% + 1.5px)',
+                            WebkitMaskPosition: 'center, calc(50% + 1.5px) calc(50% + 1.5px)',
                             maskSize: 'contain, contain',
                             WebkitMaskSize: 'contain, contain',
                             maskRepeat: 'no-repeat, no-repeat',
                             WebkitMaskRepeat: 'no-repeat, no-repeat',
                             maskComposite: 'subtract',
                             WebkitMaskComposite: 'source-out',
-                            backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                            backgroundColor: 'rgba(0, 0, 0, 0.65)',
+                            mixBlendMode: 'multiply',
+                            filter: 'blur(0.5px)',
+                          }}
+                        />
+                        {/* Debossed Highlight Edge (Bottom-Right Inner Edge) */}
+                        <div
+                          className="absolute inset-0 pointer-events-none m-6"
+                          style={{
+                            maskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
+                            WebkitMaskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
+                            maskPosition: 'center, calc(50% - 1.5px) calc(50% - 1.5px)',
+                            WebkitMaskPosition: 'center, calc(50% - 1.5px) calc(50% - 1.5px)',
+                            maskSize: 'contain, contain',
+                            WebkitMaskSize: 'contain, contain',
+                            maskRepeat: 'no-repeat, no-repeat',
+                            WebkitMaskRepeat: 'no-repeat, no-repeat',
+                            maskComposite: 'subtract',
+                            WebkitMaskComposite: 'source-out',
+                            backgroundColor: 'rgba(255, 255, 255, 0.5)',
                             mixBlendMode: 'screen',
                             filter: 'blur(0.5px)',
                           }}
                         />
+                        {/* Debossed Base Fill (slight darkening of the pressed area) */}
                         <div
                           className="absolute inset-0 pointer-events-none m-6"
                           style={{
-                            maskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
-                            WebkitMaskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
-                            maskPosition: 'calc(50% + 1px) calc(50% + 1px), center',
-                            WebkitMaskPosition: 'calc(50% + 1px) calc(50% + 1px), center',
-                            maskSize: 'contain, contain',
-                            WebkitMaskSize: 'contain, contain',
-                            maskRepeat: 'no-repeat, no-repeat',
-                            WebkitMaskRepeat: 'no-repeat, no-repeat',
-                            maskComposite: 'subtract',
-                            WebkitMaskComposite: 'source-out',
-                            backgroundColor: 'rgba(0, 0, 0, 0.45)',
+                            maskImage: `url(${customization.logoPreviewUrl})`,
+                            WebkitMaskImage: `url(${customization.logoPreviewUrl})`,
+                            maskPosition: 'center',
+                            WebkitMaskPosition: 'center',
+                            maskSize: 'contain',
+                            WebkitMaskSize: 'contain',
+                            maskRepeat: 'no-repeat',
+                            WebkitMaskRepeat: 'no-repeat',
+                            backgroundColor: 'rgba(0, 0, 0, 0.08)',
                             mixBlendMode: 'multiply',
-                            filter: 'blur(0.5px)',
                           }}
                         />
                       </>

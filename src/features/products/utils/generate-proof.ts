@@ -218,16 +218,19 @@ export async function composeProof(args: {
           } else if (branding.blockingType === 'UV Print') {
             ctx.drawImage(logoImg, logoX, logoY, logoW, logoH);
           } else if (branding.blockingType === 'Embossed') {
+            const shift = Math.max(1.5, logoW * 0.003); // Proportional shift for high-res canvas
+
+            // 1. Debossed Shadow Edge (Top-Left Inner Edge)
             const darkEdge = document.createElement('canvas');
             darkEdge.width = logoW; darkEdge.height = logoH;
             const dCtx = darkEdge.getContext('2d');
             if (dCtx) {
               dCtx.drawImage(logoImg, 0, 0, logoW, logoH);
               dCtx.globalCompositeOperation = 'source-in';
-              dCtx.fillStyle = 'rgba(0,0,0,0.5)';
+              dCtx.fillStyle = 'rgba(0,0,0,0.65)';
               dCtx.fillRect(0, 0, logoW, logoH);
               dCtx.globalCompositeOperation = 'destination-out';
-              dCtx.drawImage(logoImg, 1, 1, logoW, logoH);
+              dCtx.drawImage(logoImg, shift, shift, logoW, logoH);
 
               ctx.save();
               ctx.filter = 'blur(0.5px)';
@@ -236,21 +239,38 @@ export async function composeProof(args: {
               ctx.restore();
             }
 
+            // 2. Debossed Highlight Edge (Bottom-Right Inner Edge)
             const lightEdge = document.createElement('canvas');
             lightEdge.width = logoW; lightEdge.height = logoH;
             const lCtx = lightEdge.getContext('2d');
             if (lCtx) {
               lCtx.drawImage(logoImg, 0, 0, logoW, logoH);
               lCtx.globalCompositeOperation = 'source-in';
-              lCtx.fillStyle = 'rgba(255,255,255,0.3)';
+              lCtx.fillStyle = 'rgba(255,255,255,0.5)';
               lCtx.fillRect(0, 0, logoW, logoH);
               lCtx.globalCompositeOperation = 'destination-out';
-              lCtx.drawImage(logoImg, -1, -1, logoW, logoH);
+              lCtx.drawImage(logoImg, -shift, -shift, logoW, logoH);
 
               ctx.save();
               ctx.filter = 'blur(0.5px)';
               ctx.globalCompositeOperation = 'screen';
               ctx.drawImage(lightEdge, logoX, logoY, logoW, logoH);
+              ctx.restore();
+            }
+
+            // 3. Debossed Base Fill (slight darkening of the pressed area)
+            const baseFill = document.createElement('canvas');
+            baseFill.width = logoW; baseFill.height = logoH;
+            const bCtx = baseFill.getContext('2d');
+            if (bCtx) {
+              bCtx.drawImage(logoImg, 0, 0, logoW, logoH);
+              bCtx.globalCompositeOperation = 'source-in';
+              bCtx.fillStyle = 'rgba(0,0,0,0.08)';
+              bCtx.fillRect(0, 0, logoW, logoH);
+
+              ctx.save();
+              ctx.globalCompositeOperation = 'multiply';
+              ctx.drawImage(baseFill, logoX, logoY, logoW, logoH);
               ctx.restore();
             }
           } else {

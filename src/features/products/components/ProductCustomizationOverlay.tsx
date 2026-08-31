@@ -136,42 +136,58 @@ export const ProductCustomizationOverlay = ({
             />
           ) : (
             <>
-              {/* Embossed Highlight Edge */}
+              {/* Debossed Shadow Edge (Top-Left Inner Edge) */}
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
                   maskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
                   WebkitMaskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
-                  maskPosition: `calc(${posLabel.includes('left') ? '0%' : posLabel.includes('right') ? '100%' : '50%'} - 1px) calc(${posLabel.includes('top') ? '0%' : posLabel.includes('bottom') ? '100%' : '50%'} - 1px), ${bgPosition}`,
-                  WebkitMaskPosition: `calc(${posLabel.includes('left') ? '0%' : posLabel.includes('right') ? '100%' : '50%'} - 1px) calc(${posLabel.includes('top') ? '0%' : posLabel.includes('bottom') ? '100%' : '50%'} - 1px), ${bgPosition}`,
+                  maskPosition: `${bgPosition}, calc(${posLabel.includes('left') ? '0%' : posLabel.includes('right') ? '100%' : '50%'} + 1.5px) calc(${posLabel.includes('top') ? '0%' : posLabel.includes('bottom') ? '100%' : '50%'} + 1.5px)`,
+                  WebkitMaskPosition: `${bgPosition}, calc(${posLabel.includes('left') ? '0%' : posLabel.includes('right') ? '100%' : '50%'} + 1.5px) calc(${posLabel.includes('top') ? '0%' : posLabel.includes('bottom') ? '100%' : '50%'} + 1.5px)`,
                   maskSize: 'contain, contain',
                   WebkitMaskSize: 'contain, contain',
                   maskRepeat: 'no-repeat, no-repeat',
                   WebkitMaskRepeat: 'no-repeat, no-repeat',
                   maskComposite: 'subtract',
                   WebkitMaskComposite: 'source-out',
-                  backgroundColor: 'rgba(255, 255, 255, 0.45)',
+                  backgroundColor: 'rgba(0, 0, 0, 0.65)',
+                  mixBlendMode: 'multiply',
+                  filter: 'blur(0.5px)',
+                }}
+              />
+              {/* Debossed Highlight Edge (Bottom-Right Inner Edge) */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  maskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
+                  WebkitMaskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
+                  maskPosition: `${bgPosition}, calc(${posLabel.includes('left') ? '0%' : posLabel.includes('right') ? '100%' : '50%'} - 1.5px) calc(${posLabel.includes('top') ? '0%' : posLabel.includes('bottom') ? '100%' : '50%'} - 1.5px)`,
+                  WebkitMaskPosition: `${bgPosition}, calc(${posLabel.includes('left') ? '0%' : posLabel.includes('right') ? '100%' : '50%'} - 1.5px) calc(${posLabel.includes('top') ? '0%' : posLabel.includes('bottom') ? '100%' : '50%'} - 1.5px)`,
+                  maskSize: 'contain, contain',
+                  WebkitMaskSize: 'contain, contain',
+                  maskRepeat: 'no-repeat, no-repeat',
+                  WebkitMaskRepeat: 'no-repeat, no-repeat',
+                  maskComposite: 'subtract',
+                  WebkitMaskComposite: 'source-out',
+                  backgroundColor: 'rgba(255, 255, 255, 0.5)',
                   mixBlendMode: 'screen',
                   filter: 'blur(0.5px)',
                 }}
               />
-              {/* Embossed Shadow Edge */}
+              {/* Debossed Base Fill (slight darkening of the pressed area) */}
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
-                  maskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
-                  WebkitMaskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
-                  maskPosition: `calc(${posLabel.includes('left') ? '0%' : posLabel.includes('right') ? '100%' : '50%'} + 1px) calc(${posLabel.includes('top') ? '0%' : posLabel.includes('bottom') ? '100%' : '50%'} + 1px), ${bgPosition}`,
-                  WebkitMaskPosition: `calc(${posLabel.includes('left') ? '0%' : posLabel.includes('right') ? '100%' : '50%'} + 1px) calc(${posLabel.includes('top') ? '0%' : posLabel.includes('bottom') ? '100%' : '50%'} + 1px), ${bgPosition}`,
-                  maskSize: 'contain, contain',
-                  WebkitMaskSize: 'contain, contain',
-                  maskRepeat: 'no-repeat, no-repeat',
-                  WebkitMaskRepeat: 'no-repeat, no-repeat',
-                  maskComposite: 'subtract',
-                  WebkitMaskComposite: 'source-out',
-                  backgroundColor: 'rgba(0, 0, 0, 0.55)',
+                  maskImage: `url(${customization.logoPreviewUrl})`,
+                  WebkitMaskImage: `url(${customization.logoPreviewUrl})`,
+                  maskPosition: bgPosition,
+                  WebkitMaskPosition: bgPosition,
+                  maskSize: 'contain',
+                  WebkitMaskSize: 'contain',
+                  maskRepeat: 'no-repeat',
+                  WebkitMaskRepeat: 'no-repeat',
+                  backgroundColor: 'rgba(0, 0, 0, 0.08)',
                   mixBlendMode: 'multiply',
-                  filter: 'blur(0.5px)',
                 }}
               />
             </>
