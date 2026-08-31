@@ -77,6 +77,9 @@ export async function POST(request: NextRequest) {
       
       const payload = new FormData();
       payload.append('product_id', item.productId);
+      if (item.variationId) {
+        payload.append('variation_id', item.variationId);
+      }
       payload.append('quantity', item.quantity.toString());
 
       if (item.customization) {
@@ -166,7 +169,7 @@ export async function POST(request: NextRequest) {
       // ENFORCE cross-subdomain sharing ONLY if running on the actual production domain.
       // If we are on Vercel preview (e.g. abbeygate-website.vercel.app), forcing domain='.abbeygate-england.com'
       // will cause the browser to reject the cookie completely.
-      const origin = request.headers.get('origin') || '';
+      const origin = request.headers.get('origin') || request.headers.get('host') || '';
       if (origin.includes('abbeygate-england.com')) {
         options.domain = '.abbeygate-england.com';
       }
