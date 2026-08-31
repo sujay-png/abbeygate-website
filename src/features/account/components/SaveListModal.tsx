@@ -49,6 +49,7 @@ export function SaveListModal({ isOpen, onClose, rows }: Props) {
       setName('');
       onClose();
       router.push('/account/purchase-lists');
+      router.refresh(); // Force Next.js to fetch the latest server data
     } else {
       toast.error(res.error || 'Failed to save list.');
     }
@@ -56,17 +57,21 @@ export function SaveListModal({ isOpen, onClose, rows }: Props) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-[#1f1a24] text-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-brand-primary/20">
-        <div className="p-6 md:p-8">
-          <h3 className="text-xl font-semibold mb-2">Save Purchase List</h3>
-          <p className="text-[#f1e6da]/70 text-sm mb-6">Enter a name for your new purchase list.</p>
-          
-          <input 
-            type="text" 
+      <div className="bg-white rounded-lg shadow-xl border border-gray-200 w-full max-w-md overflow-hidden transform transition-all">
+        <div className="px-6 py-5 border-b border-gray-100">
+          <h3 className="text-xl font-semibold text-brand-primary-dark">Save Purchase List</h3>
+          <p className="text-gray-600 text-sm mt-2">
+            Enter a name for your new purchase list.
+          </p>
+        </div>
+
+        <div className="px-6 py-5">
+          <input
+            type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Monthly Restock"
-            className="w-full bg-[#2d2535] border border-[#3e3447] focus:border-brand-primary rounded-lg px-4 py-3 text-white outline-none placeholder:text-gray-500 transition-colors"
+            className="w-full bg-white border border-gray-300 text-gray-800 text-sm rounded focus:ring-brand-primary focus:border-brand-primary block p-2.5 outline-none transition-colors"
             autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleSave();
@@ -74,19 +79,19 @@ export function SaveListModal({ isOpen, onClose, rows }: Props) {
             }}
           />
         </div>
-        
-        <div className="bg-[#17131a] px-6 py-5 flex items-center justify-end gap-3 border-t border-[#3e3447]">
-          <button 
+
+        <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3 border-t border-gray-100">
+          <button
             onClick={onClose}
             disabled={isSaving}
-            className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
-          <button 
+          <button
             onClick={handleSave}
-            disabled={isSaving}
-            className="px-5 py-2.5 rounded-lg text-sm font-medium bg-gradient-to-r from-brand-primary to-brand-primary-dark hover:from-[#963a90] hover:to-[#571750] text-white transition-all shadow-md shadow-brand-primary/20 disabled:opacity-50 flex items-center gap-2"
+            disabled={!name.trim() || isSaving}
+            className="px-5 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary-dark rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center gap-2"
           >
             {isSaving && (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

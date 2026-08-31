@@ -83,7 +83,7 @@ export async function savePurchaseList(name: string, items: PurchaseListItem[]):
         meta_data: [
           {
             key: '_purchase_lists',
-            value: updatedLists
+            value: JSON.stringify(updatedLists)
           }
         ]
       }
@@ -111,7 +111,7 @@ export async function deletePurchaseList(id: string): Promise<{ success: boolean
         meta_data: [
           {
             key: '_purchase_lists',
-            value: updatedLists
+            value: JSON.stringify(updatedLists)
           }
         ]
       }
