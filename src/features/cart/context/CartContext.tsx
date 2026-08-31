@@ -108,6 +108,21 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('openCart') === 'true') {
+        // Use a small timeout to ensure everything is mounted
+        setTimeout(() => {
+          openCart();
+          params.delete('openCart');
+          const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : '') + window.location.hash;
+          window.history.replaceState({}, '', newUrl);
+        }, 100);
+      }
+    }
+  }, [openCart]);
+
   const addItem = useCallback(async (item: Omit<CartItem, 'key'> & { key?: string }) => {
     setIsLoading(true);
     try {

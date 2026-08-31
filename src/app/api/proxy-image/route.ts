@@ -1,5 +1,13 @@
 import { NextResponse } from 'next/server';
 
+const ALLOWED_DOMAINS = [
+  'localhost',
+  '127.0.0.1',
+  'abbeygate-website.vercel.app',
+  'corporate.abbeygate-england.com',
+  'abbeygate-england.com'
+];
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const imageUrl = searchParams.get('url');
@@ -15,6 +23,20 @@ export async function GET(request: Request) {
       const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
       finalUrl = `${baseUrl}${imageUrl}`;
     }
+
+    // SSRF Protection: Parse and validate the hostname
+    const targetUrl = new URL(finalUrl);
+    const hostname = targetUrl.hostname;
+    
+    const isAllowed = ALLOWED_DOMAINS.some(domain => 
+      hostname === domain || hostname.endsWith(`.${domain}`)
+    );
+
+    if (!isAllowed) {
+      console.warn(`[Security] Blocked attempt to proxy unauthorized domain: ${hostname}`);
+      return NextResponse.json({ error: 'Forbidden image source' }, { status: 403 });
+    }
+
     const response = await fetch(finalUrl, {
       headers: {
         'User-Agent':
