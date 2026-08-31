@@ -15,7 +15,11 @@ type WooCommerceOrder = {
   status: string;
   total: string;
   currency: string;
-  line_items: any[];
+  line_items: Array<{
+    id: number;
+    name: string;
+    quantity: number;
+  }>;
   billing: {
     first_name: string;
     last_name: string;

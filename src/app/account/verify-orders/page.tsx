@@ -10,13 +10,11 @@ function VerifyOrdersHandler() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [message, setMessage] = useState('');
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>(!token ? 'error' : 'loading');
+  const [message, setMessage] = useState(!token ? 'Invalid or missing verification token.' : '');
 
   useEffect(() => {
     if (!token) {
-      setStatus('error');
-      setMessage('Invalid or missing verification token.');
       return;
     }
 

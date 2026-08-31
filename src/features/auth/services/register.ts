@@ -43,17 +43,16 @@ export async function registerCustomer(
       success: true,
       message: 'Registration successful. Please check your email to set your password.',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating customer:', error);
     
     // Attempt to extract a user-friendly error message from the WooCommerce API response
     let errorMessage = 'An unexpected error occurred during registration.';
-    if (error instanceof Error) {
-      if (error.message.includes('registration-error-email-exists')) {
-        errorMessage = 'An account is already registered with your email address. Please log in.';
-      } else {
-        errorMessage = error.message;
-      }
+    const err = error as Error;
+    if (err.message.includes('registration-error-email-exists')) {
+      errorMessage = 'An account is already registered with your email address. Please log in.';
+    } else {
+      errorMessage = err.message;
     }
 
     return {

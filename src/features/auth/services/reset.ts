@@ -60,13 +60,14 @@ export async function resetCustomerPassword(
       success: true,
       message: 'Password successfully updated! You can now log in.',
     };
-  } catch (error: any) {
-    console.error('Error resetting password:', error);
+  } catch (error: unknown) {
+    console.error('Password reset error:', error);
+    const err = error as Error;
     
     return {
       success: false,
-      message: error.message || 'An unexpected error occurred while resetting your password.',
-      error: error.message,
+      message: err.message || 'An unexpected error occurred while resetting the password.',
+      error: err.message,
     };
   }
 }

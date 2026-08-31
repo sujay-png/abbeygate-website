@@ -30,8 +30,8 @@ export function AccountSidebar() {
               href={item.href}
               className={`px-5 py-3 text-[14px] transition-colors border-b border-gray-200/80 ${
                 isActive 
-                  ? 'bg-gray-100/50 font-medium text-brand-primary-dark' 
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-brand-primary'
+                  ? 'bg-brand-tint font-medium text-brand-primary-dark' 
+                  : 'text-gray-600 hover:bg-brand-cream hover:text-brand-primary-dark'
               }`}
             >
               {item.label}
@@ -39,7 +39,7 @@ export function AccountSidebar() {
           );
         })}
         <form action={logoutCustomer}>
-          <button type="submit" className="w-full text-left px-5 py-3 text-[14px] text-gray-600 hover:bg-gray-50 hover:text-red-600 transition-colors">
+          <button type="submit" className="w-full text-left px-5 py-3 text-[14px] text-gray-600 hover:bg-brand-cream hover:text-red-600 transition-colors">
             Logout
           </button>
         </form>

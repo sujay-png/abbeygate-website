@@ -9,8 +9,8 @@ export type ActionState = {
 };
 
 export async function triggerLinkOrdersEmail(
-  prevState: ActionState | null,
-  formData: FormData
+  _prevState: ActionState | null,
+  _formData: FormData
 ): Promise<ActionState> {
   try {
     const session = await getSession();
@@ -42,12 +42,13 @@ export async function triggerLinkOrdersEmail(
       success: true,
       message: 'A confirmation link has been sent to your email address. Please check your inbox.',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error triggering link email:', error);
+    const err = error as Error;
     return {
       success: false,
-      message: error.message || 'An unexpected error occurred.',
-      error: error.message,
+      message: err.message || 'An unexpected error occurred.',
+      error: err.message,
     };
   }
 }
@@ -75,12 +76,13 @@ export async function processLinkOrdersToken(token: string): Promise<ActionState
       success: true,
       message: data.message, // "Successfully linked X order(s)."
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error processing link token:', error);
+    const err = error as Error;
     return {
       success: false,
-      message: error.message || 'An unexpected error occurred.',
-      error: error.message,
+      message: err.message || 'An unexpected error occurred.',
+      error: err.message,
     };
   }
 }

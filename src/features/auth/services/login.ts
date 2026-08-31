@@ -46,13 +46,13 @@ export async function loginCustomer(
     await createSession(data.user.id, data.user.email, data.user.roles);
     
     // We don't return here, we fall through to redirect outside the try-catch
-  } catch (error: any) {
-    console.error('Error during login:', error);
-    
+  } catch (error: unknown) {
+    console.error('Login error:', error);
+    const err = error as Error;
     return {
       success: false,
-      message: error.message || 'An unexpected error occurred during login.',
-      error: error.message,
+      message: err.message || 'An unexpected error occurred during login.',
+      error: err.message,
     };
   }
 

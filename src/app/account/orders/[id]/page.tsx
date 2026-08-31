@@ -10,6 +10,42 @@ type OrderDetailsProps = {
   params: Promise<{ id: string }>;
 };
 
+type WooCommerceOrderDetail = {
+  id: number;
+  number: string;
+  status: string;
+  date_created: string;
+  total: string;
+  currency: string;
+  discount_total: string;
+  customer_note?: string;
+  customer_id: number;
+  billing: {
+    first_name: string;
+    last_name: string;
+    company?: string;
+    address_1: string;
+    address_2?: string;
+    city: string;
+    state?: string;
+    postcode: string;
+    country: string;
+    email: string;
+    phone?: string;
+  };
+  line_items: Array<{
+    id: number;
+    product_id: number;
+    name: string;
+    quantity: number;
+    total: string;
+    meta_data?: Array<{
+      key: string;
+      value: string;
+    }>;
+  }>;
+};
+
 export default async function OrderDetailsPage({ params }: OrderDetailsProps) {
   const session = await getSession();
 
@@ -18,10 +54,10 @@ export default async function OrderDetailsPage({ params }: OrderDetailsProps) {
   }
 
   const { id } = await params;
-  let order: any = null;
+  let order: WooCommerceOrderDetail | null = null;
 
   try {
-    order = await woocommerceApi.request(`/orders/${id}`, {
+    order = await woocommerceApi.request<WooCommerceOrderDetail>(`/orders/${id}`, {
       revalidate: 0,
     });
 
@@ -72,7 +108,7 @@ export default async function OrderDetailsPage({ params }: OrderDetailsProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {order.line_items.map((item: any) => (
+                  {order.line_items.map((item) => (
                     <tr key={item.id} className="bg-white">
                       <td className="py-4 px-4 text-gray-600">
                         <Link href={`/product/${item.product_id}`} className="text-[#3498db] hover:underline">
@@ -83,7 +119,7 @@ export default async function OrderDetailsPage({ params }: OrderDetailsProps) {
                         {/* Render meta data for custom logos if present */}
                         {item.meta_data && item.meta_data.length > 0 && (
                           <div className="mt-2 text-sm text-gray-500 pl-4 border-l-2 border-gray-200 space-y-1">
-                            {item.meta_data.map((meta: any, idx: number) => {
+                            {item.meta_data.map((meta, idx: number) => {
                               // Hide internal woo meta keys
                               if (meta.key.startsWith('_')) return null;
                               return (
@@ -110,7 +146,7 @@ export default async function OrderDetailsPage({ params }: OrderDetailsProps) {
 
                   <tr className="bg-white">
                     <td className="py-3 px-4 font-semibold text-gray-900 text-right border-t border-gray-200">Subtotal:</td>
-                    <td className="py-3 px-4 text-gray-900 text-right font-medium border-t border-gray-200">£{parseFloat(order.total - order.discount_total).toFixed(2)}</td>
+                    <td className="py-3 px-4 text-gray-900 text-right font-medium border-t border-gray-200">£{(Number(order.total) - Number(order.discount_total)).toFixed(2)}</td>
                   </tr>
                   
                   {parseFloat(order.discount_total) > 0 && (
