@@ -40,6 +40,7 @@ export async function resetCustomerPassword(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-headless-secret': process.env.WP_HEADLESS_SECRET || '',
       },
       body: JSON.stringify({
         key,

@@ -24,6 +24,7 @@ export async function triggerLinkOrdersEmail(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-headless-secret': process.env.WP_HEADLESS_SECRET || '',
       },
       body: JSON.stringify({
         email: session.email,
@@ -61,6 +62,7 @@ export async function processLinkOrdersToken(token: string): Promise<ActionState
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-headless-secret': process.env.WP_HEADLESS_SECRET || '',
       },
       body: JSON.stringify({ token }),
       cache: 'no-store',

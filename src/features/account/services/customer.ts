@@ -27,6 +27,7 @@ export async function getAccountDetails(userId: number): Promise<AccountDetails 
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'x-headless-secret': process.env.WP_HEADLESS_SECRET || '',
       },
       cache: 'no-store', // Always get fresh data for account details
     });
@@ -70,6 +71,7 @@ export async function updateAccountDetails(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-headless-secret': process.env.WP_HEADLESS_SECRET || '',
       },
       body: JSON.stringify({
         first_name,
