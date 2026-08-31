@@ -41,7 +41,7 @@ export function PurchaseListsClient({ initialLists }: { initialLists: PurchaseLi
 
       <div className="overflow-x-auto border border-gray-200 rounded-sm">
         <table className="w-full text-left text-sm text-gray-600">
-          <thead className="bg-[#2a2b3c] text-white">
+          <thead className="bg-brand-primary-dark text-white">
             <tr>
               <th className="px-4 py-3 font-medium">List name</th>
               <th className="px-4 py-3 font-medium text-center">Number of items</th>

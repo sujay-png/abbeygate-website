@@ -78,8 +78,8 @@ export function BulkOrderForm({ initialRows }: Props) {
   };
 
   return (
-    <div className="text-gray-700 shadow-sm border border-gray-200">
-      <div className="bg-[#5a5a5a] text-white px-4 py-3 text-[15px] font-medium">
+    <div className="text-gray-700 shadow-sm border border-brand-primary/20 rounded-md overflow-hidden">
+      <div className="bg-brand-primary-dark text-white px-4 py-3 text-[15px] font-medium">
         Bulk Order Form
       </div>
       
@@ -127,20 +127,20 @@ export function BulkOrderForm({ initialRows }: Props) {
         <div className="mt-4">
           <button 
             onClick={handleAddRow}
-            className="bg-[#95a5a6] hover:bg-[#7f8c8d] text-white px-3 py-1.5 rounded text-sm flex items-center gap-1.5 transition-colors font-medium shadow-sm"
+            className="text-brand-primary border border-brand-primary hover:bg-brand-tint px-4 py-1.5 rounded text-sm flex items-center gap-1.5 transition-colors font-medium"
           >
-            <span className="text-lg leading-none">+</span> new line
+            <span className="text-lg leading-none">+</span> New line
           </button>
         </div>
       </div>
 
-      <div className="bg-gray-100/80 px-4 md:px-6 py-5 flex flex-col md:flex-row items-center justify-between border-t border-gray-200 gap-4">
-        <div className="flex flex-wrap gap-2 w-full md:w-auto">
+      <div className="bg-brand-cream/30 px-4 md:px-6 py-5 flex flex-col md:flex-row items-center justify-between border-t border-brand-primary/10 gap-4">
+        <div className="flex flex-wrap gap-3 w-full md:w-auto">
           <button 
             onClick={handleAddToCart}
-            className="bg-[#4aa0e3] hover:bg-[#328bc9] text-white px-5 py-2.5 rounded font-medium transition-colors flex items-center gap-2 shadow-sm flex-1 md:flex-none justify-center"
+            className="bg-brand-primary hover:bg-brand-primary-dark text-white px-6 py-2.5 rounded font-medium transition-colors flex items-center gap-2 shadow-sm flex-1 md:flex-none justify-center"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
             Add to Cart
@@ -148,9 +148,9 @@ export function BulkOrderForm({ initialRows }: Props) {
           
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="bg-[#95a5a6] hover:bg-[#7f8c8d] text-white px-5 py-2.5 rounded font-medium transition-colors flex items-center gap-2 shadow-sm flex-1 md:flex-none justify-center"
+            className="bg-white text-brand-primary border border-brand-primary hover:bg-brand-tint px-6 py-2.5 rounded font-medium transition-colors flex items-center gap-2 flex-1 md:flex-none justify-center"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
             </svg>
             Save list
