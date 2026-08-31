@@ -43,7 +43,7 @@ export async function getPurchaseLists(): Promise<PurchaseList[]> {
   const data = await getCustomerMeta();
   if (!data) return [];
 
-  const listsMeta = data.customer.meta_data.find((meta) => meta.key === '_purchase_lists');
+  const listsMeta = data.customer.meta_data.find((meta) => meta.key === 'purchase_lists');
   if (listsMeta && Array.isArray(listsMeta.value)) {
     return listsMeta.value as PurchaseList[];
   }
@@ -82,7 +82,7 @@ export async function savePurchaseList(name: string, items: PurchaseListItem[]):
       body: {
         meta_data: [
           {
-            key: '_purchase_lists',
+            key: 'purchase_lists',
             value: JSON.stringify(updatedLists)
           }
         ]
@@ -110,7 +110,7 @@ export async function deletePurchaseList(id: string): Promise<{ success: boolean
       body: {
         meta_data: [
           {
-            key: '_purchase_lists',
+            key: 'purchase_lists',
             value: JSON.stringify(updatedLists)
           }
         ]
