@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { Breadcrumb } from '@/components/content';
 import { Container } from '@/components/ui/Container';
 import { AccountSidebar } from '@/features/account/components/AccountSidebar';
+import { getAccountDetails } from '@/features/account/services/customer';
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -13,8 +14,11 @@ export default async function DashboardPage() {
     redirect('/account');
   }
 
-  // Determine user display name
-  const username = session.email.split('@')[0];
+  // Fetch the user's actual display name from the custom endpoint
+  const accountDetails = await getAccountDetails(session.userId);
+  
+  // Determine user display name: use display_name, fallback to first_name, then email prefix
+  const username = accountDetails?.display_name || accountDetails?.first_name || session.email.split('@')[0];
 
   return (
     <main className="flex flex-col min-h-screen bg-brand-cream">
