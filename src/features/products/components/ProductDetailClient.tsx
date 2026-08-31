@@ -14,6 +14,7 @@ import { composeProof } from '../utils/generate-proof';
 import { TrustIndicators } from '@/components/home/TrustIndicators';
 import { Send, X, ChevronLeft, ChevronRight, ZoomIn, Check, Star } from 'lucide-react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import type { CustomTab } from '@/features/products/services/store-products';
 
@@ -49,6 +50,7 @@ export type ColorVariant = {
   slug: string;
   hex: string;
   imageSrc?: string;
+  fullProduct?: StoreProduct;
 };
 
 type ProductDetailClientProps = {
@@ -61,13 +63,19 @@ type ProductDetailClientProps = {
 };
 
 export const ProductDetailClient = ({
-  product,
+  product: initialProduct,
   tiers,
   basePrice,
   colorVariants = [],
   customTabs = [],
   amendKey,
 }: ProductDetailClientProps) => {
+  const [product, setProduct] = useState(initialProduct);
+
+  useEffect(() => {
+    setProduct(initialProduct);
+  }, [initialProduct.slug]);
+
   useEffect(() => {
     // Silently preload variant images to warm up Next.js optimization cache and browser cache
     if (!colorVariants || colorVariants.length === 0) return;
@@ -109,6 +117,10 @@ export const ProductDetailClient = ({
   const [isZooming, setIsZooming] = useState(false);
   const [zoomOrigin, setZoomOrigin] = useState('center center');
   const zoomTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setActiveImageIndex(0);
+  }, [product.slug]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!previewContainerRef.current) return;
@@ -887,32 +899,42 @@ export const ProductDetailClient = ({
                       transform: isZooming ? 'scale(2.2)' : 'scale(1.05)'
                     }}
                   >
-                    <div className="relative w-full h-full" ref={imageElementRef}>
-                      {product.images.map((img, idx) => {
-                        const isActive = img.src === activeSrc;
-                        return (
-                          <ImageWithFallback
-                            key={img.id || idx}
-                            src={img.src}
-                            alt={img.alt || product.name}
-                            fill
-                            priority={true}
-                            sizes="(max-width: 768px) 100vw, 50vw"
-                            className={`transition-all duration-500 object-contain ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
-                          />
-                        );
-                      })}
-                      {isCustomizingStarted && customizationActive && (
-                        <div className={`absolute inset-0 transition-opacity duration-500 z-20 ${isCustomizationSurface ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-                          <ProductCustomizationOverlay
-                            product={product}
-                            customization={customization}
-                            onPositionChange={handlePositionChange}
-                            imageBounds={imageBounds}
-                          />
-                        </div>
-                      )}
-                    </div>
+                    <AnimatePresence mode="wait">
+                      <motion.div 
+                        key={product.slug}
+                        initial={{ opacity: 0.5 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0.5 }}
+                        transition={{ duration: 0.2 }}
+                        className="relative w-full h-full" 
+                        ref={imageElementRef}
+                      >
+                        {product.images.map((img, idx) => {
+                          const isActive = img.src === activeSrc;
+                          return (
+                            <ImageWithFallback
+                              key={img.id || idx}
+                              src={img.src}
+                              alt={img.alt || product.name}
+                              fill
+                              priority={true}
+                              sizes="(max-width: 768px) 100vw, 50vw"
+                              className={`transition-all duration-500 object-contain ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+                            />
+                          );
+                        })}
+                        {isCustomizingStarted && customizationActive && (
+                          <div className={`absolute inset-0 transition-opacity duration-500 z-20 ${isCustomizationSurface ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+                            <ProductCustomizationOverlay
+                              product={product}
+                              customization={customization}
+                              onPositionChange={handlePositionChange}
+                              imageBounds={imageBounds}
+                            />
+                          </div>
+                        )}
+                      </motion.div>
+                    </AnimatePresence>
                   </div>
                 </div>
               ) : (
@@ -1220,10 +1242,15 @@ export const ProductDetailClient = ({
                   {colorVariants.map((color) => {
                     const isActive = product.slug === color.slug;
                     return (
-                      <Link
+                      <button
                         key={color.slug}
-                        href={`/product/${color.slug}`}
                         title={color.name}
+                        onClick={() => {
+                          if (color.fullProduct) {
+                            setProduct(color.fullProduct);
+                            window.history.replaceState({}, '', `/product/${color.slug}`);
+                          }
+                        }}
                         className={`w-8 h-8 rounded-full shadow-sm transition-transform hover:scale-110 ${isActive ? 'ring-2 ring-offset-2 ring-brand-body scale-110' : 'border border-gray-300'
                           }`}
                         style={{ backgroundColor: color.hex }}

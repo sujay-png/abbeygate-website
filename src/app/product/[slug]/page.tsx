@@ -125,7 +125,8 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
           name: colorName,
           slug: sibling.slug,
           hex: COLOR_HEX_MAP[colorSlug] || '#cccccc',
-          imageSrc: sibling.images?.[0]?.src
+          imageSrc: sibling.images?.[0]?.src,
+          fullProduct: sibling
         };
       });
     } catch (error) {
