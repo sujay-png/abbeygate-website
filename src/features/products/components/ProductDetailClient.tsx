@@ -12,7 +12,7 @@ import { getLogoAnchors, getImageBoundingBox, getProductPhysicalDimensionsMm } f
 import { getConfiguredImageBounds } from '../utils/product-image-bounds';
 import { composeProof } from '../utils/generate-proof';
 import { TrustIndicators } from '@/components/home/TrustIndicators';
-import { Send, X, ChevronLeft, ChevronRight, ZoomIn, Check } from 'lucide-react';
+import { Send, X, ChevronLeft, ChevronRight, ZoomIn, Check, Star } from 'lucide-react';
 import Link from 'next/link';
 
 import type { CustomTab } from '@/features/products/services/store-products';
@@ -633,12 +633,12 @@ export const ProductDetailClient = ({
     return false;
   };
 
-  const renderAccordions = () => (
+  const renderAccordions = (includeDescription: boolean = false) => (
     <>
-      {/* Description Accordion */}
-      <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
-        <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
-          <span>Description</span>
+      {includeDescription && (
+        <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
+          <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
+            <span>Description</span>
           <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
         </summary>
         <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
@@ -657,6 +657,7 @@ export const ProductDetailClient = ({
             })()}
         </div>
       </details>
+      )}
 
       {/* Specifications Accordion */}
       <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
@@ -720,6 +721,17 @@ export const ProductDetailClient = ({
           </div>
         </details>
       ))}
+
+      {/* Reviews Accordion (Dummy) */}
+      <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4" id="reviews">
+        <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
+          <span>Reviews (21)</span>
+          <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
+        </summary>
+        <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
+          <p>4.9 out of 5 average rating based on 21 verified customer reviews.</p>
+        </div>
+      </details>
     </>
   );
 
@@ -1099,7 +1111,7 @@ export const ProductDetailClient = ({
             
             {/* Accordions in Customisation Aside */}
             <div className="mt-2">
-              {renderAccordions()}
+              {renderAccordions(true)}
             </div>
           </aside>
         )}
@@ -1120,10 +1132,31 @@ export const ProductDetailClient = ({
 
             {product.short_description && (
               <div
-                className="text-[15px] text-brand-body mb-3"
+                className="text-[15px] text-brand-body mb-2"
                 dangerouslySetInnerHTML={{ __html: product.short_description }}
               />
             )}
+
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex text-[#d4af37]">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star key={star} size={15} fill="currentColor" strokeWidth={0} />
+                ))}
+              </div>
+              <button 
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById('reviews');
+                  if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.setAttribute('open', 'true');
+                  }
+                }}
+                className="text-[14px] font-medium text-gray-500 hover:text-brand-primary-dark underline underline-offset-4 decoration-gray-400 hover:decoration-brand-primary-dark transition-colors"
+              >
+                (21 reviews)
+              </button>
+            </div>
           </div>
 
           {/* PRICE BLOCK */}
@@ -1155,7 +1188,7 @@ export const ProductDetailClient = ({
           </div>
 
           {/* Description Accordion */}
-          <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mb-2">
+          <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mb-2 mt-2">
             <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
               <span>Description</span>
               <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
