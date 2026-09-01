@@ -107,7 +107,10 @@ export async function composeProof(args: {
     const ctx = canvas.getContext('2d');
 
     if (ctx) {
-      ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+      // Fill white background for WooCommerce checkout lightbox
+      // We use mix-blend-multiply in the frontend cart to hide it seamlessly
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
       const productImg = await loadProductImageElement(productImageUrl);
 
