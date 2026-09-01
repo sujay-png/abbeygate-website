@@ -107,7 +107,7 @@ export const generateDigitalProof = async (
     addSpecRow('Colour', colourName.trim());
   }
   addSpecRow('SKU', product.sku || 'N/A');
-  addSpecRow('Branding', customization.blockingType);
+  addSpecRow('Branding', customization.blockingType === 'Embossed' ? 'Blind debossed' : customization.blockingType);
   if (customization.blockingType === 'Foil blocked' && customization.foilColor) {
     addSpecRow('Foil Colour', customization.foilColor);
   }
