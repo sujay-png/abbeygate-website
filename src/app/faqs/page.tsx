@@ -17,7 +17,7 @@ export default function FAQsPage() {
       
       <div className="pb-16 md:pb-24">
         {/* We use hideTitle=true because PageHero already has the title */}
-        <FAQ hideTitle={true} className="bg-white !pt-2 md:!pt-6 !pb-0" />
+        <FAQ hideTitle={true} className="!pt-2 md:!pt-6 !pb-0" />
       </div>
     </main>
   );
