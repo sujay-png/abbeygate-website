@@ -26,7 +26,7 @@ export const FeaturedProducts = async () => {
             <ArrowIcon className="absolute -right-22 -top-1 hidden md:block" />
           </div>
 
-          <Button href="/notebooks" variant="primary" className="md:w-auto w-full max-w-[200px]">
+          <Button href="/custom-gifts" variant="primary" className="md:w-auto w-full max-w-[200px]">
             Shop All
           </Button>
         </div>
