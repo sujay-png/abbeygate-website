@@ -155,11 +155,11 @@ export const CartDrawer = () => {
                     <li key={item.key} className={`flex gap-4 ${isGrouped ? 'border-l-2 border-l-gray-200 pl-3 rounded-l -ml-3' : ''}`}>
                       <div className="w-20 h-20 relative shrink-0 rounded">
                         <Image
-                          src={item.image || '/images/logo/abbeygate-logo.png'}
+                          src={item.customization?.fullPreviewUrl || item.image || '/images/logo/abbeygate-logo.png'}
                           alt={item.name}
                           fill
                           sizes="80px"
-                          className="object-cover rounded"
+                          className="object-cover rounded mix-blend-multiply"
                         />
                       </div>
 

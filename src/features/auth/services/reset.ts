@@ -72,3 +72,48 @@ export async function resetCustomerPassword(
     };
   }
 }
+
+export async function requestPasswordReset(
+  prevState: ResetPasswordState | null,
+  formData: FormData
+): Promise<ResetPasswordState> {
+  try {
+    const email = formData.get('email') as string;
+
+    if (!email) {
+      return { success: false, message: 'Please enter your email address.' };
+    }
+
+    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://corporate.abbeygate-england.com';
+    
+    const response = await fetch(`${storeUrl}/wp-json/headless/v1/lost-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-headless-secret': process.env.WP_HEADLESS_SECRET || '',
+      },
+      body: JSON.stringify({ email }),
+      cache: 'no-store',
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Failed to send reset email.');
+    }
+
+    return {
+      success: true,
+      message: 'If an account exists with that email, a password reset link has been sent.',
+    };
+  } catch (error: unknown) {
+    console.error('Password reset request error:', error);
+    const err = error as Error;
+    
+    return {
+      success: false,
+      message: err.message || 'An unexpected error occurred while requesting a password reset.',
+      error: err.message,
+    };
+  }
+}

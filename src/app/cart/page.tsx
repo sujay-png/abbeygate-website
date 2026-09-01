@@ -158,7 +158,7 @@ export default function CartPage() {
                     {/* 1. Item */}
                     <div className="flex gap-4">
                       <div className="w-[84px] h-[116px] relative shrink-0 overflow-hidden">
-                        <Image src={item.image || '/images/logo/abbeygate-logo.png'} alt={item.name} fill sizes="84px" className="object-cover" />
+                        <Image src={item.customization?.fullPreviewUrl || item.image || '/images/logo/abbeygate-logo.png'} alt={item.name} fill sizes="84px" className="object-cover mix-blend-multiply" />
                       </div>
                       <div className="flex-1 flex flex-col">
                         <Link href={item.slug ? `/product/${item.slug}` : '#'} className="font-josefin font-bold text-[18px] text-brand-primary-dark leading-tight hover:underline">

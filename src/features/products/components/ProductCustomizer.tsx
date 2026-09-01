@@ -692,11 +692,11 @@ export const ProductCustomizer = ({
                  </div>
               ) : customization.fullPreviewUrl ? (
                  <>
-                   <div className="w-24 h-auto shrink-0 bg-white rounded overflow-hidden">
+                   <div className="w-32 sm:w-36 h-auto shrink-0 bg-white rounded overflow-hidden">
                      <img 
                        src={customization.fullPreviewUrl} 
                        alt="Digital Proof" 
-                       className="w-full h-auto" 
+                       className="w-full h-auto mix-blend-multiply" 
                      />
                    </div>
                    <div className="flex-1 text-center sm:text-left">

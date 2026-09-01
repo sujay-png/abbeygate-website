@@ -107,8 +107,7 @@ export async function composeProof(args: {
     const ctx = canvas.getContext('2d');
 
     if (ctx) {
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+      ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
       const productImg = await loadProductImageElement(productImageUrl);
 
