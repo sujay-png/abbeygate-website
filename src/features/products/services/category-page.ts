@@ -1,5 +1,5 @@
 import { getCategoryRoute, getFilterConfigForPath } from '@/data/category-routes';
-import { getAllStoreProductsByCategory, getStoreAttributes, getStoreAttributeTerms } from '../services/store-products';
+import { getAllStoreProductsByCategory, getStoreAttributes, getStoreAttributeTerms, getStoreCategoryById } from '../services/store-products';
 import { parseFiltersFromSearchParams } from '../utils/product-helpers';
 import type { StoreAttribute, StoreAttributeTerm, StoreProduct } from '../types/store-product';
 
@@ -12,6 +12,13 @@ export async function loadCategoryPageData(path: string, searchParams: Record<st
 
   let allProducts: StoreProduct[] = [];
   let attributes: StoreAttribute[] = [];
+  let wooCategory = null;
+
+  try {
+    wooCategory = await getStoreCategoryById(route.categoryId);
+  } catch (error) {
+    console.warn(`Failed to load WooCommerce category ${route.categoryId}:`, error);
+  }
 
   try {
     allProducts = await getAllStoreProductsByCategory(route.categoryId);
@@ -55,13 +62,22 @@ export async function loadCategoryPageData(path: string, searchParams: Record<st
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ');
     return index === pathParts.length - 1
-      ? { label: route.title }
+      ? { label: wooCategory?.name || route.title }
       : { label, href };
   });
 
+  let description = wooCategory?.description || route.description || '';
+  if (description && !description.includes('<p>') && !description.includes('<h')) {
+    // WordPress often returns raw text with \r\n for category descriptions
+    description = description
+      .split(/\r?\n\r?\n/)
+      .map((p: string) => `<p class="mb-4">${p.trim()}</p>`)
+      .join('');
+  }
+
   return {
-    title: route.title,
-    description: route.description || '',
+    title: wooCategory?.name || route.title,
+    description,
     breadcrumbItems,
     allProducts,
     filters,

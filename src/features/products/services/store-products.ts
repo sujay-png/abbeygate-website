@@ -84,6 +84,16 @@ export async function getStoreCategories(): Promise<StoreCategory[]> {
   });
 }
 
+export const getStoreCategoryById = cache(async (
+  id: number,
+): Promise<StoreCategory | null> => {
+  try {
+    return await storeFetch<StoreCategory>(`/products/categories/${id}`, { revalidate: 300 });
+  } catch (error) {
+    return null;
+  }
+});
+
 export async function getStoreAttributes(): Promise<StoreAttribute[]> {
   return storeFetch<StoreAttribute[]>("/products/attributes", {
     revalidate: 300,
