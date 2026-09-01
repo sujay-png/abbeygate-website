@@ -1009,27 +1009,47 @@ export const ProductDetailClient = ({
 
             <div className="relative w-full max-w-[80vw] flex items-center justify-center mb-8">
               <div 
-                className="relative"
+                className="relative overflow-hidden"
+                onMouseMove={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = ((e.clientX - rect.left) / rect.width) * 100;
+                  const y = ((e.clientY - rect.top) / rect.height) * 100;
+                  setZoomOrigin(`${x}% ${y}%`);
+                  if (!isZooming) setIsZooming(true);
+                }}
+                onMouseLeave={() => {
+                  setIsZooming(false);
+                  setZoomOrigin('center center');
+                }}
                 style={{ 
                   aspectRatio: imageAspectRatio,
-                  width: `min(100%, calc(70vh * ${imageAspectRatio}))`
+                  width: `min(100%, calc(70vh * ${imageAspectRatio}))`,
+                  cursor: 'crosshair'
                 }}
               >
-                <ImageWithFallback
-                  src={product.images[activeImageIndex]?.src || activeSrc}
-                  alt={product.images[activeImageIndex]?.alt || product.name}
-                  fill
-                  sizes="80vw"
-                  className="object-contain"
-                />
-                {isCustomizationSurface && isCustomizingStarted && customizationActive && (
-                  <ProductCustomizationOverlay
-                    product={product}
-                    customization={customization}
-                    onPositionChange={handlePositionChange}
-                    imageBounds={imageBounds}
+                <div 
+                  className="absolute inset-0 transition-transform duration-300 ease-out"
+                  style={{
+                    transformOrigin: zoomOrigin,
+                    transform: isZooming ? 'scale(2.2)' : 'scale(1)'
+                  }}
+                >
+                  <ImageWithFallback
+                    src={product.images[activeImageIndex]?.src || activeSrc}
+                    alt={product.images[activeImageIndex]?.alt || product.name}
+                    fill
+                    sizes="80vw"
+                    className="object-contain"
                   />
-                )}
+                  {isCustomizationSurface && isCustomizingStarted && customizationActive && (
+                    <ProductCustomizationOverlay
+                      product={product}
+                      customization={customization}
+                      onPositionChange={handlePositionChange}
+                      imageBounds={imageBounds}
+                    />
+                  )}
+                </div>
               </div>
             </div>
 
