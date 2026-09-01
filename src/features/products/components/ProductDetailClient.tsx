@@ -333,7 +333,8 @@ export const ProductDetailClient = ({
       quantity,
       basePrice,
       tiers,
-      customizationEnabled: false, // Not customizing yet
+      customizationEnabled: customization.enabled,
+      blockingType: customization.blockingType || 'Embossed',
       isGifts
     });
     
@@ -348,7 +349,7 @@ export const ProductDetailClient = ({
         discountLabel: result.discountLabel
       };
     });
-  }, [quantity, basePrice, tiers, isGifts, isCustomizingStarted]);
+  }, [quantity, basePrice, tiers, isGifts, isCustomizingStarted, customization.enabled, customization.blockingType]);
 
   const handlePositionChange = useCallback((position: { x: number; y: number }) => {
     setCustomization(prev => ({ ...prev, logoPosition: position }));
