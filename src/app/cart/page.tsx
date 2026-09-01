@@ -169,7 +169,7 @@ export default function CartPage() {
                           {item.attributes?.filter(attr => !['Custom Logo', 'Blocking', 'Foil Colour', 'Logo Scale', 'Logo', 'Corner Edges'].includes(attr.name)).map((attr) => (
                             <p key={attr.name}>{attr.value}</p>
                           ))}
-                          <p className="pt-1 uppercase">SKU: {item.productId}</p>
+                          <p className="pt-1 uppercase">SKU: {item.sku || item.productId}</p>
                         </div>
 
                         <div className="flex flex-col gap-1 mt-4 text-[12px] font-semibold text-brand-primary-dark tracking-wide">

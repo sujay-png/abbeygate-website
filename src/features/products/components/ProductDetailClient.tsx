@@ -578,6 +578,7 @@ export const ProductDetailClient = ({
         const activeColour = colorVariants.find(c => c.slug === product.slug);
         await addItem({
           productId: String(product.id),
+          sku: product.sku,
           slug: product.slug,
           name: product.name,
           image: product.images[0]?.thumbnail || product.images[0]?.src || '',

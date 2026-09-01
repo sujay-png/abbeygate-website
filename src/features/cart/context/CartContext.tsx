@@ -22,6 +22,7 @@ export type ProofStatus = 'ready' | 'pending' | 'failed';
 export interface CartItem {
   key: string;
   productId: string;
+  sku?: string;
   slug?: string;
   variationId?: string;
   name: string;
