@@ -1024,7 +1024,7 @@ export const ProductDetailClient = ({
                 style={{ 
                   aspectRatio: imageAspectRatio,
                   width: `min(100%, calc(70vh * ${imageAspectRatio}))`,
-                  cursor: 'crosshair'
+                  cursor: 'zoom-in'
                 }}
               >
                 <div 

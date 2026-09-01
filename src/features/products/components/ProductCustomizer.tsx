@@ -275,7 +275,7 @@ export const ProductCustomizer = ({
                  </div>
                  <div className="font-bold text-brand-body">Foil blocked</div>
                  <div className="text-[12px] text-gray-500 mt-1 mb-2 leading-relaxed">Metallic foil stamped into the cover for a premium finish.</div>
-                 <div className="text-[12px] font-bold text-brand-primary mb-4">{getExtraCostLabel('Foil blocked')}</div>
+
                  
                  {customization.blockingType === 'Foil blocked' && (
                     <div className="mt-auto pt-3 border-t border-gray-200/60" onClick={e => e.stopPropagation()}>
@@ -378,7 +378,7 @@ export const ProductCustomizer = ({
                  </div>
                  <div className="font-bold text-brand-body">Blind debossed</div>
                  <div className="text-[12px] text-gray-500 mt-1 mb-2 leading-relaxed">Logo is pressed directly into the material for a subtle effect.</div>
-                 <div className="text-[12px] font-bold text-brand-primary mb-4">{getExtraCostLabel('Embossed')}</div>
+
               </div>
 
               {/* UV Print Card */}
@@ -407,6 +407,7 @@ export const ProductCustomizer = ({
                  <div className="font-bold text-brand-body">UV Print</div>
                  <div className="text-[12px] text-gray-500 mt-1 mb-2 leading-relaxed">Full colour digital printing directly onto the product surface.</div>
                  <div className="text-[12px] font-bold text-brand-primary mb-4">{getExtraCostLabel('UV Print')}</div>
+
               </div>
 
             </div>
