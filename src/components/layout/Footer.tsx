@@ -180,11 +180,9 @@ export const Footer = () => {
             {/* Address */}
             <div className="lg:col-span-1">
               <h4 className="font-bold text-brand-primary-dark font-josefin text-sm tracking-wide mb-3 uppercase">Address</h4>
-              <address className="not-italic text-brand-body text-[15px] leading-relaxed">
-                Abbeygate<br />
-                Graphic House<br />
-                Portland Street<br />
-                Walsall<br />
+              <address className="not-italic text-brand-body text-[15px] leading-7">
+                Abbeygate, Graphic House,<br />
+                Portland Street, Walsall,<br />
                 WS2 8AA
               </address>
             </div>
