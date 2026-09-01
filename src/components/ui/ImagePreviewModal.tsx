@@ -42,16 +42,12 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, title = 'Customizatio
   // page. Prefer it so every customization layer (including corner clips) stays
   // in precisely the same place in the cart preview.
   const fullPreviewUrl = item?.customization?.fullPreviewUrl;
+  const useComposedPreview = Boolean(fullPreviewUrl);
 
   // Migration for old cart items: cornerEdges might be in attributes instead of customization payload
   const cornerEdges = item?.customization?.cornerEdges || 
     item?.attributes?.find(a => a.name === 'Corner Edges')?.value;
   const hasCornerEdges = Boolean(cornerEdges && cornerEdges !== 'None');
-  // Always use the dynamic CSS-based preview for corner edges to guarantee they perfectly
-  // match the main product page's logic. Composed canvas corners can sometimes drift.
-  const useComposedPreview = Boolean(
-    fullPreviewUrl && !hasCornerEdges,
-  );
 
   const isNotebook = Boolean(
     item?.name?.toLowerCase().includes('lewes smoothgrain') || item?.slug?.toLowerCase().includes('lewes-smoothgrain')
