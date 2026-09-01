@@ -9,7 +9,7 @@ import type {
 import { woocommerceApi } from "@/lib/woocommerce/client";
 
 export type ProductListOptions = {
-  categoryId?: number;
+  categoryId?: number | string;
   tagId?: number;
   page?: number;
   perPage?: number;
@@ -42,7 +42,7 @@ export async function getStoreProducts(
 
 /** Fetch category products (capped pages for speed). */
 export async function getAllStoreProductsByCategory(
-  categoryId: number,
+  categoryId: number | string,
   options: { maxPages?: number; perPage?: number } = {},
 ): Promise<StoreProduct[]> {
   const { maxPages = 3, perPage = 50 } = options;

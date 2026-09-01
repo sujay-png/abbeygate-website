@@ -15,7 +15,9 @@ export async function loadCategoryPageData(path: string, searchParams: Record<st
   let wooCategory = null;
 
   try {
-    wooCategory = await getStoreCategoryById(route.categoryId);
+    if (typeof route.categoryId === 'number' || !String(route.categoryId).includes(',')) {
+      wooCategory = await getStoreCategoryById(Number(route.categoryId));
+    }
   } catch (error) {
     console.warn(`Failed to load WooCommerce category ${route.categoryId}:`, error);
   }

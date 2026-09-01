@@ -8,7 +8,7 @@ export type FilterConfig = {
 
 export type CategoryRoute = {
   path: string;
-  categoryId: number;
+  categoryId: number | string;
   title: string;
   description?: string;
   filterConfig?: FilterConfig;
@@ -127,7 +127,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
   { path: "/custom-gifts/all", categoryId: 126, title: "All Gifts" },
 
   // Collections
-  { path: "/collection", categoryId: 49, title: "Our Collection", filterConfig: { disableCollection: true } },
+  { path: "/collection", categoryId: "49,50,51,52,53,54,55,140", title: "Our Collection", description: "Discover the full Abbeygate collection, featuring our complete range of premium diaries, notebooks, and travel accessories. From the eco-conscious materials of our Conscious Collection to the timeless elegance of the Dorchester and Chelsea ranges, our entire selection is crafted with meticulous attention to detail. Explore our comprehensive range to find the perfect companion for your personal and professional needs.", filterConfig: { disableCollection: true } },
   { path: "/collection/chelsea", categoryId: 49, title: "Chelsea Collection", filterConfig: { disableCollection: true } },
   { path: "/collection/dorchester", categoryId: 50, title: "Dorchester Collection", filterConfig: { disableCollection: true } },
   { path: "/collection/harrogate", categoryId: 51, title: "Harrogate Collection", filterConfig: { disableCollection: true } },
@@ -135,7 +135,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
   { path: "/collection/richmond", categoryId: 53, title: "Richmond Collection", filterConfig: { disableCollection: true } },
   { path: "/collection/windsor", categoryId: 140, title: "Windsor Collection",  filterConfig: { disableCollection: true } },
   { path: "/collection/conscious", categoryId: 55, title: "Conscious Collection", filterConfig: { disableCollection: true } },
-  { path: "/collection/all", categoryId: 49, title: "All Collections", filterConfig: { disableCollection: true } },
+  { path: "/collection/all", categoryId: "49,50,51,52,53,54,55,140", title: "All Collections", description: "Discover the full Abbeygate collection, featuring our complete range of premium diaries, notebooks, and travel accessories. From the eco-conscious materials of our Conscious Collection to the timeless elegance of the Dorchester and Chelsea ranges, our entire selection is crafted with meticulous attention to detail. Explore our comprehensive range to find the perfect companion for your personal and professional needs.", filterConfig: { disableCollection: true } },
 ];
 
 export function getCategoryRoute(path: string): CategoryRoute | undefined {
