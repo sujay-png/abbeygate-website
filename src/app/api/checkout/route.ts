@@ -142,7 +142,44 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. Return success and forward ALL accumulated cookies to the browser
+    // 4. If the user is logged into Next.js, sync their saved addresses to the WooCommerce checkout session
+    try {
+      const { getSession } = await import('@/features/auth/utils/session');
+      const { getAddresses } = await import('@/features/account/services/address');
+      const session = await getSession();
+      
+      if (session) {
+        const addresses = await getAddresses();
+        if (addresses) {
+          // Get a fresh nonce for the cart
+          const freshCartRes = await fetch(`${WOOCOMMERCE_STORE_URL}/wp-json/wc/store/v1/cart`, {
+            method: 'GET',
+            headers: finalSessionCookieStr ? { 'Cookie': finalSessionCookieStr } : {}
+          });
+          const freshNonce = freshCartRes.headers.get('nonce');
+          
+          if (freshNonce) {
+            await fetch(`${WOOCOMMERCE_STORE_URL}/wp-json/wc/store/v1/cart/update-customer`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Nonce': freshNonce,
+                ...(finalSessionCookieStr ? { 'Cookie': finalSessionCookieStr } : {})
+              },
+              body: JSON.stringify({
+                billing_address: addresses.billing,
+                shipping_address: addresses.shipping
+              })
+            });
+          }
+        }
+      }
+    } catch (addressSyncError) {
+      console.error('Failed to sync addresses to WooCommerce checkout:', addressSyncError);
+      // Non-fatal, allow checkout to proceed
+    }
+
+    // 5. Return success and forward ALL accumulated cookies to the browser
     const response = NextResponse.json({ success: true });
     
     for (const rawCookie of accumulatedCookies.values()) {
