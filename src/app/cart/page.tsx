@@ -112,6 +112,7 @@ export default function CartPage() {
       }
 
       window.location.href = 'https://corporate.abbeygate-england.com/checkout/';
+      setTimeout(() => setIsSyncing(false), 500);
     } catch (error) {
       console.error(error);
       alert('There was a problem syncing your cart. Please try again.');
