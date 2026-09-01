@@ -26,7 +26,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
     path: "/diaries/pocket", 
     categoryId: 39, 
     title: "Pocket Diaries", 
-    font-bold mb-4 text-brand-body\">Corporate & Branded Pocket Diaries: Compact Planners for Business</p><p class=\"mb-4\">Boost your brand’s visibility with Abbeygate’s premium selection of corporate and branded pocket diaries. Perfect for businesses seeking compact and practical promotional items, employee gifts, or client appreciation tokens, our pocket diaries offer a convenient way to keep your brand top-of-mind.</p><p>Create a lasting impression with branded pocket diaries that are both functional and visually appealing. Explore our collection of corporate pocket diaries and request a quote for your custom order today.</p>",
+
     filterConfig: { disableSize: true } 
   },
   { 
@@ -71,7 +71,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
     path: "/notebooks", 
     categoryId: 17, 
     title: "All Notebooks", 
-    font-bold mb-4 text-brand-body\">Corporate & Branded Notebooks & Journals: Custom Solutions for Business</p><p class=\"mb-4\">Choose from a diverse range of sizes, styles, and formats to suit your specific needs. Our customisation options allow you to tailor every detail, including:</p><ul class=\"list-disc pl-5 space-y-2 mb-4\"><li><strong>Cover Customisation:</strong> Showcase your logo and branding with embossing, debossing, foil stamping, or vibrant full-colour printing. Select from a variety of cover materials, including classic leather, durable linen, and eco-friendly recycled options.</li><li><strong>Personalised Inserts:</strong> Enhance functionality and brand messaging with custom-printed pages featuring company information, calendars, lined or dot-grid layouts, or promotional content.</li><li><strong>Binding Options:</strong> Choose from a selection of binding styles, including case-bound, wire-o, or perfect bound, to create the perfect look and feel for your notebooks and journals.</li></ul>"
+
   },
   { 
     path: "/notebooks/a5", 
@@ -98,7 +98,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
     path: "/notebooks/faux-leather", 
     categoryId: 48, 
     title: "Faux Leather Notebooks", 
-    font-bold mb-4 text-brand-body\">Corporate & Branded Notebooks & Journals: Custom Solutions for Business</p><p class=\"mb-4\">Choose from a diverse range of sizes, styles, and formats to suit your specific needs. Our customisation options allow you to tailor every detail, including:</p><ul class=\"list-disc pl-5 space-y-2 mb-4\"><li><strong>Cover Customisation:</strong> Showcase your logo and branding with embossing, debossing, foil stamping, or vibrant full-colour printing. Select from a variety of cover materials, including classic leather, durable linen, and eco-friendly recycled options.</li><li><strong>Personalised Inserts:</strong> Enhance functionality and brand messaging with custom-printed pages featuring company information, calendars, lined or dot-grid layouts, or promotional content.</li><li><strong>Binding Options:</strong> Choose from a selection of binding styles, including case-bound, wire-o, or perfect bound, to create the perfect look and feel for your notebooks and journals.</li></ul>",
+
     filterConfig: { disableLayout: true, disableSize: true } 
   },
   { 
