@@ -17,7 +17,7 @@ export const privacyData = {
         WS2 8AA<br>
         United Kingdom</p>
         <p>VAT Number: 357928352</p>
-        <p>Website: <a href="https://corporate.abbeygate-england.com" class="text-rose-400 hover:text-rose-500 underline">corporate.abbeygate-england.com</a></p>
+        <p>Website: <a href="https://dashboard.abbeygate-england.com" class="text-rose-400 hover:text-rose-500 underline">dashboard.abbeygate-england.com</a></p>
         <p>For the purposes of UK data protection law, Abbeygate Manufacturing Company Ltd is the data controller responsible for your personal information.</p>
       `
     },

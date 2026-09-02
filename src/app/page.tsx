@@ -22,8 +22,8 @@ export default function Home() {
             "@context": "https://schema.org",
             "@type": "Organization",
             "name": "Abbeygate England",
-            "url": "https://corporate.abbeygate-england.com",
-            "logo": "https://corporate.abbeygate-england.com/favicon.ico",
+            "url": "https://dashboard.abbeygate-england.com",
+            "logo": "https://dashboard.abbeygate-england.com/favicon.ico",
           }),
         }}
       />

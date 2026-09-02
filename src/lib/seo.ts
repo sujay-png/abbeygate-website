@@ -7,7 +7,7 @@ export async function generateCategoryMetadata(basePath: string, slug?: string[]
   let description = `Browse our exclusive collection of luxury ${formattedBaseName.toLowerCase()}.`;
   
   const path = slug?.length ? `${basePath}/${slug.join('/')}` : basePath;
-  const canonicalUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://corporate.abbeygate-england.com'}${path}`;
+  const canonicalUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://dashboard.abbeygate-england.com'}${path}`;
 
   if (slug?.length) {
     const pathSlug = slug[slug.length - 1];

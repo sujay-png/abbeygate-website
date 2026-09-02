@@ -17,7 +17,7 @@ export type AccountDetailsState = {
 };
 
 function getStoreUrl() {
-  return process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://corporate.abbeygate-england.com';
+  return process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://dashboard.abbeygate-england.com';
 }
 
 export async function getAccountDetails(userId: number): Promise<AccountDetails | null> {

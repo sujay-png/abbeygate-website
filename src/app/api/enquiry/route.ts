@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const wpUrl = process.env.WOOCOMMERCE_STORE_URL || 'https://corporate.abbeygate-england.com';
+    const wpUrl = process.env.WOOCOMMERCE_STORE_URL || 'https://dashboard.abbeygate-england.com';
     const secret = process.env.WP_HEADLESS_SECRET;
 
     if (!secret) {

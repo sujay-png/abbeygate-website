@@ -10,7 +10,7 @@ export const cookiesData = {
       Abbeygate England<br>
       <a href="mailto:support@abbeygate-england.com" class="text-rose-400 hover:text-rose-500 underline">support@abbeygate-england.com</a>
     </p>
-    <p>Website: <a href="https://corporate.abbeygate-england.com" class="text-rose-400 hover:text-rose-500 underline" target="_blank" rel="noopener noreferrer">corporate.abbeygate-england.com</a></p>
+    <p>Website: <a href="https://dashboard.abbeygate-england.com" class="text-rose-400 hover:text-rose-500 underline" target="_blank" rel="noopener noreferrer">dashboard.abbeygate-england.com</a></p>
   `,
   sections: [
     {

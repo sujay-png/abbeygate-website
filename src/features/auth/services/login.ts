@@ -22,7 +22,7 @@ export async function loginCustomer(
     }
 
     // Call the custom WP REST API login endpoint
-    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://corporate.abbeygate-england.com';
+    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://dashboard.abbeygate-england.com';
     
     const response = await fetch(`${storeUrl}/wp-json/headless/v1/login`, {
       method: 'POST',

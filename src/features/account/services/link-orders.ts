@@ -18,7 +18,7 @@ export async function triggerLinkOrdersEmail(
       return { success: false, message: 'You must be logged in.' };
     }
 
-    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://corporate.abbeygate-england.com';
+    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://dashboard.abbeygate-england.com';
 
     const response = await fetch(`${storeUrl}/wp-json/headless/v1/trigger-guest-link`, {
       method: 'POST',
@@ -56,7 +56,7 @@ export async function triggerLinkOrdersEmail(
 
 export async function processLinkOrdersToken(token: string): Promise<ActionState> {
   try {
-    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://corporate.abbeygate-england.com';
+    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://dashboard.abbeygate-england.com';
 
     const response = await fetch(`${storeUrl}/wp-json/headless/v1/process-guest-link`, {
       method: 'POST',

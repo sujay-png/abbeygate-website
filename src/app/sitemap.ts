@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 import { getStoreProducts, getStoreCategories } from '@/features/products/services/store-products';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://corporate.abbeygate-england.com';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://dashboard.abbeygate-england.com';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const sitemap: MetadataRoute.Sitemap = [

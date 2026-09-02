@@ -29,7 +29,7 @@ const josefinSans = Josefin_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://corporate.abbeygate-england.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://dashboard.abbeygate-england.com'),
   title: {
     template: "%s | Abbeygate England",
     default: "Abbeygate England | Your Brand, Our Craftsmanship",

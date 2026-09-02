@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkoutRateLimit } from '@/lib/rate-limit';
 
-const WOOCOMMERCE_STORE_URL = process.env.WOOCOMMERCE_STORE_URL || 'https://corporate.abbeygate-england.com';
+const WOOCOMMERCE_STORE_URL = process.env.WOOCOMMERCE_STORE_URL || 'https://dashboard.abbeygate-england.com';
 
 export async function POST(request: NextRequest) {
   try {

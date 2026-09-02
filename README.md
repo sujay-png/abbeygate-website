@@ -1,6 +1,6 @@
 # Abbeygate England — Next.js Frontend
 
-Headless Next.js storefront for [corporate.abbeygate-england.com](https://corporate.abbeygate-england.com/), connected to the existing **WordPress + WooCommerce** backend.
+Headless Next.js storefront for [dashboard.abbeygate-england.com](https://dashboard.abbeygate-england.com/), connected to the existing **WordPress + WooCommerce** backend.
 
 This doc is a handoff for developers: what was built, where the code lives, and how to run it.
 
@@ -21,7 +21,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ```env
 # Site origin ONLY — do NOT include /wp-json/wc/v3
-WOOCOMMERCE_STORE_URL=https://corporate.abbeygate-england.com
+WOOCOMMERCE_STORE_URL=https://dashboard.abbeygate-england.com
 WOOCOMMERCE_CONSUMER_KEY=ck_xxxxxxxx
 WOOCOMMERCE_CONSUMER_SECRET=cs_xxxxxxxx
 ```
@@ -32,7 +32,7 @@ WOOCOMMERCE_CONSUMER_SECRET=cs_xxxxxxxx
 | `WOOCOMMERCE_CONSUMER_KEY` | For B2B tier pricing | WooCommerce REST API key |
 | `WOOCOMMERCE_CONSUMER_SECRET` | For B2B tier pricing | WooCommerce REST API secret |
 
-**Important:** `WOOCOMMERCE_STORE_URL` must be `https://corporate.abbeygate-england.com` — **not** `.../wp-json/wc/v3`. Pasting the full API path causes Store API 404s.
+**Important:** `WOOCOMMERCE_STORE_URL` must be `https://dashboard.abbeygate-england.com` — **not** `.../wp-json/wc/v3`. Pasting the full API path causes Store API 404s.
 
 Generate keys in WP: **WooCommerce → Settings → Advanced → REST API**.
 
@@ -300,4 +300,4 @@ npm run lint     # ESLint
 - `cursor/woocommerce-api-client-91f3` — initial REST client
 - `cursor/woocommerce-commerce-layer-91f3` — PLP, PDP, filters, cart, shipping
 
-Live WordPress reference: https://corporate.abbeygate-england.com/
+Live WordPress reference: https://dashboard.abbeygate-england.com/

@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: product ? `${product.name} | Abbeygate England` : 'Product',
       description: product?.short_description?.replace(/<[^>]*>/g, '').slice(0, 160) || 'Bespoke corporate gifting by Abbeygate England.',
       alternates: {
-        canonical: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://corporate.abbeygate-england.com'}/product/${slug}`,
+        canonical: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://dashboard.abbeygate-england.com'}/product/${slug}`,
       }
     };
   } catch {
@@ -212,7 +212,7 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
             },
             "offers": {
               "@type": "Offer",
-              "url": `https://corporate.abbeygate-england.com/product/${product.slug}`,
+              "url": `https://dashboard.abbeygate-england.com/product/${product.slug}`,
               "priceCurrency": "GBP",
               "price": pricing.basePrice,
               "itemCondition": "https://schema.org/NewCondition",

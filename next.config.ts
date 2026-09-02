@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "corporate.abbeygate-england.com",
+        hostname: "dashboard.abbeygate-england.com",
       },
     ],
   },

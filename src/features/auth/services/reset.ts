@@ -34,7 +34,7 @@ export async function resetCustomerPassword(
 
     // Call the custom WP REST API endpoint we created
     // Use the base store URL from our config, removing trailing slash if present
-    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://corporate.abbeygate-england.com';
+    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://dashboard.abbeygate-england.com';
     
     const response = await fetch(`${storeUrl}/wp-json/headless/v1/reset-password`, {
       method: 'POST',
@@ -84,7 +84,7 @@ export async function requestPasswordReset(
       return { success: false, message: 'Please enter your email address.' };
     }
 
-    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://corporate.abbeygate-england.com';
+    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://dashboard.abbeygate-england.com';
     
     const response = await fetch(`${storeUrl}/wp-json/headless/v1/lost-password`, {
       method: 'POST',

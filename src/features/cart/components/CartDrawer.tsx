@@ -87,7 +87,7 @@ export const CartDrawer = () => {
         throw new Error('Failed to sync cart');
       }
 
-      window.location.href = 'https://corporate.abbeygate-england.com/checkout/';
+      window.location.href = 'https://dashboard.abbeygate-england.com/checkout/';
       setTimeout(() => setIsSyncing(false), 500);
     } catch (error) {
       console.error(error);

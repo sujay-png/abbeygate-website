@@ -4,7 +4,7 @@ const ALLOWED_DOMAINS = [
   'localhost',
   '127.0.0.1',
   'abbeygate-website.vercel.app',
-  'corporate.abbeygate-england.com',
+  'dashboard.abbeygate-england.com',
   'abbeygate-england.com'
 ];
 

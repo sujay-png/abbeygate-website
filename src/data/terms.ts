@@ -16,7 +16,7 @@ export const termsData = {
         <p>Registered in England and Wales<br>Company Number: 12623021</p>
         <p>VAT Number: 357928352</p>
         <p>Registered Office & Trading Address:<br>Portland Street<br>Walsall<br>WS2 8AA<br>United Kingdom</p>
-        <p>Website: <a href="https://corporate.abbeygate-england.com" class="text-rose-400 hover:text-rose-500 underline" target="_blank" rel="noopener noreferrer">corporate.abbeygate-england.com</a></p>
+        <p>Website: <a href="https://dashboard.abbeygate-england.com" class="text-rose-400 hover:text-rose-500 underline" target="_blank" rel="noopener noreferrer">dashboard.abbeygate-england.com</a></p>
         <p>You can contact us via email: <a href="mailto:support@abbeygate-england.com" class="text-rose-400 hover:text-rose-500 underline">support@abbeygate-england.com</a>.</p>
         <p>All payments must be made in Pounds Sterling (GBP).</p>
       `
