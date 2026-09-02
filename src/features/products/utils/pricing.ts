@@ -1,7 +1,7 @@
 import type { StoreProduct, PriceTier } from "../types/store-product";
 
 export const LOGO_CUSTOMIZATION_FEE = 0.52;
-export const CUSTOMIZATION_MIN_QTY = 25;
+export const CUSTOMIZATION_MIN_QTY = 1;
 export const VAT_RATE = 0.20;
 
 export const LOGO_BLOCKING_PRICES: Record<string, number> = {
