@@ -51,11 +51,12 @@ export function parsePriceTiersFromMeta(
 
   try {
     const raw = tierMeta.value;
+    let tiers: PriceTier[] = [];
     
     // Handle semicolon-separated string format (e.g. "1:25.00;50:3.32;100:2.83;")
     if (typeof raw === "string" && raw.includes(":")) {
       const parts = raw.split(";").map(s => s.trim()).filter(Boolean);
-      const tiers: PriceTier[] = parts.map(part => {
+      tiers = parts.map(part => {
         const [qtyStr, priceStr] = part.split(":");
         return {
           min: parseInt(qtyStr, 10) || 1,
@@ -63,36 +64,45 @@ export function parsePriceTiersFromMeta(
           price: parseFloat(priceStr) || basePrice
         };
       }).filter(t => t.price > 0).sort((a, b) => a.min - b.min);
-      
-      if (tiers.length > 0) {
-        for (let i = 0; i < tiers.length - 1; i++) {
-          tiers[i].max = tiers[i + 1].min - 1;
-        }
-        return tiers;
+    } else {
+      const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+      if (Array.isArray(parsed)) {
+        tiers = parsed
+          .map((tier: { quantity?: number; price?: string | number; min?: number; max?: number }) => {
+            const min = tier.min ?? tier.quantity ?? 1;
+            const price =
+              typeof tier.price === "string"
+                ? parseFloat(tier.price)
+                : (tier.price ?? basePrice);
+            return { min, max: tier.max ?? null, price };
+          })
+          .filter((t) => t.price > 0)
+          .sort((a, b) => a.min - b.min);
       }
     }
-
-    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-
-    if (!Array.isArray(parsed)) return [];
-
-    const tiers: PriceTier[] = parsed
-      .map((tier: { quantity?: number; price?: string | number; min?: number; max?: number }) => {
-        const min = tier.min ?? tier.quantity ?? 1;
-        const price =
-          typeof tier.price === "string"
-            ? parseFloat(tier.price)
-            : (tier.price ?? basePrice);
-        return { min, max: tier.max ?? null, price };
-      })
-      .filter((t) => t.price > 0)
-      .sort((a, b) => a.min - b.min);
 
     if (tiers.length > 0) {
       for (let i = 0; i < tiers.length - 1; i++) {
         tiers[i].max = tiers[i + 1].min - 1;
       }
       tiers[tiers.length - 1].max = null;
+    }
+
+    // Merge UV printing tiered prices if they exist
+    const uvTierMeta = metaData.find(m => m.key === "_uv_printing_tiered_price" && m.value);
+    if (uvTierMeta?.value && typeof uvTierMeta.value === "string" && uvTierMeta.value.includes(":")) {
+      const parts = uvTierMeta.value.split(";").map(s => s.trim()).filter(Boolean);
+      parts.forEach(part => {
+        const [qtyStr, priceStr] = part.split(":");
+        const minQty = parseInt(qtyStr, 10);
+        const uvPrice = parseFloat(priceStr);
+        if (!isNaN(minQty) && !isNaN(uvPrice)) {
+          const matchingTier = tiers.find(t => t.min === minQty);
+          if (matchingTier) {
+            matchingTier.uvPrice = uvPrice;
+          }
+        }
+      });
     }
 
     return tiers;
@@ -106,18 +116,21 @@ export function getTierUnitPrice(
   quantity: number,
   tiers: PriceTier[],
   basePrice: number,
+  useUvPrice: boolean = false
 ): number {
   if (!tiers.length) return basePrice;
 
   for (const tier of tiers) {
     const max = tier.max ?? Infinity;
     if (quantity >= tier.min && quantity <= max) {
-      return tier.price;
+      return useUvPrice && tier.uvPrice !== undefined ? tier.uvPrice : tier.price;
     }
   }
 
   const lastTier = tiers[tiers.length - 1];
-  if (quantity >= lastTier.min) return lastTier.price;
+  if (quantity >= lastTier.min) {
+    return useUvPrice && lastTier.uvPrice !== undefined ? lastTier.uvPrice : lastTier.price;
+  }
 
   return basePrice;
 }
@@ -169,8 +182,10 @@ export function calculateProductPrice(
     cornerEdges,
   } = input;
 
+  const isUvPrint = Boolean(customizationEnabled && blockingType && blockingType.toLowerCase() === 'uv print');
+
   let unitPrice = tiers.length
-    ? getTierUnitPrice(quantity, tiers, basePrice)
+    ? getTierUnitPrice(quantity, tiers, basePrice, isUvPrint)
     : basePrice;
 
   const discountRate = tiers.length ? 0 : getBulkDiscountRate(quantity);
@@ -181,7 +196,11 @@ export function calculateProductPrice(
   let customizationFee = 0;
   let extraBlockingFee = 0;
 
-  if (!isGifts && customizationEnabled && blockingType) {
+  if (isUvPrint) {
+    // UV price from the tiers already includes logo customization.
+    customizationFee = 0;
+    extraBlockingFee = 0;
+  } else if (!isGifts && customizationEnabled && blockingType) {
     customizationFee =
       LOGO_BLOCKING_PRICES[blockingType.toLowerCase()] ?? LOGO_CUSTOMIZATION_FEE;
     extraBlockingFee = Math.max(0, customizationFee - LOGO_CUSTOMIZATION_FEE);
@@ -194,7 +213,7 @@ export function calculateProductPrice(
   //   unitPrice += cornerEdgesFee;
   // }
 
-  if (!isGifts && !customizationEnabled) {
+  if (!isGifts && !customizationEnabled && !isUvPrint) {
     unitPrice = Math.max(0, unitPrice - LOGO_CUSTOMIZATION_FEE);
   }
 

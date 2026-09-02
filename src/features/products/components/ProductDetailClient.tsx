@@ -103,10 +103,10 @@ export const ProductDetailClient = ({
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const imageElementRef = useRef<HTMLDivElement>(null);
   const customizerSectionRef = useRef<HTMLDivElement>(null);
-  const [quantity, setQuantity] = useState(isGifts ? 1 : CUSTOMIZATION_MIN_QTY);
+  const [quantity, setQuantity] = useState(isGifts ? 1 : 25);
   const [priceDetails, setPriceDetails] = useState({
     unitPrice: basePrice,
-    totalPrice: basePrice * (isGifts ? 1 : CUSTOMIZATION_MIN_QTY),
+    totalPrice: basePrice * (isGifts ? 1 : 25),
     statusText: '',
     statusColor: '',
     discountRate: 0,
@@ -1129,30 +1129,39 @@ export const ProductDetailClient = ({
             </div>
 
             {/* Price Breaks Table */}
-            {!isGifts && tiers.length > 0 && (
-              <div className="mt-4">
-                <div className="font-bold text-[13px] tracking-wider text-brand-body uppercase mb-3">
-                  PRICE BREAKS (PER UNIT)
-                </div>
-                <table className="w-full text-left text-[12px]">
-                  <thead className="text-brand-grey border-b border-[var(--brand-border)]">
-                    <tr><th className="py-2 font-medium">Quantity</th><th className="py-2 text-right font-medium">Price per unit (ex VAT)</th></tr>
-                  </thead>
-                  <tbody>
-                    {tiers.map(tier => {
-                      const active = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
-                      return (
-                        <tr key={tier.min} onClick={() => setQuantity(tier.min)} className={`cursor-pointer border-b transition-colors ${active ? 'border-brand-primary bg-brand-primary text-white font-bold' : 'border-[var(--brand-border)] text-brand-body hover:bg-brand-tint'}`}>
-                          <td className="py-3 px-2">{tier.min}{tier.max ? ` - ${tier.max}` : '+'}</td>
-                          <td className="py-3 px-2 text-right">{formatGBP(tier.price)}</td>
+            {!isGifts && tiers.length > 0 && (() => {
+                const hasUvPricing = tiers.some(t => t.uvPrice !== undefined);
+                return (
+                  <div className="mt-4">
+                    <div className="font-bold text-[13px] tracking-wider text-brand-body uppercase mb-3">
+                      PRICE BREAKS (PER UNIT)
+                    </div>
+                    <table className="w-full text-left text-[12px]">
+                      <thead className="text-brand-grey border-b border-[var(--brand-border)]">
+                        <tr>
+                          <th className="py-2 font-medium">Quantity</th>
+                          <th className="py-2 text-center font-medium">Price per unit (ex VAT)</th>
+                          {hasUvPricing && <th className="py-2 text-center font-medium">Price Including UV Printing</th>}
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                      </thead>
+                      <tbody>
+                        {tiers.map(tier => {
+                          const active = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
+                          return (
+                            <tr key={tier.min} onClick={() => setQuantity(tier.min)} className={`cursor-pointer border-b transition-colors ${active ? 'border-brand-primary bg-brand-primary text-white font-bold' : 'border-[var(--brand-border)] text-brand-body hover:bg-brand-tint'}`}>
+                              <td className="py-3 px-2">{tier.min}{tier.max ? ` - ${tier.max}` : '+'}</td>
+                              <td className="py-3 px-2 text-center">{formatGBP(tier.price)}</td>
+                              {hasUvPricing && <td className="py-3 px-2 text-center">{tier.uvPrice ? formatGBP(tier.uvPrice) : '-'}</td>}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
             
+
             {/* Accordions in Customisation Aside */}
             <div className="mt-2">
               {renderAccordions(true)}
@@ -1383,43 +1392,53 @@ export const ProductDetailClient = ({
           </div>
 
           {/* VOLUME PRICING TABLE */}
-          {!isGifts && tiers.length > 0 && (
-            <div className="mt-1 border border-gray-200 rounded-lg bg-transparent overflow-hidden">
-              <div className="flex justify-between items-center font-bold px-4 py-3 text-[13px] tracking-widest text-brand-body uppercase bg-transparent border-b border-gray-200">
-                <span>PRICE BREAKS (PER UNIT)</span>
-              </div>
-              <div>
-                <table className="w-full text-left text-[13px]">
-                  <thead className="bg-transparent text-brand-grey border-b border-[var(--brand-border)]">
-                    <tr>
-                      <th className="py-2.5 px-4 font-medium w-1/2">Quantity</th>
-                      <th className="py-2.5 px-4 font-medium w-1/2 text-right">Price per unit (ex VAT)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tiers.map((tier) => {
-                      const isActive = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
-                      return (
-                        <tr
-                          key={tier.min}
-                          onClick={() => setQuantity(tier.min)}
-                          className={`border-b cursor-pointer transition-colors ${isActive ? 'border-brand-primary bg-brand-primary text-white font-bold' : 'border-[var(--brand-border)] hover:bg-brand-tint text-brand-body'
-                            }`}
-                        >
-                          <td className="py-2.5 px-4">
-                            {tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}
-                          </td>
-                          <td className="py-2.5 px-4 text-right">
-                            {formatGBP(tier.price)}
-                          </td>
+          {!isGifts && tiers.length > 0 && (() => {
+              const hasUvPricing = tiers.some(t => t.uvPrice !== undefined);
+              return (
+                <div className="mt-1 border border-gray-200 rounded-lg bg-transparent overflow-hidden">
+                  <div className="flex justify-between items-center font-bold px-4 py-3 text-[13px] tracking-widest text-brand-body uppercase bg-transparent border-b border-gray-200">
+                    <span>PRICE BREAKS (PER UNIT)</span>
+                  </div>
+                  <div>
+                    <table className="w-full text-left text-[13px]">
+                      <thead className="bg-transparent text-brand-grey border-b border-[var(--brand-border)]">
+                        <tr>
+                          <th className="py-2.5 px-4 font-medium w-1/3">Quantity</th>
+                          <th className="py-2.5 px-4 font-medium w-1/3 text-center">Price per unit (ex VAT)</th>
+                          {hasUvPricing && <th className="py-2.5 px-4 font-medium w-1/3 text-center">Price Including UV Printing</th>}
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+                      </thead>
+                      <tbody>
+                        {tiers.map((tier) => {
+                          const isActive = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
+                          return (
+                            <tr
+                              key={tier.min}
+                              onClick={() => setQuantity(tier.min)}
+                              className={`border-b cursor-pointer transition-colors ${isActive ? 'border-brand-primary bg-brand-primary text-white font-bold' : 'border-[var(--brand-border)] hover:bg-brand-tint text-brand-body'
+                                }`}
+                            >
+                              <td className="py-2.5 px-4">
+                                {tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}
+                              </td>
+                              <td className="py-2.5 px-4 text-center">
+                                {formatGBP(tier.price)}
+                              </td>
+                              {hasUvPricing && (
+                                <td className="py-2.5 px-4 text-center">
+                                  {tier.uvPrice ? formatGBP(tier.uvPrice) : '-'}
+                                </td>
+                              )}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })()}
+
 
           <hr className="border-gray-200" />
 

@@ -108,6 +108,7 @@ export type PriceTier = {
   min: number;
   max: number | null;
   price: number;
+  uvPrice?: number;
 };
 
 export type LogoCustomization = {

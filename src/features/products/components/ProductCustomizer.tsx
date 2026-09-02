@@ -88,6 +88,17 @@ export const ProductCustomizer = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const getExtraCostLabel = (type: string) => {
+    if (type === 'UV Print') {
+      let minExtra = Infinity;
+      for (const tier of tiers) {
+        if (tier.uvPrice !== undefined && tier.price !== undefined) {
+          const extra = tier.uvPrice - tier.price;
+          if (extra < minExtra) minExtra = extra;
+        }
+      }
+      if (minExtra === Infinity) return `From £0.00`;
+      return `From ${formatGBP(Math.max(0, minExtra))}`;
+    }
     const price = LOGO_BLOCKING_PRICES[type.toLowerCase()] ?? LOGO_CUSTOMIZATION_FEE;
     const extra = price - LOGO_CUSTOMIZATION_FEE;
     return `From ${formatGBP(extra)}`;

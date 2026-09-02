@@ -20,7 +20,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
     path: "/diaries", 
     categoryId: 18, 
     title: "All Diaries",
-    
+    description: "Discover Abbeygate's extensive collection of premium diaries. From compact pocket diaries to professional desk sizes, our high-quality diaries are designed to keep you organized in style. Customize with your corporate logo for the perfect branded business gift.",
   },
   { 
     path: "/diaries/pocket", 
@@ -71,7 +71,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
     path: "/notebooks", 
     categoryId: 17, 
     title: "All Notebooks", 
-
+    description: "Explore Abbeygate's versatile collection of premium notebooks. Whether you need a compact pocket companion or a spacious desk notebook, our collection offers superior quality and durability. Enhance your corporate gifting by personalizing our notebooks with your brand's unique logo or design.",
   },
   { 
     path: "/notebooks/a5", 
@@ -110,7 +110,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
   },
 
   // Custom Gifts
-  { path: "/custom-gifts", categoryId: 126, title: "Custom Gifts" },
+  { path: "/custom-gifts", categoryId: 126, title: "Custom Gifts", description: "Make a lasting impression with Abbeygate's exquisite range of custom business gifts. From elegant travel wallets to sophisticated card holders, our collection is perfect for client appreciation, employee rewards, and promotional events. Add your bespoke branding for a truly memorable gifting experience." },
   { path: "/custom-gifts/luggage-tags", categoryId: 144, title: "Luggage Tags" },
   { path: "/custom-gifts/card-holders", categoryId: 152, title: "Card Holders" },
   { path: "/custom-gifts/keyrings", categoryId: 149, title: "Keyrings" },
