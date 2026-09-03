@@ -123,6 +123,7 @@ export const ProductDetailClient = ({
   }, [product.slug]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (typeof window !== 'undefined' && window.matchMedia && !window.matchMedia('(hover: hover)').matches) return;
     if (!previewContainerRef.current) return;
     
     // Only trigger if entering the inner image element, not the padded container bounds
@@ -147,6 +148,7 @@ export const ProductDetailClient = ({
   }, [isZooming]);
 
   const handleMouseEnter = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (typeof window !== 'undefined' && window.matchMedia && !window.matchMedia('(hover: hover)').matches) return;
     if (imageElementRef.current?.contains(e.target as Node)) {
       if (!isZooming && !zoomTimeoutRef.current) {
         zoomTimeoutRef.current = setTimeout(() => {
@@ -403,6 +405,9 @@ export const ProductDetailClient = ({
     if (isPreviewOpen) {
       document.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
+      // Reset any zooming state when opening modal
+      setIsZooming(false);
+      setZoomOrigin('center center');
     } else {
       document.body.style.overflow = '';
     }
@@ -1011,6 +1016,7 @@ export const ProductDetailClient = ({
               <div 
                 className="relative overflow-hidden"
                 onMouseMove={(e) => {
+                  if (typeof window !== 'undefined' && window.matchMedia && !window.matchMedia('(hover: hover)').matches) return;
                   const rect = e.currentTarget.getBoundingClientRect();
                   const x = ((e.clientX - rect.left) / rect.width) * 100;
                   const y = ((e.clientY - rect.top) / rect.height) * 100;

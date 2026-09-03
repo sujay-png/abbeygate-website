@@ -198,7 +198,7 @@ export default function CartPage() {
                         <>
                           <div className="grid grid-cols-[90px_1fr] gap-x-2 gap-y-1 items-start">
                             <span className="font-bold text-gray-900">Branding</span>
-                            <span>{item.customization.choice.replace(' blocked', ' blocking')}</span>
+                            <span>{item.customization.choice === 'Embossed' ? 'Blind debossed' : item.customization.choice.replace(' blocked', ' blocking')}</span>
                             
                             {item.customization.foilColor && (
                               <>

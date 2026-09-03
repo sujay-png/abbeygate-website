@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "dashboard.abbeygate-england.com",
       },
+      {
+        protocol: "https",
+        hostname: "corporate.abbeygate-england.com",
+      },
     ],
   },
   allowedDevOrigins: ['local.abbeygate-england.com'],
