@@ -5,7 +5,7 @@ import { ArrowIcon } from "../ui/ArrowIcon";
 import { getStoreProducts } from "@/features/products/services/store-products";
 import { getProductDisplayPrice, stripHtml } from "@/features/products/utils/product-helpers";
 
-export const FeaturedProducts = async () => {
+export const FeaturedProducts = async ({ title = "Best Sellers" }: { title?: string }) => {
   let products: Awaited<ReturnType<typeof getStoreProducts>>["products"] = [];
 
   try {
@@ -19,11 +19,11 @@ export const FeaturedProducts = async () => {
     <section className="py-16 bg-brand-cream">
       <Container>
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-          <div className="relative inline-block">
+          <div className="relative inline-block pr-12">
             <h2 className="font-josefin text-[26px] font-bold tracking-tight text-brand-primary-dark lg:text-[32px]">
-              Best Sellers
+              {title}
             </h2>
-            <ArrowIcon className="absolute -right-22 -top-1 hidden md:block" />
+            <ArrowIcon className="absolute -right-10 -top-1 hidden md:block" />
           </div>
 
           <Button href="/custom-gifts" variant="primary" className="md:w-auto w-full max-w-[200px]">
