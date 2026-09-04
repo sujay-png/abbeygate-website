@@ -112,7 +112,7 @@ export async function getStoreAttributeTerms(
 export async function getFeaturedStoreProducts(
   limit = 4,
 ): Promise<StoreProduct[]> {
-  const { products } = await getStoreProducts({ perPage: limit });
+  const { products } = await getStoreProducts({ perPage: limit, tagId: 158 });
   return products.slice(0, limit);
 }
 

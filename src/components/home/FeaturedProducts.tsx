@@ -2,15 +2,14 @@ import { Container } from "../ui/Container";
 import { ProductCard } from "../ui/ProductCard";
 import { Button } from "../ui/Button";
 import { ArrowIcon } from "../ui/ArrowIcon";
-import { getStoreProducts } from "@/features/products/services/store-products";
+import { getFeaturedStoreProducts } from "@/features/products/services/store-products";
 import { getProductDisplayPrice, stripHtml } from "@/features/products/utils/product-helpers";
 
 export const FeaturedProducts = async ({ title = "Best Sellers" }: { title?: string }) => {
-  let products: Awaited<ReturnType<typeof getStoreProducts>>["products"] = [];
+  let products: Awaited<ReturnType<typeof getFeaturedStoreProducts>> = [];
 
   try {
-    const result = await getStoreProducts({ perPage: 4 });
-    products = result.products;
+    products = await getFeaturedStoreProducts(4);
   } catch {
     // Fallback to empty if API unavailable
   }
