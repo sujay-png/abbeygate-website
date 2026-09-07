@@ -2,12 +2,65 @@
 
 import { createSession, deleteSession } from '../utils/session';
 import { redirect } from 'next/navigation';
+import { cookies, headers } from 'next/headers';
 
 export type LoginState = {
   success: boolean;
   message: string;
   error?: string;
 };
+
+async function shareWordPressAuthCookies(response: Response) {
+  const setCookies = response.headers.getSetCookie?.() ?? [];
+  if (!setCookies.length) return;
+
+  const cookieStore = await cookies();
+  const requestHeaders = await headers();
+  const origin = requestHeaders.get('origin') || requestHeaders.get('host') || '';
+  const shareAcrossSubdomains = origin.includes('abbeygate-england.com');
+
+  for (const rawCookie of setCookies) {
+    const parts = rawCookie.split(';').map((part) => part.trim());
+    const [nameValue, ...attributes] = parts;
+    const separator = nameValue.indexOf('=');
+    if (separator === -1) continue;
+
+    const name = nameValue.slice(0, separator);
+    let value = nameValue.slice(separator + 1);
+    try {
+      value = decodeURIComponent(value);
+    } catch {
+      // Keep the original value if an upstream plugin did not URL-encode it.
+    }
+
+    const options: {
+      path?: string;
+      expires?: Date;
+      maxAge?: number;
+      httpOnly?: boolean;
+      secure?: boolean;
+      sameSite?: 'lax' | 'strict' | 'none';
+      domain?: string;
+    } = {};
+
+    for (const attribute of attributes) {
+      const [rawKey, ...rawValue] = attribute.split('=');
+      const key = rawKey.toLowerCase();
+      const attributeValue = rawValue.join('=').trim();
+      if (key === 'path') options.path = attributeValue;
+      if (key === 'expires') options.expires = new Date(attributeValue);
+      if (key === 'max-age') options.maxAge = Number.parseInt(attributeValue, 10);
+      if (key === 'httponly') options.httpOnly = true;
+      if (key === 'secure') options.secure = true;
+      if (key === 'samesite' && ['lax', 'strict', 'none'].includes(attributeValue.toLowerCase())) {
+        options.sameSite = attributeValue.toLowerCase() as 'lax' | 'strict' | 'none';
+      }
+    }
+
+    if (shareAcrossSubdomains) options.domain = '.abbeygate-england.com';
+    cookieStore.set(name, value, options);
+  }
+}
 
 export async function loginCustomer(
   prevState: LoginState | null,
@@ -41,6 +94,24 @@ export async function loginCustomer(
 
     if (!response.ok || !data.success) {
       throw new Error(data.message || 'Invalid username or password.');
+    }
+
+    // The Next.js session authorises the headless site. A separate WordPress
+    // login cookie is required for WooCommerce to recognise this customer at
+    // its own checkout. This endpoint is intentionally best-effort so existing
+    // Next.js login remains available until the accompanying WP snippet is live.
+    const wordpressSessionResponse = await fetch(`${storeUrl}/wp-json/headless/v1/session-login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-headless-secret': process.env.WP_HEADLESS_SECRET || '',
+      },
+      body: JSON.stringify({ username, password }),
+      cache: 'no-store',
+    });
+
+    if (wordpressSessionResponse.ok) {
+      await shareWordPressAuthCookies(wordpressSessionResponse);
     }
 
     // Setup the secure session cookie

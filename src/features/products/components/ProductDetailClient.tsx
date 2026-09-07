@@ -7,7 +7,7 @@ import type { StoreProduct, PriceTier } from '../types/store-product';
 import { ProductCustomizer, type CustomizationState } from './ProductCustomizer';
 import { ProductCustomizationOverlay } from './ProductCustomizationOverlay';
 import { useCart } from '@/features/cart/context/CartContext';
-import { CUSTOMIZATION_MIN_QTY, formatGBP, isGiftsProduct, VAT_RATE, calculateProductPrice } from '../utils/pricing';
+import { BRANDING_SETUP_FEE, CORNER_PAIRS_PER_PRODUCT, CUSTOMIZATION_MIN_QTY, formatGBP, getCornerEdgesPricing, isGiftsProduct, LOGO_BLOCKING_PRICES, LOGO_CUSTOMIZATION_FEE, VAT_RATE, calculateProductPrice } from '../utils/pricing';
 import { getLogoAnchors, getImageBoundingBox, getProductPhysicalDimensionsMm } from '../utils/product-helpers';
 import { getConfiguredImageBounds } from '../utils/product-image-bounds';
 import { composeProof } from '../utils/generate-proof';
@@ -97,6 +97,7 @@ export const ProductDetailClient = ({
 
   const { addItem, updateItem, items } = useCart();
   const isGifts = isGiftsProduct(product);
+  const cornerEdgesPricing = getCornerEdgesPricing(product);
   const activeColorHex = colorVariants.find(c => c.slug === product.slug)?.hex;
   const activeColorName = colorVariants.find(c => c.slug === product.slug)?.name;
 
@@ -170,6 +171,7 @@ export const ProductDetailClient = ({
   const [activeTab, setActiveTab] = useState('Description');
   const [isCustomizingStarted, setIsCustomizingStarted] = useState(false);
   const [customizerStep, setCustomizerStep] = useState<1 | 2 | 3 | 4>(1);
+  const [showPricesIncludingVat, setShowPricesIncludingVat] = useState(true);
   const isCustomizationSurface = activeImageIndex === 0;
   const [customization, setCustomization] = useState<CustomizationState>({
     enabled: !isGifts,
@@ -319,6 +321,41 @@ export const ProductDetailClient = ({
 
   const customizationAllowed = !isGifts && quantity >= CUSTOMIZATION_MIN_QTY;
   const customizationActive = customizationAllowed && customization.enabled;
+  const hasCornerEdges = customizationActive && customization.cornerEdges !== 'None';
+  const cornerEdgesTotal = hasCornerEdges
+    ? cornerEdgesPricing.pricePerPair * CORNER_PAIRS_PER_PRODUCT * quantity
+    : 0;
+  const brandingApplicationTotal = (() => {
+    if (!customizationActive) return 0;
+    if (customization.blockingType === 'UV Print') {
+      const selectedTier = tiers.find((tier) => quantity >= tier.min && (tier.max === null || quantity <= tier.max));
+      return selectedTier?.uvPrice ? Math.max(0, selectedTier.uvPrice - selectedTier.price) * quantity : 0;
+    }
+    const selectedPrice = LOGO_BLOCKING_PRICES[customization.blockingType.toLowerCase()] ?? LOGO_CUSTOMIZATION_FEE;
+    return Math.max(0, selectedPrice - LOGO_CUSTOMIZATION_FEE) * quantity;
+  })();
+  // `priceDetails` already includes a paid branding method (for example UV).
+  // Split that premium back out so the summary matches the client-approved
+  // Products / Branding / Extras breakdown without charging it twice.
+  const productsTotal = Math.max(0, priceDetails.totalPrice - brandingApplicationTotal);
+  const customizationSubtotal = productsTotal + BRANDING_SETUP_FEE + brandingApplicationTotal + cornerEdgesTotal;
+  const getSelectedTierUnitPrice = (tier: PriceTier) => {
+    let price = tier.price;
+
+    if (!customizationActive) {
+      price = Math.max(0, price - LOGO_CUSTOMIZATION_FEE);
+    } else if (customization.blockingType === 'UV Print' && tier.uvPrice !== undefined) {
+      price = tier.uvPrice;
+    } else {
+      const selectedPrice = LOGO_BLOCKING_PRICES[customization.blockingType.toLowerCase()] ?? LOGO_CUSTOMIZATION_FEE;
+      price += Math.max(0, selectedPrice - LOGO_CUSTOMIZATION_FEE);
+    }
+
+    return price + (hasCornerEdges ? cornerEdgesPricing.pricePerPair * CORNER_PAIRS_PER_PRODUCT : 0);
+  };
+  const formatDisplayedPrice = (amount: number) =>
+    formatGBP(showPricesIncludingVat ? amount * (1 + VAT_RATE) : amount);
+  const displayedVatLabel = showPricesIncludingVat ? 'inc VAT' : 'ex VAT';
 
   // Customisation is only available at 25+ units — exit the stepper if quantity drops below
   useEffect(() => {
@@ -744,11 +781,11 @@ export const ProductDetailClient = ({
       {/* Reviews Accordion (Dummy) */}
       <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4" id="reviews">
         <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
-          <span>Reviews (21)</span>
+          <span>Reviews</span>
           <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
         </summary>
         <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
-          <p>4.9 out of 5 average rating based on 21 verified customer reviews.</p>
+          <p>There are currently no reviews for this product.</p>
         </div>
       </details>
     </>
@@ -767,6 +804,17 @@ export const ProductDetailClient = ({
           {/* STEPPER AND HEADING */}
           {!isGifts && isCustomizingStarted && customizationActive && (
             <div className="mb-6 animate-in fade-in duration-500 w-full">
+              <button
+                type="button"
+                onClick={() => {
+                  setCustomizerStep(1);
+                  setIsCustomizingStarted(false);
+                }}
+                className="mb-5 inline-flex items-center gap-2 text-[13px] font-bold text-brand-primary hover:text-brand-primary-dark"
+              >
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                Back to product details
+              </button>
               {/* Stepper Navigation */}
               <div className="flex items-center justify-between w-full max-w-2xl mx-auto mb-10">
                 {[
@@ -1085,22 +1133,44 @@ export const ProductDetailClient = ({
                 </div>
               </div>
               <div className="text-right text-[12px] font-bold text-gray-500">
-                {formatGBP(priceDetails.unitPrice)} per unit (ex VAT)
+                {formatDisplayedPrice(priceDetails.unitPrice)} per unit ({displayedVatLabel})
               </div>
+              <fieldset className="self-end flex items-center gap-3 text-[11px] font-bold text-brand-primary">
+                <legend className="sr-only">Price display</legend>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" name="customisation-vat-display" checked={showPricesIncludingVat} onChange={() => setShowPricesIncludingVat(true)} className="accent-brand-primary" />
+                  Inc. VAT
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" name="customisation-vat-display" checked={!showPricesIncludingVat} onChange={() => setShowPricesIncludingVat(false)} className="accent-brand-primary" />
+                  Ex. VAT
+                </label>
+              </fieldset>
             </div>
 
             {/* Order Summary Box */}
             <div className="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm">
               <div className="p-4 space-y-3 text-[13px] text-gray-600">
-                <div className="flex justify-between gap-4 font-bold text-brand-body"><dt>Products total</dt><dd>{formatGBP(priceDetails.unitPrice * quantity)}</dd></div>
-                <div className="flex justify-between gap-4 font-bold text-gray-400"><dt>Branding</dt><dd>{customization.blockingType}</dd></div>
-                <div className="flex justify-between gap-4 font-bold text-gray-400"><dt>Corner edges</dt><dd>{customization.cornerEdges}</dd></div>
+                <div className="flex justify-between gap-4 font-bold text-brand-body"><dt>Products total</dt><dd>{formatGBP(productsTotal)}</dd></div>
+                <div className="flex justify-between gap-4 font-bold text-gray-500"><dt>Branding set-up (one-off)</dt><dd>{formatGBP(BRANDING_SETUP_FEE)}</dd></div>
+                <div className="flex justify-between gap-4 font-bold text-gray-500">
+                  <dt>{customization.blockingType === 'Foil blocked' ? 'Foil blocking' : customization.blockingType}</dt>
+                  <dd>{formatGBP(brandingApplicationTotal)}</dd>
+                </div>
+                <div className="flex justify-between gap-4 font-bold text-gray-500">
+                  <dt>
+                    {hasCornerEdges
+                      ? `Extras (${customization.cornerEdges.toLowerCase()} corners)`
+                      : 'Extras'}
+                  </dt>
+                  <dd>{hasCornerEdges ? formatGBP(cornerEdgesTotal) : 'None selected'}</dd>
+                </div>
               </div>
               <div className="px-4 py-3 border-t border-gray-200 flex justify-between gap-4 font-bold text-brand-body text-[14px]">
-                <dt>Subtotal (ex VAT)</dt><dd>{formatGBP(priceDetails.totalPrice)}</dd>
+                <dt>Subtotal (ex VAT)</dt><dd>{formatGBP(customizationSubtotal)}</dd>
               </div>
               <div className="px-4 py-3 bg-brand-tint flex justify-between gap-4 font-bold text-brand-body text-[14px]">
-                <dt>Including VAT (20%)</dt><dd>{formatGBP(priceDetails.totalPrice * (1 + VAT_RATE))}</dd>
+                <dt>Including VAT (20%)</dt><dd>{formatGBP(customizationSubtotal * (1 + VAT_RATE))}</dd>
               </div>
             </div>
 
@@ -1146,8 +1216,8 @@ export const ProductDetailClient = ({
                       <thead className="text-brand-grey border-b border-[var(--brand-border)]">
                         <tr>
                           <th className="py-2 font-medium">Quantity</th>
-                          <th className="py-2 text-center font-medium">Price per unit (ex VAT)</th>
-                          {hasUvPricing && <th className="py-2 text-center font-medium">Price Including UV Printing</th>}
+                          <th className="py-2 text-center font-medium">Price per unit ({displayedVatLabel})</th>
+                          {hasUvPricing && <th className="py-2 text-center font-medium">Price including UV printing ({displayedVatLabel})</th>}
                         </tr>
                       </thead>
                       <tbody>
@@ -1156,8 +1226,8 @@ export const ProductDetailClient = ({
                           return (
                             <tr key={tier.min} onClick={() => setQuantity(tier.min)} className={`cursor-pointer border-b transition-colors ${active ? 'border-brand-primary bg-brand-primary text-white font-bold' : 'border-[var(--brand-border)] text-brand-body hover:bg-brand-tint'}`}>
                               <td className="py-3 px-2">{tier.min}{tier.max ? ` - ${tier.max}` : '+'}</td>
-                              <td className="py-3 px-2 text-center">{formatGBP(tier.price)}</td>
-                              {hasUvPricing && <td className="py-3 px-2 text-center">{tier.uvPrice ? formatGBP(tier.uvPrice) : '-'}</td>}
+                              <td className="py-3 px-2 text-center">{formatDisplayedPrice(getSelectedTierUnitPrice(tier))}</td>
+                              {hasUvPricing && <td className="py-3 px-2 text-center">{tier.uvPrice ? formatDisplayedPrice(tier.uvPrice + (hasCornerEdges ? cornerEdgesPricing.pricePerPair * CORNER_PAIRS_PER_PRODUCT : 0)) : '-'}</td>}
                             </tr>
                           );
                         })}
@@ -1213,15 +1283,28 @@ export const ProductDetailClient = ({
                 }}
                 className="text-[14px] font-medium text-gray-500 hover:text-brand-primary-dark underline underline-offset-4 decoration-gray-400 hover:decoration-brand-primary-dark transition-colors"
               >
-                (21 reviews)
+                Reviews
               </button>
             </div>
           </div>
 
           {/* PRICE BLOCK */}
           <div>
-            <div className="text-[20px] font-bold text-brand-body mb-1">
-              {formatGBP(priceDetails.unitPrice)} <span className="text-[14px] font-normal text-gray-500">(ex VAT)</span>
+            <div className="flex flex-wrap items-center gap-3 mb-1">
+              <div className="text-[20px] font-bold text-brand-body">
+                {formatDisplayedPrice(priceDetails.unitPrice)} <span className="text-[14px] font-normal text-gray-500">({displayedVatLabel})</span>
+              </div>
+              <fieldset className="flex items-center gap-3 text-[11px] font-bold text-brand-primary">
+                <legend className="sr-only">Price display</legend>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" name="product-vat-display" checked={showPricesIncludingVat} onChange={() => setShowPricesIncludingVat(true)} className="accent-brand-primary" />
+                  Inc. VAT
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" name="product-vat-display" checked={!showPricesIncludingVat} onChange={() => setShowPricesIncludingVat(false)} className="accent-brand-primary" />
+                  Ex. VAT
+                </label>
+              </fieldset>
             </div>
 
             {priceDetails.statusText ? (
@@ -1321,7 +1404,7 @@ export const ProductDetailClient = ({
                   <button type="button" className="px-3 hover:bg-gray-100 text-gray-600 transition" onClick={() => setQuantity(quantity + 1)}>+</button>
                 </div>
                 <div className="text-[14px] font-bold text-brand-body mt-1">
-                  {formatGBP(priceDetails.unitPrice)} <span className="font-normal text-gray-500">per unit (ex VAT)</span>
+                  {formatDisplayedPrice(priceDetails.unitPrice)} <span className="font-normal text-gray-500">per unit ({displayedVatLabel})</span>
                 </div>
               </div>
             </div>
@@ -1410,8 +1493,8 @@ export const ProductDetailClient = ({
                       <thead className="bg-transparent text-brand-grey border-b border-[var(--brand-border)]">
                         <tr>
                           <th className="py-2.5 px-4 font-medium w-1/3">Quantity</th>
-                          <th className="py-2.5 px-4 font-medium w-1/3 text-center">Price per unit (ex VAT)</th>
-                          {hasUvPricing && <th className="py-2.5 px-4 font-medium w-1/3 text-center">Price Including UV Printing</th>}
+                          <th className="py-2.5 px-4 font-medium w-1/3 text-center">Price per unit ({displayedVatLabel})</th>
+                          {hasUvPricing && <th className="py-2.5 px-4 font-medium w-1/3 text-center">Price including UV printing ({displayedVatLabel})</th>}
                         </tr>
                       </thead>
                       <tbody>
@@ -1428,11 +1511,11 @@ export const ProductDetailClient = ({
                                 {tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}
                               </td>
                               <td className="py-2.5 px-4 text-center">
-                                {formatGBP(tier.price)}
+                                {formatDisplayedPrice(getSelectedTierUnitPrice(tier))}
                               </td>
                               {hasUvPricing && (
                                 <td className="py-2.5 px-4 text-center">
-                                  {tier.uvPrice ? formatGBP(tier.uvPrice) : '-'}
+                                  {tier.uvPrice ? formatDisplayedPrice(tier.uvPrice + (hasCornerEdges ? cornerEdgesPricing.pricePerPair * CORNER_PAIRS_PER_PRODUCT : 0)) : '-'}
                                 </td>
                               )}
                             </tr>

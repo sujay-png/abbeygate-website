@@ -65,7 +65,8 @@ export default function CartPage() {
       const payload = currentCart.map((item: any, index: number) => {
         const outItem: any = {
           productId: item.productId,
-          quantity: item.quantity
+          quantity: item.quantity,
+          variationId: item.variationId,
         };
 
         if (item.customization?.enabled) {

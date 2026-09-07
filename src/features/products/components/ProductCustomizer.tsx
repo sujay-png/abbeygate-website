@@ -10,7 +10,9 @@ import {
   isFoilBlockedProduct,
   isGiftsProduct,
   LOGO_BLOCKING_PRICES,
-  LOGO_CUSTOMIZATION_FEE
+  LOGO_CUSTOMIZATION_FEE,
+  CORNER_PAIRS_PER_PRODUCT,
+  getCornerEdgesPricing,
 } from '../utils/pricing';
 import { processLogo } from '../utils/image-processing';
 
@@ -81,6 +83,10 @@ export const ProductCustomizer = ({
 }: ProductCustomizerProps) => {
   const isGifts = isGiftsProduct(product);
   const isFoil = isFoilBlockedProduct(product);
+  const cornerEdgesPricing = getCornerEdgesPricing(product);
+  const cornerPriceLabel = cornerEdgesPricing.pricePerPair > 0
+    ? `+${formatGBP(cornerEdgesPricing.pricePerPair)} per unit`
+    : 'Price set for this product';
 
   const [collapseOpen, setCollapseOpen] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -526,6 +532,10 @@ export const ProductCustomizer = ({
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
           <div>
             <div className="text-xl font-bold text-brand-body mb-2 uppercase tracking-wide text-[13px] text-gray-700">Corner Edges</div>
+            <p className="text-[12px] leading-relaxed text-gray-500 mb-4">
+              Includes {CORNER_PAIRS_PER_PRODUCT} pairs of metal corners, fitted to the front cover only. The rear cover is supplied without corners.
+              {cornerEdgesPricing.size && ` ${cornerEdgesPricing.size} corners are used for this product.`}
+            </p>
             <div className="grid grid-cols-3 gap-4">
               
               {/* None Card */}
@@ -588,7 +598,7 @@ export const ProductCustomizer = ({
                     </div>
                  </div>
                  <div className="font-bold text-brand-body">Gold</div>
-                 <div className="text-[12px] text-gray-500 mt-1">+£0.24 per unit</div>
+                 <div className="text-[12px] text-gray-500 mt-1 text-center">{cornerPriceLabel}</div>
               </div>
 
               {/* Silver Card */}
@@ -634,7 +644,7 @@ export const ProductCustomizer = ({
                     </div>
                  </div>
                  <div className="font-bold text-brand-body">Silver</div>
-                 <div className="text-[12px] text-gray-500 mt-1">+£0.24 per unit</div>
+                 <div className="text-[12px] text-gray-500 mt-1 text-center">{cornerPriceLabel}</div>
               </div>
 
             </div>

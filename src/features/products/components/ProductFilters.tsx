@@ -24,7 +24,7 @@ const FILTER_LABELS: Record<FilterParamKey, string> = {
 };
 
 export const ProductFilters = (props: ProductFiltersProps) => (
-  <Suspense fallback={<div className="h-20 bg-white animate-pulse rounded mb-8 border border-gray-200" />}>
+  <Suspense fallback={<div className="h-20 bg-brand-cream animate-pulse rounded mb-8 border border-gray-200" />}>
     <ProductFiltersInner {...props} />
   </Suspense>
 );
@@ -174,7 +174,7 @@ const ProductFiltersInner = ({
   );
 
   return (
-    <div className={`mb-10 bg-white ${isLoading ? 'opacity-60 transition-opacity' : ''}`}>
+    <div className={`mb-10 bg-brand-cream ${isLoading ? 'opacity-60 transition-opacity' : ''}`}>
       
       {/* Mobile filter bar: matches desktop visually and scrolls instead of squeezing controls. */}
       <div className="md:hidden">
@@ -185,7 +185,7 @@ const ProductFiltersInner = ({
           </span>
         </div>
         <div className="overflow-x-auto overscroll-x-contain border-y border-brand-border" aria-label="Product filters">
-          <div className="flex min-w-max bg-white">
+          <div className="flex min-w-max bg-brand-cream">
             {(Object.keys(FILTER_TAXONOMY_MAP) as FilterParamKey[]).map((key) => {
               const disabled = isFilterDisabled(key);
               return (
@@ -200,7 +200,7 @@ const ProductFiltersInner = ({
                   className={`flex min-w-[152px] items-center justify-between border-r border-brand-border px-5 py-5 text-[15px] font-medium transition-colors last:border-r-0 ${
                     disabled
                       ? 'cursor-not-allowed bg-brand-tint text-brand-grey opacity-60'
-                      : 'bg-white text-brand-body hover:bg-brand-tint'
+                      : 'bg-brand-cream text-brand-body hover:bg-brand-tint'
                   }`}
                 >
                   {FILTER_LABELS[key]}
@@ -213,7 +213,7 @@ const ProductFiltersInner = ({
 
         {mobileDropdown && (
           <div
-            className="max-h-[300px] overflow-y-auto border-b border-brand-border bg-white shadow-[0_8px_18px_rgba(0,0,0,0.08)]"
+            className="max-h-[300px] overflow-y-auto border-b border-brand-border bg-brand-cream shadow-[0_8px_18px_rgba(0,0,0,0.08)]"
             onClick={(event) => event.stopPropagation()}
             data-lenis-prevent
           >
@@ -265,7 +265,7 @@ const ProductFiltersInner = ({
       </div>
 
       {/* Desktop Horizontal Filters */}
-      <div className="hidden md:flex w-full border-t border-b border-brand-border bg-white">
+      <div className="hidden md:flex w-full border-t border-b border-brand-border bg-brand-cream">
         {(Object.keys(FILTER_TAXONOMY_MAP) as FilterParamKey[]).map((key) => {
           const disabled = isFilterDisabled(key);
           const attr = getAttributeForFilter(key);
@@ -275,7 +275,7 @@ const ProductFiltersInner = ({
           return (
             <div
               key={key}
-              className={`relative flex-1 border-r border-brand-border last:border-r-0 bg-white ${
+              className={`relative flex-1 border-r border-brand-border last:border-r-0 bg-brand-cream ${
                 disabled ? 'opacity-40 pointer-events-none bg-brand-tint' : ''
               }`}
               onClick={(e) => e.stopPropagation()}
@@ -283,7 +283,7 @@ const ProductFiltersInner = ({
               <button
                 type="button"
                 onClick={() => !disabled && setOpenDropdown(openDropdown === key ? null : key)}
-                className={`w-full px-5 py-5 flex items-center justify-between text-[15px] font-medium transition-colors bg-white ${
+                className={`w-full px-5 py-5 flex items-center justify-between text-[15px] font-medium transition-colors bg-brand-cream ${
                   disabled ? 'text-brand-grey' : 'text-brand-body hover:bg-brand-tint'
                 }`}
               >
@@ -298,7 +298,7 @@ const ProductFiltersInner = ({
               </button>
 
               {openDropdown === key && !disabled && (
-                <div className="absolute top-full left-[-1px] w-[calc(100%+2px)] bg-white border border-brand-border border-t-0 z-50 max-h-[300px] overflow-y-auto shadow-[0_4px_10px_rgba(0,0,0,0.08)]" data-lenis-prevent>
+                <div className="absolute top-full left-[-1px] w-[calc(100%+2px)] bg-brand-cream border border-brand-border border-t-0 z-50 max-h-[300px] overflow-y-auto shadow-[0_4px_10px_rgba(0,0,0,0.08)]" data-lenis-prevent>
                   <div className="p-4 flex flex-col gap-2.5">
                     {terms.map((term) => {
                       const count = countProductsForTerm(

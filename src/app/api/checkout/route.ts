@@ -3,6 +3,23 @@ import { checkoutRateLimit } from '@/lib/rate-limit';
 
 const WOOCOMMERCE_STORE_URL = process.env.WOOCOMMERCE_STORE_URL || 'https://dashboard.abbeygate-england.com';
 
+async function getWooCommerceError(response: Response): Promise<string | null> {
+  const body = await response.text();
+  if (!response.ok) return `WooCommerce returned ${response.status}${body ? `: ${body.slice(0, 200)}` : ''}`;
+
+  // wc-ajax uses HTTP 200 for some add-to-cart failures, so the status code alone
+  // is not enough to decide that the cart was actually updated.
+  try {
+    const data = JSON.parse(body);
+    if (data?.error) return data?.message || 'WooCommerce rejected an item.';
+  } catch {
+    // Some WooCommerce themes return HTML on success. There is nothing further to
+    // validate here; the response cookies below remain the session source of truth.
+  }
+
+  return null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
@@ -122,6 +139,11 @@ export async function POST(request: NextRequest) {
         body: payload
       });
 
+      const wooError = await getWooCommerceError(addRes);
+      if (wooError) {
+        throw new Error(`Could not add ${item.productId} to the WooCommerce cart. ${wooError}`);
+      }
+
       // WooCommerce returns Set-Cookie headers for items_in_cart and cart_hash on EVERY successful add.
       // It only returns wp_woocommerce_session if it's establishing a new session.
       const currentSetCookies = addRes.headers.getSetCookie ? addRes.headers.getSetCookie() : [];
@@ -139,6 +161,13 @@ export async function POST(request: NextRequest) {
             finalSessionCookieStr = `${sessionCookieName}=${sessionCookieValue}`;
           }
         }
+      }
+
+      // Without a session cookie the checkout domain cannot recover the cart we
+      // just created. Stop here instead of redirecting the customer to an empty
+      // WooCommerce cart.
+      if (!finalSessionCookieStr) {
+        throw new Error('WooCommerce did not return a cart session cookie.');
       }
     }
 

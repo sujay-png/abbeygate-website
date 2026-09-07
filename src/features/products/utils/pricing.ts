@@ -1,6 +1,8 @@
 import type { StoreProduct, PriceTier } from "../types/store-product";
 
 export const LOGO_CUSTOMIZATION_FEE = 0.52;
+export const BRANDING_SETUP_FEE = 48;
+export const CORNER_PAIRS_PER_PRODUCT = 2;
 export const CUSTOMIZATION_MIN_QTY = 1;
 export const VAT_RATE = 0.20;
 
@@ -30,6 +32,33 @@ export function isGiftsProduct(product: StoreProduct): boolean {
 
 export function isFoilBlockedProduct(product: StoreProduct): boolean {
   return product.categories.some((cat) => cat.slug === "foil-blocked");
+}
+
+export type CornerEdgesPricing = {
+  size: '18mm × 18mm' | '22mm × 22mm' | '27mm × 27mm' | null;
+  pricePerPair: number;
+};
+
+/**
+ * Mirrors the WooCommerce corner-price rules until the product meta is exposed
+ * through the Store API. Product names are the temporary source for the format.
+ */
+export function getCornerEdgesPricing(product: StoreProduct): CornerEdgesPricing {
+  const description = [product.name, product.slug, ...product.attributes.flatMap((attribute) => attribute.terms.map((term) => term.name))]
+    .join(' ')
+    .toLowerCase();
+
+  if (description.includes('pocket')) {
+    return { size: '18mm × 18mm', pricePerPair: 0.42 };
+  }
+  if (description.includes('a5')) {
+    return { size: '22mm × 22mm', pricePerPair: 0.48 };
+  }
+  if (description.includes('quarto') || description.includes('a4')) {
+    return { size: '27mm × 27mm', pricePerPair: 0.48 };
+  }
+
+  return { size: null, pricePerPair: 0 };
 }
 
 /** Parse B2B King tier pricing from WooCommerce REST API meta_data. */
@@ -179,7 +208,6 @@ export function calculateProductPrice(
     customizationEnabled,
     blockingType,
     isGifts,
-    cornerEdges,
   } = input;
 
   const isUvPrint = Boolean(customizationEnabled && blockingType && blockingType.toLowerCase() === 'uv print');
@@ -206,12 +234,6 @@ export function calculateProductPrice(
     extraBlockingFee = Math.max(0, customizationFee - LOGO_CUSTOMIZATION_FEE);
     unitPrice += extraBlockingFee;
   }
-
-  let cornerEdgesFee = 0;
-  // if (!isGifts && customizationEnabled && cornerEdges && (cornerEdges === 'Gold' || cornerEdges === 'Silver')) {
-  //   cornerEdgesFee = 0.24;
-  //   unitPrice += cornerEdgesFee;
-  // }
 
   if (!isGifts && !customizationEnabled && !isUvPrint) {
     unitPrice = Math.max(0, unitPrice - LOGO_CUSTOMIZATION_FEE);
