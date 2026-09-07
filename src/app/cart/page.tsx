@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Container } from '@/components/ui/Container';
@@ -12,6 +12,7 @@ import { ColourPickerRow } from '@/features/cart/components/ColourPickerRow';
 import { retryProof } from '@/features/cart/utils/add-colour-variant';
 import { validateCustomisationMinimums } from '@/features/cart/utils/colour-group';
 import { downloadCartItemProof, canDownloadProof } from '@/features/cart/utils/download-proof';
+import { checkAuthStatus } from '@/features/auth/services/login';
 
 const formatPrice = (value: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
@@ -21,6 +22,11 @@ export default function CartPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [pickerFor, setPickerFor] = useState<string | null>(null);
   const [previewItem, setPreviewItem] = useState<any | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    checkAuthStatus().then(setIsLoggedIn);
+  }, []);
 
   const amendLine = (item: CartItem) => {
     if (!item.customization?.enabled) return;
@@ -385,22 +391,31 @@ export default function CartPage() {
                 </div>
               </div>
 
-              <button
-                onClick={handleCheckout}
-                disabled={isSyncing || hasShortfalls}
-                className="w-full flex items-center justify-center bg-brand-primary text-white py-3 rounded font-medium hover:bg-brand-primary-dark transition-colors disabled:bg-gray-400 text-[15px]"
-              >
-                {isSyncing ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                    Syncing Cart...
-                  </>
-                ) : hasShortfalls ? (
-                  'Minimum requirement not met'
-                ) : (
-                  'Proceed to checkout'
-                )}
-              </button>
+              {isLoggedIn === false ? (
+                <div className="w-full bg-orange-50 border border-orange-200 p-4 rounded text-center">
+                  <p className="text-[14px] text-brand-body font-medium mb-3">You must be logged in to checkout.</p>
+                  <Link href="/account" className="w-full flex items-center justify-center bg-brand-primary text-white py-2.5 rounded font-medium hover:bg-brand-primary-dark transition-colors text-[14px]">
+                    Log in / Register
+                  </Link>
+                </div>
+              ) : (
+                <button
+                  onClick={handleCheckout}
+                  disabled={isLoggedIn === null || isSyncing || hasShortfalls}
+                  className="w-full flex items-center justify-center bg-brand-primary text-white py-3 rounded font-medium hover:bg-brand-primary-dark transition-colors disabled:bg-gray-400 text-[15px]"
+                >
+                  {isSyncing || isLoggedIn === null ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                      {isSyncing ? 'Syncing Cart...' : 'Checking...'}
+                    </>
+                  ) : hasShortfalls ? (
+                    'Minimum requirement not met'
+                  ) : (
+                    'Proceed to checkout'
+                  )}
+                </button>
+              )}
               
               <Link
                 href="/notebooks"

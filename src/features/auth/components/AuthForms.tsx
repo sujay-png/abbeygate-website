@@ -137,21 +137,7 @@ export function AuthForms() {
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <label className="text-[14px] text-gray-700 font-medium">
-                    User Type <span className="text-[#b00c0c]">*</span>
-                  </label>
-                  <select 
-                    name="userRole"
-                    required
-                    disabled={isRegisterPending}
-                    className="w-full h-12 bg-white border border-gray-200 rounded-md px-4 text-gray-700 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all duration-200 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:16px] bg-[position:calc(100%-16px)_center] bg-no-repeat disabled:opacity-50"
-                  >
-                    <option value="">- - - Select User Role - - -</option>
-                    <option value="individual">Individual Customer</option>
-                    <option value="b2b">B2B (requires approval)</option>
-                  </select>
-                </div>
+
 
                 <p className="text-[13px] text-gray-500 leading-relaxed">
                   Your personal data will be used to support your experience throughout this website, to manage access to your account, and for other purposes described in our <Link href="/privacy" className="text-brand-primary hover:underline transition-colors">privacy policy</Link>.

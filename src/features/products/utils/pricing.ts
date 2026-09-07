@@ -242,8 +242,8 @@ export function calculateProductPrice(
   const totalPrice = unitPrice * quantity;
 
   const statusText = customizationEnabled
-    ? "Including logo customisation and excluding VAT"
-    : "Not including logo customisation and VAT";
+    ? "Including logo customisation"
+    : "Not including logo customisation";
 
   const statusColor = customizationEnabled ? "#1b7a1b" : "#7f56b3";
 

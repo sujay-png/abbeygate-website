@@ -196,7 +196,7 @@ export const Navbar = () => {
         <div className="w-full px-6 lg:px-10 xl:px-16 flex justify-between items-center text-[10px] font-bold tracking-[0.15em] text-gray-700 uppercase">
           <div>Bespoke Leather Manufacturers of Diaries, Notebooks & Accessories</div>
           <div className="flex items-center gap-6">
-            <span>0121 236 2534</span>
+            <span>01922 616286</span>
             <Link href="/contact" className="hover:text-brand-primary-dark transition-colors">Contact Us</Link>
           </div>
         </div>

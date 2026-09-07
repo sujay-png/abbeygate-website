@@ -134,5 +134,34 @@ export async function loginCustomer(
 
 export async function logoutCustomer() {
   await deleteSession();
+
+  // Clear WooCommerce and WordPress session cookies to ensure full logout
+  const cookieStore = await cookies();
+  const allCookies = cookieStore.getAll();
+  const requestHeaders = await headers();
+  const origin = requestHeaders.get('origin') || requestHeaders.get('host') || '';
+  const shareAcrossSubdomains = origin.includes('abbeygate-england.com');
+  
+  for (const cookie of allCookies) {
+    const name = cookie.name;
+    if (
+      name.startsWith('wordpress_') ||
+      name.startsWith('wp-') ||
+      name.startsWith('woocommerce_')
+    ) {
+      if (shareAcrossSubdomains) {
+        cookieStore.delete({ name, domain: '.abbeygate-england.com' });
+      } else {
+        cookieStore.delete(name);
+      }
+    }
+  }
+
   redirect('/account');
+}
+
+export async function checkAuthStatus(): Promise<boolean> {
+  const { getSession } = await import('../utils/session');
+  const session = await getSession();
+  return !!session;
 }
