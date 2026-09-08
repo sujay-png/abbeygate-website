@@ -22,6 +22,11 @@ export function getProductPhysicalDimensionsMm(product: StoreProduct): { width: 
   // Default fallback (e.g. A5)
   return { width: 148, height: 210 };
 }
+
+export function sanitizeImageUrl(url?: string | null): string {
+  if (!url) return '';
+  return url.replace(/ /g, '%20');
+}
 export function productMatchesFilters(
   product: StoreProduct,
   filters: ProductFilters,

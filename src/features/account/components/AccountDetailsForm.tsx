@@ -63,7 +63,7 @@ export function AccountDetailsForm({ initialData }: Props) {
             disabled={isPending}
             className="w-full h-12 bg-gray-50/50 border border-gray-200 rounded-md px-4 text-brand-primary-dark focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all duration-200 disabled:opacity-50"
           />
-          <p className="text-[13px] text-gray-500 italic mt-1">This will be how your name will be displayed in the account section and in reviews</p>
+          <p className="text-[13px] text-gray-500 italic mt-1">This will be how your name will be displayed in the account section.</p>
         </div>
 
         <div className="space-y-2">

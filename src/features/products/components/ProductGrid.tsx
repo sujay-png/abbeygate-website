@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { StoreProduct } from '../types/store-product';
-import { getProductDisplayPrice, stripHtml } from '../utils/product-helpers';
+import { getProductDisplayPrice, stripHtml, sanitizeImageUrl } from '../utils/product-helpers';
 
 type ProductGridProps = {
   products: StoreProduct[];
@@ -20,7 +20,7 @@ export const ProductGrid = ({ products }: ProductGridProps) => {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
       {products.map((product) => {
         const image = product.images[0];
-        const imageSrc = image?.thumbnail || image?.src;
+        const imageSrc = sanitizeImageUrl(image?.thumbnail || image?.src);
 
         return (
           <Link

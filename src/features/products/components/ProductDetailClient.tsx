@@ -8,21 +8,22 @@ import { ProductCustomizer, type CustomizationState } from './ProductCustomizer'
 import { ProductCustomizationOverlay } from './ProductCustomizationOverlay';
 import { useCart } from '@/features/cart/context/CartContext';
 import { BRANDING_SETUP_FEE, CORNER_PAIRS_PER_PRODUCT, CUSTOMIZATION_MIN_QTY, formatGBP, getCornerEdgesPricing, isGiftsProduct, LOGO_BLOCKING_PRICES, LOGO_CUSTOMIZATION_FEE, VAT_RATE, calculateProductPrice } from '../utils/pricing';
-import { getLogoAnchors, getImageBoundingBox, getProductPhysicalDimensionsMm } from '../utils/product-helpers';
+import { getLogoAnchors, getImageBoundingBox, getProductPhysicalDimensionsMm, sanitizeImageUrl } from '../utils/product-helpers';
 import { getConfiguredImageBounds } from '../utils/product-image-bounds';
 import { composeProof } from '../utils/generate-proof';
 import { TrustIndicators } from '@/components/home/TrustIndicators';
-import { Send, X, ChevronLeft, ChevronRight, ZoomIn, Check, Star } from 'lucide-react';
+import { Send, X, ChevronLeft, ChevronRight, ZoomIn, Check } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import type { CustomTab } from '@/features/products/services/store-products';
 
 const ImageWithFallback = ({ src, fallbackSrc = '/images/logo/abbeygate-logo.png', ...rest }: any) => {
-  const [imgSrc, setImgSrc] = useState(src);
+  const safeSrc = sanitizeImageUrl(src);
+  const [imgSrc, setImgSrc] = useState(safeSrc);
 
   useEffect(() => {
-    setImgSrc(src);
+    setImgSrc(sanitizeImageUrl(src));
   }, [src]);
 
   return (
@@ -79,7 +80,7 @@ export const ProductDetailClient = ({
   useEffect(() => {
     // Silently preload variant images to warm up Next.js optimization cache and browser cache
     if (!colorVariants || colorVariants.length === 0) return;
-    
+
     // Use a short delay so we don't compete with the main LCP image
     const timeout = setTimeout(() => {
       colorVariants.forEach(variant => {
@@ -126,7 +127,7 @@ export const ProductDetailClient = ({
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (typeof window !== 'undefined' && window.matchMedia && !window.matchMedia('(hover: hover)').matches) return;
     if (!previewContainerRef.current) return;
-    
+
     // Only trigger if entering the inner image element, not the padded container bounds
     if (imageElementRef.current?.contains(e.target as Node)) {
       if (!isZooming && !zoomTimeoutRef.current) {
@@ -141,7 +142,7 @@ export const ProductDetailClient = ({
         zoomTimeoutRef.current = null;
       }
     }
-    
+
     const { left, top, width, height } = previewContainerRef.current.getBoundingClientRect();
     const x = ((e.clientX - left) / width) * 100;
     const y = ((e.clientY - top) / height) * 100;
@@ -236,18 +237,18 @@ export const ProductDetailClient = ({
         if (draft) {
           // If the draft contains a base64 logoPreviewUrl, convert it back to a File object for checkout
           if (draft.logoPreviewUrl && draft.logoPreviewUrl.startsWith('data:image')) {
-             fetch(draft.logoPreviewUrl)
-               .then(res => res.blob())
-               .then(blob => {
-                 const file = new File([blob], 'restored-logo.png', { type: blob.type });
-                 setCustomization({ ...draft, logoFile: file });
-               })
-               .catch(e => {
-                 console.error("Failed to restore logo file from base64", e);
-                 setCustomization(draft);
-               });
+            fetch(draft.logoPreviewUrl)
+              .then(res => res.blob())
+              .then(blob => {
+                const file = new File([blob], 'restored-logo.png', { type: blob.type });
+                setCustomization({ ...draft, logoFile: file });
+              })
+              .catch(e => {
+                console.error("Failed to restore logo file from base64", e);
+                setCustomization(draft);
+              });
           } else {
-             setCustomization(draft);
+            setCustomization(draft);
           }
         }
       }
@@ -260,8 +261,8 @@ export const ProductDetailClient = ({
   // Persist customization state to localStorage on change
   useEffect(() => {
     if (!product || !product.slug || isGifts || !isCustomizingStarted || amendKey) return;
-    
-    const isDefault = 
+
+    const isDefault =
       customization.blockingType === 'Embossed' &&
       customization.logoScale === 1.0 &&
       customization.cornerEdges === 'None' &&
@@ -277,7 +278,7 @@ export const ProductDetailClient = ({
           localStorage.setItem(`customization_draft_${product.slug}`, JSON.stringify(draftState));
         } catch (e) {
           if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-             console.error("LocalStorage quota exceeded, cannot save customization state.");
+            console.error("LocalStorage quota exceeded, cannot save customization state.");
           }
         }
       }, 500); // 500ms debounce
@@ -288,7 +289,7 @@ export const ProductDetailClient = ({
   const [isAdding, setIsAdding] = useState(false);
   const [pendingPropagate, setPendingPropagate] = useState<{ amendKey: string; customization: any; siblingsCount: number } | null>(null);
   const [isPropagating, setIsPropagating] = useState(false);
-  const [imageBounds, setImageBounds] = useState<{top: number, bottom: number, left: number, right: number} | null>(null);
+  const [imageBounds, setImageBounds] = useState<{ top: number, bottom: number, left: number, right: number } | null>(null);
   const [imageAspectRatio, setImageAspectRatio] = useState<number>(1);
 
   const handlePriceChange = useCallback((result: any) => {
@@ -304,7 +305,7 @@ export const ProductDetailClient = ({
 
   const handleCustomizationChange = useCallback((state: CustomizationState) => {
     setCustomization((prev) => {
-      const visualPropsChanged = 
+      const visualPropsChanged =
         state.blockingType !== prev.blockingType ||
         state.cornerEdges !== prev.cornerEdges ||
         state.foilColor !== prev.foilColor ||
@@ -367,7 +368,7 @@ export const ProductDetailClient = ({
   useEffect(() => {
     // If we're customizing, ProductCustomizer handles the price updates.
     if (isCustomizingStarted) return;
-    
+
     const result = calculateProductPrice({
       quantity,
       basePrice,
@@ -376,7 +377,7 @@ export const ProductDetailClient = ({
       blockingType: customization.blockingType || 'Embossed',
       isGifts
     });
-    
+
     setPriceDetails(prev => {
       if (prev.unitPrice === result.unitPrice && prev.totalPrice === result.totalPrice) return prev;
       return {
@@ -568,9 +569,9 @@ export const ProductDetailClient = ({
             if (result.widthPercent !== undefined) widthPercent = result.widthPercent;
           }
         } else {
-           if (customization.leftPercent !== undefined) leftPercent = customization.leftPercent;
-           if (customization.topPercent !== undefined) topPercent = customization.topPercent;
-           if (customization.widthPercent !== undefined) widthPercent = customization.widthPercent;
+          if (customization.leftPercent !== undefined) leftPercent = customization.leftPercent;
+          if (customization.topPercent !== undefined) topPercent = customization.topPercent;
+          if (customization.widthPercent !== undefined) widthPercent = customization.widthPercent;
         }
       } // closing the if(customization.enabled) block!
 
@@ -674,12 +675,12 @@ export const ProductDetailClient = ({
     if (amendKey && (!isCustomizingStarted || !customizationActive || customizerStep === 4)) return 'Update Basket \u2192';
     if (!isCustomizingStarted && customizationActive && !isGifts) return 'Start customising \u2192';
     if (!isCustomizingStarted || !customizationActive || isGifts) return 'Add to Basket \u2192';
-    
+
     if (customizerStep === 1) return 'Proceed to Position \u2192';
     if (customizerStep === 2) return 'Proceed to Extras \u2192';
     if (customizerStep === 3) return 'Proceed to Review \u2192';
     if (customizerStep === 4) return amendKey ? 'Update Basket \u2192' : 'Add to Basket \u2192';
-    
+
     return 'Proceed \u2192';
   };
 
@@ -695,24 +696,24 @@ export const ProductDetailClient = ({
         <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
           <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
             <span>Description</span>
-          <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
-        </summary>
-        <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
-          {(() => {
+            <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
+          </summary>
+          <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
+            {(() => {
               const customDesc = customTabs.find(t => t.title.trim().toLowerCase() === 'description');
               const descHtml = customDesc ? customDesc.content : product.description;
               if (descHtml) {
                 return (
-                  <div 
+                  <div
                     className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
-                    dangerouslySetInnerHTML={{ __html: descHtml }} 
+                    dangerouslySetInnerHTML={{ __html: descHtml }}
                   />
                 );
               }
               return <p className="italic">No description available.</p>;
             })()}
-        </div>
-      </details>
+          </div>
+        </details>
       )}
 
       {/* Specifications Accordion */}
@@ -736,11 +737,11 @@ export const ProductDetailClient = ({
 
       {/* Delivery Accordion */}
       {(() => {
-        const deliveryTab = customTabs.find(t => 
-          t.title.trim().toLowerCase() === 'shipping' || 
+        const deliveryTab = customTabs.find(t =>
+          t.title.trim().toLowerCase() === 'shipping' ||
           t.title.trim().toLowerCase() === 'delivery'
         );
-        
+
         if (!deliveryTab) return null;
 
         return (
@@ -750,9 +751,9 @@ export const ProductDetailClient = ({
               <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
             </summary>
             <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
-              <div 
+              <div
                 className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
-                dangerouslySetInnerHTML={{ __html: deliveryTab.content }} 
+                dangerouslySetInnerHTML={{ __html: deliveryTab.content }}
               />
             </div>
           </details>
@@ -770,24 +771,13 @@ export const ProductDetailClient = ({
             <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
           </summary>
           <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
-            <div 
+            <div
               className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
-              dangerouslySetInnerHTML={{ __html: tab.content }} 
+              dangerouslySetInnerHTML={{ __html: tab.content }}
             />
           </div>
         </details>
       ))}
-
-      {/* Reviews Accordion (Dummy) */}
-      <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4" id="reviews">
-        <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
-          <span>Reviews</span>
-          <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
-        </summary>
-        <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
-          <p>There are currently no reviews for this product.</p>
-        </div>
-      </details>
     </>
   );
 
@@ -800,7 +790,7 @@ export const ProductDetailClient = ({
       >
         {/* Left: gallery and customizer */}
         <div id="product-gallery-container" className={`relative z-10 self-start flex flex-col gap-4 w-full scroll-mt-[120px] ${!isCustomizingStarted ? 'lg:sticky lg:top-[120px]' : ''}`}>
-          
+
           {/* STEPPER AND HEADING */}
           {!isGifts && isCustomizingStarted && customizationActive && (
             <div className="mb-6 animate-in fade-in duration-500 w-full">
@@ -847,7 +837,7 @@ export const ProductDetailClient = ({
                           {s.label}
                         </span>
                       </div>
-                      
+
                       {/* Connecting Line */}
                       {index < 3 && (
                         <div className="flex-1 mx-2 lg:mx-4">
@@ -863,15 +853,15 @@ export const ProductDetailClient = ({
               <div className="mb-4">
                 <h1 className="text-[22px] lg:text-2xl font-bold font-josefin text-brand-body mb-1">
                   {customizerStep === 1 ? 'Choose your branding' :
-                   customizerStep === 2 ? 'Position your logo' :
-                   customizerStep === 3 ? 'Add finishing touches' :
-                   'Review your customisation'}
+                    customizerStep === 2 ? 'Position your logo' :
+                      customizerStep === 3 ? 'Add finishing touches' :
+                        'Review your customisation'}
                 </h1>
                 <p className="text-[13px] lg:text-[14px] text-gray-500 font-work">
                   {customizerStep === 1 ? "Upload your logo, then select how you'd like it applied to the cover." :
-                   customizerStep === 2 ? "Select the placement and size of your logo on the product." :
-                   customizerStep === 3 ? "Select any optional extras like metal corner edges." :
-                   "Check the digital proof before adding to your basket."}
+                    customizerStep === 2 ? "Select the placement and size of your logo on the product." :
+                      customizerStep === 3 ? "Select any optional extras like metal corner edges." :
+                        "Check the digital proof before adding to your basket."}
                 </p>
               </div>
             </div>
@@ -940,14 +930,14 @@ export const ProductDetailClient = ({
               )}
 
               {product.images && product.images.length > 0 ? (
-                <div 
-                  className="absolute inset-0 bg-transparent overflow-hidden" 
+                <div
+                  className="absolute inset-0 bg-transparent overflow-hidden"
                   ref={previewContainerRef}
                   onMouseEnter={handleMouseEnter}
                   onMouseLeave={handleMouseLeave}
                   onMouseMove={handleMouseMove}
                 >
-                  <div 
+                  <div
                     className="absolute inset-0 p-4 transition-transform duration-300 ease-out"
                     style={{
                       transformOrigin: zoomOrigin,
@@ -955,13 +945,13 @@ export const ProductDetailClient = ({
                     }}
                   >
                     <AnimatePresence mode="wait">
-                      <motion.div 
+                      <motion.div
                         key={product.slug}
                         initial={{ opacity: 0.5 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0.5 }}
                         transition={{ duration: 0.2 }}
-                        className="relative w-full h-full" 
+                        className="relative w-full h-full"
                         ref={imageElementRef}
                       >
                         {product.images.map((img, idx) => {
@@ -999,7 +989,7 @@ export const ProductDetailClient = ({
               )}
             </div>
           </div>
-          
+
           {/* Customizer underneath the gallery on the left */}
           {!isGifts && isCustomizingStarted && customizationActive && (
             <div ref={customizerSectionRef}>
@@ -1061,7 +1051,7 @@ export const ProductDetailClient = ({
             )}
 
             <div className="relative w-full max-w-[80vw] flex items-center justify-center mb-8">
-              <div 
+              <div
                 className="relative overflow-hidden"
                 onMouseMove={(e) => {
                   if (typeof window !== 'undefined' && window.matchMedia && !window.matchMedia('(hover: hover)').matches) return;
@@ -1075,13 +1065,13 @@ export const ProductDetailClient = ({
                   setIsZooming(false);
                   setZoomOrigin('center center');
                 }}
-                style={{ 
+                style={{
                   aspectRatio: imageAspectRatio,
                   width: `min(100%, calc(70vh * ${imageAspectRatio}))`,
                   cursor: 'zoom-in'
                 }}
               >
-                <div 
+                <div
                   className="absolute inset-0 transition-transform duration-300 ease-out"
                   style={{
                     transformOrigin: zoomOrigin,
@@ -1121,7 +1111,7 @@ export const ProductDetailClient = ({
 
         {isCustomizingStarted && customizationActive && (
           <aside className="relative z-20 flex h-fit flex-col gap-4">
-            
+
             {/* Quantity */}
             <div className="flex flex-col gap-1 mb-2">
               <div className="flex justify-between items-center w-full">
@@ -1206,37 +1196,37 @@ export const ProductDetailClient = ({
 
             {/* Price Breaks Table */}
             {!isGifts && tiers.length > 0 && (() => {
-                const hasUvPricing = tiers.some(t => t.uvPrice !== undefined);
-                return (
-                  <div className="mt-4">
-                    <div className="font-bold text-[13px] tracking-wider text-brand-body uppercase mb-3">
-                      PRICE BREAKS (PER UNIT)
-                    </div>
-                    <table className="w-full text-left text-[12px]">
-                      <thead className="text-brand-grey border-b border-[var(--brand-border)]">
-                        <tr>
-                          <th className="py-2 font-medium">Quantity</th>
-                          <th className="py-2 text-center font-medium">Price per unit ({displayedVatLabel})</th>
-                          {hasUvPricing && <th className="py-2 text-center font-medium">Price including UV printing ({displayedVatLabel})</th>}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {tiers.map(tier => {
-                          const active = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
-                          return (
-                            <tr key={tier.min} onClick={() => setQuantity(tier.min)} className={`cursor-pointer border-b transition-colors ${active ? 'border-brand-primary bg-brand-primary text-white font-bold' : 'border-[var(--brand-border)] text-brand-body hover:bg-brand-tint'}`}>
-                              <td className="py-3 px-2">{tier.min}{tier.max ? ` - ${tier.max}` : '+'}</td>
-                              <td className="py-3 px-2 text-center">{formatDisplayedPrice(getSelectedTierUnitPrice(tier))}</td>
-                              {hasUvPricing && <td className="py-3 px-2 text-center">{tier.uvPrice ? formatDisplayedPrice(tier.uvPrice + (hasCornerEdges ? cornerEdgesPricing.pricePerPair * CORNER_PAIRS_PER_PRODUCT : 0)) : '-'}</td>}
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+              const hasUvPricing = tiers.some(t => t.uvPrice !== undefined);
+              return (
+                <div className="mt-4">
+                  <div className="font-bold text-[13px] tracking-wider text-brand-body uppercase mb-3">
+                    PRICE BREAKS (PER UNIT)
                   </div>
-                );
-              })()}
-            
+                  <table className="w-full text-left text-[12px]">
+                    <thead className="text-brand-grey border-b border-[var(--brand-border)]">
+                      <tr>
+                        <th className="py-2 font-medium">Quantity</th>
+                        <th className="py-2 text-center font-medium">Price per unit ({displayedVatLabel})</th>
+                        {hasUvPricing && <th className="py-2 text-center font-medium">Price including UV printing ({displayedVatLabel})</th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tiers.map(tier => {
+                        const active = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
+                        return (
+                          <tr key={tier.min} onClick={() => setQuantity(tier.min)} className={`cursor-pointer border-b transition-colors ${active ? 'border-brand-primary bg-brand-primary text-white font-bold' : 'border-[var(--brand-border)] text-brand-body hover:bg-brand-tint'}`}>
+                            <td className="py-3 px-2">{tier.min}{tier.max ? ` - ${tier.max}` : '+'}</td>
+                            <td className="py-3 px-2 text-center">{formatDisplayedPrice(getSelectedTierUnitPrice(tier))}</td>
+                            {hasUvPricing && <td className="py-3 px-2 text-center">{tier.uvPrice ? formatDisplayedPrice(tier.uvPrice + (hasCornerEdges ? cornerEdgesPricing.pricePerPair * CORNER_PAIRS_PER_PRODUCT : 0)) : '-'}</td>}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
+
 
             {/* Accordions in Customisation Aside */}
             <div className="mt-2">
@@ -1265,27 +1255,6 @@ export const ProductDetailClient = ({
                 dangerouslySetInnerHTML={{ __html: product.short_description }}
               />
             )}
-
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex text-[#d4af37]">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} size={15} fill="currentColor" strokeWidth={0} />
-                ))}
-              </div>
-              <button 
-                type="button"
-                onClick={() => {
-                  const el = document.getElementById('reviews');
-                  if (el) {
-                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    el.setAttribute('open', 'true');
-                  }
-                }}
-                className="text-[14px] font-medium text-gray-500 hover:text-brand-primary-dark underline underline-offset-4 decoration-gray-400 hover:decoration-brand-primary-dark transition-colors"
-              >
-                Reviews
-              </button>
-            </div>
           </div>
 
           {/* PRICE BLOCK */}
@@ -1337,18 +1306,18 @@ export const ProductDetailClient = ({
             </summary>
             <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
               {(() => {
-                  const customDesc = customTabs.find(t => t.title.trim().toLowerCase() === 'description');
-                  const descHtml = customDesc ? customDesc.content : product.description;
-                  if (descHtml) {
-                    return (
-                      <div 
-                        className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
-                        dangerouslySetInnerHTML={{ __html: descHtml }} 
-                      />
-                    );
-                  }
-                  return <p className="italic">No description available.</p>;
-                })()}
+                const customDesc = customTabs.find(t => t.title.trim().toLowerCase() === 'description');
+                const descHtml = customDesc ? customDesc.content : product.description;
+                if (descHtml) {
+                  return (
+                    <div
+                      className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
+                      dangerouslySetInnerHTML={{ __html: descHtml }}
+                    />
+                  );
+                }
+                return <p className="italic">No description available.</p>;
+              })()}
             </div>
           </details>
 
@@ -1482,51 +1451,51 @@ export const ProductDetailClient = ({
 
           {/* VOLUME PRICING TABLE */}
           {!isGifts && tiers.length > 0 && (() => {
-              const hasUvPricing = tiers.some(t => t.uvPrice !== undefined);
-              return (
-                <div className="mt-1 border border-gray-200 rounded-lg bg-transparent overflow-hidden">
-                  <div className="flex justify-between items-center font-bold px-4 py-3 text-[13px] tracking-widest text-brand-body uppercase bg-transparent border-b border-gray-200">
-                    <span>PRICE BREAKS (PER UNIT)</span>
-                  </div>
-                  <div>
-                    <table className="w-full text-left text-[13px]">
-                      <thead className="bg-transparent text-brand-grey border-b border-[var(--brand-border)]">
-                        <tr>
-                          <th className="py-2.5 px-4 font-medium w-1/3">Quantity</th>
-                          <th className="py-2.5 px-4 font-medium w-1/3 text-center">Price per unit ({displayedVatLabel})</th>
-                          {hasUvPricing && <th className="py-2.5 px-4 font-medium w-1/3 text-center">Price including UV printing ({displayedVatLabel})</th>}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {tiers.map((tier) => {
-                          const isActive = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
-                          return (
-                            <tr
-                              key={tier.min}
-                              onClick={() => setQuantity(tier.min)}
-                              className={`border-b cursor-pointer transition-colors ${isActive ? 'border-brand-primary bg-brand-primary text-white font-bold' : 'border-[var(--brand-border)] hover:bg-brand-tint text-brand-body'
-                                }`}
-                            >
-                              <td className="py-2.5 px-4">
-                                {tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}
-                              </td>
-                              <td className="py-2.5 px-4 text-center">
-                                {formatDisplayedPrice(getSelectedTierUnitPrice(tier))}
-                              </td>
-                              {hasUvPricing && (
-                                <td className="py-2.5 px-4 text-center">
-                                  {tier.uvPrice ? formatDisplayedPrice(tier.uvPrice + (hasCornerEdges ? cornerEdgesPricing.pricePerPair * CORNER_PAIRS_PER_PRODUCT : 0)) : '-'}
-                                </td>
-                              )}
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+            const hasUvPricing = tiers.some(t => t.uvPrice !== undefined);
+            return (
+              <div className="mt-1 border border-gray-200 rounded-lg bg-transparent overflow-hidden">
+                <div className="flex justify-between items-center font-bold px-4 py-3 text-[13px] tracking-widest text-brand-body uppercase bg-transparent border-b border-gray-200">
+                  <span>PRICE BREAKS (PER UNIT)</span>
                 </div>
-              );
-            })()}
+                <div>
+                  <table className="w-full text-left text-[13px]">
+                    <thead className="bg-transparent text-brand-grey border-b border-[var(--brand-border)]">
+                      <tr>
+                        <th className="py-2.5 px-4 font-medium w-1/3">Quantity</th>
+                        <th className="py-2.5 px-4 font-medium w-1/3 text-center">Price per unit ({displayedVatLabel})</th>
+                        {hasUvPricing && <th className="py-2.5 px-4 font-medium w-1/3 text-center">Price including UV printing ({displayedVatLabel})</th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tiers.map((tier) => {
+                        const isActive = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
+                        return (
+                          <tr
+                            key={tier.min}
+                            onClick={() => setQuantity(tier.min)}
+                            className={`border-b cursor-pointer transition-colors ${isActive ? 'border-brand-primary bg-brand-primary text-white font-bold' : 'border-[var(--brand-border)] hover:bg-brand-tint text-brand-body'
+                              }`}
+                          >
+                            <td className="py-2.5 px-4">
+                              {tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}
+                            </td>
+                            <td className="py-2.5 px-4 text-center">
+                              {formatDisplayedPrice(getSelectedTierUnitPrice(tier))}
+                            </td>
+                            {hasUvPricing && (
+                              <td className="py-2.5 px-4 text-center">
+                                {tier.uvPrice ? formatDisplayedPrice(tier.uvPrice + (hasCornerEdges ? cornerEdgesPricing.pricePerPair * CORNER_PAIRS_PER_PRODUCT : 0)) : '-'}
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            );
+          })()}
 
 
           <hr className="border-gray-200" />
@@ -1539,38 +1508,38 @@ export const ProductDetailClient = ({
         </div>
       </div>
 
-        {pendingPropagate && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full flex flex-col items-center text-center animate-in zoom-in-95 duration-200 border border-brand-primary/20">
-              <h3 className="text-xl font-bold text-brand-body mb-2">Update all colours</h3>
-              <p className="text-gray-600 mb-8">
-                These branding changes will be applied to all {pendingPropagate.siblingsCount} other {pendingPropagate.siblingsCount === 1 ? 'colour' : 'colours'} in this group, so every colour matches.
-              </p>
-              <div className="flex flex-col w-full gap-3">
-                <button
-                  type="button"
-                  disabled={isPropagating}
-                  onClick={async () => {
-                    setIsPropagating(true);
-                    const { propagateAmendToGroup } = await import('@/features/cart/utils/amend-group');
-                    await propagateAmendToGroup(pendingPropagate.amendKey, pendingPropagate.customization, items, updateItem);
-                    sessionStorage.removeItem(`abbeygate-amend-${pendingPropagate.amendKey}`);
-                    window.location.href = '/cart';
-                  }}
-                  className="w-full h-12 bg-brand-primary text-white font-medium rounded-lg hover:bg-brand-primary-dark transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {isPropagating ? (
-                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  ) : null}
-                  Apply to all colours
-                </button>
-              </div>
+      {pendingPropagate && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full flex flex-col items-center text-center animate-in zoom-in-95 duration-200 border border-brand-primary/20">
+            <h3 className="text-xl font-bold text-brand-body mb-2">Update all colours</h3>
+            <p className="text-gray-600 mb-8">
+              These branding changes will be applied to all {pendingPropagate.siblingsCount} other {pendingPropagate.siblingsCount === 1 ? 'colour' : 'colours'} in this group, so every colour matches.
+            </p>
+            <div className="flex flex-col w-full gap-3">
+              <button
+                type="button"
+                disabled={isPropagating}
+                onClick={async () => {
+                  setIsPropagating(true);
+                  const { propagateAmendToGroup } = await import('@/features/cart/utils/amend-group');
+                  await propagateAmendToGroup(pendingPropagate.amendKey, pendingPropagate.customization, items, updateItem);
+                  sessionStorage.removeItem(`abbeygate-amend-${pendingPropagate.amendKey}`);
+                  window.location.href = '/cart';
+                }}
+                className="w-full h-12 bg-brand-primary text-white font-medium rounded-lg hover:bg-brand-primary-dark transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isPropagating ? (
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : null}
+                Apply to all colours
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
     </div>
   );
