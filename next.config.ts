@@ -3,6 +3,7 @@ import { withSentryConfig } from '@sentry/nextjs';
 
 const nextConfig: NextConfig = {
   images: {
+    unoptimized: true,
     qualities: [25, 50, 70, 75, 80, 95],
     minimumCacheTTL: 31536000, // 1 year
     remotePatterns: [
