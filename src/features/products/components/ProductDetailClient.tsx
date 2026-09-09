@@ -1184,12 +1184,12 @@ export const ProductDetailClient = ({
             })()}
 
             {/* Proceed Button */}
-            <button type="button" onClick={handleSummaryAction} disabled={isSummaryButtonDisabled()} className="flex h-12 w-full items-center justify-center rounded-lg bg-brand-primary text-[15px] font-bold text-white transition-colors hover:bg-brand-primary-dark disabled:opacity-50 shadow-sm mt-2">
+            <button type="button" onClick={handleSummaryAction} disabled={isSummaryButtonDisabled()} className="flex h-12 w-full items-center justify-center rounded-lg bg-brand-primary text-[15px] font-bold text-white transition-colors hover:bg-brand-primary-dark disabled:opacity-50 shadow-sm">
               {getSummaryButtonText()}
             </button>
 
             {/* Free digital proof */}
-            <div className="rounded-lg border border-gray-200 bg-white px-4 py-4 shadow-sm mt-2">
+            <div className="rounded-lg border border-gray-200 bg-white px-4 py-4 shadow-sm">
               <p className="text-[14px] font-bold text-brand-body mb-1">Free digital proof</p>
               <p className="text-[12px] text-gray-500 font-medium">Final artwork proof provided via email before production for your approval.</p>
             </div>
@@ -1240,7 +1240,24 @@ export const ProductDetailClient = ({
 
           <div>
             <div className="text-[13px] font-bold tracking-widest text-brand-primary uppercase mb-2">
-              {product.categories?.[0]?.name ? `${product.categories[0].name} COLLECTION` : 'COLLECTION'}
+              {(() => {
+                const collectionNames = ['richmond', 'dorchester', 'harrogate', 'lewes', 'chelsea', 'windsor', 'conscious'];
+                const collectionCategory = product.categories?.find(c =>
+                  collectionNames.some(name => c.name.toLowerCase().includes(name) || c.slug.toLowerCase().includes(name))
+                );
+                if (collectionCategory) {
+                  return `${collectionCategory.name.toUpperCase().replace(' COLLECTION', '')} COLLECTION`;
+                }
+                const fallback = product.categories?.find(c =>
+                  !['diaries', 'notebooks', 'gifts', 'accessories'].some(name => c.name.toLowerCase().includes(name))
+                );
+                if (fallback) {
+                  return `${fallback.name.toUpperCase().replace(' COLLECTION', '')} COLLECTION`;
+                }
+                return product.categories?.[0]?.name
+                  ? `${product.categories[0].name.toUpperCase().replace(' COLLECTION', '')} COLLECTION`
+                  : 'COLLECTION';
+              })()}
             </div>
             <h1
               className="text-2xl lg:text-[32px] font-bold leading-tight mb-2"
@@ -1298,28 +1315,6 @@ export const ProductDetailClient = ({
             SKU: {product.sku}
           </div>
 
-          {/* Description Accordion */}
-          <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mb-2 mt-2">
-            <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
-              <span>Description</span>
-              <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
-            </summary>
-            <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
-              {(() => {
-                const customDesc = customTabs.find(t => t.title.trim().toLowerCase() === 'description');
-                const descHtml = customDesc ? customDesc.content : product.description;
-                if (descHtml) {
-                  return (
-                    <div
-                      className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
-                      dangerouslySetInnerHTML={{ __html: descHtml }}
-                    />
-                  );
-                }
-                return <p className="italic">No description available.</p>;
-              })()}
-            </div>
-          </details>
 
           {/* Available Colours Section */}
           {colorVariants.length > 0 && (
@@ -1443,7 +1438,7 @@ export const ProductDetailClient = ({
               type="button"
               onClick={handleSummaryAction}
               disabled={isSummaryButtonDisabled()}
-              className="w-full h-[54px] text-[16px] font-bold rounded-lg text-white transition-all disabled:opacity-50 flex items-center justify-center bg-brand-primary hover:bg-brand-primary-dark mt-2 shadow-sm"
+              className="w-full h-[54px] text-[16px] font-bold rounded-lg text-white transition-all disabled:opacity-50 flex items-center justify-center bg-brand-primary hover:bg-brand-primary-dark shadow-sm"
             >
               {getSummaryButtonText()}
             </button>
@@ -1502,7 +1497,7 @@ export const ProductDetailClient = ({
 
           {/* Accordions in Normal View */}
           <div className="mt-2">
-            {renderAccordions()}
+            {renderAccordions(true)}
           </div>
 
         </div>

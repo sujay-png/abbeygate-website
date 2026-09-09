@@ -28,7 +28,7 @@ export const ProductGrid = ({ products }: ProductGridProps) => {
             href={`/product/${product.slug}`}
             className="group flex flex-col"
           >
-            <div className="relative aspect-square w-full bg-white overflow-hidden mb-4">
+            <div className="relative aspect-square w-full bg-transparent overflow-hidden mb-4">
               {imageSrc ? (
                 <Image
                   src={imageSrc}

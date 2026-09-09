@@ -19,8 +19,8 @@ export const ProductCard = ({
   href = "#",
 }: ProductCardProps) => {
   return (
-    <Link href={href} className="mt-10 group flex flex-col bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-      <div className="h-[280px] w-full flex items-center justify-center p-8 relative overflow-hidden">
+    <Link href={href} className="group flex flex-col bg-transparent rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+      <div className="h-[280px] w-full flex items-center justify-center p-8 relative overflow-hidden bg-transparent">
         {imageUrl ? (
           <Image
             src={imageUrl}

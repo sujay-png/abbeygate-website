@@ -169,9 +169,23 @@ export function getLogoAnchors(product: StoreProduct) {
 }
 
 export async function getImageBoundingBox(imageUrl: string): Promise<{ top: number, bottom: number, left: number, right: number } | null> {
+  // Fetch via our proxy to avoid CORS issues with external domains.
+  // The proxy returns a base64 data URL which can be drawn to canvas without CORS errors.
+  let srcToLoad = imageUrl;
+  if (imageUrl.startsWith('http')) {
+    try {
+      const res = await fetch(`/api/proxy-image?url=${encodeURIComponent(imageUrl)}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.dataUrl) srcToLoad = json.dataUrl;
+      }
+    } catch {
+      // fall through and try loading directly
+    }
+  }
+
   return new Promise((resolve) => {
     const img = new window.Image();
-    img.crossOrigin = 'Anonymous';
     img.onload = () => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -185,83 +199,98 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
       try {
         imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       } catch (e) {
-        console.error('Canvas CORS error:', e);
+        console.error('Canvas error:', e);
         return resolve(null);
       }
       const data = imageData.data;
-      
+
+      // Check if this is a transparent-background PNG by sampling the 4 corners
+      const isTransparentPng =
+        data[3] < 250 ||
+        data[((canvas.width - 1) * 4) + 3] < 250 ||
+        data[((canvas.height - 1) * canvas.width * 4) + 3] < 250 ||
+        data[(((canvas.height - 1) * canvas.width + canvas.width - 1) * 4) + 3] < 250;
+
       let minX = canvas.width;
       let maxX = 0;
       let minY = canvas.height;
       let maxY = 0;
-      
-      const marginX = Math.floor(canvas.width * 0.05);
-      const marginY = Math.floor(canvas.height * 0.05);
 
-      const sumX = new Float64Array(canvas.width);
-      const sumY = new Float64Array(canvas.height);
-
-      const getBrightness = (x: number, y: number) => {
-        const i = (y * canvas.width + x) * 4;
-        const a = data[i + 3];
-        // Treat transparent pixels as white for gradient purposes
-        if (a < 10) return 255; 
-        return (data[i] + data[i + 1] + data[i + 2]) / 3;
-      };
-
-      // Calculate horizontal gradient sums (finds left/right edges)
-      for (let y = marginY; y < canvas.height - marginY; y++) {
-        for (let x = marginX + 1; x < canvas.width - marginX; x++) {
-          const diff = Math.abs(getBrightness(x, y) - getBrightness(x - 1, y));
-          sumX[x] += diff;
+      if (isTransparentPng) {
+        // For transparent PNGs: the physical book is fully opaque (alpha = 255),
+        // the drop shadow is semi-transparent (alpha < 255).
+        // Scanning for alpha > 240 gives us a pixel-perfect book boundary,
+        // completely immune to drop shadow shape or intensity.
+        for (let y = 0; y < canvas.height; y++) {
+          for (let x = 0; x < canvas.width; x++) {
+            const alpha = data[(y * canvas.width + x) * 4 + 3];
+            if (alpha > 240) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+            }
+          }
         }
-      }
+      } else {
+        // For solid JPEGs: use gradient detection to find the book edge
+        const marginX = Math.floor(canvas.width * 0.05);
+        const marginY = Math.floor(canvas.height * 0.05);
 
-      // Calculate vertical gradient sums (finds top/bottom edges)
-      for (let x = marginX; x < canvas.width - marginX; x++) {
-        for (let y = marginY + 1; y < canvas.height - marginY; y++) {
-          const diff = Math.abs(getBrightness(x, y) - getBrightness(x, y - 1));
-          sumY[y] += diff;
+        const sumX = new Float64Array(canvas.width);
+        const sumY = new Float64Array(canvas.height);
+
+        const getBrightness = (x: number, y: number) => {
+          const i = (y * canvas.width + x) * 4;
+          const a = data[i + 3];
+          if (a < 10) return 255;
+          return (data[i] + data[i + 1] + data[i + 2]) / 3;
+        };
+
+        for (let y = marginY; y < canvas.height - marginY; y++) {
+          for (let x = marginX + 1; x < canvas.width - marginX; x++) {
+            const diff = Math.abs(getBrightness(x, y) - getBrightness(x - 1, y));
+            sumX[x] += diff;
+          }
         }
-      }
+        for (let x = marginX; x < canvas.width - marginX; x++) {
+          for (let y = marginY + 1; y < canvas.height - marginY; y++) {
+            const diff = Math.abs(getBrightness(x, y) - getBrightness(x, y - 1));
+            sumY[y] += diff;
+          }
+        }
 
-      // Find the maximum gradient spike in X and Y
-      let maxSpikeX = 0;
-      for (let x = marginX; x < canvas.width - marginX; x++) {
-        if (sumX[x] > maxSpikeX) maxSpikeX = sumX[x];
-      }
+        let maxSpikeX = 0;
+        for (let x = marginX; x < canvas.width - marginX; x++) {
+          if (sumX[x] > maxSpikeX) maxSpikeX = sumX[x];
+        }
+        let maxSpikeY = 0;
+        for (let y = marginY; y < canvas.height - marginY; y++) {
+          if (sumY[y] > maxSpikeY) maxSpikeY = sumY[y];
+        }
 
-      let maxSpikeY = 0;
-      for (let y = marginY; y < canvas.height - marginY; y++) {
-        if (sumY[y] > maxSpikeY) maxSpikeY = sumY[y];
-      }
+        const threshX = maxSpikeX * 0.35;
+        const threshY = maxSpikeY * 0.35;
 
-      // A true physical edge is a sharp transition over the whole length of the book.
-      // Soft drop shadows have spread-out gradients.
-      // 35% of the max spike reliably isolates the sharp edge from the fuzzy shadow.
-      const threshX = maxSpikeX * 0.35;
-      const threshY = maxSpikeY * 0.35;
+        minX = marginX; maxX = canvas.width - marginX;
+        minY = marginY; maxY = canvas.height - marginY;
 
-      minX = marginX; maxX = canvas.width - marginX;
-      minY = marginY; maxY = canvas.height - marginY;
-
-      // Find the first column/row that exceeds the threshold from each side
-      for (let x = marginX; x < canvas.width - marginX; x++) {
-        if (sumX[x] > threshX) { minX = x; break; }
-      }
-      for (let x = canvas.width - marginX - 1; x >= marginX; x--) {
-        if (sumX[x] > threshX) { maxX = x; break; }
-      }
-
-      for (let y = marginY; y < canvas.height - marginY; y++) {
-        if (sumY[y] > threshY) { minY = y; break; }
-      }
-      for (let y = canvas.height - marginY - 1; y >= marginY; y--) {
-        if (sumY[y] > threshY) { maxY = y; break; }
+        for (let x = marginX; x < canvas.width - marginX; x++) {
+          if (sumX[x] > threshX) { minX = x; break; }
+        }
+        for (let x = canvas.width - marginX - 1; x >= marginX; x--) {
+          if (sumX[x] > threshX) { maxX = x; break; }
+        }
+        for (let y = marginY; y < canvas.height - marginY; y++) {
+          if (sumY[y] > threshY) { minY = y; break; }
+        }
+        for (let y = canvas.height - marginY - 1; y >= marginY; y--) {
+          if (sumY[y] > threshY) { maxY = y; break; }
+        }
       }
       
       if (minX >= maxX || minY >= maxY) {
-        return resolve(null); // empty or fully transparent
+        return resolve(null);
       }
       
       resolve({
@@ -272,12 +301,6 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
       });
     };
     img.onerror = () => resolve(null);
-    // If it's an external URL, route it through Next.js image proxy to avoid CORS issues
-    // We use w=1080 as it's a standard Next.js device size and provides enough resolution for edge detection
-    if (imageUrl.startsWith('http')) {
-      img.src = `/_next/image?url=${encodeURIComponent(imageUrl)}&w=1080&q=75`;
-    } else {
-      img.src = imageUrl;
-    }
+    img.src = srcToLoad;
   });
 }

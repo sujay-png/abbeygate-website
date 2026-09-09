@@ -20,22 +20,12 @@ export async function registerCustomer(
       return { success: false, message: 'Email address is required.' };
     }
 
-    if (!userRole) {
-      return { success: false, message: 'Please select a user role.' };
-    }
-
     // Call WooCommerce API to create the customer.
     // By NOT sending a password, WooCommerce will generate one and send the welcome email.
     await woocommerceApi.request('customers', {
       method: 'POST',
       body: {
         email,
-        meta_data: [
-          {
-            key: 'user_type',
-            value: userRole,
-          },
-        ],
       },
     });
 
