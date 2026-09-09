@@ -330,10 +330,14 @@ export const ProductDetailClient = ({
     if (!customizationActive) return 0;
     if (customization.blockingType === 'UV Print') {
       const selectedTier = tiers.find((tier) => quantity >= tier.min && (tier.max === null || quantity <= tier.max));
-      return selectedTier?.uvPrice ? Math.max(0, selectedTier.uvPrice - selectedTier.price) * quantity : 0;
+      if (selectedTier?.uvPrice) {
+        const unbrandedBasePrice = Math.max(0, selectedTier.price - LOGO_CUSTOMIZATION_FEE);
+        return Math.max(0, selectedTier.uvPrice - unbrandedBasePrice) * quantity;
+      }
+      return 0;
     }
     const selectedPrice = LOGO_BLOCKING_PRICES[customization.blockingType.toLowerCase()] ?? LOGO_CUSTOMIZATION_FEE;
-    return Math.max(0, selectedPrice - LOGO_CUSTOMIZATION_FEE) * quantity;
+    return selectedPrice * quantity;
   })();
   // `priceDetails` already includes a paid branding method (for example UV).
   // Split that premium back out so the summary matches the client-approved
