@@ -9,9 +9,7 @@ const FOOTER_LINKS = {
   company: [
     { label: "About Abbeygate", href: "/about" },
     { label: "Our Heritage", href: "/heritage" },
-    { label: "Blog", href: "/blog" },
     { label: "Modern Slavery Statement", href: "/modern-slavery" },
-    { label: "Sustainability", href: "/sustainability" },
     { label: "Our CSR Policy", href: "/privacy" },
   ],
   help: [

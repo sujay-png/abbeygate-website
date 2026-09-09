@@ -80,33 +80,31 @@ export const FeaturedCollections = () => {
           <ArrowIcon className="absolute -right-22 -top-1 hidden md:block" />
         </div>
 
-        {/* Headings Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-0 mb-8">
-          {/* Left Heading */}
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-brand-primary-dark mb-2 font-sans">
-              Featured Collection
-            </p>
-            <h3 className="text-xl md:text-2xl font-bold font-sans text-brand-primary-dark mb-4">
-              Harrogate Collection
-            </h3>
-            <Button href="/collection/harrogate" variant="primary">
-              Shop Collection
-            </Button>
-          </div>
-
-          {/* Right Heading */}
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-brand-primary-dark mb-2 font-sans">
-              Featured Collection
-            </p>
-            <h3 className="text-xl md:text-2xl font-bold font-sans text-brand-primary-dark mb-4">
-              Dorchester Collection
-            </h3>
-            <Button href="/collection/dorchester" variant="primary">
-              Shop Collection
-            </Button>
-          </div>
+        {/* Collections Grid — bordered professional layout */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 border-t border-l border-gray-200 mb-8">
+          {[
+            { name: 'Chelsea Collection',    href: '/collection/chelsea' },
+            { name: 'Dorchester Collection', href: '/collection/dorchester' },
+            { name: 'Harrogate Collection',  href: '/collection/harrogate' },
+            { name: 'Lewes Collection',      href: '/collection/lewes' },
+            { name: 'Richmond Collection',   href: '/collection/richmond' },
+            { name: 'Windsor Collection',    href: '/collection/windsor' },
+            { name: 'Conscious Collection',  href: '/collection/conscious' },
+          ].map((col) => (
+            <div key={col.href} className="border-b border-r border-gray-200 p-7 flex flex-col gap-4">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-primary-dark font-sans">
+                Featured Collection
+              </p>
+              <h3 className="text-xl font-bold font-sans text-brand-primary-dark">
+                {col.name}
+              </h3>
+              <div className="mt-auto">
+                <Button href={col.href} variant="primary">
+                  Shop Collection
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Flush Content Grid */}

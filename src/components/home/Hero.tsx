@@ -18,11 +18,11 @@ const SLIDES = [
       </>
     ),
     description:
-      'Elevate your corporate gifting and bespoke and merchandise with our expertly customised leather goods',
+      'Elevate your corporate gifting and bespoke merchandise with our expertly customised leather goods',
     bgImage:
       '/images/banners/hero-banner.png',
     cta1: <>Shop Express</>,
-    cta1Link: '/collection',
+    cta1Link: '/notebooks',
     cta2: <>Bespoke Orders</>,
     cta2Link: '/quote',
   },
@@ -36,11 +36,11 @@ const SLIDES = [
       </>
     ),
     description:
-      'Explore our beautifully crafted diaries tailored to keep you organized while making a statement.',
+      'Explore our beautifully crafted diaries tailored to keep you organised while making a statement.',
     bgImage:
       '/images/banners/hero-banner-2.png',
     cta1: <>Shop All</>,
-    cta1Link: '/collection',
+    cta1Link: '/diaries',
     cta2: <>Request a Sample</>,
     cta2Link: '/contact',
   },
