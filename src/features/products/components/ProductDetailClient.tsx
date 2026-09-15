@@ -1305,7 +1305,7 @@ export const ProductDetailClient = ({
           <div>
             <div className="flex flex-wrap items-center gap-3 mb-1">
               <div className="text-[20px] font-bold text-brand-body">
-                {formatDisplayedPrice(priceDetails.unitPrice + (hasCornerEdges ? cornerEdgesPricing.pricePerPair * CORNER_PAIRS_PER_PRODUCT : 0))} <span className="text-[14px] font-normal text-gray-500">({displayedVatLabel})</span>
+                {formatDisplayedPrice(priceDetails.unitPrice)} <span className="text-[14px] font-normal text-gray-500">({displayedVatLabel})</span>
               </div>
             </div>
 
@@ -1384,7 +1384,7 @@ export const ProductDetailClient = ({
                   <button type="button" className="px-3 hover:bg-gray-100 text-gray-600 transition" onClick={() => setQuantity(quantity + 1)}>+</button>
                 </div>
                 <div className="text-[14px] font-bold text-brand-body mt-1">
-                  {formatDisplayedPrice(priceDetails.unitPrice + (hasCornerEdges ? cornerEdgesPricing.pricePerPair * CORNER_PAIRS_PER_PRODUCT : 0))} <span className="font-normal text-gray-500">per unit ({displayedVatLabel})</span>
+                  {formatDisplayedPrice(priceDetails.unitPrice)} <span className="font-normal text-gray-500">per unit ({displayedVatLabel})</span>
                 </div>
               </div>
             </div>
