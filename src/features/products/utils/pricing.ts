@@ -120,17 +120,50 @@ export function parsePriceTiersFromMeta(
     // Merge UV printing tiered prices if they exist
     const uvTierMeta = metaData.find(m => m.key === "_uv_printing_tiered_price" && m.value);
     if (uvTierMeta?.value && typeof uvTierMeta.value === "string" && uvTierMeta.value.includes(":")) {
+      const parsedUvTiers: { min: number, price: number }[] = [];
       const parts = uvTierMeta.value.split(";").map(s => s.trim()).filter(Boolean);
       parts.forEach(part => {
         const [qtyStr, priceStr] = part.split(":");
         const minQty = parseInt(qtyStr, 10);
         const uvPrice = parseFloat(priceStr);
         if (!isNaN(minQty) && !isNaN(uvPrice)) {
-          const matchingTier = tiers.find(t => t.min === minQty);
-          if (matchingTier) {
-            matchingTier.uvPrice = uvPrice;
-          }
+          parsedUvTiers.push({ min: minQty, price: uvPrice });
         }
+      });
+      parsedUvTiers.sort((a, b) => a.min - b.min);
+
+      tiers.forEach(tier => {
+        let selectedPrice = undefined;
+        for (const pt of parsedUvTiers) {
+          if (tier.min >= pt.min) selectedPrice = pt.price;
+          else break;
+        }
+        if (selectedPrice !== undefined) tier.uvPrice = selectedPrice;
+      });
+    }
+
+    // Merge without customisation tiered prices if they exist
+    const noCustTierMeta = metaData.find(m => m.key === "_without_customisation_tiered_price" && m.value);
+    if (noCustTierMeta?.value && typeof noCustTierMeta.value === "string" && noCustTierMeta.value.includes(":")) {
+      const parsedNoCustTiers: { min: number, price: number }[] = [];
+      const parts = noCustTierMeta.value.split(";").map(s => s.trim()).filter(Boolean);
+      parts.forEach(part => {
+        const [qtyStr, priceStr] = part.split(":");
+        const minQty = parseInt(qtyStr, 10);
+        const noCustPrice = parseFloat(priceStr);
+        if (!isNaN(minQty) && !isNaN(noCustPrice)) {
+          parsedNoCustTiers.push({ min: minQty, price: noCustPrice });
+        }
+      });
+      parsedNoCustTiers.sort((a, b) => a.min - b.min);
+
+      tiers.forEach(tier => {
+        let selectedPrice = undefined;
+        for (const pt of parsedNoCustTiers) {
+          if (tier.min >= pt.min) selectedPrice = pt.price;
+          else break;
+        }
+        if (selectedPrice !== undefined) tier.noCustomisationPrice = selectedPrice;
       });
     }
 
@@ -145,20 +178,25 @@ export function getTierUnitPrice(
   quantity: number,
   tiers: PriceTier[],
   basePrice: number,
-  useUvPrice: boolean = false
+  useUvPrice: boolean = false,
+  useNoCustomisationPrice: boolean = false
 ): number {
   if (!tiers.length) return basePrice;
 
   for (const tier of tiers) {
     const max = tier.max ?? Infinity;
     if (quantity >= tier.min && quantity <= max) {
-      return useUvPrice && tier.uvPrice !== undefined ? tier.uvPrice : tier.price;
+      if (useUvPrice && tier.uvPrice !== undefined) return tier.uvPrice;
+      if (useNoCustomisationPrice && tier.noCustomisationPrice !== undefined) return tier.noCustomisationPrice;
+      return tier.price;
     }
   }
 
   const lastTier = tiers[tiers.length - 1];
   if (quantity >= lastTier.min) {
-    return useUvPrice && lastTier.uvPrice !== undefined ? lastTier.uvPrice : lastTier.price;
+    if (useUvPrice && lastTier.uvPrice !== undefined) return lastTier.uvPrice;
+    if (useNoCustomisationPrice && lastTier.noCustomisationPrice !== undefined) return lastTier.noCustomisationPrice;
+    return lastTier.price;
   }
 
   return basePrice;
@@ -211,9 +249,10 @@ export function calculateProductPrice(
   } = input;
 
   const isUvPrint = Boolean(customizationEnabled && blockingType && blockingType.toLowerCase() === 'uv print');
+  const isNoCustomization = !isGifts && !customizationEnabled && !isUvPrint;
 
   let unitPrice = tiers.length
-    ? getTierUnitPrice(quantity, tiers, basePrice, isUvPrint)
+    ? getTierUnitPrice(quantity, tiers, basePrice, isUvPrint, isNoCustomization)
     : basePrice;
 
   const discountRate = tiers.length ? 0 : getBulkDiscountRate(quantity);
@@ -233,10 +272,6 @@ export function calculateProductPrice(
       LOGO_BLOCKING_PRICES[blockingType.toLowerCase()] ?? LOGO_CUSTOMIZATION_FEE;
     extraBlockingFee = Math.max(0, customizationFee - LOGO_CUSTOMIZATION_FEE);
     unitPrice += extraBlockingFee;
-  }
-
-  if (!isGifts && !customizationEnabled && !isUvPrint) {
-    unitPrice = Math.max(0, unitPrice - LOGO_CUSTOMIZATION_FEE);
   }
 
   const totalPrice = unitPrice * quantity;

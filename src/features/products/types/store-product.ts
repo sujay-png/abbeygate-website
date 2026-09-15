@@ -109,6 +109,7 @@ export type PriceTier = {
   max: number | null;
   price: number;
   uvPrice?: number;
+  noCustomisationPrice?: number;
 };
 
 export type LogoCustomization = {

@@ -349,7 +349,7 @@ export const ProductDetailClient = ({
     let price = tier.price;
 
     if (!customizationActive) {
-      price = Math.max(0, price - LOGO_CUSTOMIZATION_FEE);
+      price = tier.noCustomisationPrice ?? price;
     } else if (customization.blockingType === 'UV Print' && tier.uvPrice !== undefined) {
       price = tier.uvPrice;
     } else {
@@ -1500,7 +1500,7 @@ export const ProductDetailClient = ({
                             </td>
                             {isNoCustomization ? (
                               <td className="py-2.5 px-4 text-center">
-                                {formatDisplayedPrice(Math.max(0, tier.price - LOGO_CUSTOMIZATION_FEE))}
+                                {formatDisplayedPrice(tier.noCustomisationPrice ?? tier.price)}
                               </td>
                             ) : (
                               <>
