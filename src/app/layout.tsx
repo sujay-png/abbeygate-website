@@ -8,6 +8,7 @@ import { CartProvider } from '@/features/cart/context/CartContext';
 import { CartDrawer } from '@/features/cart/components/CartDrawer';
 import { Toaster } from 'react-hot-toast';
 import { LenisProvider } from '@/components/layout/LenisProvider';
+import { VatProvider } from '@/context/VatContext';
 
 
 
@@ -91,17 +92,19 @@ export default function RootLayout({
         className="min-h-screen flex flex-col bg-brand-cream text-brand-body"
         suppressHydrationWarning
       >
-        <LenisProvider>
-          <CartProvider>
-            <Suspense fallback={null}><Navbar /></Suspense>
-            <main className="flex-1 bg-brand-cream">
-              {children}
-            </main>
-            <Footer />
-            <CartDrawer />
-            <Toaster position="bottom-left" toastOptions={{ duration: 4000, style: { background: '#341a3d', color: '#fff' } }} />
-          </CartProvider>
-        </LenisProvider>
+        <VatProvider>
+          <LenisProvider>
+            <CartProvider>
+              <Suspense fallback={null}><Navbar /></Suspense>
+              <main className="flex-1 bg-brand-cream">
+                {children}
+              </main>
+              <Footer />
+              <CartDrawer />
+              <Toaster position="bottom-left" toastOptions={{ duration: 4000, style: { background: '#341a3d', color: '#fff' } }} />
+            </CartProvider>
+          </LenisProvider>
+        </VatProvider>
       </body>
     </html>
   );

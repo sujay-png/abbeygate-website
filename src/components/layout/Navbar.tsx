@@ -8,6 +8,7 @@ import { Search, Menu, X, ChevronDown, User } from 'lucide-react';
 import { AnimatePresence, motion, Variants, Transition } from 'framer-motion';
 import { NAV_ITEMS } from '@/data/navigation';
 import { useCart } from '@/features/cart/context/CartContext';
+import { useVat } from '@/context/VatContext';
 
 const CLOSE_DELAY = 200;
 
@@ -34,6 +35,7 @@ export const Navbar = () => {
   const [mobileExpandedId, setMobileExpandedId] = useState<string | null>(null);
   const [activeItemOffset, setActiveItemOffset] = useState(0);
   const { itemCount, openCart } = useCart();
+  const { showPricesIncludingVat, setShowPricesIncludingVat } = useVat();
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -196,6 +198,17 @@ export const Navbar = () => {
         <div className="w-full px-6 lg:px-10 xl:px-16 flex justify-between items-center text-[10px] font-bold tracking-[0.15em] text-gray-700 uppercase">
           <div>Bespoke Leather Manufacturers of Diaries, Notebooks & Accessories</div>
           <div className="flex items-center gap-6">
+            <fieldset className="flex items-center gap-3 text-[10px] font-bold text-gray-700 uppercase border-r border-gray-300 pr-6 mr-1">
+              <legend className="sr-only">Price display</legend>
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="header-vat-display" checked={showPricesIncludingVat} onChange={() => setShowPricesIncludingVat(true)} className="accent-brand-primary" />
+                Inc. VAT
+              </label>
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="header-vat-display" checked={!showPricesIncludingVat} onChange={() => setShowPricesIncludingVat(false)} className="accent-brand-primary" />
+                Ex. VAT
+              </label>
+            </fieldset>
             <span>01922 616286</span>
             <Link href="/contact" className="hover:text-brand-primary-dark transition-colors">Contact Us</Link>
           </div>

@@ -3,7 +3,7 @@ import { ProductCard } from "../ui/ProductCard";
 import { Button } from "../ui/Button";
 import { ArrowIcon } from "../ui/ArrowIcon";
 import { getFeaturedStoreProducts } from "@/features/products/services/store-products";
-import { getProductDisplayPrice, stripHtml } from "@/features/products/utils/product-helpers";
+import { getProductBaseAmount, stripHtml } from "@/features/products/utils/product-helpers";
 
 export const FeaturedProducts = async ({ title = "Best Sellers" }: { title?: string }) => {
   let products: Awaited<ReturnType<typeof getFeaturedStoreProducts>> = [];
@@ -37,7 +37,7 @@ export const FeaturedProducts = async ({ title = "Best Sellers" }: { title?: str
                   key={product.id}
                   title={product.name}
                   description={stripHtml(product.short_description)}
-                  price={getProductDisplayPrice(product)}
+                  baseAmount={getProductBaseAmount(product)}
                   imageUrl={product.images[0]?.thumbnail || product.images[0]?.src}
                   href={`/product/${product.slug}`}
                 />

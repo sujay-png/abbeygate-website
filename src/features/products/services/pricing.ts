@@ -20,10 +20,13 @@ function hasRestCredentials(): boolean {
 export async function getProductPricingFromProduct(
   storeProduct: StoreProduct,
 ): Promise<ProductPricingData> {
-  const basePrice = parseStorePrice(
+  // WooCommerce store product prices are inclusive of VAT (e.g. 7.99)
+  // We need the basePrice to be ex-VAT to align with our tiers and calculation logic
+  const rawBasePrice = parseStorePrice(
     storeProduct.prices.price,
     storeProduct.prices.currency_minor_unit,
   );
+  const basePrice = rawBasePrice / 1.2;
 
   // Skip slow REST round-trip when keys aren't configured
   if (!hasRestCredentials()) {

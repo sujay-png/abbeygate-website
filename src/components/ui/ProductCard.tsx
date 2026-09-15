@@ -1,10 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
+import { PriceDisplay } from "@/components/shared/PriceDisplay";
 
 interface ProductCardProps {
   title: string;
   description: string;
-  price: string;
+  baseAmount?: number;
+
   imageUrl?: string;
   fallbackColor?: string;
   href?: string;
@@ -13,7 +15,7 @@ interface ProductCardProps {
 export const ProductCard = ({
   title,
   description,
-  price,
+  baseAmount,
   imageUrl,
   fallbackColor = "bg-gray-300",
   href = "#",
@@ -52,7 +54,11 @@ export const ProductCard = ({
           {description}
         </p>
         <div className="mt-auto">
-          <span className="text-gray-500 font-medium">{price}</span>
+          {baseAmount !== undefined && (
+            <span className="text-gray-500 font-medium flex gap-1">
+              From <PriceDisplay amount={baseAmount} />
+            </span>
+          )}
         </div>
       </div>
     </Link>

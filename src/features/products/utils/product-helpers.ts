@@ -129,13 +129,11 @@ export function stripHtml(html: string): string {
     .trim();
 }
 
-export function getProductDisplayPrice(product: StoreProduct): string {
+export function getProductBaseAmount(product: StoreProduct): number {
   const minorUnit = product.prices.currency_minor_unit ?? 2;
   const price = parseInt(product.prices.price, 10) / Math.pow(10, minorUnit);
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-  }).format(price);
+  // product.prices.price is inc-VAT by default, return ex-VAT for internal logic
+  return price / 1.2;
 }
 
 export function getLogoAnchorsFromMm(widthMm: number, heightMm: number) {

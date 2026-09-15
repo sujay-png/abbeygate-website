@@ -1,46 +1,44 @@
 import { Container } from "@/components/ui/Container";
 import { ProductCard } from "@/components/ui/ProductCard";
-import { ArrowIcon } from "@/components/ui/ArrowIcon";
 import { getStoreProducts } from "@/features/products/services/store-products";
-import { getProductDisplayPrice, stripHtml } from "@/features/products/utils/product-helpers";
+import { getProductBaseAmount, stripHtml } from "@/features/products/utils/product-helpers";
 
 export const RelatedProducts = async ({ categoryId }: { categoryId?: number }) => {
   let products: Awaited<ReturnType<typeof getStoreProducts>>["products"] = [];
 
   try {
-    const result = await getStoreProducts({ categoryId, perPage: 4 });
-    products = result.products;
-  } catch {
-    // Fallback to empty if API unavailable
+    const res = await getStoreProducts({ categoryId, perPage: 8 });
+    products = res.products;
+  } catch (error) {
+    console.error("Failed to fetch related products:", error);
   }
 
-  if (products.length === 0) {
-    return null;
-  }
+  if (!products.length) return null;
 
   return (
-    <section className="py-16 bg-brand-cream">
+    <section className="py-16 md:py-24 bg-brand-cream border-t border-[var(--brand-border)]">
       <Container>
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-          <div className="relative inline-block">
-            <h2 className="text-3xl font-extrabold text-brand-primary-dark tracking-tight">
-              You May Also Like
-            </h2>
-            <ArrowIcon className="absolute -right-22 -top-1 hidden md:block" />
+        <div className="flex items-center justify-between mb-12">
+          <h2 className="text-[28px] md:text-[32px] font-bold text-brand-primary-dark">You May Also Like</h2>
+          <div className="hidden md:flex gap-2">
+            {/* Optional navigation arrows could go here */}
           </div>
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-2 lg:px-12 xl:px-20">
-          {products.map((product) => (
-            <ProductCard
-              key={product.id}
-              title={product.name}
-              description={stripHtml(product.short_description)}
-              price={getProductDisplayPrice(product)}
-              imageUrl={product.images[0]?.thumbnail || product.images[0]?.src}
-              href={`/product/${product.slug}`}
-            />
-          ))}
+        
+        <div className="relative -mx-6 px-6 overflow-x-auto pb-8 md:mx-0 md:px-0 md:pb-0 hide-scrollbar">
+          <div className="flex md:grid md:grid-cols-4 gap-6 w-[max-content] md:w-auto min-w-full">
+            {products.map((product) => (
+              <div key={product.id} className="w-[280px] md:w-auto shrink-0">
+                <ProductCard
+                  title={product.name}
+                  description={stripHtml(product.short_description)}
+                  baseAmount={getProductBaseAmount(product)}
+                  imageUrl={product.images[0]?.thumbnail || product.images[0]?.src}
+                  href={`/product/${product.slug}`}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </Container>
     </section>

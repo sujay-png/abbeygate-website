@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { StoreProduct } from '../types/store-product';
-import { getProductDisplayPrice, stripHtml, sanitizeImageUrl } from '../utils/product-helpers';
+import { getProductBaseAmount, stripHtml, sanitizeImageUrl } from '../utils/product-helpers';
+import { PriceDisplay } from '@/components/shared/PriceDisplay';
 
 type ProductGridProps = {
   products: StoreProduct[];
@@ -54,8 +55,8 @@ export const ProductGrid = ({ products }: ProductGridProps) => {
               </p>
             )}
 
-            <span className="text-[15px] font-bold text-brand-body mt-auto">
-              {getProductDisplayPrice(product)}
+            <span className="text-[15px] font-bold text-brand-body mt-auto flex gap-1">
+              From <PriceDisplay amount={getProductBaseAmount(product)} />
             </span>
           </Link>
         );

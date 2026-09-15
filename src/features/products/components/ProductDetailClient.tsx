@@ -7,6 +7,7 @@ import type { StoreProduct, PriceTier } from '../types/store-product';
 import { ProductCustomizer, type CustomizationState } from './ProductCustomizer';
 import { ProductCustomizationOverlay } from './ProductCustomizationOverlay';
 import { useCart } from '@/features/cart/context/CartContext';
+import { useVat } from '@/context/VatContext';
 import { BRANDING_SETUP_FEE, CORNER_PAIRS_PER_PRODUCT, CUSTOMIZATION_MIN_QTY, formatGBP, getCornerEdgesPricing, isGiftsProduct, LOGO_BLOCKING_PRICES, LOGO_CUSTOMIZATION_FEE, VAT_RATE, calculateProductPrice } from '../utils/pricing';
 import { getLogoAnchors, getImageBoundingBox, getProductPhysicalDimensionsMm, sanitizeImageUrl } from '../utils/product-helpers';
 import { getConfiguredImageBounds } from '../utils/product-image-bounds';
@@ -172,7 +173,7 @@ export const ProductDetailClient = ({
   const [activeTab, setActiveTab] = useState('Description');
   const [isCustomizingStarted, setIsCustomizingStarted] = useState(false);
   const [customizerStep, setCustomizerStep] = useState<1 | 2 | 3 | 4>(1);
-  const [showPricesIncludingVat, setShowPricesIncludingVat] = useState(true);
+  const { showPricesIncludingVat } = useVat();
   const isCustomizationSurface = activeImageIndex === 0;
   const [customization, setCustomization] = useState<CustomizationState>({
     enabled: !isGifts,
@@ -1129,17 +1130,6 @@ export const ProductDetailClient = ({
               <div className="text-right text-[12px] font-bold text-gray-500">
                 {formatDisplayedPrice(priceDetails.unitPrice)} per unit ({displayedVatLabel})
               </div>
-              <fieldset className="self-end flex items-center gap-3 text-[11px] font-bold text-brand-primary">
-                <legend className="sr-only">Price display</legend>
-                <label className="flex items-center gap-1.5 cursor-pointer">
-                  <input type="radio" name="customisation-vat-display" checked={showPricesIncludingVat} onChange={() => setShowPricesIncludingVat(true)} className="accent-brand-primary" />
-                  Inc. VAT
-                </label>
-                <label className="flex items-center gap-1.5 cursor-pointer">
-                  <input type="radio" name="customisation-vat-display" checked={!showPricesIncludingVat} onChange={() => setShowPricesIncludingVat(false)} className="accent-brand-primary" />
-                  Ex. VAT
-                </label>
-              </fieldset>
             </div>
 
             {/* Order Summary Box */}
@@ -1284,17 +1274,6 @@ export const ProductDetailClient = ({
               <div className="text-[20px] font-bold text-brand-body">
                 {formatDisplayedPrice(priceDetails.unitPrice)} <span className="text-[14px] font-normal text-gray-500">({displayedVatLabel})</span>
               </div>
-              <fieldset className="flex items-center gap-3 text-[11px] font-bold text-brand-primary">
-                <legend className="sr-only">Price display</legend>
-                <label className="flex items-center gap-1.5 cursor-pointer">
-                  <input type="radio" name="product-vat-display" checked={showPricesIncludingVat} onChange={() => setShowPricesIncludingVat(true)} className="accent-brand-primary" />
-                  Inc. VAT
-                </label>
-                <label className="flex items-center gap-1.5 cursor-pointer">
-                  <input type="radio" name="product-vat-display" checked={!showPricesIncludingVat} onChange={() => setShowPricesIncludingVat(false)} className="accent-brand-primary" />
-                  Ex. VAT
-                </label>
-              </fieldset>
             </div>
 
             {priceDetails.statusText ? (
