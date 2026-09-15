@@ -1190,33 +1190,66 @@ export const ProductDetailClient = ({
 
             {/* Price Breaks Table */}
             {!isGifts && tiers.length > 0 && (() => {
-              const hasUvPricing = tiers.some(t => t.uvPrice !== undefined);
+              const cornerPrice = hasCornerEdges ? cornerEdgesPricing.pricePerPair * CORNER_PAIRS_PER_PRODUCT : 0;
+              let brandingColHeader = `Price per unit for ${customization.blockingType}`;
+              if (customization.blockingType === 'UV Print') {
+                brandingColHeader = 'Price including UV print';
+              } else if (customization.blockingType === 'Blind debossed' || customization.blockingType === 'Embossed') {
+                brandingColHeader = 'Price per unit for debossed';
+              } else if (customization.blockingType === 'Foil blocked') {
+                brandingColHeader = 'Price per unit for foil';
+              }
+              
               return (
                 <div className="mt-4">
                   <div className="font-bold text-[13px] tracking-wider text-brand-body uppercase mb-3">
                     PRICE BREAKS (PER UNIT)
                   </div>
-                  <table className="w-full text-left text-[12px]">
-                    <thead className="text-brand-grey border-b border-[var(--brand-border)]">
-                      <tr>
-                        <th className="py-2 font-medium">Quantity</th>
-                        <th className="py-2 text-center font-medium">Price per unit ({displayedVatLabel})</th>
-                        {hasUvPricing && <th className="py-2 text-center font-medium">Price including UV printing ({displayedVatLabel})</th>}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {tiers.map(tier => {
-                        const active = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
-                        return (
-                          <tr key={tier.min} onClick={() => setQuantity(tier.min)} className={`cursor-pointer border-b transition-colors ${active ? 'border-brand-primary bg-brand-primary text-white font-bold' : 'border-[var(--brand-border)] text-brand-body hover:bg-brand-tint'}`}>
-                            <td className="py-3 px-2">{tier.min}{tier.max ? ` - ${tier.max}` : '+'}</td>
-                            <td className="py-3 px-2 text-center">{formatDisplayedPrice(getSelectedTierUnitPrice(tier))}</td>
-                            {hasUvPricing && <td className="py-3 px-2 text-center">{tier.uvPrice ? formatDisplayedPrice(tier.uvPrice + (hasCornerEdges ? cornerEdgesPricing.pricePerPair * CORNER_PAIRS_PER_PRODUCT : 0)) : '-'}</td>}
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-[12px] min-w-[300px]">
+                      <thead className="text-brand-grey border-b border-[var(--brand-border)]">
+                        <tr>
+                          <th className="py-2 font-medium">Quantity</th>
+                          <th className="py-2 text-center font-medium">
+                            {brandingColHeader} {!hasCornerEdges && `(${displayedVatLabel})`}
+                          </th>
+                          {hasCornerEdges && (
+                            <>
+                              <th className="py-2 text-center font-medium">Corner clips</th>
+                              <th className="py-2 text-center font-medium">Total per unit ({displayedVatLabel})</th>
+                            </>
+                          )}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tiers.map(tier => {
+                          const active = quantity >= tier.min && (tier.max === null || quantity <= tier.max);
+                          
+                          // Base customisation price without corners
+                          let baseCustomisedPrice = tier.price;
+                          if (customization.blockingType === 'UV Print' && tier.uvPrice !== undefined) {
+                            baseCustomisedPrice = tier.uvPrice;
+                          } else {
+                            const selectedPrice = LOGO_BLOCKING_PRICES[customization.blockingType.toLowerCase()] ?? LOGO_CUSTOMIZATION_FEE;
+                            baseCustomisedPrice += Math.max(0, selectedPrice - LOGO_CUSTOMIZATION_FEE);
+                          }
+
+                          return (
+                            <tr key={tier.min} onClick={() => setQuantity(tier.min)} className={`cursor-pointer border-b transition-colors ${active ? 'border-brand-primary bg-brand-primary text-white font-bold' : 'border-[var(--brand-border)] text-brand-body hover:bg-brand-tint'}`}>
+                              <td className="py-3 px-2">{tier.min}{tier.max ? ` - ${tier.max}` : '+'}</td>
+                              <td className="py-3 px-2 text-center">{!hasCornerEdges ? formatDisplayedPrice(baseCustomisedPrice) : formatGBP(baseCustomisedPrice)}</td>
+                              {hasCornerEdges && (
+                                <>
+                                  <td className="py-3 px-2 text-center">{formatGBP(cornerPrice)}</td>
+                                  <td className={`py-3 px-2 text-center font-bold ${active ? 'text-white' : 'text-brand-primary'}`}>{formatDisplayedPrice(baseCustomisedPrice + cornerPrice)}</td>
+                                </>
+                              )}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               );
             })()}
@@ -1272,7 +1305,7 @@ export const ProductDetailClient = ({
           <div>
             <div className="flex flex-wrap items-center gap-3 mb-1">
               <div className="text-[20px] font-bold text-brand-body">
-                {formatDisplayedPrice(priceDetails.unitPrice)} <span className="text-[14px] font-normal text-gray-500">({displayedVatLabel})</span>
+                {formatDisplayedPrice(priceDetails.unitPrice + (hasCornerEdges ? cornerEdgesPricing.pricePerPair * CORNER_PAIRS_PER_PRODUCT : 0))} <span className="text-[14px] font-normal text-gray-500">({displayedVatLabel})</span>
               </div>
             </div>
 
@@ -1351,7 +1384,7 @@ export const ProductDetailClient = ({
                   <button type="button" className="px-3 hover:bg-gray-100 text-gray-600 transition" onClick={() => setQuantity(quantity + 1)}>+</button>
                 </div>
                 <div className="text-[14px] font-bold text-brand-body mt-1">
-                  {formatDisplayedPrice(priceDetails.unitPrice)} <span className="font-normal text-gray-500">per unit ({displayedVatLabel})</span>
+                  {formatDisplayedPrice(priceDetails.unitPrice + (hasCornerEdges ? cornerEdgesPricing.pricePerPair * CORNER_PAIRS_PER_PRODUCT : 0))} <span className="font-normal text-gray-500">per unit ({displayedVatLabel})</span>
                 </div>
               </div>
             </div>
@@ -1385,7 +1418,7 @@ export const ProductDetailClient = ({
                     No customisation required
                   </span>
                   <span className="block text-[13px] text-gray-500 mt-1">
-                    I don't need to add a logo or personalisation. Prices below will update to exclude branding.
+                    I don&apos;t need to add a logo or personalisation. Prices below will update to exclude branding.
                   </span>
                 </div>
               </label>
@@ -1430,6 +1463,8 @@ export const ProductDetailClient = ({
           {/* VOLUME PRICING TABLE */}
           {!isGifts && tiers.length > 0 && (() => {
             const hasUvPricing = tiers.some(t => t.uvPrice !== undefined);
+            const isNoCustomization = !customization.enabled;
+
             return (
               <div className="mt-1 border border-gray-200 rounded-lg bg-transparent overflow-hidden">
                 <div className="flex justify-between items-center font-bold px-4 py-3 text-[13px] tracking-widest text-brand-body uppercase bg-transparent border-b border-gray-200">
@@ -1440,8 +1475,14 @@ export const ProductDetailClient = ({
                     <thead className="bg-transparent text-brand-grey border-b border-[var(--brand-border)]">
                       <tr>
                         <th className="py-2.5 px-4 font-medium w-1/3">Quantity</th>
-                        <th className="py-2.5 px-4 font-medium w-1/3 text-center">Price per unit ({displayedVatLabel})</th>
-                        {hasUvPricing && <th className="py-2.5 px-4 font-medium w-1/3 text-center">Price including UV printing ({displayedVatLabel})</th>}
+                        {isNoCustomization ? (
+                          <th className="py-2.5 px-4 font-medium w-2/3 text-center">Price per unit ({displayedVatLabel})</th>
+                        ) : (
+                          <>
+                            <th className="py-2.5 px-4 font-medium w-1/3 text-center">Price including foil/debossed ({displayedVatLabel})</th>
+                            {hasUvPricing && <th className="py-2.5 px-4 font-medium w-1/3 text-center">Price including UV printing ({displayedVatLabel})</th>}
+                          </>
+                        )}
                       </tr>
                     </thead>
                     <tbody>
@@ -1457,13 +1498,21 @@ export const ProductDetailClient = ({
                             <td className="py-2.5 px-4">
                               {tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}
                             </td>
-                            <td className="py-2.5 px-4 text-center">
-                              {formatDisplayedPrice(getSelectedTierUnitPrice(tier))}
-                            </td>
-                            {hasUvPricing && (
+                            {isNoCustomization ? (
                               <td className="py-2.5 px-4 text-center">
-                                {tier.uvPrice ? formatDisplayedPrice(tier.uvPrice + (hasCornerEdges ? cornerEdgesPricing.pricePerPair * CORNER_PAIRS_PER_PRODUCT : 0)) : '-'}
+                                {formatDisplayedPrice(Math.max(0, tier.price - LOGO_CUSTOMIZATION_FEE))}
                               </td>
+                            ) : (
+                              <>
+                                <td className="py-2.5 px-4 text-center">
+                                  {formatDisplayedPrice(tier.price)}
+                                </td>
+                                {hasUvPricing && (
+                                  <td className="py-2.5 px-4 text-center">
+                                    {tier.uvPrice ? formatDisplayedPrice(tier.uvPrice) : '-'}
+                                  </td>
+                                )}
+                              </>
                             )}
                           </tr>
                         );
