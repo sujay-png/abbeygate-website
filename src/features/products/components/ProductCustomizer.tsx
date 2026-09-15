@@ -533,7 +533,7 @@ export const ProductCustomizer = ({
           <div>
             <div className="text-xl font-bold text-brand-body mb-2 uppercase tracking-wide text-[13px] text-gray-700">Corner Edges</div>
             <p className="text-[12px] leading-relaxed text-gray-500 mb-4">
-              Includes {CORNER_PAIRS_PER_PRODUCT} pairs of metal corners, fitted to the front cover only. The rear cover is supplied without corners.
+              Includes a pairs of gold metal corners, fitted to the front cover only as standard. The rear cover is supplied without corners.
               {cornerEdgesPricing.size && ` ${cornerEdgesPricing.size} corners are used for this product.`}
             </p>
             <div className="grid grid-cols-3 gap-4">
@@ -589,10 +589,6 @@ export const ProductCustomizer = ({
                           <path d="M 0 1.5 L 35 1.5 Q 38.5 1.5 38.5 5 L 38.5 40" stroke="rgba(255,255,255,0.9)" strokeWidth="1.2" fill="none" style={{ filter: 'blur(0.5px)' }} />
                           <path d="M 0 3 L 34 3 Q 37 3 37 6 L 37 40" stroke="rgba(255,255,255,0.4)" strokeWidth="2" fill="none" style={{ filter: 'blur(1px)' }} />
                           <path d="M 0 5 L 31 5 Q 35 5 35 9 L 35 40" stroke="rgba(0,0,0,0.3)" strokeWidth="1" fill="none" style={{ filter: 'blur(1px)' }} />
-                          <path d="M 12 0 L 12 6 M 14 0 L 14 6" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
-                          <path d="M 12.5 0 L 12.5 6 M 14.5 0 L 14.5 6" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
-                          <path d="M 34 26 L 40 26 M 34 28 L 40 28" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
-                          <path d="M 34 26.5 L 40 26.5 M 34 28.5 L 40 28.5" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
                         </g>
                       </svg>
                     </div>
@@ -635,10 +631,6 @@ export const ProductCustomizer = ({
                           <path d="M 0 1.5 L 35 1.5 Q 38.5 1.5 38.5 5 L 38.5 40" stroke="rgba(255,255,255,0.9)" strokeWidth="1.2" fill="none" style={{ filter: 'blur(0.5px)' }} />
                           <path d="M 0 3 L 34 3 Q 37 3 37 6 L 37 40" stroke="rgba(255,255,255,0.4)" strokeWidth="2" fill="none" style={{ filter: 'blur(1px)' }} />
                           <path d="M 0 5 L 31 5 Q 35 5 35 9 L 35 40" stroke="rgba(0,0,0,0.3)" strokeWidth="1" fill="none" style={{ filter: 'blur(1px)' }} />
-                          <path d="M 12 0 L 12 6 M 14 0 L 14 6" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
-                          <path d="M 12.5 0 L 12.5 6 M 14.5 0 L 14.5 6" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
-                          <path d="M 34 26 L 40 26 M 34 28 L 40 28" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
-                          <path d="M 34 26.5 L 40 26.5 M 34 28.5 L 40 28.5" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
                         </g>
                       </svg>
                     </div>

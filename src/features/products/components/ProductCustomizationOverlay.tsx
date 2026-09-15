@@ -3,6 +3,7 @@
 import type { StoreProduct } from '../types/store-product';
 import { getLogoAnchors } from '../utils/product-helpers';
 import type { CustomizationState } from './ProductCustomizer';
+import { getCornerEdgesPricing } from '../utils/pricing';
 
 type ProductCustomizationOverlayProps = {
   product: StoreProduct;
@@ -26,16 +27,7 @@ export const ProductCustomizationOverlay = ({
   let bookTop = imageBounds ? imageBounds.top : anchors.bookTop;
   let bookBottom = imageBounds ? imageBounds.bottom : anchors.bookBottom;
 
-  // The heavy drop shadow on this specific product image throws off the edge detection,
-  // making the book height seem huge and pushing the diaryTopOffset too far down.
-  // Because the shadow is so large on the right/bottom, the book is off-center, 
-  // so we must hand-calibrate the bounds to strictly cover the book face.
-  if (product.name?.toLowerCase().includes('richmond finegrain quarto')) {
-    bookLeft = 16.8;
-    bookRight = 84.4;
-    bookTop = 9.8;
-    bookBottom = 90.8;
-  }
+
 
   const bookWidth = bookRight - bookLeft;
   const bookHeight = bookBottom - bookTop;
@@ -200,13 +192,24 @@ export const ProductCustomizationOverlay = ({
           {(() => {
             // For notebooks, we don't want to push it outward because the corner recedes
             const offset = isNotebook ? 0 : 0.2;
+            
+            const cornerPricing = getCornerEdgesPricing(product);
+            let cornerSizeClass = 'w-[8%] h-[8%]';
+            if (cornerPricing.size === '18mm × 18mm') {
+              cornerSizeClass = 'w-[6.5%] h-[6.5%]';
+            } else if (cornerPricing.size === '22mm × 22mm') {
+              cornerSizeClass = 'w-[8%] h-[8%]';
+            } else if (cornerPricing.size === '27mm × 27mm') {
+              cornerSizeClass = 'w-[10%] h-[10%]';
+            }
+
             return ([] as Array<{top?: number, bottom?: number, left?: number, right?: number, rotate: string}>).concat([
               { top: bookTop - offset, right: 100 - bookRight - offset, rotate: 'rotate-0' }, // top-right
               { bottom: 100 - bookBottom - offset, right: 100 - bookRight - offset, rotate: 'rotate-90' }, // bottom-right
             ]).map((pos, i) => (
             <div
               key={i}
-              className={`absolute w-[8%] h-[8%] ${pos.rotate}`}
+              className={`absolute ${cornerSizeClass} ${pos.rotate}`}
               style={{
                 top: pos.top !== undefined ? `${pos.top}%` : undefined,
                 bottom: pos.bottom !== undefined ? `${pos.bottom}%` : undefined,
@@ -295,19 +298,6 @@ export const ProductCustomizationOverlay = ({
                     style={{ filter: 'blur(1px)' }}
                   />
 
-                  {/* Crimps / Indentations (Top Arm) */}
-                  <path d="M 12 0 L 12 6" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
-                  <path d="M 12.5 0 L 12.5 6" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
-                  
-                  <path d="M 14 0 L 14 6" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
-                  <path d="M 14.5 0 L 14.5 6" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
-                  
-                  {/* Crimps / Indentations (Right Arm) */}
-                  <path d="M 34 26 L 40 26" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
-                  <path d="M 34 26.5 L 40 26.5" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
-                  
-                  <path d="M 34 28 L 40 28" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
-                  <path d="M 34 28.5 L 40 28.5" stroke="rgba(255,255,255,0.4)" strokeWidth="0.5" />
                 </g>
               </svg>
             </div>
