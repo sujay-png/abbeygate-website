@@ -187,9 +187,9 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
           colorVariants={colorVariants}
           customTabs={customTabs}
           amendKey={amendKey}
+          relatedProducts={<RelatedProducts categoryId={product.categories[0]?.id} />}
         />
       </Container>
-      <RelatedProducts categoryId={product.categories[0]?.id} />
       <FAQ />
       <CustomisationCTA />
       

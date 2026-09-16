@@ -55,9 +55,11 @@ export const ProductGrid = ({ products }: ProductGridProps) => {
               </p>
             )}
 
-            <span className="text-[15px] font-bold text-brand-body mt-auto flex gap-1">
-              From <PriceDisplay amount={getProductBaseAmount(product)} />
-            </span>
+            {getProductBaseAmount(product) > 0 && (
+              <span className="text-[15px] font-bold text-brand-body mt-auto flex gap-1">
+                <PriceDisplay amount={getProductBaseAmount(product)} />
+              </span>
+            )}
           </Link>
         );
       })}

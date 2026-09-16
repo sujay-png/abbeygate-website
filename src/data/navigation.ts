@@ -85,7 +85,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'our-collection',
-    label: 'OUR COLLECTION',
+    label: 'OUR COLLECTIONS',
     href: '/collection',
     megaMenu: {
       columns: [

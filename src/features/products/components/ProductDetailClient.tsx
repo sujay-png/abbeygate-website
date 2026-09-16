@@ -62,6 +62,7 @@ type ProductDetailClientProps = {
   colorVariants?: ColorVariant[];
   customTabs?: CustomTab[];
   amendKey?: string;
+  relatedProducts?: React.ReactNode;
 };
 
 export const ProductDetailClient = ({
@@ -71,6 +72,7 @@ export const ProductDetailClient = ({
   colorVariants = [],
   customTabs = [],
   amendKey,
+  relatedProducts,
 }: ProductDetailClientProps) => {
   const [product, setProduct] = useState(initialProduct);
 
@@ -1568,6 +1570,12 @@ export const ProductDetailClient = ({
         </div>
       )}
 
+      {/* Render Related Products conditionally */}
+      {!isCustomizingStarted && relatedProducts && (
+        <div className="mt-4 md:mt-8 w-[100vw] relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
+          {relatedProducts}
+        </div>
+      )}
     </div>
   );
 };

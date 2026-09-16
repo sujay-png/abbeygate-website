@@ -10,6 +10,7 @@ interface ProductCardProps {
   imageUrl?: string;
   fallbackColor?: string;
   href?: string;
+  compact?: boolean;
 }
 
 export const ProductCard = ({
@@ -19,10 +20,11 @@ export const ProductCard = ({
   imageUrl,
   fallbackColor = "bg-gray-300",
   href = "#",
+  compact = false,
 }: ProductCardProps) => {
   return (
     <Link href={href} className="group flex flex-col bg-transparent rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-      <div className="h-[280px] w-full flex items-center justify-center p-8 relative overflow-hidden bg-transparent">
+      <div className={`${compact ? 'h-[200px] p-4' : 'h-[280px] p-8'} w-full flex items-center justify-center relative overflow-hidden bg-transparent`}>
         {imageUrl ? (
           <Image
             src={imageUrl}
@@ -46,17 +48,17 @@ export const ProductCard = ({
         )}
       </div>
 
-      <div className="p-6 flex flex-col flex-grow">
-        <h3 className="text-base font-bold text-gray-900 leading-snug mb-3 group-hover:text-brand-primary-dark transition-colors duration-300">
+      <div className={`${compact ? 'p-4' : 'p-6'} flex flex-col flex-grow`}>
+        <h3 className={`${compact ? 'text-[14px]' : 'text-base'} font-bold text-gray-900 leading-snug mb-2 group-hover:text-brand-primary-dark transition-colors duration-300`}>
           {title}
         </h3>
-        <p className="text-sm text-gray-500 leading-relaxed line-clamp-3 mb-6 flex-grow">
+        <p className={`${compact ? 'text-[12px] mb-4' : 'text-sm mb-6'} text-gray-500 leading-relaxed line-clamp-3 flex-grow`}>
           {description}
         </p>
         <div className="mt-auto">
-          {baseAmount !== undefined && (
+          {baseAmount !== undefined && baseAmount > 0 && (
             <span className="text-gray-500 font-medium flex gap-1">
-              From <PriceDisplay amount={baseAmount} />
+              <PriceDisplay amount={baseAmount} />
             </span>
           )}
         </div>

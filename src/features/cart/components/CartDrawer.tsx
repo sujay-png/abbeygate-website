@@ -12,6 +12,8 @@ import { ColourPickerRow } from '@/features/cart/components/ColourPickerRow';
 import { retryProof } from '@/features/cart/utils/add-colour-variant';
 import { downloadCartItemProof, canDownloadProof } from '@/features/cart/utils/download-proof';
 import { checkAuthStatus } from '@/features/auth/services/login';
+import { useVat } from '@/context/VatContext';
+import { VAT_RATE } from '@/features/products/utils/pricing';
 
 const OPEN_TRANSITION: Transition = { duration: 0.5, ease: [0.16, 1, 0.3, 1] };
 const CLOSE_TRANSITION: Transition = { duration: 0.35, ease: [0.7, 0, 0.84, 0] };
@@ -21,6 +23,7 @@ const formatPrice = (value: number) =>
 
 export const CartDrawer = () => {
   const { items: rawItems, pricedItems: items, isOpen, isLoading, subtotal, shippingCost, shippingLabel, vatCost, total, closeCart, removeItem, updateQuantity, updateItem } = useCart();
+  const { showPricesIncludingVat } = useVat();
   const [previewItem, setPreviewItem] = useState<any | null>(null);
   const [pickerFor, setPickerFor] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -259,8 +262,13 @@ export const CartDrawer = () => {
                             </button>
                           </div>
                           <div className="text-right">
-                            <p className="text-[15px] text-brand-body font-medium">
-                              {formatPrice(item.lineTotal)}
+                            <p className="text-[15px] text-brand-body font-medium flex items-center justify-end gap-1">
+                              {showPricesIncludingVat 
+                                ? formatPrice(item.lineTotal * (1 + VAT_RATE)) 
+                                : formatPrice(item.lineTotal)}
+                              <span className="text-[11px] font-normal text-gray-500">
+                                {showPricesIncludingVat ? '(inc VAT)' : '(ex VAT)'}
+                              </span>
                             </p>
                             {item.groupQuantity > item.quantity && (
                               <div className="text-[11px] text-gray-500 mt-0.5">

@@ -26,15 +26,16 @@ export const RelatedProducts = async ({ categoryId }: { categoryId?: number }) =
         </div>
         
         <div className="relative -mx-6 px-6 overflow-x-auto pb-8 md:mx-0 md:px-0 md:pb-0 hide-scrollbar">
-          <div className="flex md:grid md:grid-cols-4 gap-6 w-[max-content] md:w-auto min-w-full">
+          <div className="flex md:grid md:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 w-[max-content] md:w-auto min-w-full">
             {products.map((product) => (
-              <div key={product.id} className="w-[280px] md:w-auto shrink-0">
+              <div key={product.id} className="w-[210px] md:w-auto shrink-0">
                 <ProductCard
                   title={product.name}
                   description={stripHtml(product.short_description)}
                   baseAmount={getProductBaseAmount(product)}
                   imageUrl={product.images[0]?.thumbnail || product.images[0]?.src}
                   href={`/product/${product.slug}`}
+                  compact={true}
                 />
               </div>
             ))}

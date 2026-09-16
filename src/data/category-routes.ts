@@ -4,6 +4,7 @@ export type FilterConfig = {
   disableCollection?: boolean;
   disableLayout?: boolean;
   disableSize?: boolean;
+  disableProductType?: boolean;
 };
 
 export type CategoryRoute = {
@@ -127,7 +128,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
   { path: "/custom-gifts/all", categoryId: 126, title: "All Gifts" },
 
   // Collections
-  { path: "/collection", categoryId: "49,50,51,52,53,54,55,140", title: "Our Collection", description: "Discover the full Abbeygate collection, featuring our complete range of premium diaries, notebooks, and travel accessories. From the eco-conscious materials of our Conscious Collection to the timeless elegance of the Dorchester and Chelsea ranges, our entire selection is crafted with meticulous attention to detail. Explore our comprehensive range to find the perfect companion for your personal and professional needs.", filterConfig: { disableCollection: true } },
+  { path: "/collection", categoryId: "49,50,51,52,53,54,55,140", title: "Our Collections", description: "Discover the full Abbeygate collection, featuring our complete range of premium diaries, notebooks, and travel accessories. From the eco-conscious materials of our Conscious Collection to the timeless elegance of the Dorchester and Chelsea ranges, our entire selection is crafted with meticulous attention to detail. Explore our comprehensive range to find the perfect companion for your personal and professional needs.", filterConfig: { disableCollection: true } },
   { path: "/collection/chelsea", categoryId: 49, title: "Chelsea Collection", filterConfig: { disableCollection: true } },
   { path: "/collection/dorchester", categoryId: 50, title: "Dorchester Collection", filterConfig: { disableCollection: true } },
   { path: "/collection/harrogate", categoryId: 51, title: "Harrogate Collection", filterConfig: { disableCollection: true } },
@@ -161,6 +162,11 @@ export function getFilterConfigForPath(path: string): FilterConfig {
     disableSize = true;
   }
 
+  if (pathLower.includes("custom-gifts")) {
+    disableSize = true;
+    disableLayout = true;
+  }
+
   if (pathLower.includes("all-diaries") || pathLower === "/diaries") {
     disableSize = false;
   }
@@ -168,5 +174,7 @@ export function getFilterConfigForPath(path: string): FilterConfig {
     disableSize = false;
   }
 
-  return { disableCollection, disableLayout, disableSize };
+  const disableProductType = !pathLower.includes("custom-gifts");
+
+  return { disableCollection, disableLayout, disableSize, disableProductType };
 }

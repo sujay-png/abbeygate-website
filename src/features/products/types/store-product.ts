@@ -93,6 +93,7 @@ export type ProductFilters = {
   filter_colour?: string[];
   filter_layout?: string[];
   filter_size?: string[];
+  filter_product_type?: string[];
 };
 
 export const FILTER_TAXONOMY_MAP = {
@@ -100,6 +101,7 @@ export const FILTER_TAXONOMY_MAP = {
   filter_colour: "pa_colour",
   filter_layout: "pa_layout",
   filter_collection: "pa_collection",
+  filter_product_type: "pa_product-type",
 } as const;
 
 export type FilterParamKey = keyof typeof FILTER_TAXONOMY_MAP;

@@ -21,6 +21,7 @@ const FILTER_LABELS: Record<FilterParamKey, string> = {
   filter_colour: 'Colour',
   filter_layout: 'Layout',
   filter_collection: 'Collection',
+  filter_product_type: 'Product Type',
 };
 
 export const ProductFilters = (props: ProductFiltersProps) => (
@@ -50,6 +51,7 @@ const ProductFiltersInner = ({
       filter_colour: [],
       filter_layout: [],
       filter_size: [],
+      filter_product_type: [],
     };
 
     for (const key of Object.keys(FILTER_TAXONOMY_MAP) as FilterParamKey[]) {
@@ -64,6 +66,7 @@ const ProductFiltersInner = ({
     if (key === 'filter_collection' && filterConfig.disableCollection) return true;
     if (key === 'filter_layout' && filterConfig.disableLayout) return true;
     if (key === 'filter_size' && filterConfig.disableSize) return true;
+    if (key === 'filter_product_type' && filterConfig.disableProductType) return true;
     return false;
   };
 
@@ -116,6 +119,7 @@ const ProductFiltersInner = ({
       filter_colour: [],
       filter_layout: [],
       filter_size: [],
+      filter_product_type: [],
     });
   };
 
@@ -229,15 +233,19 @@ const ProductFiltersInner = ({
                 return (
                   <label
                     key={term.slug}
-                    className={`flex items-center gap-3 text-[15px] text-brand-body cursor-pointer ${
+                    className={`flex items-center gap-3 text-[15px] text-brand-body cursor-pointer w-full py-1 ${
                       isDisabled ? 'opacity-35 pointer-events-none' : ''
                     }`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (!isDisabled) toggleFilter(mobileDropdown, term.slug);
+                    }}
                   >
                     <input
                       type="checkbox"
                       checked={isChecked}
                       disabled={isDisabled}
-                      onChange={() => toggleFilter(mobileDropdown, term.slug)}
+                      readOnly
                       className="cursor-pointer w-5 h-5 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
                     />
                     <span className="flex-1">{term.name}</span>
@@ -316,15 +324,19 @@ const ProductFiltersInner = ({
                       return (
                         <label
                           key={term.slug}
-                          className={`flex items-center gap-2 text-sm text-brand-body cursor-pointer ${
+                          className={`flex items-center gap-2 text-sm text-brand-body cursor-pointer w-full py-1 ${
                             isDisabled ? 'opacity-35 pointer-events-none' : ''
                           }`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (!isDisabled) toggleFilter(key, term.slug);
+                          }}
                         >
                           <input
                             type="checkbox"
                             checked={isChecked}
                             disabled={isDisabled}
-                            onChange={() => toggleFilter(key, term.slug)}
+                            readOnly
                             className="cursor-pointer"
                           />
                           <span className="flex-1 pl-2">{term.name}</span>
