@@ -102,7 +102,11 @@ export async function loadCategoryPageData(path: string, searchParams: Record<st
   }
 
   const filters = parseFiltersFromSearchParams(searchParams);
-  const filterConfig = route.filterConfig ?? getFilterConfigForPath(path);
+  const baseFilterConfig = getFilterConfigForPath(path);
+  const filterConfig = {
+    ...baseFilterConfig,
+    ...(route.filterConfig || {})
+  };
 
   const pathParts = path.split('/').filter(Boolean);
   const breadcrumbItems = pathParts.map((part, index) => {

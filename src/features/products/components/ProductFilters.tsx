@@ -192,6 +192,10 @@ const ProductFiltersInner = ({
           <div className="flex min-w-max bg-brand-cream">
             {(Object.keys(FILTER_TAXONOMY_MAP) as FilterParamKey[]).map((key) => {
               const disabled = isFilterDisabled(key);
+              
+              // Hide Product Type completely if it's disabled
+              if (key === 'filter_product_type' && disabled) return null;
+              
               return (
                 <button
                   key={key}
@@ -279,6 +283,9 @@ const ProductFiltersInner = ({
           const attr = getAttributeForFilter(key);
           const terms = attr ? (attributeTerms[attr.id] ?? []) : [];
           const taxonomy = FILTER_TAXONOMY_MAP[key];
+
+          // Hide Product Type completely if it's disabled, as it doesn't make sense to show a disabled column for it
+          if (key === 'filter_product_type' && disabled) return null;
 
           return (
             <div
