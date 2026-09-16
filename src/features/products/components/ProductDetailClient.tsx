@@ -381,11 +381,10 @@ export const ProductDetailClient = ({
       basePrice,
       tiers,
       customizationEnabled: customization.enabled,
-      blockingType: customization.blockingType || 'Embossed',
-      cornerEdges: customization.cornerEdges,
-      cornerEdgePrice: customization.cornerEdges && customization.cornerEdges !== 'None' 
-        ? cornerEdgesPricing.pricePerPair * CORNER_PAIRS_PER_PRODUCT 
-        : 0,
+      // For the main PDP view, always show the base initial price without extra inner customisation costs
+      blockingType: 'Embossed',
+      cornerEdges: 'None',
+      cornerEdgePrice: 0,
       isGifts
     });
 
