@@ -57,23 +57,29 @@ export const generateDigitalProof = async (
   doc.line(20, 36, 190, 36);
 
   // 2. Product Name & Description
+  let currentY = 48;
   doc.setFontSize(18);
   doc.setTextColor(50, 20, 80); // Dark purple theme color
   doc.setFont('helvetica', 'bold');
-  doc.text(product.name, 20, 48);
+  const titleLines = doc.splitTextToSize(product.name, 170);
+  doc.text(titleLines, 20, currentY);
+  currentY += (titleLines.length * 7);
 
   doc.setFontSize(9);
   doc.setTextColor(100, 100, 100);
   doc.setFont('helvetica', 'normal');
   // Combine some short details.
   const details = product.categories.map(c => c.name).join(' · ');
-  doc.text(details, 20, 54);
+  const detailsLines = doc.splitTextToSize(details, 170);
+  doc.text(detailsLines, 20, currentY);
+  currentY += (detailsLines.length * 4) + 6;
 
   // 3. Main Product Image (Left side)
+  const contentStartY = Math.max(65, currentY);
   if (customization.fullPreviewUrl) {
     try {
       // 80x80 box for the image, approx center-left
-      doc.addImage(customization.fullPreviewUrl, 'PNG', 20, 65, 90, 90);
+      doc.addImage(customization.fullPreviewUrl, 'PNG', 20, contentStartY, 90, 90);
     } catch (error) {
       console.error('Failed to add preview image to PDF', error);
     }
@@ -81,7 +87,7 @@ export const generateDigitalProof = async (
 
   // 4. Specification Block (Right side)
   const specStartX = 130;
-  let specY = 65;
+  let specY = contentStartY;
 
   doc.setFontSize(10);
   doc.setTextColor(50, 20, 80);
