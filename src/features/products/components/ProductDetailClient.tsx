@@ -382,6 +382,10 @@ export const ProductDetailClient = ({
       tiers,
       customizationEnabled: customization.enabled,
       blockingType: customization.blockingType || 'Embossed',
+      cornerEdges: customization.cornerEdges,
+      cornerEdgePrice: customization.cornerEdges && customization.cornerEdges !== 'None' 
+        ? cornerEdgesPricing.pricePerPair * CORNER_PAIRS_PER_PRODUCT 
+        : 0,
       isGifts
     });
 
@@ -588,6 +592,7 @@ export const ProductDetailClient = ({
           choice: customization.blockingType || '',
           foilColor: customization.blockingType === 'Foil blocked' ? customization.foilColor : undefined,
           cornerEdges: customization.cornerEdges || 'None',
+          cornerEdgesPrice: hasCornerEdges ? cornerEdgesPricing.pricePerPair * CORNER_PAIRS_PER_PRODUCT : 0,
           position: (customization.logoPosition?.label || 'center').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
           positionLabel: customization.logoPosition?.label || 'center',
           logoScale: customization.logoScale ?? 1,
@@ -1213,14 +1218,8 @@ export const ProductDetailClient = ({
                         <tr>
                           <th className="py-2 font-medium">Quantity</th>
                           <th className="py-2 text-center font-medium">
-                            {brandingColHeader} {!hasCornerEdges && `(${displayedVatLabel})`}
+                            {brandingColHeader} ({displayedVatLabel})
                           </th>
-                          {hasCornerEdges && (
-                            <>
-                              <th className="py-2 text-center font-medium">Corner clips</th>
-                              <th className="py-2 text-center font-medium">Total per unit ({displayedVatLabel})</th>
-                            </>
-                          )}
                         </tr>
                       </thead>
                       <tbody>
@@ -1239,13 +1238,9 @@ export const ProductDetailClient = ({
                           return (
                             <tr key={tier.min} onClick={() => setQuantity(tier.min)} className={`cursor-pointer border-b transition-colors ${active ? 'border-brand-primary bg-brand-primary text-white font-bold' : 'border-[var(--brand-border)] text-brand-body hover:bg-brand-tint'}`}>
                               <td className="py-3 px-2">{tier.min}{tier.max ? ` - ${tier.max}` : '+'}</td>
-                              <td className="py-3 px-2 text-center">{!hasCornerEdges ? formatDisplayedPrice(baseCustomisedPrice) : formatGBP(baseCustomisedPrice)}</td>
-                              {hasCornerEdges && (
-                                <>
-                                  <td className="py-3 px-2 text-center">{formatGBP(cornerPrice)}</td>
-                                  <td className={`py-3 px-2 text-center font-bold ${active ? 'text-white' : 'text-brand-primary'}`}>{formatDisplayedPrice(baseCustomisedPrice + cornerPrice)}</td>
-                                </>
-                              )}
+                              <td className={`py-3 px-2 text-center ${active ? 'text-white' : ''}`}>
+                                {formatDisplayedPrice(baseCustomisedPrice + cornerPrice)}
+                              </td>
                             </tr>
                           );
                         })}
@@ -1464,7 +1459,6 @@ export const ProductDetailClient = ({
 
           {/* VOLUME PRICING TABLE */}
           {!isGifts && tiers.length > 0 && (() => {
-            const hasUvPricing = tiers.some(t => t.uvPrice !== undefined);
             const isNoCustomization = !customization.enabled;
 
             return (
@@ -1477,14 +1471,7 @@ export const ProductDetailClient = ({
                     <thead className="bg-transparent text-brand-grey border-b border-[var(--brand-border)]">
                       <tr>
                         <th className="py-2.5 px-4 font-medium w-1/3">Quantity</th>
-                        {isNoCustomization ? (
-                          <th className="py-2.5 px-4 font-medium w-2/3 text-center">Price per unit ({displayedVatLabel})</th>
-                        ) : (
-                          <>
-                            <th className="py-2.5 px-4 font-medium w-1/3 text-center">Price including foil/debossed ({displayedVatLabel})</th>
-                            {hasUvPricing && <th className="py-2.5 px-4 font-medium w-1/3 text-center">Price including UV printing ({displayedVatLabel})</th>}
-                          </>
-                        )}
+                        <th className="py-2.5 px-4 font-medium w-2/3 text-center">Price per unit ({displayedVatLabel})</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1500,22 +1487,9 @@ export const ProductDetailClient = ({
                             <td className="py-2.5 px-4">
                               {tier.max ? `${tier.min} - ${tier.max}` : `${tier.min}+`}
                             </td>
-                            {isNoCustomization ? (
-                              <td className="py-2.5 px-4 text-center">
-                                {formatDisplayedPrice(tier.noCustomisationPrice ?? tier.price)}
-                              </td>
-                            ) : (
-                              <>
-                                <td className="py-2.5 px-4 text-center">
-                                  {formatDisplayedPrice(tier.price)}
-                                </td>
-                                {hasUvPricing && (
-                                  <td className="py-2.5 px-4 text-center">
-                                    {tier.uvPrice ? formatDisplayedPrice(tier.uvPrice) : '-'}
-                                  </td>
-                                )}
-                              </>
-                            )}
+                            <td className="py-2.5 px-4 text-center">
+                              {formatDisplayedPrice(isNoCustomization ? (tier.noCustomisationPrice ?? tier.price) : tier.price)}
+                            </td>
                           </tr>
                         );
                       })}

@@ -223,6 +223,7 @@ export type PriceCalculationInput = {
   customizationEnabled: boolean;
   blockingType?: string;
   cornerEdges?: string;
+  cornerEdgePrice?: number;
   isGifts: boolean;
 };
 
@@ -245,6 +246,7 @@ export function calculateProductPrice(
     tiers = [],
     customizationEnabled,
     blockingType,
+    cornerEdgePrice = 0,
     isGifts,
   } = input;
 
@@ -273,6 +275,8 @@ export function calculateProductPrice(
     extraBlockingFee = Math.max(0, customizationFee - LOGO_CUSTOMIZATION_FEE);
     unitPrice += extraBlockingFee;
   }
+
+  unitPrice += cornerEdgePrice;
 
   const totalPrice = unitPrice * quantity;
 

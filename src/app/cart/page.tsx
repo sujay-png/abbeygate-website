@@ -254,7 +254,7 @@ export default function CartPage() {
                             ) : null}
                           </div>
                           <p className="mt-5 text-[11px] text-gray-500 max-w-[200px]">
-                            Includes branding set-up (£0.00), branding application (£0.00) and extras (£0.00)
+                            Includes branding set-up (£48.00){(item.customization as any)?.cornerEdgesPrice ? ` and extras (${formatPrice((item.customization as any).cornerEdgesPrice * item.quantity)})` : ''}
                           </p>
                         </>
                       ) : (
@@ -307,7 +307,9 @@ export default function CartPage() {
                       <span className="lg:hidden font-bold text-[13px]">Total</span>
                       <div>
                         <div className="font-bold text-[14px] text-gray-900">{formatPrice(item.lineTotal)}</div>
-                        <div className="text-[11px] text-gray-500 whitespace-nowrap">incl. branding &<br/>extras</div>
+                        {item.customization?.enabled && (
+                          <div className="text-[11px] text-gray-500 whitespace-nowrap">incl. branding &<br/>extras</div>
+                        )}
                         {item.groupQuantity > item.quantity && (
                           <div className="text-[10px] text-gray-400 mt-2 max-w-[120px] ml-auto leading-tight">
                             Priced at your {item.groupQuantity}-unit total across {groupSize} colours
@@ -374,7 +376,9 @@ export default function CartPage() {
                   <div key={item.key} className="flex justify-between items-start py-2.5 border-b border-[var(--brand-border)] text-[14px] text-gray-500">
                     <span className="flex-1 pr-4">
                       {item.name}
-                      <span className="block text-[11px] mt-0.5">(incl. branding & extras)</span>
+                      {item.customization?.enabled && (
+                        <span className="block text-[11px] mt-0.5">(incl. branding & extras)</span>
+                      )}
                     </span>
                     <span className="font-medium shrink-0">{formatPrice(item.lineTotal)}</span>
                   </div>

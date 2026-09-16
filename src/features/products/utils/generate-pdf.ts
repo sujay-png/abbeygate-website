@@ -14,6 +14,17 @@ const fetchImageAsBase64 = async (url: string): Promise<string> => {
   });
 };
 
+const fetchFontBase64 = async (url: string): Promise<string> => {
+  const response = await fetch(url);
+  const buffer = await response.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+};
+
 export const generateDigitalProof = async (
   product: StoreProduct,
   customization: CustomizationState,
@@ -29,7 +40,26 @@ export const generateDigitalProof = async (
   });
 
   // Fonts
-  doc.setFont('helvetica');
+  try {
+    const [josefinReg, josefinBold, workSansReg, workSansBold] = await Promise.all([
+      fetchFontBase64('/fonts/JosefinSans-Regular.ttf'),
+      fetchFontBase64('/fonts/JosefinSans-Bold.ttf'),
+      fetchFontBase64('/fonts/WorkSans-Regular.ttf'),
+      fetchFontBase64('/fonts/WorkSans-Bold.ttf')
+    ]);
+    doc.addFileToVFS('JosefinSans-Regular.ttf', josefinReg);
+    doc.addFont('JosefinSans-Regular.ttf', 'JosefinSans', 'normal');
+    doc.addFileToVFS('JosefinSans-Bold.ttf', josefinBold);
+    doc.addFont('JosefinSans-Bold.ttf', 'JosefinSans', 'bold');
+    doc.addFileToVFS('WorkSans-Regular.ttf', workSansReg);
+    doc.addFont('WorkSans-Regular.ttf', 'WorkSans', 'normal');
+    doc.addFileToVFS('WorkSans-Bold.ttf', workSansBold);
+    doc.addFont('WorkSans-Bold.ttf', 'WorkSans', 'bold');
+    doc.setFont('WorkSans', 'normal');
+  } catch (error) {
+    console.error('Failed to load custom fonts', error);
+    doc.setFont('helvetica', 'normal');
+  }
 
   // 1. Header
   try {
@@ -48,7 +78,7 @@ export const generateDigitalProof = async (
   // "DIGITAL PROOF" label
   doc.setFontSize(12);
   doc.setTextColor(100, 100, 100);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('JosefinSans', 'bold');
   doc.text('DIGITAL PROOF', 190, 20, { align: 'right' });
 
   // Line separator
@@ -60,14 +90,14 @@ export const generateDigitalProof = async (
   let currentY = 48;
   doc.setFontSize(18);
   doc.setTextColor(50, 20, 80); // Dark purple theme color
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('JosefinSans', 'bold');
   const titleLines = doc.splitTextToSize(product.name, 170);
   doc.text(titleLines, 20, currentY);
   currentY += (titleLines.length * 7);
 
   doc.setFontSize(9);
   doc.setTextColor(100, 100, 100);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('WorkSans', 'normal');
   // Combine some short details.
   const details = product.categories.map(c => c.name).join(' · ');
   const detailsLines = doc.splitTextToSize(details, 170);
@@ -91,20 +121,20 @@ export const generateDigitalProof = async (
 
   doc.setFontSize(10);
   doc.setTextColor(50, 20, 80);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('JosefinSans', 'bold');
   doc.text('SPECIFICATION', specStartX, specY);
   specY += 8;
 
   const addSpecRow = (label: string, value: string) => {
     doc.setFontSize(8);
     doc.setTextColor(120, 120, 120);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('WorkSans', 'bold');
     doc.text(label.toUpperCase(), specStartX, specY);
     specY += 4;
     
     doc.setFontSize(10);
     doc.setTextColor(30, 30, 30);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('WorkSans', 'normal');
     doc.text(value, specStartX, specY);
     specY += 8;
   };
@@ -135,7 +165,7 @@ export const generateDigitalProof = async (
   let priceY = pricingY + 10;
   doc.setFontSize(10);
   doc.setTextColor(50, 20, 80);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('JosefinSans', 'bold');
   doc.text('PRICING', 20, priceY);
   priceY += 8;
 
@@ -143,10 +173,10 @@ export const generateDigitalProof = async (
     doc.setFontSize(9);
     if (isBold) {
       doc.setTextColor(30, 30, 30);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont('WorkSans', 'bold');
     } else {
       doc.setTextColor(100, 100, 100);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('WorkSans', 'normal');
     }
     doc.text(label, 20, priceY);
     doc.text(value, 190, priceY, { align: 'right' });
@@ -164,7 +194,7 @@ export const generateDigitalProof = async (
   // 7. Footer
   doc.setFontSize(8);
   doc.setTextColor(150, 150, 150);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('WorkSans', 'normal');
   const dateStr = new Date().toLocaleDateString('en-GB');
   doc.text('Generated ' + dateStr + ' — for visual approval only. Actual colours may vary slightly from screen.', 20, 280);
 

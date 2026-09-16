@@ -30,8 +30,10 @@ export const CartDrawer = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
-    checkAuthStatus().then(setIsLoggedIn);
-  }, []);
+    if (isOpen) {
+      checkAuthStatus().then(setIsLoggedIn);
+    }
+  }, [isOpen]);
 
   const shortfalls = validateCustomisationMinimums(rawItems);
   const hasShortfalls = shortfalls.length > 0;
@@ -47,7 +49,7 @@ export const CartDrawer = () => {
       
       const formData = new FormData();
       
-      const payload = rawItems.map((item, index) => {
+      const payload = await Promise.all(rawItems.map(async (item, index) => {
         const outItem: any = {
           productId: item.productId,
           quantity: item.quantity
@@ -65,7 +67,6 @@ export const CartDrawer = () => {
             outItem.customization.hasLogo = true;
           }
           if (item.customization.fullPreviewUrl) {
-            try {
               const previewDataUrl = item.customization.fullPreviewUrl;
               const byteString = atob(previewDataUrl.split(',')[1]);
               const mimeString = previewDataUrl.split(',')[0].split(':')[1].split(';')[0];
@@ -77,13 +78,10 @@ export const CartDrawer = () => {
               const blob = new Blob([ab], { type: mimeString });
               formData.append(`preview_${index}`, blob, 'preview.png');
               outItem.customization.hasPreview = true;
-            } catch (e) {
-              console.error('Failed to convert preview to blob', e);
-            }
           }
         }
         return outItem;
-      });
+      }));
 
       formData.append('cart', JSON.stringify({ items: payload }));
 

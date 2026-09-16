@@ -214,6 +214,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           tiers: item.priceTiers ?? [],
           customizationEnabled: !(item.isGifts ?? false) && item.quantity >= CUSTOMIZATION_MIN_QTY && !!item.customization?.enabled,
           blockingType: item.customization?.choice,
+          cornerEdges: item.customization?.cornerEdges,
+          cornerEdgePrice: (item.customization as any)?.cornerEdgesPrice || 0,
           isGifts: item.isGifts ?? false,
         }).unitPrice;
       }

@@ -198,49 +198,59 @@ export const ProductCustomizer = ({
             <p className="text-[13px] text-gray-500 mb-3">
               For best results, upload a high-contrast image (black on white) or a transparent PNG.
             </p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                
-                if (file.size > 1.5 * 1024 * 1024) {
-                  alert("Logo file is too large! Please upload a file smaller than 1.5MB.");
-                  return;
-                }
+            <div className="relative group">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  
+                  if (file.size > 1.5 * 1024 * 1024) {
+                    alert("Logo file is too large! Please upload a file smaller than 1.5MB.");
+                    return;
+                  }
 
-                try {
-                  const processedUrl = await processLogo(file);
-                  onCustomizationChange({
-                    ...customization,
-                    logoFile: file,
-                    logoPreviewUrl: processedUrl,
-                  });
-                  // Auto-scroll up to see the logo applied to the product image
-                  setTimeout(() => {
-                    document.getElementById('product-gallery-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }, 150);
-                } catch (error) {
-                  console.error('Failed to process logo:', error);
-                  // fallback
-                  const reader = new FileReader();
-                  reader.onload = (ev) => {
+                  try {
+                    const processedUrl = await processLogo(file);
                     onCustomizationChange({
                       ...customization,
                       logoFile: file,
-                      logoPreviewUrl: ev.target?.result as string,
+                      logoPreviewUrl: processedUrl,
                     });
+                    // Auto-scroll up to see the logo applied to the product image
                     setTimeout(() => {
                       document.getElementById('product-gallery-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }, 150);
-                  };
-                  reader.readAsDataURL(file);
-                }
-              }}
-              className="block w-full text-[14px] text-brand-body file:mr-4 file:py-2.5 file:px-5 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-brand-primary/10 file:text-brand-primary hover:file:bg-brand-primary/20 cursor-pointer transition-colors border border-[var(--brand-border)] hover:border-gray-400 rounded-lg p-1"
-            />
+                  } catch (error) {
+                    console.error('Failed to process logo:', error);
+                    // fallback
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                      onCustomizationChange({
+                        ...customization,
+                        logoFile: file,
+                        logoPreviewUrl: ev.target?.result as string,
+                      });
+                      setTimeout(() => {
+                        document.getElementById('product-gallery-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }, 150);
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+              <div className="flex items-center gap-4 p-1 border border-[var(--brand-border)] group-hover:border-gray-400 rounded-lg bg-transparent transition-colors relative z-0">
+                <div className="px-5 py-2.5 bg-brand-primary/10 text-brand-primary font-semibold text-sm rounded-md">
+                  Choose File
+                </div>
+                <div className="text-[14px] text-brand-body truncate flex-1">
+                  {customization.logoFile?.name || (customization as any).fileName || 'No file chosen'}
+                </div>
+              </div>
+            </div>
           </div>
 
           <div>
