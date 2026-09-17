@@ -61,6 +61,15 @@ export function getCornerEdgesPricing(product: StoreProduct): CornerEdgesPricing
   return { size: null, pricePerPair: 0 };
 }
 
+/** 
+ * Fallback tier structure when B2B King meta is unavailable. 
+ * WooCommerce often stores prices to 2 decimal places (e.g. 8.33), which causes 8.33 * 1.2 = 9.996 (rounds to 10.00).
+ * By snapping these back to the exact base price (e.g. 8.325), we get 8.325 * 1.2 = 9.99.
+ */
+function snapToBasePrice(price: number, basePrice: number): number {
+  return Math.abs(price - basePrice) < 0.01 ? basePrice : price;
+}
+
 /** Parse B2B King tier pricing from WooCommerce REST API meta_data. */
 export function parsePriceTiersFromMeta(
   metaData: { key: string; value: unknown }[] | undefined,
@@ -87,10 +96,11 @@ export function parsePriceTiersFromMeta(
       const parts = raw.split(";").map(s => s.trim()).filter(Boolean);
       tiers = parts.map(part => {
         const [qtyStr, priceStr] = part.split(":");
+        const parsedPrice = parseFloat(priceStr) || basePrice;
         return {
           min: parseInt(qtyStr, 10) || 1,
           max: null as number | null,
-          price: parseFloat(priceStr) || basePrice
+          price: snapToBasePrice(parsedPrice, basePrice)
         };
       }).filter(t => t.price > 0).sort((a, b) => a.min - b.min);
     } else {
@@ -99,10 +109,11 @@ export function parsePriceTiersFromMeta(
         tiers = parsed
           .map((tier: { quantity?: number; price?: string | number; min?: number; max?: number }) => {
             const min = tier.min ?? tier.quantity ?? 1;
-            const price =
+            const rawPrice =
               typeof tier.price === "string"
                 ? parseFloat(tier.price)
                 : (tier.price ?? basePrice);
+            const price = snapToBasePrice(rawPrice, basePrice);
             return { min, max: tier.max ?? null, price };
           })
           .filter((t) => t.price > 0)
@@ -125,7 +136,7 @@ export function parsePriceTiersFromMeta(
       parts.forEach(part => {
         const [qtyStr, priceStr] = part.split(":");
         const minQty = parseInt(qtyStr, 10);
-        const uvPrice = parseFloat(priceStr);
+        const uvPrice = snapToBasePrice(parseFloat(priceStr), basePrice);
         if (!isNaN(minQty) && !isNaN(uvPrice)) {
           parsedUvTiers.push({ min: minQty, price: uvPrice });
         }
@@ -150,7 +161,7 @@ export function parsePriceTiersFromMeta(
       parts.forEach(part => {
         const [qtyStr, priceStr] = part.split(":");
         const minQty = parseInt(qtyStr, 10);
-        const noCustPrice = parseFloat(priceStr);
+        const noCustPrice = snapToBasePrice(parseFloat(priceStr), basePrice);
         if (!isNaN(minQty) && !isNaN(noCustPrice)) {
           parsedNoCustTiers.push({ min: minQty, price: noCustPrice });
         }
