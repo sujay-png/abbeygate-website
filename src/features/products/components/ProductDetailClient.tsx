@@ -497,15 +497,16 @@ export const ProductDetailClient = ({
       if (!isCustomizingStarted) {
         setIsCustomizingStarted(true);
         setTimeout(() => {
-          const gallery = document.getElementById('product-gallery-container');
-          if (gallery) {
-            if (lenis) {
-              lenis.scrollTo(gallery, { offset: -120 });
-            } else {
-              gallery.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
+          const customizer = document.getElementById('upload-logo') || document.getElementById('customizer-section');
+          if (customizer) {
+            lenis?.stop();
+            const y = customizer.getBoundingClientRect().top + window.scrollY - 120;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+            setTimeout(() => {
+              lenis?.start();
+            }, 1000);
           }
-        }, 100);
+        }, 150);
       } else {
         alert('Please upload a logo to continue with customisation, or disable customisation to proceed without it.');
       }
@@ -516,15 +517,16 @@ export const ProductDetailClient = ({
     if (customizationActive && !isCustomizingStarted) {
       setIsCustomizingStarted(true);
       setTimeout(() => {
-        const gallery = document.getElementById('product-gallery-container');
-        if (gallery) {
-          if (lenis) {
-            lenis.scrollTo(gallery, { offset: -120 });
-          } else {
-            gallery.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
+        const customizer = document.getElementById('upload-logo') || document.getElementById('customizer-section');
+        if (customizer) {
+          lenis?.stop();
+          const y = customizer.getBoundingClientRect().top + window.scrollY - 120;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+          setTimeout(() => {
+            lenis?.start();
+          }, 1000);
         }
-      }, 100);
+      }, 150);
       return;
     }
 
@@ -1003,7 +1005,7 @@ export const ProductDetailClient = ({
 
           {/* Customizer underneath the gallery on the left */}
           {!isGifts && isCustomizingStarted && customizationActive && (
-            <div ref={customizerSectionRef}>
+            <div ref={customizerSectionRef} id="customizer-section">
               <ProductCustomizer
                 product={product}
                 tiers={tiers}
@@ -1129,7 +1131,21 @@ export const ProductDetailClient = ({
                 <span className="text-[14px] font-bold text-brand-body">Quantity</span>
                 <div className="flex h-9 items-center overflow-hidden rounded-md border border-gray-200 bg-white shadow-sm">
                   <button type="button" aria-label="Decrease quantity" className="px-3 text-gray-600 hover:bg-gray-50" onClick={() => setQuantity(Math.max(CUSTOMIZATION_MIN_QTY, quantity - 1))}>−</button>
-                  <span className="w-12 text-center text-[13px] font-bold text-brand-body">{quantity}</span>
+                  <input
+                    type="number"
+                    min={CUSTOMIZATION_MIN_QTY}
+                    value={quantity}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      if (!Number.isNaN(val)) setQuantity(val);
+                    }}
+                    onBlur={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      if (Number.isNaN(val) || val < CUSTOMIZATION_MIN_QTY) setQuantity(CUSTOMIZATION_MIN_QTY);
+                    }}
+                    className="w-14 text-center text-[13px] font-bold text-brand-body focus:outline-none hide-spin-buttons bg-transparent"
+                    style={{ MozAppearance: 'textfield' }}
+                  />
                   <button type="button" aria-label="Increase quantity" className="px-3 text-gray-600 hover:bg-gray-50" onClick={() => setQuantity(quantity + 1)}>+</button>
                 </div>
               </div>

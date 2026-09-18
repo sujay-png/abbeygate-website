@@ -339,7 +339,13 @@ export default function CartPage() {
                   <button type="button" onClick={clearCart} className="px-5 py-2.5 rounded-md border border-[var(--brand-border)] bg-white text-brand-primary-dark font-semibold text-[14px] tracking-wide hover:bg-gray-50 transition-colors">
                     Clear basket
                   </button>
-                  <button type="button" className="px-5 py-2.5 rounded-md border border-[var(--brand-border)] bg-white text-brand-primary-dark font-semibold text-[14px] tracking-wide hover:bg-gray-50 transition-colors">
+                  <button type="button" onClick={() => {
+                    if (isLoggedIn === false) {
+                      window.location.href = '/account?redirect=/cart';
+                    } else if (isLoggedIn === true) {
+                      alert('Basket saved to your account!');
+                    }
+                  }} className="px-5 py-2.5 rounded-md border border-[var(--brand-border)] bg-white text-brand-primary-dark font-semibold text-[14px] tracking-wide hover:bg-gray-50 transition-colors">
                     Save basket
                   </button>
                 </div>

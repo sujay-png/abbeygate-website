@@ -42,6 +42,7 @@ export const Navbar = () => {
   const scrollPositionRef = useRef(0);
   const navRefs = useRef<(HTMLDivElement | null)[]>([]);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -168,16 +169,21 @@ export const Navbar = () => {
 
   const openMenu = useCallback((id: string) => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
-    setActiveMenuId(id);
+    if (openTimer.current) clearTimeout(openTimer.current);
+    openTimer.current = setTimeout(() => {
+      setActiveMenuId(id);
+    }, 500);
   }, []);
 
   const scheduleClose = useCallback(() => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
+    if (openTimer.current) clearTimeout(openTimer.current);
     closeTimer.current = setTimeout(() => setActiveMenuId(null), 150);
   }, []);
 
   useEffect(() => () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
+    if (openTimer.current) clearTimeout(openTimer.current);
   }, []);
 
   const toggleMobileSection = (id: string) => {

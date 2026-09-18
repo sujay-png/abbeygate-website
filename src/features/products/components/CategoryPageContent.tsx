@@ -44,18 +44,18 @@ export const CategoryPageContent = ({
         />
 
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 mt-8">
-          <div className="lg:w-1/3 flex-shrink-0">
+          <div className="lg:w-[30%] flex-shrink-0">
             <h1 className="text-3xl md:text-4xl font-extrabold text-brand-primary-dark mb-4 leading-tight tracking-tight">
               {title}
             </h1>
             {description && (
               <div
-                className="prose prose-sm text-brand-body max-w-full [&>p]:leading-relaxed"
+                className="prose prose-sm text-brand-body max-w-full [&>p]:leading-relaxed line-clamp-3 lg:line-clamp-none overflow-hidden"
                 dangerouslySetInnerHTML={{ __html: description }}
               />
             )}
           </div>
-          <div className="lg:w-2/3">
+          <div className="lg:w-[70%]">
             <ProductGrid products={filteredProducts} />
           </div>
         </div>

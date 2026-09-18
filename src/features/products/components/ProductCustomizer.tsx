@@ -13,8 +13,10 @@ import {
   LOGO_CUSTOMIZATION_FEE,
   CORNER_PAIRS_PER_PRODUCT,
   getCornerEdgesPricing,
+  VAT_RATE,
 } from '../utils/pricing';
 import { processLogo } from '../utils/image-processing';
+import { useVat } from '@/context/VatContext';
 
 export type CustomizationState = {
   enabled: boolean;
@@ -84,8 +86,9 @@ export const ProductCustomizer = ({
   const isGifts = isGiftsProduct(product);
   const isFoil = isFoilBlockedProduct(product);
   const cornerEdgesPricing = getCornerEdgesPricing(product);
+  const { showPricesIncludingVat } = useVat();
   const cornerPriceLabel = cornerEdgesPricing.pricePerPair > 0
-    ? `+${formatGBP(cornerEdgesPricing.pricePerPair)} per unit`
+    ? `+${formatGBP(cornerEdgesPricing.pricePerPair * (showPricesIncludingVat ? (1 + VAT_RATE) : 1))} per unit`
     : 'Price set for this product';
 
   const [collapseOpen, setCollapseOpen] = useState(true);
@@ -194,7 +197,7 @@ export const ProductCustomizer = ({
       {step === 1 && (
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
           <div>
-            <div className="text-xl font-bold text-brand-body mb-2">Upload Logo</div>
+            <div id="upload-logo" className="text-xl font-bold text-brand-body mb-2">Upload Logo</div>
             <p className="text-[13px] text-gray-500 mb-3">
               For best results, upload a high-contrast image (black on white) or a transparent PNG.
             </p>
@@ -543,7 +546,7 @@ export const ProductCustomizer = ({
           <div>
             <div className="text-xl font-bold text-brand-body mb-2 uppercase tracking-wide text-[13px] text-gray-700">Corner Edges</div>
             <p className="text-[12px] leading-relaxed text-gray-500 mb-4">
-              Includes a pairs of gold metal corners, fitted to the front cover only as standard. The rear cover is supplied without corners.
+              Includes a pair of metal corners, fitted to the front cover only. The rear cover is supplied without corners.
               {cornerEdgesPricing.size && ` ${cornerEdgesPricing.size} corners are used for this product.`}
             </p>
             <div className="grid grid-cols-3 gap-4">

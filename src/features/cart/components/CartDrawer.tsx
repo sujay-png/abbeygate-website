@@ -249,7 +249,22 @@ export const CartDrawer = () => {
                             >
                               <Minus className="w-3 h-3" strokeWidth={2} />
                             </button>
-                            <span className="w-8 text-center text-[14px] text-brand-body">{item.quantity}</span>
+                            <input
+                              type="number"
+                              min={1}
+                              value={item.quantity}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                if (!Number.isNaN(val)) updateQuantity(item.key, val);
+                              }}
+                              onBlur={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                if (Number.isNaN(val) || val < 1) updateQuantity(item.key, 1);
+                              }}
+                              disabled={isLoading}
+                              className="w-10 text-center text-[14px] text-brand-body font-medium focus:outline-none bg-transparent hide-spin-buttons"
+                              style={{ MozAppearance: 'textfield' }}
+                            />
                             <button
                               aria-label="Increase quantity"
                               onClick={() => updateQuantity(item.key, item.quantity + 1)}

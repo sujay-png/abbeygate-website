@@ -2,7 +2,7 @@ import type { StoreProduct, PriceTier } from "../types/store-product";
 
 export const LOGO_CUSTOMIZATION_FEE = 0.52;
 export const BRANDING_SETUP_FEE = 48;
-export const CORNER_PAIRS_PER_PRODUCT = 2;
+export const CORNER_PAIRS_PER_PRODUCT = 1;
 export const CUSTOMIZATION_MIN_QTY = 1;
 export const VAT_RATE = 0.20;
 
