@@ -233,18 +233,15 @@ export async function POST(request: NextRequest) {
       }
 
       // ENFORCE cross-subdomain sharing ONLY if running on the actual production domain.
-      // If we are on Vercel preview (e.g. abbeygate-website.vercel.app), forcing domain='.abbeygate-england.com'
-      // will cause the browser to reject the cookie completely.
       const origin = request.headers.get('origin') || request.headers.get('host') || '';
       if (origin.includes('abbeygate-england.com')) {
         options.domain = '.abbeygate-england.com';
+        options.secure = true;
+        options.sameSite = 'lax';
       }
 
       // In development, strip domain/secure ONLY if strictly testing on localhost.
-      // If testing via a modified hosts file (e.g., local.abbeygate-england.com), we KEEP the domain.
       if (process.env.NODE_ENV === 'development') {
-        // We leave it to the user to either test on local.abbeygate-england.com or accept localhost won't handoff.
-        // Stripping secure is necessary for local HTTP.
         delete options.secure;
       }
 

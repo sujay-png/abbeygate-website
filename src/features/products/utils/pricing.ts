@@ -291,11 +291,13 @@ export function calculateProductPrice(
 
   const totalPrice = unitPrice * quantity;
 
-  const statusText = customizationEnabled
+  const statusText = isGifts
+    ? ""
+    : customizationEnabled
     ? "Including logo customisation"
     : "Not including logo customisation";
 
-  const statusColor = customizationEnabled ? "#1b7a1b" : "#7f56b3";
+  const statusColor = isGifts ? "" : customizationEnabled ? "#1b7a1b" : "#7f56b3";
 
   return {
     unitPrice,

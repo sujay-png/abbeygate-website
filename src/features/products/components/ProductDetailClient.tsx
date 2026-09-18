@@ -1165,7 +1165,7 @@ export const ProductDetailClient = ({
             </div>
 
             {/* Next Tier Savings */}
-            {!isGifts && tiers.length > 0 && (() => {
+            {tiers.length > 0 && (() => {
               const activeTierIndex = tiers.findIndex(tier => quantity >= tier.min && (tier.max === null || quantity <= tier.max));
               const nextTier = activeTierIndex >= 0 ? tiers[activeTierIndex + 1] : null;
               const savings = nextTier ? (priceDetails.unitPrice - nextTier.price) * nextTier.min : 0;
@@ -1195,7 +1195,7 @@ export const ProductDetailClient = ({
             </div>
 
             {/* Price Breaks Table */}
-            {!isGifts && tiers.length > 0 && (() => {
+            {tiers.length > 0 && (() => {
               const cornerPrice = hasCornerEdges ? cornerEdgesPricing.pricePerPair * CORNER_PAIRS_PER_PRODUCT : 0;
               let brandingColHeader = `Price per unit for ${customization.blockingType}`;
               if (customization.blockingType === 'UV Print') {
@@ -1312,13 +1312,11 @@ export const ProductDetailClient = ({
               >
                 {priceDetails.statusText}
               </p>
-            ) : (
+            ) : isGifts ? null : (
               <div className="text-[13px] text-gray-500">
-                {isGifts
-                  ? 'Excluding VAT'
-                  : customizationActive
-                    ? 'Including logo branding'
-                    : 'Excluding logo branding'}
+                {customizationActive
+                  ? 'Including logo branding'
+                  : 'Excluding logo branding'}
               </div>
             )}
           </div>
@@ -1421,7 +1419,7 @@ export const ProductDetailClient = ({
             )}
 
             {/* Savings Callout */}
-            {!isGifts && tiers.length > 0 && (() => {
+            {tiers.length > 0 && (() => {
               const currentTierIndex = tiers.findIndex(t => quantity >= t.min && (t.max === null || quantity <= t.max));
               const nextTier = currentTierIndex >= 0 && currentTierIndex < tiers.length - 1 ? tiers[currentTierIndex + 1] : null;
 
@@ -1457,8 +1455,8 @@ export const ProductDetailClient = ({
           </div>
 
           {/* VOLUME PRICING TABLE */}
-          {!isGifts && tiers.length > 0 && (() => {
-            const isNoCustomization = !customization.enabled;
+          {tiers.length > 0 && (() => {
+            const isNoCustomization = !isGifts && !customization.enabled;
 
             return (
               <div className="mt-1 border border-gray-200 rounded-lg bg-transparent overflow-hidden">
