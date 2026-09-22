@@ -16,6 +16,7 @@ import { TrustIndicators } from '@/components/home/TrustIndicators';
 import { Send, X, ChevronLeft, ChevronRight, ZoomIn, Check } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import * as idb from '@/lib/idb';
 
 import type { CustomTab } from '@/features/products/services/store-products';
 
@@ -230,20 +231,27 @@ export const ProductDetailClient = ({
     }
   }, [amendKey, items]);
 
-  // Rehydrate customization state from localStorage on mount
+  // Rehydrate customization state from IDB on mount
   useEffect(() => {
     if (!product || !product.slug || isGifts || amendKey) return;
-    try {
-      const draftStr = localStorage.getItem(`customization_draft_${product.slug}`);
+    idb.get(`customization_draft_${product.slug}`).then((draftStr: any) => {
       if (draftStr) {
-        const draft = JSON.parse(draftStr);
+        let draft: any = draftStr;
+        if (typeof draftStr === 'string') {
+          try {
+            draft = JSON.parse(draftStr);
+          } catch (e) {
+            draft = null;
+          }
+        }
         if (draft) {
           // If the draft contains a base64 logoPreviewUrl, convert it back to a File object for checkout
           if (draft.logoPreviewUrl && draft.logoPreviewUrl.startsWith('data:image')) {
             fetch(draft.logoPreviewUrl)
               .then(res => res.blob())
               .then(blob => {
-                const file = new File([blob], 'restored-logo.png', { type: blob.type });
+                const originalName = draft.fileName || 'restored-logo.png';
+                const file = new File([blob], originalName, { type: blob.type });
                 setCustomization({ ...draft, logoFile: file });
               })
               .catch(e => {
@@ -255,10 +263,9 @@ export const ProductDetailClient = ({
           }
         }
       }
-    } catch (e) {
+    }).catch(e => {
       console.error("Failed to rehydrate customization draft", e);
-      localStorage.removeItem(`customization_draft_${product.slug}`);
-    }
+    });
   }, [product, isGifts, amendKey]);
 
   // Persist customization state to localStorage on change
@@ -277,13 +284,9 @@ export const ProductDetailClient = ({
           ...customization,
           logoFile: undefined, // Cannot serialize File objects
         };
-        try {
-          localStorage.setItem(`customization_draft_${product.slug}`, JSON.stringify(draftState));
-        } catch (e) {
-          if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-            console.error("LocalStorage quota exceeded, cannot save customization state.");
-          }
-        }
+        idb.set(`customization_draft_${product.slug}`, JSON.stringify(draftState)).catch(e => {
+          console.error("IDB storage failed, cannot save customization state.", e);
+        });
       }, 500); // 500ms debounce
       return () => clearTimeout(timeoutId);
     }
@@ -293,6 +296,7 @@ export const ProductDetailClient = ({
   const [pendingPropagate, setPendingPropagate] = useState<{ amendKey: string; customization: any; siblingsCount: number } | null>(null);
   const [isPropagating, setIsPropagating] = useState(false);
   const [imageBounds, setImageBounds] = useState<{ top: number, bottom: number, left: number, right: number } | null>(null);
+  const [isCalculatingBounds, setIsCalculatingBounds] = useState(false);
   const [imageAspectRatio, setImageAspectRatio] = useState<number>(1);
 
   const handlePriceChange = useCallback((result: any) => {
@@ -436,11 +440,15 @@ export const ProductDetailClient = ({
       const configuredBounds = getConfiguredImageBounds(activeSrc);
       if (configuredBounds) {
         setImageBounds(configuredBounds);
+        setIsCalculatingBounds(false);
         return;
       }
 
+      setImageBounds(null);
+      setIsCalculatingBounds(true);
       getImageBoundingBox(activeSrc).then(bounds => {
-        if (bounds) setImageBounds(bounds);
+        setImageBounds(bounds);
+        setIsCalculatingBounds(false);
       });
     }
   }, [activeSrc]);
@@ -1043,7 +1051,7 @@ export const ProductDetailClient = ({
                           );
                         })}
                         {isCustomizingStarted && customizationActive && (
-                          <div className={`absolute inset-0 transition-opacity duration-500 z-20 ${isCustomizationSurface ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+                          <div className={`absolute inset-0 transition-opacity duration-500 z-20 ${isCustomizationSurface && !isCalculatingBounds ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
                             <ProductCustomizationOverlay
                               product={product}
                               customization={customization}
@@ -1159,7 +1167,7 @@ export const ProductDetailClient = ({
                     sizes="80vw"
                     className="object-contain"
                   />
-                  {isCustomizationSurface && isCustomizingStarted && customizationActive && (
+                  {isCustomizationSurface && isCustomizingStarted && customizationActive && !isCalculatingBounds && (
                     <ProductCustomizationOverlay
                       product={product}
                       customization={customization}
@@ -1339,24 +1347,42 @@ export const ProductDetailClient = ({
         <div className={`relative z-20 flex flex-col gap-4 ${isCustomizingStarted && customizationActive ? 'hidden' : ''}`}>
 
           {/* Collection Name */}
-          <div className="text-[13px] font-bold tracking-widest text-brand-primary uppercase">
+          <div className="text-[13px] font-bold tracking-widest uppercase">
             {(() => {
               const collectionNames = ['richmond', 'dorchester', 'harrogate', 'lewes', 'chelsea', 'windsor', 'conscious'];
-              const collectionCategory = product.categories?.find(c =>
-                collectionNames.some(name => c.name.toLowerCase().includes(name) || c.slug.toLowerCase().includes(name))
-              );
+              let matchedName: string | null = null;
+              
+              const collectionCategory = product.categories?.find(c => {
+                const match = collectionNames.find(name => c.name.toLowerCase().includes(name) || c.slug.toLowerCase().includes(name));
+                if (match) {
+                  matchedName = match;
+                  return true;
+                }
+                return false;
+              });
+
+              let label = 'COLLECTION';
+              let href = '/collection';
+
               if (collectionCategory) {
-                return `${collectionCategory.name.toUpperCase().replace(' COLLECTION', '')} COLLECTION`;
+                label = `${collectionCategory.name.toUpperCase().replace(' COLLECTION', '')} COLLECTION`;
+                href = `/collection/${matchedName}`;
+              } else {
+                const fallback = product.categories?.find(c =>
+                  !['diaries', 'notebooks', 'gifts', 'accessories'].some(name => c.name.toLowerCase().includes(name))
+                );
+                if (fallback) {
+                  label = `${fallback.name.toUpperCase().replace(' COLLECTION', '')} COLLECTION`;
+                } else if (product.categories?.[0]?.name) {
+                  label = `${product.categories[0].name.toUpperCase().replace(' COLLECTION', '')} COLLECTION`;
+                }
               }
-              const fallback = product.categories?.find(c =>
-                !['diaries', 'notebooks', 'gifts', 'accessories'].some(name => c.name.toLowerCase().includes(name))
+
+              return (
+                <Link href={href} className="text-brand-primary hover:text-brand-primary-dark transition-colors">
+                  {label}
+                </Link>
               );
-              if (fallback) {
-                return `${fallback.name.toUpperCase().replace(' COLLECTION', '')} COLLECTION`;
-              }
-              return product.categories?.[0]?.name
-                ? `${product.categories[0].name.toUpperCase().replace(' COLLECTION', '')} COLLECTION`
-                : 'COLLECTION';
             })()}
           </div>
 

@@ -31,8 +31,15 @@ export const CartDrawer = () => {
 
   useEffect(() => {
     if (isOpen) {
+      document.body.style.overflow = 'hidden';
       checkAuthStatus().then(setIsLoggedIn);
+    } else {
+      document.body.style.overflow = '';
     }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [isOpen]);
 
   const shortfalls = validateCustomisationMinimums(rawItems);

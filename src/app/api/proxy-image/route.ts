@@ -37,13 +37,30 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Forbidden image source' }, { status: 403 });
     }
 
-    const response = await fetch(finalUrl, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
-        Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-      },
-    });
+    let response;
+    let retries = 1;
+    while (retries >= 0) {
+      try {
+        response = await fetch(finalUrl, {
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+            Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+          },
+        });
+        break; // success
+      } catch (err: any) {
+        if (retries === 0) throw err;
+        console.warn(`Proxy fetch failed, retrying... (${err.message})`);
+        retries--;
+        await new Promise(res => setTimeout(res, 500)); // wait 500ms before retry
+      }
+    }
+
+    if (!response) {
+      throw new Error('Proxy fetch failed unexpectedly');
+    }
+
     if (!response.ok) {
       throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
     }

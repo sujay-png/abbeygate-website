@@ -2,7 +2,10 @@ import { Suspense } from 'react';
 import { Container } from '@/components/ui/Container';
 import { Breadcrumb } from '@/components/content/Breadcrumb';
 import { ProductGrid } from '@/features/products/components/ProductGrid';
+import { ProductFilters } from '@/features/products/components/ProductFilters';
 import { getStoreProducts } from '@/features/products/services/store-products';
+import { getFilterDataForProducts } from '@/features/products/services/filter-helpers';
+import { parseFiltersFromSearchParams, productMatchesFilters, sortProducts, type SortOption } from '@/features/products/utils/product-helpers';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -14,7 +17,7 @@ export const metadata: Metadata = {
 };
 
 type SearchPageProps = {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
@@ -40,7 +43,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   // so if someone searches "SKU: NH-BK", cleanQuery is "nhbk", which matches the product's clean SKU.
   const cleanQuery = query.toLowerCase().replace(/sku:?/g, '').replace(/[\W_]+/g, '');
   
-  const products = uniqueProducts.filter((product) => {
+  const searchedProductsRaw = uniqueProducts.filter((product) => {
     // Include the word "sku" in the searchable text just in case!
     const searchableText = `${product.name} sku ${product.sku || ''} ${product.description || ''} ${product.short_description || ''}`.toLowerCase();
     const cleanSearchableText = searchableText.replace(/sku/g, '').replace(/[\W_]+/g, '');
@@ -59,6 +62,30 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     });
   });
 
+  // Get filter terms and inject Product Type based on the found products
+  const { allProducts: searchedProducts, filterAttributes, attributeTerms } = await getFilterDataForProducts(searchedProductsRaw);
+
+  const filters = parseFiltersFromSearchParams(params);
+  const sort = typeof params?.sort === 'string' ? params.sort : 'date-new';
+  const filteredProducts = sortProducts(
+    searchedProducts.filter((p) => productMatchesFilters(p, filters)),
+    sort as SortOption
+  );
+
+  // Check if any of the matched search results have specific attributes so we can grey out columns
+  const hasSize = searchedProducts.some(p => p.attributes.some(a => a.taxonomy === 'pa_size'));
+  const hasLayout = searchedProducts.some(p => p.attributes.some(a => a.taxonomy === 'pa_layout'));
+  const hasColour = searchedProducts.some(p => p.attributes.some(a => a.taxonomy === 'pa_colour'));
+  const hasCollection = searchedProducts.some(p => p.attributes.some(a => a.taxonomy === 'pa_collection'));
+  const hasProductType = searchedProducts.some(p => p.attributes.some(a => a.taxonomy === 'pa_product-type'));
+
+  const filterConfig = {
+    disableCollection: !hasCollection,
+    disableLayout: !hasLayout,
+    disableSize: !hasSize,
+    disableProductType: !hasProductType,
+  };
+
   return (
     <div className="bg-brand-cream min-h-screen">
       <Breadcrumb paths={[{ label: 'Home', href: '/' }, { label: 'Search Results' }]} />
@@ -68,23 +95,41 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           <h1 className="text-3xl md:text-4xl font-extrabold text-brand-body mb-4">
             Search Results
           </h1>
-          {products.length > 0 && (
+          {searchedProducts.length > 0 && (
             <p className="text-gray-700">
-              Found {products.length} product{products.length === 1 ? '' : 's'} for "{query}"
+              Found {searchedProducts.length} product{searchedProducts.length === 1 ? '' : 's'} for "{query}"
             </p>
           )}
         </div>
 
-        {products.length > 0 ? (
-          <Suspense fallback={<div className="py-10 text-center">Loading products...</div>}>
-            <ProductGrid products={products} />
-          </Suspense>
-        ) : (
-          <div className="py-16 text-center text-gray-500 abbeygate-search-no-results">
-            <p className="mb-4 text-lg">
-              Sorry, we can't find any results for "<strong>{query}</strong>", please try again or browse the navigation.
-            </p>
+        {searchedProducts.length > 0 && (
+          <ProductFilters
+            products={searchedProducts}
+            attributes={filterAttributes}
+            attributeTerms={attributeTerms}
+            filterConfig={filterConfig}
+            resultCount={filteredProducts.length}
+          />
+        )}
+
+        {filteredProducts.length > 0 ? (
+          <div className="mt-8">
+            <Suspense fallback={<div className="py-10 text-center">Loading products...</div>}>
+              <ProductGrid products={filteredProducts} />
+            </Suspense>
           </div>
+        ) : (
+          searchedProducts.length > 0 ? (
+            <div className="py-16 text-center text-gray-500">
+              <p className="mb-4 text-lg">No products match your selected filters.</p>
+            </div>
+          ) : (
+            <div className="py-16 text-center text-gray-500 abbeygate-search-no-results">
+              <p className="mb-4 text-lg">
+                Sorry, we can't find any results for "<strong>{query}</strong>", please try again or browse the navigation.
+              </p>
+            </div>
+          )
         )}
       </Container>
     </div>

@@ -23,6 +23,7 @@ export type CustomizationState = {
   blockingType: string;
   foilColor?: string;
   logoFile?: File;
+  fileName?: string;
   logoPreviewUrl?: string;
   logoScale: number;
   logoPosition: { x: number; y: number; label?: string; leftPercent?: number; topPercent?: number };
@@ -220,6 +221,7 @@ export const ProductCustomizer = ({
                     onCustomizationChange({
                       ...customization,
                       logoFile: file,
+                      fileName: file.name,
                       logoPreviewUrl: processedUrl,
                     });
                     // Auto-scroll up to see the logo applied to the product image
@@ -234,6 +236,7 @@ export const ProductCustomizer = ({
                       onCustomizationChange({
                         ...customization,
                         logoFile: file,
+                        fileName: file.name,
                         logoPreviewUrl: ev.target?.result as string,
                       });
                       setTimeout(() => {

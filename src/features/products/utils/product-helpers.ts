@@ -184,6 +184,8 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
 
   return new Promise((resolve) => {
     const img = new window.Image();
+    img.crossOrigin = 'anonymous';
+    
     img.onload = () => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -362,3 +364,40 @@ export function sortProductsCommercially(products: StoreProduct[]): StoreProduct
     return a.name.localeCompare(b.name);
   });
 }
+
+export type SortOption = 
+  | 'date-new' 
+  | 'date-old' 
+  | 'price-low' 
+  | 'price-high' 
+  | 'bestselling';
+
+export function sortProducts(products: StoreProduct[], sort: SortOption = 'date-new'): StoreProduct[] {
+  const sorted = [...products];
+
+  switch (sort) {
+    case 'price-low':
+      return sorted.sort((a, b) => {
+        const priceA = parseFloat(a.prices?.price || '0');
+        const priceB = parseFloat(b.prices?.price || '0');
+        return priceA - priceB;
+      });
+    case 'price-high':
+      return sorted.sort((a, b) => {
+        const priceA = parseFloat(a.prices?.price || '0');
+        const priceB = parseFloat(b.prices?.price || '0');
+        return priceB - priceA;
+      });
+    case 'date-old':
+      // Assuming lower ID is older
+      return sorted.sort((a, b) => a.id - b.id);
+    case 'bestselling':
+      // Fallback to commercial sort which groups by logical product type/collection
+      return sortProductsCommercially(products);
+    case 'date-new':
+    default:
+      // Assuming higher ID is newer
+      return sorted.sort((a, b) => b.id - a.id);
+  }
+}
+

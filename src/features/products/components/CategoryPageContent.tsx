@@ -4,7 +4,7 @@ import { ProductGrid } from './ProductGrid';
 import { ProductFilters } from './ProductFilters';
 import type { StoreProduct, StoreAttribute, StoreAttributeTerm } from '../types/store-product';
 import type { FilterConfig } from '@/data/category-routes';
-import { productMatchesFilters, sortProductsCommercially } from '../utils/product-helpers';
+import { productMatchesFilters, sortProducts, type SortOption } from '../utils/product-helpers';
 import type { ProductFilters as ProductFiltersType } from '../types/store-product';
 import { ExpandableDescription } from './ExpandableDescription';
 
@@ -17,6 +17,7 @@ type CategoryPageContentProps = {
   attributes: StoreAttribute[];
   attributeTerms: Record<number, StoreAttributeTerm[]>;
   filterConfig: FilterConfig;
+  sort?: string;
 };
 
 export const CategoryPageContent = ({
@@ -28,8 +29,12 @@ export const CategoryPageContent = ({
   attributes,
   attributeTerms,
   filterConfig,
+  sort = 'date-new',
 }: CategoryPageContentProps) => {
-  const filteredProducts = sortProductsCommercially(allProducts.filter((p) => productMatchesFilters(p, filters)));
+  const filteredProducts = sortProducts(
+    allProducts.filter((p) => productMatchesFilters(p, filters)),
+    sort as SortOption
+  );
 
   return (
     <div className="bg-brand-cream min-h-screen">
