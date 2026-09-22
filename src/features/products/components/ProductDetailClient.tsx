@@ -703,6 +703,42 @@ export const ProductDetailClient = ({
     return false;
   };
 
+  const formatHyphenBullets = (html: string) => {
+    if (!html) return html;
+    
+    let normalized = html.replace(/>\s*-\s+/g, '> - ');
+    if (normalized.trim().startsWith('- ')) {
+      normalized = ' - ' + normalized.trim().substring(2);
+    }
+    
+    const parts = normalized.split(/(?:<br\s*\/?>\s*-\s*|\s+-\s+)/);
+    
+    if (parts.length <= 1) return html;
+
+    let result = '';
+    const intro = parts[0].trim();
+    if (intro && intro !== '<p>' && intro !== '<div>') {
+      result += intro;
+      if (intro.startsWith('<p>') && !intro.includes('</p>')) {
+        result += '</p>';
+      }
+    }
+
+    result += '<ul class="list-disc pl-5 space-y-1 mt-3 mb-3">';
+    for (let i = 1; i < parts.length; i++) {
+      let item = parts[i].trim();
+      if (i === parts.length - 1) {
+        item = item.replace(/<\/p>$/, '').replace(/<\/div>$/, '');
+      }
+      if (item) {
+        result += `<li>${item}</li>`;
+      }
+    }
+    result += '</ul>';
+
+    return result;
+  };
+
   const renderAccordions = (includeDescription: boolean = false) => (
     <>
       {includeDescription && (
@@ -715,38 +751,56 @@ export const ProductDetailClient = ({
             {(() => {
               const customDesc = customTabs.find(t => t.title.trim().toLowerCase() === 'description');
               const descHtml = customDesc ? customDesc.content : product.description;
-              if (descHtml) {
-                return (
-                  <div
-                    className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
-                    dangerouslySetInnerHTML={{ __html: descHtml }}
-                  />
-                );
-              }
-              return <p className="italic">No description available.</p>;
+              return (
+                <>
+                  {descHtml ? (
+                    <div
+                      className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
+                      dangerouslySetInnerHTML={{ __html: descHtml }}
+                    />
+                  ) : (
+                    <p className="italic">No description available.</p>
+                  )}
+                  
+                  {product.attributes.length > 0 && (
+                    <div className="mt-4">
+                      <ul className="list-disc pl-5 space-y-1">
+                        {product.attributes.map(attr => (
+                          <li key={attr.id}><span className="font-semibold">{attr.name}:</span> {attr.terms.map(t => t.name).join(', ')}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              );
             })()}
           </div>
         </details>
       )}
 
-      {/* Specifications Accordion */}
-      <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
-        <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
-          <span>Specifications</span>
-          <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
-        </summary>
-        <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
-          {product.attributes.length > 0 ? (
-            <ul className="list-disc pl-5 space-y-1">
-              {product.attributes.map(attr => (
-                <li key={attr.id}><span className="font-semibold">{attr.name}:</span> {attr.terms.map(t => t.name).join(', ')}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="italic">No additional specifications available.</p>
-          )}
-        </div>
-      </details>
+      {/* Specifications Accordion (Sourced from Special Features) */}
+      {(() => {
+        const specialFeaturesTab = customTabs.find(t => {
+          const title = t.title.trim().toLowerCase();
+          return title === 'special features' || title === 'special feature';
+        });
+        if (!specialFeaturesTab) return null;
+        
+        return (
+          <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
+            <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
+              <span>Specifications</span>
+              <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
+            </summary>
+            <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
+              <div
+                className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
+                dangerouslySetInnerHTML={{ __html: formatHyphenBullets(specialFeaturesTab.content) }}
+              />
+            </div>
+          </details>
+        );
+      })()}
 
       {/* Delivery Accordion */}
       {(() => {
@@ -757,6 +811,11 @@ export const ProductDetailClient = ({
 
         if (!deliveryTab) return null;
 
+        // Remove speech/quotation marks from the start and end of the text/HTML
+        const formattedDeliveryContent = deliveryTab.content
+          .replace(/(^|<[^>]+>)\s*["“”']/g, '$1')
+          .replace(/["“”']\s*(<\/[^>]+>|$)/g, '$1');
+
         return (
           <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
             <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
@@ -766,7 +825,7 @@ export const ProductDetailClient = ({
             <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
               <div
                 className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
-                dangerouslySetInnerHTML={{ __html: deliveryTab.content }}
+                dangerouslySetInnerHTML={{ __html: formattedDeliveryContent }}
               />
             </div>
           </details>
@@ -776,7 +835,7 @@ export const ProductDetailClient = ({
       {/* Other Custom Tabs Accordions */}
       {customTabs.filter(t => {
         const title = t.title.trim().toLowerCase();
-        return title !== 'description' && title !== 'shipping' && title !== 'delivery';
+        return title !== 'description' && title !== 'shipping' && title !== 'delivery' && title !== 'special features' && title !== 'special feature';
       }).map((tab, idx) => (
         <details key={idx} className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
           <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
@@ -786,7 +845,9 @@ export const ProductDetailClient = ({
           <div className="p-4 border-t border-gray-200 text-[14px] text-gray-600">
             <div
               className="leading-relaxed prose prose-sm max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-brand-primary-dark hover:prose-a:text-gray-600"
-              dangerouslySetInnerHTML={{ __html: tab.content }}
+              dangerouslySetInnerHTML={{ 
+                __html: tab.title.trim().toLowerCase() === 'quality information' ? formatHyphenBullets(tab.content) : tab.content 
+              }}
             />
           </div>
         </details>
