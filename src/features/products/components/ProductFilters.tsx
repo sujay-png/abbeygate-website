@@ -211,7 +211,7 @@ const ProductFiltersInner = ({
   );
 
   const renderSortDropdown = () => (
-    <div className="absolute top-full left-[-1px] w-[calc(100%+2px)] bg-brand-cream border border-brand-border border-t-0 z-50 shadow-[0_4px_10px_rgba(0,0,0,0.08)]">
+    <div className="absolute top-full left-[-1px] w-[calc(100%+2px)] bg-brand-cream border border-brand-border border-t-0 z-40 shadow-[0_4px_10px_rgba(0,0,0,0.08)]">
       <div className="flex flex-col py-2">
         {SORT_OPTIONS.map((opt) => (
           <button
@@ -270,7 +270,7 @@ const ProductFiltersInner = ({
               Sort By
             </button>
             {openDropdown === 'sort' && (
-              <div className="absolute top-full left-0 right-0 w-full min-w-[200px] bg-brand-cream border-b border-brand-border shadow-md z-50">
+              <div className="absolute top-full left-0 right-0 w-full min-w-[200px] bg-brand-cream border-b border-brand-border shadow-md z-40">
                 <div className="flex flex-col p-2">
                   {SORT_OPTIONS.map((opt) => (
                     <button
@@ -343,7 +343,7 @@ const ProductFiltersInner = ({
                 </button>
 
                 {openDropdown === key && !disabled && (
-                  <div className="absolute top-full left-[-1px] w-[calc(100%+2px)] bg-brand-cream border border-brand-border border-t-0 z-50 max-h-[300px] overflow-y-auto shadow-[0_4px_10px_rgba(0,0,0,0.08)]" data-lenis-prevent>
+                  <div className="absolute top-full left-[-1px] w-[calc(100%+2px)] bg-brand-cream border border-brand-border border-t-0 z-40 max-h-[300px] overflow-y-auto shadow-[0_4px_10px_rgba(0,0,0,0.08)]" data-lenis-prevent>
                     <div className="p-4 flex flex-col gap-2.5">
                       {terms.map((term) => {
                         const count = countProductsForTerm(
