@@ -302,3 +302,63 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
     img.src = srcToLoad;
   });
 }
+
+export function getProductTypeWeight(product: StoreProduct): number {
+  const catNames = product.categories.map(c => c.name.toLowerCase());
+  const hasCat = (keyword: string) => catNames.some(c => c.includes(keyword));
+
+  if (hasCat('diar')) return 1;
+  if (hasCat('notebook')) return 2;
+  if (hasCat('passport')) return 3;
+  if (hasCat('luggage')) return 4;
+  if (hasCat('card')) return 5;
+  if (hasCat('key')) return 6;
+  
+  return 99;
+}
+
+export function getCollectionWeight(product: StoreProduct): number {
+  let keywords: string[] = [];
+  
+  const collectionAttr = product.attributes.find(a => a.taxonomy === 'pa_collection');
+  if (collectionAttr) {
+    keywords = keywords.concat(collectionAttr.terms.map(t => t.name.toLowerCase()));
+  }
+  
+  keywords = keywords.concat(product.categories.map(c => c.name.toLowerCase()));
+  keywords.push(product.name.toLowerCase());
+
+  const hasKeyword = (k: string) => keywords.some(kw => kw.includes(k));
+
+  if (hasKeyword('chelsea')) return 1;
+  if (hasKeyword('windsor')) return 2;
+  if (hasKeyword('apple')) return 3;
+  if (hasKeyword('ocean')) return 4;
+  if (hasKeyword('dorchester')) return 5;
+  if (hasKeyword('harrogate')) return 6;
+  if (hasKeyword('richmond')) return 7;
+  if (hasKeyword('lewes')) return 8;
+
+  return 99;
+}
+
+export function sortProductsCommercially(products: StoreProduct[]): StoreProduct[] {
+  return [...products].sort((a, b) => {
+    // 1. Product Type
+    const weightA = getProductTypeWeight(a);
+    const weightB = getProductTypeWeight(b);
+    if (weightA !== weightB) {
+      return weightA - weightB;
+    }
+
+    // 2. Collection / Material
+    const collWeightA = getCollectionWeight(a);
+    const collWeightB = getCollectionWeight(b);
+    if (collWeightA !== collWeightB) {
+      return collWeightA - collWeightB;
+    }
+
+    // 3. Name (Alphabetical, to group variants)
+    return a.name.localeCompare(b.name);
+  });
+}

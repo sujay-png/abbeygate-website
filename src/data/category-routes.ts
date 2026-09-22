@@ -174,7 +174,7 @@ export function getFilterConfigForPath(path: string): FilterConfig {
     disableSize = false;
   }
 
-  const disableProductType = !pathLower.includes("custom-gifts");
+  const disableProductType = !pathLower.includes("custom-gifts") && !pathLower.includes("collection");
 
   const dynamicConfig = { disableCollection, disableLayout, disableSize, disableProductType };
 

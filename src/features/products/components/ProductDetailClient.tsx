@@ -706,7 +706,7 @@ export const ProductDetailClient = ({
   const renderAccordions = (includeDescription: boolean = false) => (
     <>
       {includeDescription && (
-        <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
+        <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4 description-accordion-element">
           <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-4 text-[14px] text-brand-body">
             <span>Description</span>
             <span className="transition group-open:rotate-45 text-xl leading-none">+</span>
@@ -1277,45 +1277,72 @@ export const ProductDetailClient = ({
         {/* Right: normal product details */}
         <div className={`relative z-20 flex flex-col gap-4 ${isCustomizingStarted && customizationActive ? 'hidden' : ''}`}>
 
-          <div>
-            <div className="text-[13px] font-bold tracking-widest text-brand-primary uppercase mb-2">
-              {(() => {
-                const collectionNames = ['richmond', 'dorchester', 'harrogate', 'lewes', 'chelsea', 'windsor', 'conscious'];
-                const collectionCategory = product.categories?.find(c =>
-                  collectionNames.some(name => c.name.toLowerCase().includes(name) || c.slug.toLowerCase().includes(name))
-                );
-                if (collectionCategory) {
-                  return `${collectionCategory.name.toUpperCase().replace(' COLLECTION', '')} COLLECTION`;
-                }
-                const fallback = product.categories?.find(c =>
-                  !['diaries', 'notebooks', 'gifts', 'accessories'].some(name => c.name.toLowerCase().includes(name))
-                );
-                if (fallback) {
-                  return `${fallback.name.toUpperCase().replace(' COLLECTION', '')} COLLECTION`;
-                }
-                return product.categories?.[0]?.name
-                  ? `${product.categories[0].name.toUpperCase().replace(' COLLECTION', '')} COLLECTION`
-                  : 'COLLECTION';
-              })()}
-            </div>
-            <h1
-              className="text-2xl lg:text-[32px] font-bold leading-tight mb-2"
-              style={{ color: 'var(--brand-body)' }}
-            >
-              {product.name}
-            </h1>
-
-            {product.short_description && (
-              <div
-                className="text-[15px] text-brand-body mb-2"
-                dangerouslySetInnerHTML={{ __html: product.short_description }}
-              />
-            )}
+          {/* Collection Name */}
+          <div className="text-[13px] font-bold tracking-widest text-brand-primary uppercase">
+            {(() => {
+              const collectionNames = ['richmond', 'dorchester', 'harrogate', 'lewes', 'chelsea', 'windsor', 'conscious'];
+              const collectionCategory = product.categories?.find(c =>
+                collectionNames.some(name => c.name.toLowerCase().includes(name) || c.slug.toLowerCase().includes(name))
+              );
+              if (collectionCategory) {
+                return `${collectionCategory.name.toUpperCase().replace(' COLLECTION', '')} COLLECTION`;
+              }
+              const fallback = product.categories?.find(c =>
+                !['diaries', 'notebooks', 'gifts', 'accessories'].some(name => c.name.toLowerCase().includes(name))
+              );
+              if (fallback) {
+                return `${fallback.name.toUpperCase().replace(' COLLECTION', '')} COLLECTION`;
+              }
+              return product.categories?.[0]?.name
+                ? `${product.categories[0].name.toUpperCase().replace(' COLLECTION', '')} COLLECTION`
+                : 'COLLECTION';
+            })()}
           </div>
 
+          {/* Title */}
+          <h1
+            className="text-2xl lg:text-[32px] font-bold leading-tight"
+            style={{ color: 'var(--brand-body)' }}
+          >
+            {product.name}
+          </h1>
+
+          {/* Description */}
+          {product.short_description && (() => {
+            const plainText = product.short_description.replace(/<[^>]+>/g, '').trim();
+            const shouldTruncate = plainText.length > 250;
+            const truncated = shouldTruncate ? plainText.substring(0, 250).trim() + '...' : plainText;
+
+            return (
+              <div className="flex flex-col gap-2">
+                <p className="text-[15px] text-brand-body leading-relaxed">{truncated}</p>
+                <button 
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const accordions = document.querySelectorAll('.description-accordion-element');
+                    accordions.forEach((el) => {
+                      if (el instanceof HTMLDetailsElement) {
+                        el.open = true;
+                        // Only scroll to the visible one
+                        if (el.offsetParent !== null) {
+                          const y = el.getBoundingClientRect().top + window.scrollY - 200;
+                          window.scrollTo({ top: y, behavior: 'smooth' });
+                        }
+                      }
+                    });
+                  }}
+                  className="text-[14px] font-bold text-brand-primary underline text-left hover:text-brand-primary-dark transition-colors w-fit"
+                >
+                  See more product information
+                </button>
+              </div>
+            );
+          })()}
+
           {/* PRICE BLOCK */}
-          <div>
-            <div className="flex flex-wrap items-center gap-3 mb-1">
+          <div className="flex flex-col gap-1">
+            <div className="flex flex-wrap items-center gap-3">
               <div className="text-[20px] font-bold text-brand-body">
                 {formatDisplayedPrice(priceDetails.unitPrice)} <span className="text-[14px] font-normal text-gray-500">({displayedVatLabel})</span>
               </div>
@@ -1323,7 +1350,7 @@ export const ProductDetailClient = ({
 
             {priceDetails.statusText ? (
               <p
-                className="text-[14px] font-semibold mt-1"
+                className="text-[14px] font-semibold"
                 style={{ color: priceDetails.statusColor }}
               >
                 {priceDetails.statusText}
@@ -1337,45 +1364,40 @@ export const ProductDetailClient = ({
             )}
           </div>
 
-          <div className="text-[13px] text-gray-500 mb-2">
+          <div className="text-[13px] text-gray-500">
             SKU: {product.sku}
           </div>
 
 
           {/* Available Colours Section */}
           {colorVariants.length > 0 && (
-            <>
-              <hr className="border-gray-200" />
-              <div className="mt-2 mb-2">
-                <span className="text-[14px] font-bold text-brand-body block mb-3">Colour: {product.name.split(', ').pop() || 'Selected'}</span>
-                <div className="flex flex-wrap items-center gap-2">
-                  {colorVariants.map((color) => {
-                    const isActive = product.slug === color.slug;
-                    return (
-                      <button
-                        key={color.slug}
-                        title={color.name}
-                        onClick={() => {
-                          if (color.fullProduct) {
-                            setProduct(color.fullProduct);
-                            window.history.replaceState({}, '', `/product/${color.slug}`);
-                          }
-                        }}
-                        className={`w-8 h-8 rounded-full shadow-sm transition-transform hover:scale-110 ${isActive ? 'ring-2 ring-offset-2 ring-brand-body scale-110' : 'border border-gray-300'
-                          }`}
-                        style={{ backgroundColor: color.hex }}
-                      />
-                    );
-                  })}
-                </div>
+            <div>
+              <span className="text-[14px] font-bold text-brand-body block mb-3">Colour: {product.name.split(', ').pop() || 'Selected'}</span>
+              <div className="flex flex-wrap items-center gap-2">
+                {colorVariants.map((color) => {
+                  const isActive = product.slug === color.slug;
+                  return (
+                    <button
+                      key={color.slug}
+                      title={color.name}
+                      onClick={() => {
+                        if (color.fullProduct) {
+                          setProduct(color.fullProduct);
+                          window.history.replaceState({}, '', `/product/${color.slug}`);
+                        }
+                      }}
+                      className={`w-8 h-8 rounded-full shadow-sm transition-transform hover:scale-110 ${isActive ? 'ring-2 ring-offset-2 ring-brand-body scale-110' : 'border border-gray-300'
+                        }`}
+                      style={{ backgroundColor: color.hex }}
+                    />
+                  );
+                })}
               </div>
-            </>
+            </div>
           )}
 
-          <hr className="border-gray-200" />
-
           {/* Quantity & Actions (Unwrapped) */}
-          <div className="flex flex-col gap-4 mt-2">
+          <div className="flex flex-col gap-4">
             <div className="flex justify-between items-start">
               <label className="text-[14px] font-bold text-brand-body mt-2">Quantity</label>
               <div className="flex flex-col items-end gap-2">
@@ -1514,10 +1536,8 @@ export const ProductDetailClient = ({
           })()}
 
 
-          <hr className="border-gray-200" />
-
           {/* Accordions in Normal View */}
-          <div className="mt-2">
+          <div>
             {renderAccordions(true)}
           </div>
 

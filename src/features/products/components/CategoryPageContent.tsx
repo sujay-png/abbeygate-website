@@ -4,8 +4,9 @@ import { ProductGrid } from './ProductGrid';
 import { ProductFilters } from './ProductFilters';
 import type { StoreProduct, StoreAttribute, StoreAttributeTerm } from '../types/store-product';
 import type { FilterConfig } from '@/data/category-routes';
-import { productMatchesFilters } from '../utils/product-helpers';
+import { productMatchesFilters, sortProductsCommercially } from '../utils/product-helpers';
 import type { ProductFilters as ProductFiltersType } from '../types/store-product';
+import { ExpandableDescription } from './ExpandableDescription';
 
 type CategoryPageContentProps = {
   title: string;
@@ -28,13 +29,20 @@ export const CategoryPageContent = ({
   attributeTerms,
   filterConfig,
 }: CategoryPageContentProps) => {
-  const filteredProducts = allProducts.filter((p) => productMatchesFilters(p, filters));
+  const filteredProducts = sortProductsCommercially(allProducts.filter((p) => productMatchesFilters(p, filters)));
 
   return (
     <div className="bg-brand-cream min-h-screen">
       <Breadcrumb paths={[{ label: 'Home', href: '/' }, ...breadcrumbItems]} />
 
       <Container className="py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-brand-primary-dark mb-4 leading-tight tracking-tight">
+            {title}
+          </h1>
+          {description && <ExpandableDescription description={description} />}
+        </div>
+
         <ProductFilters
           products={allProducts}
           attributes={attributes}
@@ -43,21 +51,8 @@ export const CategoryPageContent = ({
           resultCount={filteredProducts.length}
         />
 
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 mt-8">
-          <div className="lg:w-[30%] flex-shrink-0">
-            <h1 className="text-3xl md:text-4xl font-extrabold text-brand-primary-dark mb-4 leading-tight tracking-tight">
-              {title}
-            </h1>
-            {description && (
-              <div
-                className="prose prose-sm text-brand-body max-w-full [&>p]:leading-relaxed line-clamp-3 lg:line-clamp-none overflow-hidden"
-                dangerouslySetInnerHTML={{ __html: description }}
-              />
-            )}
-          </div>
-          <div className="lg:w-[70%]">
-            <ProductGrid products={filteredProducts} />
-          </div>
+        <div className="mt-8">
+          <ProductGrid products={filteredProducts} />
         </div>
       </Container>
     </div>
