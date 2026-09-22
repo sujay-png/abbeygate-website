@@ -426,7 +426,9 @@ export const ProductDetailClient = ({
     if (activeSrc) {
       const activeImage = product.images.find(img => img.src === activeSrc || img.thumbnail === activeSrc);
       if (activeImage && activeImage.width && activeImage.height && activeImage.height > 0) {
-        setImageAspectRatio(activeImage.width / activeImage.height);
+        setTimeout(() => {
+          setImageAspectRatio(activeImage.width! / activeImage.height!);
+        }, 0);
       } else {
         const img = new window.Image();
         img.onload = () => {
@@ -462,8 +464,10 @@ export const ProductDetailClient = ({
       document.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
       // Reset any zooming state when opening modal
-      setIsZooming(false);
-      setZoomOrigin('center center');
+      setTimeout(() => {
+        setIsZooming(false);
+        setZoomOrigin('center center');
+      }, 0);
     } else {
       document.body.style.overflow = '';
     }
