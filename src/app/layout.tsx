@@ -88,6 +88,11 @@ export default function RootLayout({
       style={{ colorScheme: "light" }}
       suppressHydrationWarning
     >
+      {/* Preconnect to WordPress checkout domain so the TLS handshake is already
+          done when the user clicks "Proceed to Checkout" from the cart page. */}
+      <link rel="preconnect" href="https://dashboard.abbeygate-england.com" />
+      <link rel="dns-prefetch" href="https://dashboard.abbeygate-england.com" />
+
       <body
         className="min-h-screen flex flex-col bg-brand-cream text-brand-body"
         suppressHydrationWarning

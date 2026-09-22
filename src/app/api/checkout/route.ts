@@ -41,50 +41,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No items in cart' }, { status: 400 });
     }
 
-    // 1. Find existing session cookie
+    // We deliberately ignore any existing WooCommerce session cookie.
+    // By NOT sending a session cookie on the first add_to_cart request,
+    // WooCommerce will instantly create a brand new, empty session.
+    // This entirely skips the need to fetch the old cart and send DELETE requests for every item.
+    
     let sessionCookieName = '';
     let sessionCookieValue = '';
-    
-    for (const cookie of request.cookies.getAll()) {
-      if (cookie.name.startsWith('wp_woocommerce_session_')) {
-        sessionCookieName = cookie.name;
-        sessionCookieValue = cookie.value;
-        break;
-      }
-    }
-
-    // 2. Clear existing WooCommerce cart (if session exists)
-    if (sessionCookieName && sessionCookieValue) {
-      const cookieStr = `${sessionCookieName}=${sessionCookieValue}`;
-      
-      const cartRes = await fetch(`${WOOCOMMERCE_STORE_URL}/wp-json/wc/store/v1/cart`, {
-        method: 'GET',
-        headers: {
-          'Cookie': cookieStr,
-        }
-      });
-      
-      if (cartRes.ok) {
-        const nonce = cartRes.headers.get('nonce');
-        const cartData = await cartRes.json();
-        
-        if (nonce && cartData.items && cartData.items.length > 0) {
-          // Delete each item sequentially
-          for (const wcItem of cartData.items) {
-            await fetch(`${WOOCOMMERCE_STORE_URL}/wp-json/wc/store/v1/cart/items/${wcItem.key}`, {
-              method: 'DELETE',
-              headers: {
-                'Cookie': cookieStr,
-                'Nonce': nonce,
-              }
-            });
-          }
-        }
-      }
-    }
-
-    // 3. Add Next.js cart items sequentially
-    let finalSessionCookieStr = sessionCookieName ? `${sessionCookieName}=${sessionCookieValue}` : '';
+    let finalSessionCookieStr = '';
     
     // Accumulate all cookies received from WooCommerce during the sync
     const accumulatedCookies = new Map<string, string>();

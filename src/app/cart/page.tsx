@@ -41,6 +41,7 @@ export default function CartPage() {
   const shortfalls = validateCustomisationMinimums(rawItems);
   const hasShortfalls = shortfalls.length > 0;
 
+
   const handleCheckout = async () => {
     if (hasShortfalls) {
       alert("Please resolve the minimum quantity requirements before checking out.");
@@ -126,6 +127,7 @@ export default function CartPage() {
       setIsSyncing(false);
     }
   };
+
 
   return (
     <div className="py-10">
@@ -411,6 +413,17 @@ export default function CartPage() {
               ) : (
                 <button
                   onClick={handleCheckout}
+                  onMouseEnter={() => {
+                    // Prefetch the WP checkout page the moment the user hovers —
+                    // by the time the cart sync finishes, the page is already in the browser cache.
+                    const link = document.createElement('link');
+                    link.rel = 'prefetch';
+                    link.href = 'https://dashboard.abbeygate-england.com/checkout/';
+                    link.as = 'document';
+                    if (!document.head.querySelector('link[href*="abbeygate-england.com/checkout"]')) {
+                      document.head.appendChild(link);
+                    }
+                  }}
                   disabled={isLoggedIn === null || isSyncing || hasShortfalls}
                   className="w-full flex items-center justify-center bg-brand-primary text-white py-3 rounded font-medium hover:bg-brand-primary-dark transition-colors disabled:bg-gray-400 text-[15px]"
                 >
@@ -425,6 +438,7 @@ export default function CartPage() {
                     'Proceed to checkout'
                   )}
                 </button>
+
               )}
               
               <Link
