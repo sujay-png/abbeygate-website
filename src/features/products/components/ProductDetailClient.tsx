@@ -550,8 +550,32 @@ export const ProductDetailClient = ({
       let widthPercent = 20;
       let fullPreviewUrl: string | undefined = undefined;
       let finalBounds: { top: number, bottom: number, left: number, right: number } | null = null;
+      let logoUploadedUrl = customization.logoUploadedUrl;
 
       if (customizationActive) {
+        // 1. Upload Logo if needed
+        if (customization.logoFile && !logoUploadedUrl) {
+          const formData = new FormData();
+          formData.append('file', customization.logoFile);
+          try {
+            const uploadRes = await fetch('/api/upload-media', { method: 'POST', body: formData });
+            if (uploadRes.ok) {
+              const data = await uploadRes.json();
+              logoUploadedUrl = data.url;
+              setCustomization(prev => ({ ...prev, logoUploadedUrl }));
+            } else {
+              alert('Failed to upload logo. Please try again.');
+              setIsAdding(false);
+              return;
+            }
+          } catch (e) {
+            console.error(e);
+            alert('Failed to upload logo. Please try again.');
+            setIsAdding(false);
+            return;
+          }
+        }
+
         attributes.push({ name: 'Custom Logo', value: '' });
 
         if (customization.blockingType) {
@@ -566,7 +590,6 @@ export const ProductDetailClient = ({
         if (customization.cornerEdges !== 'None') {
           attributes.push({ name: 'Corner Edges', value: customization.cornerEdges });
         }
-
 
         fullPreviewUrl = customization.fullPreviewUrl;
         finalBounds = customization.imageBounds;
@@ -585,6 +608,22 @@ export const ProductDetailClient = ({
           if (customization.topPercent !== undefined) topPercent = customization.topPercent;
           if (customization.widthPercent !== undefined) widthPercent = customization.widthPercent;
         }
+
+        // 2. Upload Preview Image if it's a local blob
+        if (fullPreviewUrl && fullPreviewUrl.startsWith('blob:')) {
+          try {
+            const blob = await fetch(fullPreviewUrl).then(r => r.blob());
+            const formData = new FormData();
+            formData.append('file', blob, 'preview-mockup.png');
+            const uploadRes = await fetch('/api/upload-media', { method: 'POST', body: formData });
+            if (uploadRes.ok) {
+              const data = await uploadRes.json();
+              fullPreviewUrl = data.url;
+            }
+          } catch (e) {
+            console.error('Failed to upload preview image', e);
+          }
+        }
       } // closing the if(customization.enabled) block!
 
       const cartItemCustomization = customizationActive
@@ -599,6 +638,7 @@ export const ProductDetailClient = ({
           logoScale: customization.logoScale ?? 1,
           fileName: customization.logoFile?.name,
           logoFile: customization.logoFile,
+          logoUploadedUrl: logoUploadedUrl,
           logoPreviewUrl: customization.logoPreviewUrl,
           fullPreviewUrl: fullPreviewUrl,
           leftPercent,

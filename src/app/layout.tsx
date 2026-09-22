@@ -9,8 +9,7 @@ import { CartDrawer } from '@/features/cart/components/CartDrawer';
 import { Toaster } from 'react-hot-toast';
 import { LenisProvider } from '@/components/layout/LenisProvider';
 import { VatProvider } from '@/context/VatContext';
-
-
+import { getSession } from '@/features/auth/utils/session';
 
 const didactGothic = Didact_Gothic({
   weight: "400",
@@ -76,11 +75,13 @@ export const viewport: Viewport = {
   themeColor: "#F7F1E2",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getSession();
+
   return (
     <html
       lang="en"
@@ -94,7 +95,7 @@ export default function RootLayout({
       >
         <VatProvider>
           <LenisProvider>
-            <CartProvider>
+            <CartProvider userId={session?.userId}>
               <Suspense fallback={null}><Navbar /></Suspense>
               <main className="flex-1 bg-brand-cream">
                 {children}

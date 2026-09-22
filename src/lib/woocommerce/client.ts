@@ -83,6 +83,7 @@ export async function woocommerceFetch<T>(
       "Content-Type": "application/json",
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
+    cache: revalidate === false || revalidate === 0 ? 'no-store' : undefined,
     next: revalidate === false ? { revalidate: 0 } : { revalidate },
   };
 

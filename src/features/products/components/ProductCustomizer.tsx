@@ -24,8 +24,10 @@ export type CustomizationState = {
   foilColor?: string;
   logoFile?: File;
   logoPreviewUrl?: string;
+  logoUploadedUrl?: string;
+  pdfProofUrl?: string;
   logoScale: number;
-  logoPosition: { x: number; y: number; label?: string; leftPercent?: number; topPercent?: number };
+  logoPosition?: { label?: string; x?: number; y?: number; leftPercent?: number; topPercent?: number };
   cornerEdges: 'None' | 'Gold' | 'Silver';
   fullPreviewUrl?: string;
   leftPercent?: number;
@@ -471,7 +473,7 @@ export const ProductCustomizer = ({
                 { id: 'bottom-center', label: 'Bottom centre' },
                 { id: 'bottom-right', label: 'Bottom right' },
               ].map((pos) => {
-                const isSelected = customization.logoPosition.label === pos.id;
+                const isSelected = customization.logoPosition?.label === pos.id;
                 
                 return (
                   <button
@@ -701,8 +703,11 @@ export const ProductCustomizer = ({
                <div className="flex justify-between items-center py-2 border-b border-gray-100">
                   <div className="text-brand-body font-medium">Position</div>
                   <div className="text-brand-body font-bold">
-                     {customization.logoPosition?.label ? 
-                        customization.logoPosition.label.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Center'}
+                     {customization.logoPosition?.label 
+                        ? customization.logoPosition.label.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') 
+                        : customization.logoPosition 
+                          ? 'Custom' 
+                          : 'Center'}
                   </div>
                </div>
                <div className="flex justify-between items-center py-2 border-b border-gray-100">

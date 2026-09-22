@@ -3,10 +3,13 @@ import { PurchaseList, deletePurchaseList } from '@/features/account/services/pu
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import { useCart } from '@/features/cart/context/CartContext';
 
 export function PurchaseListsClient({ initialLists }: { initialLists: PurchaseList[] }) {
   const [lists, setLists] = useState(initialLists);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isRestoring, setIsRestoring] = useState<string | null>(null);
+  const { addItem, openCart } = useCart();
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this list?')) {
@@ -19,6 +22,34 @@ export function PurchaseListsClient({ initialLists }: { initialLists: PurchaseLi
         toast.error(res.error || 'Failed to delete');
       }
       setIsDeleting(null);
+    }
+  };
+
+  const handleRestore = async (list: PurchaseList) => {
+    setIsRestoring(list.id);
+    try {
+      for (const item of list.items) {
+        if ('key' in item) {
+          // It's a CartItem
+          const { key, ...itemWithoutKey } = item as any;
+          await addItem(itemWithoutKey);
+        } else {
+          // It's a PurchaseListItem
+          await addItem({
+            productId: item.productId.toString(),
+            name: item.productName,
+            price: item.price,
+            quantity: item.qty,
+            image: item.image || '',
+            sku: item.sku,
+          });
+        }
+      }
+      toast.success('Basket restored!');
+      window.location.href = '/cart';
+    } catch (e) {
+      toast.error('Failed to restore basket');
+      setIsRestoring(null);
     }
   };
 
@@ -65,12 +96,19 @@ export function PurchaseListsClient({ initialLists }: { initialLists: PurchaseLi
                       {list.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-4 text-center">{list.items.reduce((sum, item) => sum + item.qty, 0)} items</td>
+                  <td className="px-4 py-4 text-center">{list.items.reduce((sum, item) => sum + (('qty' in item ? item.qty : item.quantity) || 0), 0)} items</td>
                   <td className="px-4 py-4 text-center">{list.user}</td>
                   <td className="px-4 py-4 text-right">
                     <button 
+                      onClick={() => handleRestore(list)}
+                      disabled={isRestoring === list.id || isDeleting === list.id}
+                      className="text-brand-primary hover:text-brand-primary-dark transition-colors text-sm font-medium disabled:opacity-50 mr-4"
+                    >
+                      {isRestoring === list.id ? 'Restoring...' : 'Restore'}
+                    </button>
+                    <button 
                       onClick={() => handleDelete(list.id)}
-                      disabled={isDeleting === list.id}
+                      disabled={isDeleting === list.id || isRestoring === list.id}
                       className="text-red-500 hover:text-red-700 transition-colors text-sm font-medium disabled:opacity-50"
                     >
                       {isDeleting === list.id ? 'Deleting...' : 'Delete'}

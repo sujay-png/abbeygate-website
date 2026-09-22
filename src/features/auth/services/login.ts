@@ -3,6 +3,7 @@
 import { createSession, deleteSession } from '../utils/session';
 import { redirect } from 'next/navigation';
 import { cookies, headers } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 
 export type LoginState = {
   success: boolean;
@@ -128,6 +129,8 @@ export async function loginCustomer(
     };
   }
 
+  // Force RootLayout to re-evaluate getSession() so CartProvider gets the new userId
+  revalidatePath('/', 'layout');
   // Redirect throws an error internally, so it must be outside the try-catch block
   redirect('/account/dashboard');
 }
@@ -157,6 +160,8 @@ export async function logoutCustomer() {
     }
   }
 
+  // Force RootLayout to re-evaluate getSession() so CartProvider clears userId
+  revalidatePath('/', 'layout');
   redirect('/account');
 }
 

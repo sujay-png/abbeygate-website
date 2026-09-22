@@ -1,12 +1,13 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useMemo, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef, ReactNode } from 'react';
 import type { LogoCustomization } from '@/features/products/types/store-product';
 import type { StoreProduct, PriceTier } from '@/features/products/types/store-product';
 import { calculateShipping } from '@/features/products/utils/shipping';
 import { VAT_RATE, calculateProductPrice, CUSTOMIZATION_MIN_QTY } from '@/features/products/utils/pricing';
 import * as idb from '@/lib/idb';
 import toast from 'react-hot-toast';
+import { fetchActiveCart, syncActiveCart } from '@/features/cart/services/active-cart-sync';
 
 export type CartColourOption = {
   productId: string;
@@ -87,7 +88,7 @@ function saveCartToStorage(items: CartItem[]) {
   idb.set(CART_STORAGE_KEY, items);
 }
 
-export const CartProvider = ({ children }: { children: ReactNode }) => {
+export const CartProvider = ({ children, userId }: { children: ReactNode, userId?: number }) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -97,13 +98,77 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     loadCartFromStorage().then(storedItems => {
       setItems(storedItems);
       setHydrated(true);
+
+      // Attempt to fetch and merge active cart from remote
+      fetchActiveCart().then(remoteCart => {
+        if (remoteCart && remoteCart.length > 0) {
+          setItems(prevItems => {
+            // Merge logic: For simplicity, we can replace the local cart if the remote cart has items,
+            // or merge by appending missing items. Let's merge by key to avoid duplicates.
+            const merged = [...prevItems];
+            for (const rItem of remoteCart) {
+              if (!merged.find(i => i.key === rItem.key)) {
+                merged.push(rItem);
+              }
+            }
+            return merged;
+          });
+        }
+      }).catch(console.error);
     });
   }, []);
 
+  // When userId changes (e.g. login), fetch the active cart again.
+  // We use a separate useEffect so it runs when userId becomes available.
+  const prevUserIdRef = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (userId && userId !== prevUserIdRef.current) {
+      prevUserIdRef.current = userId;
+      
+      fetchActiveCart().then(remoteCart => {
+        setItems(prevItems => {
+          let merged = [...prevItems];
+          let changed = false;
+          
+          if (remoteCart && remoteCart.length > 0) {
+            for (const rItem of remoteCart) {
+              if (!merged.find(i => i.key === rItem.key)) {
+                merged.push(rItem);
+                changed = true;
+              }
+            }
+          }
+          
+          // Even if we didn't add any items from remote, the user just logged in.
+          // They might have local items (guest cart) that were never synced.
+          // We must sync the current merged cart to remote now that they are logged in!
+          if (merged.length > 0) {
+            setTimeout(() => {
+              syncActiveCart(merged).catch(console.error);
+            }, 0);
+          }
+
+          return changed ? merged : prevItems;
+        });
+      }).catch(console.error);
+    }
+  }, [userId]);
+
+  // Sync to remote with debounce whenever items change and we are hydrated
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
     if (hydrated) {
       saveCartToStorage(items);
+      
+      // Debounced sync to remote
+      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+      syncTimeoutRef.current = setTimeout(() => {
+        syncActiveCart(items).catch(console.error);
+      }, 2000);
     }
+    return () => {
+      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+    };
   }, [items, hydrated]);
 
   const openCart = useCallback(() => setIsOpen(true), []);

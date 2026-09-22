@@ -122,6 +122,8 @@ export type LogoCustomization = {
   fileUrl?: string;
   fileName?: string;
   logoFile?: File;
+  logoUploadedUrl?: string;
+  pdfProofUrl?: string;
   position: string;
   logoPreviewUrl?: string;
   fullPreviewUrl?: string;

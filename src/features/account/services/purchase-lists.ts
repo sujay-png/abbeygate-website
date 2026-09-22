@@ -5,6 +5,8 @@ import { getSession } from '@/features/auth/utils/session';
 import { revalidatePath } from 'next/cache';
 import { StoreProduct } from '@/features/products/types/store-product';
 
+import type { CartItem } from '@/features/cart/context/CartContext';
+
 export type PurchaseListItem = {
   productId: number;
   productName: string;
@@ -17,7 +19,7 @@ export type PurchaseListItem = {
 export type PurchaseList = {
   id: string;
   name: string;
-  items: PurchaseListItem[];
+  items: (PurchaseListItem | CartItem)[];
   createdAt: string;
   user: string;
 };
@@ -60,7 +62,7 @@ export async function getPurchaseLists(): Promise<PurchaseList[]> {
   return [];
 }
 
-export async function savePurchaseList(name: string, items: PurchaseListItem[]): Promise<{ success: boolean; error?: string }> {
+export async function savePurchaseList(name: string, items: (PurchaseListItem | CartItem)[]): Promise<{ success: boolean; error?: string }> {
   const data = await getCustomerMeta();
   if (!data) return { success: false, error: 'Not authenticated' };
 

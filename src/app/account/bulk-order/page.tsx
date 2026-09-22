@@ -32,11 +32,11 @@ export default async function BulkOrderPage({ searchParams }: Props) {
     if (list) {
       initialRows = list.items.map(item => ({
         id: Math.random().toString(36).substring(2, 9),
-        productId: item.productId,
-        productName: item.productName,
-        sku: item.sku,
+        productId: typeof item.productId === 'string' ? parseInt(item.productId, 10) : item.productId,
+        productName: 'name' in item ? item.name : item.productName,
+        sku: item.sku || '',
         price: item.price,
-        qty: item.qty,
+        qty: 'quantity' in item ? item.quantity : item.qty,
         image: item.image || ''
       }));
     }

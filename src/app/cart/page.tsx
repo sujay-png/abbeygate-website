@@ -13,6 +13,7 @@ import { retryProof } from '@/features/cart/utils/add-colour-variant';
 import { validateCustomisationMinimums } from '@/features/cart/utils/colour-group';
 import { downloadCartItemProof, canDownloadProof } from '@/features/cart/utils/download-proof';
 import { checkAuthStatus } from '@/features/auth/services/login';
+import { savePurchaseList } from '@/features/account/services/purchase-lists';
 
 const formatPrice = (value: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
@@ -23,6 +24,9 @@ export default function CartPage() {
   const [pickerFor, setPickerFor] = useState<string | null>(null);
   const [previewItem, setPreviewItem] = useState<any | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [basketName, setBasketName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     checkAuthStatus().then(setIsLoggedIn);
@@ -124,6 +128,25 @@ export default function CartPage() {
       console.error(error);
       alert('There was a problem syncing your cart. Please try again.');
       setIsSyncing(false);
+    }
+  };
+
+  const handleSaveBasket = async () => {
+    if (!basketName.trim()) return;
+    setIsSaving(true);
+    try {
+      const res = await savePurchaseList(basketName.trim(), items);
+      if (res.success) {
+        alert('Basket saved successfully! You can view it in your account dashboard.');
+        setShowSaveModal(false);
+        setBasketName('');
+      } else {
+        alert(res.error || 'Failed to save basket');
+      }
+    } catch (e) {
+      alert('An error occurred while saving the basket.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -339,15 +362,41 @@ export default function CartPage() {
                   <button type="button" onClick={clearCart} className="px-5 py-2.5 rounded-md border border-[var(--brand-border)] bg-white text-brand-primary-dark font-semibold text-[14px] tracking-wide hover:bg-gray-50 transition-colors">
                     Clear basket
                   </button>
-                  <button type="button" onClick={() => {
-                    if (isLoggedIn === false) {
-                      window.location.href = '/account?redirect=/cart';
-                    } else if (isLoggedIn === true) {
-                      alert('Basket saved to your account!');
-                    }
-                  }} className="px-5 py-2.5 rounded-md border border-[var(--brand-border)] bg-white text-brand-primary-dark font-semibold text-[14px] tracking-wide hover:bg-gray-50 transition-colors">
-                    Save basket
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {showSaveModal ? (
+                      <div className="flex items-center gap-2 border border-[var(--brand-border)] rounded-md overflow-hidden bg-white">
+                        <input
+                          type="text"
+                          value={basketName}
+                          onChange={(e) => setBasketName(e.target.value)}
+                          placeholder="e.g. Q3 Orders..."
+                          className="px-3 py-2 text-[14px] outline-none"
+                          autoFocus
+                          onKeyDown={(e) => e.key === 'Enter' && handleSaveBasket()}
+                        />
+                        <button 
+                          onClick={handleSaveBasket} 
+                          disabled={isSaving || !basketName.trim()}
+                          className="bg-brand-primary text-white px-4 py-2 font-semibold text-[14px] hover:bg-brand-primary-dark disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        >
+                          {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+                        </button>
+                        <button onClick={() => setShowSaveModal(false)} className="px-3 py-2 text-gray-500 hover:bg-gray-100">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button type="button" onClick={() => {
+                        if (isLoggedIn === false) {
+                          window.location.href = '/account?redirect=/cart';
+                        } else if (isLoggedIn === true) {
+                          setShowSaveModal(true);
+                        }
+                      }} className="px-5 py-2.5 rounded-md border border-[var(--brand-border)] bg-white text-brand-primary-dark font-semibold text-[14px] tracking-wide hover:bg-gray-50 transition-colors">
+                        Save basket
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
               
