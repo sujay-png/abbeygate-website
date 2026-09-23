@@ -54,12 +54,29 @@ export const CartDrawer = () => {
     try {
       setIsSyncing(true);
       
+      const idb = await import('@/lib/idb');
+      let currentCart = await idb.get<any[]>('abbeygate-cart') || [];
+      let attempt = 0;
+      while (currentCart.some(i => i.proofStatus === 'pending') && attempt < 20) {
+        await new Promise(r => setTimeout(r, 500));
+        currentCart = await idb.get<any[]>('abbeygate-cart') || [];
+        attempt++;
+      }
+
+      if (currentCart.some(i => i.proofStatus === 'failed')) {
+        if (!window.confirm("Some items could not generate a visual proof. Your order details are still complete. Proceed to checkout?")) {
+          setIsSyncing(false);
+          return;
+        }
+      }
+      
       const formData = new FormData();
       
-      const payload = await Promise.all(rawItems.map(async (item, index) => {
+      const payload = currentCart.map((item: any, index: number) => {
         const outItem: any = {
           productId: item.productId,
-          quantity: item.quantity
+          quantity: item.quantity,
+          variationId: item.variationId,
         };
 
         if (item.customization?.enabled) {
@@ -74,6 +91,7 @@ export const CartDrawer = () => {
             outItem.customization.hasLogo = true;
           }
           if (item.customization.fullPreviewUrl) {
+            try {
               const previewDataUrl = item.customization.fullPreviewUrl;
               const byteString = atob(previewDataUrl.split(',')[1]);
               const mimeString = previewDataUrl.split(',')[0].split(':')[1].split(';')[0];
@@ -85,10 +103,13 @@ export const CartDrawer = () => {
               const blob = new Blob([ab], { type: mimeString });
               formData.append(`preview_${index}`, blob, 'preview.png');
               outItem.customization.hasPreview = true;
+            } catch (e) {
+              console.error('Failed to convert preview to blob', e);
+            }
           }
         }
         return outItem;
-      }));
+      });
 
       formData.append('cart', JSON.stringify({ items: payload }));
 
