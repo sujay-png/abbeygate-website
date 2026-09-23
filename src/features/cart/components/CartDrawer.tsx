@@ -371,23 +371,15 @@ export const CartDrawer = () => {
                   <span className="text-[15px] text-brand-body font-bold">Total (inc. VAT)</span>
                   <span className="text-[17px] text-brand-body font-bold">{formatPrice(total)}</span>
                 </div>
-                {isLoggedIn === false ? (
-                  <div className="w-full bg-orange-50 border border-orange-200 p-4 rounded text-center mb-3">
-                    <p className="text-[13px] text-brand-body font-medium mb-2">You must be logged in to checkout.</p>
-                    <Link href="/account" onClick={closeCart} className="w-full flex items-center justify-center bg-brand-primary text-white py-2 rounded font-medium hover:bg-brand-primary-dark transition-colors text-[13px]">
-                      Log in / Register
-                    </Link>
-                  </div>
-                ) : (
                   <button
                     onClick={handleCheckout}
-                    disabled={isLoggedIn === null || isSyncing || hasShortfalls}
+                    disabled={isSyncing || hasShortfalls}
                     className="flex items-center justify-center gap-2 w-full text-center bg-brand-primary text-white text-[15px] font-medium py-4 rounded-md hover:bg-brand-primary-dark transition-colors disabled:bg-gray-400"
                   >
-                    {isSyncing || isLoggedIn === null ? (
+                    {isSyncing ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        {isSyncing ? 'Syncing Cart...' : 'Checking...'}
+                        Syncing Cart...
                       </>
                     ) : hasShortfalls ? (
                       'Minimum requirement not met'
@@ -395,7 +387,6 @@ export const CartDrawer = () => {
                       'Checkout'
                     )}
                   </button>
-                )}
                 <Link
                   href="/cart"
                   onClick={closeCart}

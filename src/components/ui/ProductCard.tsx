@@ -32,7 +32,7 @@ export const ProductCard = ({
             fill
             quality={75}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-contain scale-110 transition-transform duration-500 group-hover:scale-125"
+            className="object-contain scale-110 transition-transform duration-500 group-hover:scale-125 mix-blend-multiply"
           />
         ) : (
           <div

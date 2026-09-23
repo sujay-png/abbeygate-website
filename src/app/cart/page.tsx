@@ -403,43 +403,33 @@ export default function CartPage() {
                 </div>
               </div>
 
-              {isLoggedIn === false ? (
-                <div className="w-full bg-orange-50 border border-orange-200 p-4 rounded text-center">
-                  <p className="text-[14px] text-brand-body font-medium mb-3">You must be logged in to checkout.</p>
-                  <Link href="/account" className="w-full flex items-center justify-center bg-brand-primary text-white py-2.5 rounded font-medium hover:bg-brand-primary-dark transition-colors text-[14px]">
-                    Log in / Register
-                  </Link>
-                </div>
-              ) : (
-                <button
-                  onClick={handleCheckout}
-                  onMouseEnter={() => {
-                    // Prefetch the WP checkout page the moment the user hovers —
-                    // by the time the cart sync finishes, the page is already in the browser cache.
-                    const link = document.createElement('link');
-                    link.rel = 'prefetch';
-                    link.href = 'https://dashboard.abbeygate-england.com/checkout/';
-                    link.as = 'document';
-                    if (!document.head.querySelector('link[href*="abbeygate-england.com/checkout"]')) {
-                      document.head.appendChild(link);
-                    }
-                  }}
-                  disabled={isLoggedIn === null || isSyncing || hasShortfalls}
-                  className="w-full flex items-center justify-center bg-brand-primary text-white py-3 rounded font-medium hover:bg-brand-primary-dark transition-colors disabled:bg-gray-400 text-[15px]"
-                >
-                  {isSyncing || isLoggedIn === null ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                      {isSyncing ? 'Syncing Cart...' : 'Checking...'}
-                    </>
-                  ) : hasShortfalls ? (
-                    'Minimum requirement not met'
-                  ) : (
-                    'Proceed to checkout'
-                  )}
-                </button>
-
-              )}
+              <button
+                onClick={handleCheckout}
+                onMouseEnter={() => {
+                  // Prefetch the WP checkout page the moment the user hovers —
+                  // by the time the cart sync finishes, the page is already in the browser cache.
+                  const link = document.createElement('link');
+                  link.rel = 'prefetch';
+                  link.href = 'https://dashboard.abbeygate-england.com/checkout/';
+                  link.as = 'document';
+                  if (!document.head.querySelector('link[href*="abbeygate-england.com/checkout"]')) {
+                    document.head.appendChild(link);
+                  }
+                }}
+                disabled={isSyncing || hasShortfalls}
+                className="w-full flex items-center justify-center bg-brand-primary text-white py-3 rounded font-medium hover:bg-brand-primary-dark transition-colors disabled:bg-gray-400 text-[15px]"
+              >
+                {isSyncing ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    Syncing Cart...
+                  </>
+                ) : hasShortfalls ? (
+                  'Minimum requirement not met'
+                ) : (
+                  'Proceed to checkout'
+                )}
+              </button>
               
               <Link
                 href="/notebooks"
