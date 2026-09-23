@@ -29,7 +29,7 @@ export const CategoryPageContent = ({
   attributes,
   attributeTerms,
   filterConfig,
-  sort = 'date-new',
+  sort = 'bestselling',
 }: CategoryPageContentProps) => {
   const filteredProducts = sortProducts(
     allProducts.filter((p) => productMatchesFilters(p, filters)),

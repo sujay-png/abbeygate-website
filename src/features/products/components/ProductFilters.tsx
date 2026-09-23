@@ -26,9 +26,9 @@ const FILTER_LABELS: Record<FilterParamKey, string> = {
 };
 
 const SORT_OPTIONS: { label: string; value: SortOption }[] = [
+  { label: 'Bestselling', value: 'bestselling' },
   { label: 'Date Added: New - Old', value: 'date-new' },
   { label: 'Date Added: Old - New', value: 'date-old' },
-  { label: 'Bestselling', value: 'bestselling' },
   { label: 'Price: Low - High', value: 'price-low' },
   { label: 'Price: High - Low', value: 'price-high' },
 ];
@@ -55,7 +55,7 @@ const ProductFiltersInner = ({
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const currentSort = (searchParams.get('sort') as SortOption) || 'date-new';
+  const currentSort = (searchParams.get('sort') as SortOption) || 'bestselling';
 
   const selectedFilters = useMemo(() => {
     const filters: Record<FilterParamKey, string[]> = {
@@ -91,7 +91,7 @@ const ProductFiltersInner = ({
     (filters: Record<FilterParamKey, string[]>, newSort?: string) => {
       const params = filtersToSearchParams(filters);
       const sortToApply = newSort || searchParams.get('sort');
-      if (sortToApply && sortToApply !== 'date-new') {
+      if (sortToApply && sortToApply !== 'bestselling') {
         params.set('sort', sortToApply);
       }
       

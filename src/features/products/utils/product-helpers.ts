@@ -110,21 +110,23 @@ export function filtersToSearchParams(filters: ProductFilters): URLSearchParams 
 }
 
 export function stripHtml(html: string): string {
+  if (!html) return "";
   return html
     .replace(/<[^>]*>/g, "")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&#8211;/g, "–")
-    .replace(/&#8212;/g, "—")
-    .replace(/&#8216;/g, "'")
-    .replace(/&#8217;/g, "'")
-    .replace(/&#8220;/g, '"')
-    .replace(/&#8221;/g, '"')
-    .replace(/&#038;/g, "&")
+    // Decode ampersands first in case of double-encoding (e.g. &amp;#8216;)
     .replace(/&amp;/gi, "&")
+    .replace(/&#038;/g, "&")
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">")
     .replace(/&quot;/gi, '"')
-    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&#8211;?/g, "–")
+    .replace(/&#8212;?/g, "—")
+    .replace(/&#8216;?/g, "'")
+    .replace(/&#8217;?/g, "'")
+    .replace(/&#8220;?/g, '"')
+    .replace(/&#8221;?/g, '"')
+    .replace(/&#39;?/g, "'")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -166,7 +168,13 @@ export function getLogoAnchors(product: StoreProduct) {
   return getLogoAnchorsFromMm(width, height);
 }
 
+const boundingBoxCache = new Map<string, { top: number, bottom: number, left: number, right: number } | null>();
+
 export async function getImageBoundingBox(imageUrl: string): Promise<{ top: number, bottom: number, left: number, right: number } | null> {
+  if (boundingBoxCache.has(imageUrl)) {
+    return boundingBoxCache.get(imageUrl) ?? null;
+  }
+
   // Fetch via our proxy to avoid CORS issues with external domains.
   // The proxy returns a base64 data URL which can be drawn to canvas without CORS errors.
   let srcToLoad = imageUrl;
@@ -188,7 +196,7 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
     
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
       if (!ctx) return resolve(null);
       
       canvas.width = img.width;
@@ -290,15 +298,18 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
       }
       
       if (minX >= maxX || minY >= maxY) {
+        boundingBoxCache.set(imageUrl, null);
         return resolve(null);
       }
       
-      resolve({
+      const bounds = {
         left: (minX / canvas.width) * 100,
         right: (maxX / canvas.width) * 100,
         top: (minY / canvas.height) * 100,
         bottom: (maxY / canvas.height) * 100
-      });
+      };
+      boundingBoxCache.set(imageUrl, bounds);
+      resolve(bounds);
     };
     img.onerror = () => resolve(null);
     img.src = srcToLoad;
@@ -306,15 +317,22 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
 }
 
 export function getProductTypeWeight(product: StoreProduct): number {
-  const catNames = product.categories.map(c => c.name.toLowerCase());
-  const hasCat = (keyword: string) => catNames.some(c => c.includes(keyword));
+  let keywords = product.categories.map(c => c.name.toLowerCase());
+  keywords.push(product.name.toLowerCase());
+  
+  const typeAttr = product.attributes.find(a => a.taxonomy === 'pa_product_type' || a.taxonomy === 'pa_product-type');
+  if (typeAttr) {
+    keywords = keywords.concat(typeAttr.terms.map(t => t.name.toLowerCase()));
+  }
 
-  if (hasCat('diar')) return 1;
-  if (hasCat('notebook')) return 2;
-  if (hasCat('passport')) return 3;
-  if (hasCat('luggage')) return 4;
-  if (hasCat('card')) return 5;
-  if (hasCat('key')) return 6;
+  const hasKeyword = (keyword: string) => keywords.some(k => k.includes(keyword));
+
+  if (hasKeyword('diar')) return 1;
+  if (hasKeyword('notebook')) return 2;
+  if (hasKeyword('passport')) return 3;
+  if (hasKeyword('luggage')) return 4;
+  if (hasKeyword('card')) return 5;
+  if (hasKeyword('key')) return 6;
   
   return 99;
 }
@@ -372,7 +390,7 @@ export type SortOption =
   | 'price-high' 
   | 'bestselling';
 
-export function sortProducts(products: StoreProduct[], sort: SortOption = 'date-new'): StoreProduct[] {
+export function sortProducts(products: StoreProduct[], sort: SortOption = 'bestselling'): StoreProduct[] {
   const sorted = [...products];
 
   switch (sort) {

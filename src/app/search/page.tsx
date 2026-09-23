@@ -66,7 +66,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const { allProducts: searchedProducts, filterAttributes, attributeTerms } = await getFilterDataForProducts(searchedProductsRaw);
 
   const filters = parseFiltersFromSearchParams(params);
-  const sort = typeof params?.sort === 'string' ? params.sort : 'date-new';
+  const sort = typeof params?.sort === 'string' ? params.sort : 'bestselling';
   const filteredProducts = sortProducts(
     searchedProducts.filter((p) => productMatchesFilters(p, filters)),
     sort as SortOption

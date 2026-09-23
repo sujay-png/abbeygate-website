@@ -9,7 +9,7 @@ import { ProductCustomizationOverlay } from './ProductCustomizationOverlay';
 import { useCart } from '@/features/cart/context/CartContext';
 import { useVat } from '@/context/VatContext';
 import { BRANDING_SETUP_FEE, CORNER_PAIRS_PER_PRODUCT, CUSTOMIZATION_MIN_QTY, formatGBP, getCornerEdgesPricing, isGiftsProduct, LOGO_BLOCKING_PRICES, LOGO_CUSTOMIZATION_FEE, VAT_RATE, calculateProductPrice } from '../utils/pricing';
-import { getLogoAnchors, getImageBoundingBox, getProductPhysicalDimensionsMm, sanitizeImageUrl } from '../utils/product-helpers';
+import { getLogoAnchors, getImageBoundingBox, getProductPhysicalDimensionsMm, sanitizeImageUrl, stripHtml } from '../utils/product-helpers';
 import { getConfiguredImageBounds } from '../utils/product-image-bounds';
 import { composeProof } from '../utils/generate-proof';
 import { TrustIndicators } from '@/components/home/TrustIndicators';
@@ -438,8 +438,14 @@ export const ProductDetailClient = ({
         };
         img.src = activeSrc;
       }
+    }
+  }, [activeSrc, product.images]);
 
-      const configuredBounds = getConfiguredImageBounds(activeSrc);
+  useEffect(() => {
+    // Only ever calculate bounds for the main product image, since that's the only one we customize
+    const mainImageSrc = product.images[0]?.src || product.images[0]?.thumbnail || '';
+    if (mainImageSrc) {
+      const configuredBounds = getConfiguredImageBounds(mainImageSrc);
       if (configuredBounds) {
         setImageBounds(configuredBounds);
         setIsCalculatingBounds(false);
@@ -448,12 +454,12 @@ export const ProductDetailClient = ({
 
       setImageBounds(null);
       setIsCalculatingBounds(true);
-      getImageBoundingBox(activeSrc).then(bounds => {
+      getImageBoundingBox(mainImageSrc).then(bounds => {
         setImageBounds(bounds);
         setIsCalculatingBounds(false);
       });
     }
-  }, [activeSrc]);
+  }, [product.images]);
 
   // Close preview on escape key
   useEffect(() => {
@@ -479,7 +485,8 @@ export const ProductDetailClient = ({
 
 
   const generateProof = async (): Promise<Partial<CustomizationState> | null> => {
-    if (!activeSrc || !customization.enabled || isGifts) return null;
+    const mainImageSrc = product.images[0]?.src || product.images[0]?.thumbnail || '';
+    if (!mainImageSrc || !customization.enabled || isGifts) return null;
 
     const { width, height } = getProductPhysicalDimensionsMm(product);
     const isDiary = product.categories?.some(c =>
@@ -489,7 +496,7 @@ export const ProductDetailClient = ({
       || product.slug?.toLowerCase().includes('lewes-smoothgrain');
 
     const result = await composeProof({
-      productImageUrl: activeSrc,
+      productImageUrl: mainImageSrc,
       branding: {
         blockingType: customization.blockingType || '',
         foilColor: customization.foilColor,
@@ -824,9 +831,15 @@ export const ProductDetailClient = ({
         if (!deliveryTab) return null;
 
         // Remove speech/quotation marks from the start and end of the text/HTML
-        const formattedDeliveryContent = deliveryTab.content
+        let formattedDeliveryContent = deliveryTab.content
           .replace(/(^|<[^>]+>)\s*["“”']/g, '$1')
           .replace(/["“”']\s*(<\/[^>]+>|$)/g, '$1');
+
+        // Ensure 'Customised products' is on a new line
+        formattedDeliveryContent = formattedDeliveryContent.replace(
+          /([.?!])\s*(<strong[^>]*>|<b>)?\s*(Customised products)/gi, 
+          '$1<br/><br/>$2$3'
+        );
 
         return (
           <details className="group border border-gray-200 rounded-lg bg-white overflow-hidden mt-4">
@@ -1055,7 +1068,7 @@ export const ProductDetailClient = ({
                           );
                         })}
                         {isCustomizingStarted && customizationActive && (
-                          <div className={`absolute inset-0 transition-opacity duration-500 z-20 ${isCustomizationSurface && !isCalculatingBounds ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+                          <div className={`absolute inset-0 transition-opacity duration-500 z-20 ${activeImageIndex === 0 && !isCalculatingBounds ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
                             <ProductCustomizationOverlay
                               product={product}
                               customization={customization}
@@ -1171,7 +1184,7 @@ export const ProductDetailClient = ({
                     sizes="80vw"
                     className="object-contain"
                   />
-                  {isCustomizationSurface && isCustomizingStarted && customizationActive && !isCalculatingBounds && (
+                  {activeImageIndex === 0 && isCustomizingStarted && customizationActive && !isCalculatingBounds && (
                     <ProductCustomizationOverlay
                       product={product}
                       customization={customization}
@@ -1400,7 +1413,7 @@ export const ProductDetailClient = ({
 
           {/* Description */}
           {product.short_description && (() => {
-            const plainText = product.short_description.replace(/<[^>]+>/g, '').trim();
+            const plainText = stripHtml(product.short_description);
             const shouldTruncate = plainText.length > 250;
             const truncated = shouldTruncate ? plainText.substring(0, 250).trim() + '...' : plainText;
 

@@ -38,7 +38,7 @@ export async function loadCategoryPageData(path: string, searchParams: Record<st
   }
 
   const filters = parseFiltersFromSearchParams(searchParams);
-  const sort = typeof searchParams?.sort === 'string' ? searchParams.sort : 'date-new';
+  const sort = typeof searchParams?.sort === 'string' ? searchParams.sort : 'bestselling';
   const baseFilterConfig = getFilterConfigForPath(path);
   const filterConfig = {
     ...baseFilterConfig,
