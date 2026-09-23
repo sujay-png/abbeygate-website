@@ -978,7 +978,7 @@ export const ProductDetailClient = ({
                       onClick={() => setActiveImageIndex(index)}
                       className={`relative h-20 w-20 lg:h-24 lg:w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${index === activeImageIndex ? 'border-brand-primary' : 'border-gray-200 hover:border-gray-300'
                         }`}
-                      style={{ backgroundColor: '#f9f9f9' }}
+                      style={{ backgroundColor: 'white' }}
                     >
                       <ImageWithFallback
                         src={thumb}
@@ -995,7 +995,7 @@ export const ProductDetailClient = ({
 
             <div
               className="relative w-full max-w-[650px] mx-auto flex-1 overflow-hidden rounded-xl flex items-center justify-center p-4 group order-1 md:order-2 cursor-zoom-in"
-              style={{ aspectRatio: imageAspectRatio, backgroundColor: 'var(--brand-cream)' }}
+              style={{ aspectRatio: imageAspectRatio }}
               onClick={() => setIsPreviewOpen(true)}
             >
               {/* Image Navigation Arrows */}
@@ -1030,7 +1030,7 @@ export const ProductDetailClient = ({
 
               {product.images && product.images.length > 0 ? (
                 <div
-                  className="absolute inset-0 bg-transparent overflow-hidden"
+                  className="absolute inset-0 overflow-hidden"
                   ref={previewContainerRef}
                   onMouseEnter={handleMouseEnter}
                   onMouseLeave={handleMouseLeave}
@@ -1050,7 +1050,7 @@ export const ProductDetailClient = ({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0.5 }}
                         transition={{ duration: 0.2 }}
-                        className="relative w-full h-full"
+                        className="relative w-full h-full bg-[var(--brand-cream)]"
                         ref={imageElementRef}
                       >
                         {product.images.map((img, idx) => {
@@ -1063,7 +1063,7 @@ export const ProductDetailClient = ({
                               fill
                               priority={true}
                               sizes="(max-width: 768px) 100vw, 50vw"
-                              className={`transition-all duration-500 object-contain ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+                              className={`transition-all duration-500 object-contain ${idx === 0 ? 'mix-blend-multiply' : ''} ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
                             />
                           );
                         })}
@@ -1182,7 +1182,7 @@ export const ProductDetailClient = ({
                     alt={product.images[activeImageIndex]?.alt || product.name}
                     fill
                     sizes="80vw"
-                    className="object-contain"
+                    className="object-contain mix-blend-multiply"
                   />
                   {activeImageIndex === 0 && isCustomizingStarted && customizationActive && !isCalculatingBounds && (
                     <ProductCustomizationOverlay
