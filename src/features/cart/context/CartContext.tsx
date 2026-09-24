@@ -70,6 +70,7 @@ interface CartContextValue {
   updateItem: (key: string, patch: Partial<CartItem>) => Promise<void>;
   insertItemAfter: (afterKey: string, item: Omit<CartItem, 'key'> & { key?: string }) => Promise<string>;
   clearCart: () => void;
+  isHydrated: boolean;
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
@@ -198,7 +199,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const clearCart = useCallback(() => setItems([]), []);
+  const clearCart = useCallback(() => {
+    setItems([]);
+    idb.set(CART_STORAGE_KEY, []);
+  }, []);
 
   const pricedItems = useMemo<PricedItem[]>(() => {
     return items.map(item => {
@@ -269,6 +273,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     updateItem,
     insertItemAfter,
     clearCart,
+    isHydrated: hydrated,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

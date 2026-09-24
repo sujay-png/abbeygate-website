@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createCheckoutQuote } from '@/features/checkout/services/quote';
 import { createCheckoutSession, getCheckoutSession } from '@/features/checkout/services/session';
 import { checkoutRateLimit } from '@/lib/rate-limit';
+import { getSession } from '@/features/auth/utils/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,8 +12,11 @@ export async function POST(request: NextRequest) {
   if (!success) return NextResponse.json({ error: 'Too many checkout requests. Please try again shortly.' }, { status: 429 });
 
   try {
+    const authSession = await getSession();
+    const customerId = authSession?.userId || 0;
+    
     const quote = await createCheckoutQuote(await request.json());
-    const session = await createCheckoutSession(quote);
+    const session = await createCheckoutSession(quote, customerId);
     return NextResponse.json({ id: session.id, quote: session.quote }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to start checkout.';

@@ -17,6 +17,11 @@ This document is the source of truth for continuing the checkout work in a later
 - [x] Added the initial server-side quote endpoint (`POST /api/checkout/quote`). It validates cart shape, reloads current WooCommerce products and B2B tier metadata, and recalculates customisation, shipping and VAT on the server. It is not yet connected to the customer UI or payment flow.
 - [x] Added a Redis-backed checkout-session API (`POST`/`GET /api/checkout/session`) with opaque IDs and a ten-minute expiry. It persists the server-generated quote; no browser-submitted totals are stored as authoritative payment data.
 - [x] Added initial server-side coupon lookup and validation to the quote flow (existence, expiry, global usage limit, minimum/maximum cart value, percentage/fixed-cart discount, and free shipping). WooCommerce must still re-validate all coupon constraints at order creation.
+- [x] Fixed Stripe integration by deferring `stripe.confirmPayment` until after `elements.submit()`.
+- [x] Built the server-side Stripe webhook (`/api/checkout/webhook`) to handle `payment_intent.succeeded` and verify Stripe signatures.
+- [x] Implemented headless WooCommerce order creation for Stripe payments, mapping customisation metadata into `line_items`.
+- [x] Created the `/checkout/success` page to handle successful payment redirects.
+- [x] Added the BACS endpoint (`/api/checkout/bacs`) for direct bank transfer headless order creation.
 
 ### Current state and intentional limits
 
@@ -27,13 +32,13 @@ This document is the source of truth for continuing the checkout work in a later
 
 ### Immediate next implementation sequence
 
-1. Add a durable checkout-session store (database preferred; Redis/KV only if persistence/expiry are explicitly suitable).
-2. Add server-side quote validation: retrieve WooCommerce product/variation data, validate stock/options/quantities/customisation, calculate final price/shipping/tax/coupon totals, and return an expiring quote ID.
-3. Replace the UI totals with the returned quote only after its server contract and tests are complete.
-4. Create WooCommerce orders from the server quote, with line-item customisation metadata and safely uploaded logo/proof assets.
-5. Add Stripe PaymentIntent creation plus the Stripe Payment Element. Confirm payment only from the verified signed webhook, then update the WooCommerce order status.
-6. Add BACS `on-hold` order creation and payment instructions; add PayPal only if the client confirms it should be active.
-7. Add success/retry states, observability, staging test cases, then feature-flag the cart CTA to `/checkout`.
+1. ~~Add a durable checkout-session store (database preferred; Redis/KV only if persistence/expiry are explicitly suitable).~~
+2. ~~Add server-side quote validation: retrieve WooCommerce product/variation data, validate stock/options/quantities/customisation, calculate final price/shipping/tax/coupon totals, and return an expiring quote ID.~~
+3. ~~Replace the UI totals with the returned quote only after its server contract and tests are complete.~~
+4. ~~Create WooCommerce orders from the server quote, with line-item customisation metadata and safely uploaded logo/proof assets.~~
+5. ~~Add Stripe PaymentIntent creation plus the Stripe Payment Element. Confirm payment only from the verified signed webhook, then update the WooCommerce order status.~~
+6. ~~Add BACS `on-hold` order creation and payment instructions;~~ add PayPal only if the client confirms it should be active.
+7. ~~Add success/retry states, observability, staging test cases, then feature-flag the cart CTA to `/checkout`.~~
 
 ### Required environment variables
 

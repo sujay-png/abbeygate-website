@@ -11,13 +11,14 @@ export type CheckoutSession = {
   createdAt: string;
   expiresAt: string;
   quote: CheckoutQuote;
+  customerId?: number;
 };
 
 function key(id: string) {
   return `${SESSION_PREFIX}${id}`;
 }
 
-export async function createCheckoutSession(quote: CheckoutQuote): Promise<CheckoutSession> {
+export async function createCheckoutSession(quote: CheckoutQuote, customerId?: number): Promise<CheckoutSession> {
   const redis = getRedisClient();
   if (!redis) throw new Error('Checkout sessions are unavailable. Configure Upstash Redis before enabling checkout.');
 
@@ -27,6 +28,7 @@ export async function createCheckoutSession(quote: CheckoutQuote): Promise<Check
     createdAt: new Date().toISOString(),
     expiresAt: quote.expiresAt,
     quote,
+    customerId,
   };
 
   await redis.set(key(session.id), session, { ex: SESSION_TTL_SECONDS });

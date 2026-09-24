@@ -29,7 +29,7 @@ function validateInput(input: unknown): CheckoutQuoteRequest {
   }
 
   const couponCode = typeof (input as CheckoutQuoteRequest).couponCode === 'string'
-    ? (input as CheckoutQuoteRequest).couponCode.trim().toUpperCase()
+    ? (input as CheckoutQuoteRequest).couponCode?.trim().toUpperCase()
     : undefined;
   if (couponCode && !/^[A-Z0-9_-]{1,50}$/.test(couponCode)) throw new Error('Coupon code is invalid.');
   return { items, couponCode };

@@ -3,19 +3,42 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronDown, CreditCard, Landmark, LockKeyhole, PackageCheck, ShoppingBag, UserRound } from 'lucide-react';
+import { ChevronDown, CreditCard, Landmark, LockKeyhole, PackageCheck, User, ShoppingBag } from 'lucide-react';
 import { useCart } from '@/features/cart/context/CartContext';
 import type { CheckoutQuote } from '@/features/checkout/types/quote';
 import type { CartItem, PricedItem } from '@/features/cart/context/CartContext';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { ImagePreviewModal } from '@/components/ui/ImagePreviewModal';
 
 const formatPrice = (value: number) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
 const inputClass = 'h-12 w-full border border-[var(--brand-border)] bg-white px-4 text-sm outline-none transition focus:border-brand-primary focus:ring-1 focus:ring-brand-primary';
 
 function CheckoutHeader() {
   const { itemCount, openCart } = useCart();
-  return <header className="border-b border-[var(--brand-border)] bg-white"><div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-12"><Link href="/" className="flex items-center" aria-label="Abbeygate England home"><Image src="/images/logo/abbeygate-logo.png" alt="Abbeygate England" width={200} height={48} priority className="h-11 w-auto object-contain" /></Link><div className="flex items-center gap-6 text-brand-primary-dark"><Link href="/account" aria-label="Account" className="hover:text-brand-primary"><UserRound className="h-5 w-5" strokeWidth={1.8} /></Link><button type="button" onClick={openCart} aria-label="Open shopping bag" className="relative hover:text-brand-primary"><ShoppingBag className="h-5 w-5" strokeWidth={1.8} />{itemCount > 0 && <span className="absolute -right-2.5 -top-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-gold text-[10px] font-bold text-brand-primary-dark">{itemCount}</span>}</button></div></div></header>;
+  return (
+    <header className="border-b border-[var(--brand-border)] bg-white">
+      <div className="mx-auto grid h-20 max-w-[1440px] grid-cols-3 items-center px-5 sm:px-8 lg:px-12">
+        <div></div>
+        <div className="flex justify-center">
+          <Link href="/" aria-label="Abbeygate England home">
+            <Image src="/images/logo/abbeygate-logo.png" alt="Abbeygate England" width={200} height={48} priority className="h-11 w-auto object-contain" />
+          </Link>
+        </div>
+        <div className="flex items-center justify-end gap-6 text-brand-primary-dark">
+          <Link href="/account" aria-label="Account" className="hover:text-brand-primary flex items-center justify-center">
+            <User className="w-[18px] h-[18px]" strokeWidth={2.2} />
+          </Link>
+          <button type="button" onClick={openCart} aria-label="Open shopping bag" className="relative flex items-center justify-center hover:text-brand-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" className="w-[15px] h-[17px] fill-current">
+              <path d="M352 160v-32C352 57.42 294.579 0 224 0 153.42 0 96 57.42 96 128v32H0v272c0 44.183 35.817 80 80 80h288c44.183 0 80-35.817 80-80V160h-96zm-192-32c0-35.29 28.71-64 64-64s64 28.71 64 64v32H160v-32zm160 120c-13.255 0-24-10.745-24-24s10.745-24 24-24 24 10.745 24 24-10.745 24-24 24zm-192 0c-13.255 0-24-10.745-24-24s10.745-24 24-24 24 10.745 24 24-10.745 24-24 24z" />
+            </svg>
+            {itemCount > 0 && <span className="absolute -right-2.5 -top-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-gold text-[10px] font-bold text-brand-primary-dark">{itemCount}</span>}
+          </button>
+        </div>
+      </div>
+    </header>
+  );
 }
 
 function CheckoutFooter() {
@@ -37,7 +60,9 @@ function CheckoutFormContent({
   quoteError,
   couponInput,
   setCouponInput,
-  setAppliedCoupon
+  setAppliedCoupon,
+  initialDetails,
+  setPreviewItem
 }: any) {
   const stripe = useStripe();
   const elements = useElements();
@@ -45,6 +70,88 @@ function CheckoutFormContent({
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'bacs'>('card');
+  const [postcode, setPostcode] = useState(initialDetails?.postcode || '');
+  const [city, setCity] = useState(initialDetails?.city || '');
+  const [postcodeStatus, setPostcodeStatus] = useState<'idle' | 'loading' | 'valid' | 'invalid'>('idle');
+  const [deliveryEstimate, setDeliveryEstimate] = useState<string | null>(null);
+
+  const getCustomDelivery = (pc: string) => {
+    const clean = pc.toUpperCase().replace(/\s+/g, '');
+    const match = clean.match(/^([A-Z]{1,2})(\d{1,2})/);
+    if (!match) return null;
+    
+    const prefix = match[1];
+    const num = parseInt(match[2]);
+    
+    const rules = [
+      { p: "BT", r: [[1,49],[51,57],[60,71],[74,82],[92,94]], days: "Next Day" },
+      { p: "IM", r: [[1,9],[86,87]], exact: [99], days: "2–5 Days" },
+      { p: "PO", r: [[30,41]], days: "Next Day" },
+      { p: "HS", r: [[1,9]], days: "2–5 Days" },
+      { p: "GY", r: [[1,10]], days: "Next Day" },
+      { p: "JE", r: [[1,5]], days: "Next Day" }
+    ];
+    
+    for (const rule of rules) {
+      if (prefix === rule.p) {
+        if (rule.exact && rule.exact.includes(num)) return rule.days;
+        if (rule.r) {
+          for (const range of rule.r) {
+            if (num >= range[0] && num <= range[1]) return rule.days;
+          }
+        }
+      }
+    }
+    return null;
+  };
+
+  const handlePostcodeBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (!val.trim()) {
+      setPostcodeStatus('idle');
+      setDeliveryEstimate(null);
+      return;
+    }
+    
+    const cleanPostcode = val.replace(/\s+/g, '');
+    
+    // Check regex first
+    if (!/^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/i.test(cleanPostcode)) {
+      setPostcodeStatus('invalid');
+      setDeliveryEstimate(null);
+      return;
+    }
+
+    // It is regex-valid, so we immediately calculate the delivery estimate
+    const customDays = getCustomDelivery(val);
+    setDeliveryEstimate(customDays || 'Next Day');
+    setPostcodeStatus('loading');
+    
+    try {
+      const res = await fetch(`https://api.postcodes.io/postcodes/${cleanPostcode}`);
+      const data = await res.json();
+      
+      if (data.status === 200) {
+        setCity(data.result.admin_district || data.result.parliamentary_constituency || data.result.primary_care_trust || '');
+      }
+      // Regardless of API result, if it passed the regex, we consider it valid for checkout
+      setPostcodeStatus('valid');
+    } catch (err) {
+      // If API fails, it's still a valid postcode by regex
+      setPostcodeStatus('valid');
+    }
+  };
+
+  useEffect(() => {
+    if (initialDetails?.postcode && postcodeStatus === 'idle') {
+      const cleanPostcode = initialDetails.postcode.replace(/\s+/g, '');
+      if (/^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/i.test(cleanPostcode)) {
+        setPostcodeStatus('valid');
+        const customDays = getCustomDelivery(initialDetails.postcode);
+        setDeliveryEstimate(customDays || 'Next Day');
+      }
+    }
+  }, [initialDetails?.postcode, postcodeStatus]);
 
   useEffect(() => {
     if (quoteData?.id) {
@@ -71,6 +178,13 @@ function CheckoutFormContent({
     const formData = new FormData(event.currentTarget);
 
     if (paymentMethod === 'card' && stripe && elements && clientSecret) {
+      const { error: submitError } = await elements.submit();
+      if (submitError) {
+        setPaymentError(submitError.message ?? 'Payment validation failed');
+        setIsProcessing(false);
+        return;
+      }
+
       const { error } = await stripe.confirmPayment({
         elements,
         clientSecret,
@@ -151,7 +265,7 @@ function CheckoutFormContent({
               <Link href="/account" className="text-sm font-semibold text-brand-primary hover:underline">Sign in</Link>
             </div>
             <label className="block text-sm font-medium" htmlFor="email">Email address</label>
-            <input id="email" name="email" type="email" autoComplete="email" required placeholder="you@company.com" className={`mt-2 ${inputClass}`} />
+            <input id="email" name="email" type="email" autoComplete="email" required placeholder="you@company.com" defaultValue={initialDetails?.email} className={`mt-2 ${inputClass}`} />
             <label className="mt-4 flex items-center gap-2 text-sm text-brand-grey">
               <input type="checkbox" className="h-4 w-4 accent-brand-primary" /> Keep me updated with Abbeygate news and offers
             </label>
@@ -167,17 +281,23 @@ function CheckoutFormContent({
               <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-grey" />
             </div>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <input name="firstName" required autoComplete="given-name" placeholder="First name" className={inputClass} />
-              <input name="lastName" required autoComplete="family-name" placeholder="Last name" className={inputClass} />
+              <input name="firstName" required autoComplete="given-name" placeholder="First name" defaultValue={initialDetails?.firstName} className={inputClass} />
+              <input name="lastName" required autoComplete="family-name" placeholder="Last name" defaultValue={initialDetails?.lastName} className={inputClass} />
             </div>
-            <input name="company" autoComplete="organization" placeholder="Company (optional)" className={`mt-4 ${inputClass}`} />
-            <input name="address1" required autoComplete="address-line1" placeholder="Address" className={`mt-4 ${inputClass}`} />
-            <input name="address2" autoComplete="address-line2" placeholder="Apartment, suite, etc. (optional)" className={`mt-4 ${inputClass}`} />
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <input name="city" required autoComplete="address-level2" placeholder="Town / City" className={inputClass} />
-              <input name="postcode" required autoComplete="postal-code" placeholder="Postcode" className={inputClass} />
+            <input name="company" autoComplete="organization" placeholder="Company (optional)" defaultValue={initialDetails?.company} className={`mt-4 ${inputClass}`} />
+            <input name="address1" required autoComplete="address-line1" placeholder="Address" defaultValue={initialDetails?.address1} className={`mt-4 ${inputClass}`} />
+            <input name="address2" autoComplete="address-line2" placeholder="Apartment, suite, etc. (optional)" defaultValue={initialDetails?.address2} className={`mt-4 ${inputClass}`} />
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 items-start">
+              <input name="city" value={city} onChange={(e) => setCity(e.target.value)} required autoComplete="address-level2" placeholder="Town / City" className={inputClass} />
+              <div>
+                <div className="relative">
+                  <input name="postcode" value={postcode} onChange={(e) => setPostcode(e.target.value)} onBlur={handlePostcodeBlur} required autoComplete="postal-code" placeholder="Postcode" className={inputClass} />
+                  {postcodeStatus === 'loading' && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-brand-grey">Checking...</span>}
+                </div>
+                {postcodeStatus === 'invalid' && <p className="mt-1 text-xs text-red-500">Invalid postcode format.</p>}
+              </div>
             </div>
-            <input name="phone" required autoComplete="tel" placeholder="Phone number" className={`mt-4 ${inputClass}`} />
+            <input name="phone" required autoComplete="tel" placeholder="Phone number" defaultValue={initialDetails?.phone} className={`mt-4 ${inputClass}`} />
           </section>
 
           <section>
@@ -186,7 +306,11 @@ function CheckoutFormContent({
               <PackageCheck className="mt-0.5 h-5 w-5 shrink-0 text-brand-accent" />
               <p>
                 <span className="font-semibold">{displayShippingLabel}</span><br />
-                <span className="text-brand-grey">Your delivery option will be confirmed when the secure order service is connected.</span>
+                {deliveryEstimate ? (
+                  <span className="text-brand-primary-dark font-medium">Estimated Delivery: {deliveryEstimate}</span>
+                ) : (
+                  <span className="text-brand-grey">Enter a valid postcode to see your estimated delivery time.</span>
+                )}
               </p>
             </div>
           </section>
@@ -226,7 +350,7 @@ function CheckoutFormContent({
               <input required type="checkbox" className="mt-1 h-4 w-4 accent-brand-primary" /> I agree to the <Link href="/terms" className="underline">Terms &amp; Conditions</Link> and <Link href="/returns" className="underline">Refund &amp; Returns policy</Link>.
             </label>
             <button type="submit" disabled={isSubmitDisabled} className="mt-6 w-full bg-brand-primary px-6 py-4 text-sm font-bold tracking-wide text-white hover:bg-brand-primary-dark disabled:opacity-75 disabled:cursor-not-allowed">
-              {isProcessing ? 'Processing payment...' : (isQuoteLoading ? 'Calculating quote...' : `Pay ${formatPrice(displayTotal)}`)}
+              {isProcessing ? 'Processing payment...' : (isQuoteLoading ? 'Calculating total...' : `Pay ${formatPrice(displayTotal)}`)}
             </button>
             <p className="mt-3 text-center text-xs text-brand-grey">Order placement is encrypted and secure.</p>
           </section>
@@ -239,40 +363,47 @@ function CheckoutFormContent({
             <h2 className="text-xl">Order summary</h2>
             <span className="text-sm text-brand-grey">{itemCount} item{itemCount === 1 ? '' : 's'}</span>
           </div>
-          <div className="space-y-5 border-b border-[var(--brand-border)] pb-6">
+          <div className="space-y-5 border-b border-[var(--brand-border)] pb-6 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar overscroll-contain" data-lenis-prevent>
             {pricedItems.map((item: PricedItem) => (
               <div key={item.key} className="flex gap-4">
-                <div className="relative h-20 w-16 shrink-0 overflow-hidden bg-white">
-                  <Image src={item.customization?.fullPreviewUrl || item.image || '/images/logo/abbeygate-logo.png'} alt="" fill sizes="64px" className="object-contain mix-blend-multiply" />
+                <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded">
+                  <Image src={item.customization?.fullPreviewUrl || item.image || '/images/logo/abbeygate-logo.png'} alt="" fill sizes="64px" className="object-cover mix-blend-multiply" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold leading-5 text-brand-primary-dark">{item.name}</p>
                   <p className="mt-1 text-xs text-brand-grey">Qty {item.quantity}</p>
                   {item.customization?.enabled && (
-                    <div className="mt-2 rounded bg-white p-2.5 text-[11px] border border-[var(--brand-border)]">
+                    <div className="mt-2 text-[12px] space-y-1">
                       <p className="font-semibold text-brand-primary-dark mb-1">Custom Logo</p>
                       {item.customization.choice && <p className="text-brand-grey"><span className="font-medium text-brand-body">Blocking:</span> {item.customization.choice.replace(' blocked', '')}</p>}
                       {item.customization.foilColor && <p className="text-brand-grey"><span className="font-medium text-brand-body">Foil Colour:</span> {item.customization.foilColor}</p>}
                       {item.customization.fileName && (
                         <p className="text-brand-grey truncate">
-                          <span className="font-medium text-brand-body">Logo:</span> {item.customization.fileName}
+                          <span className="font-medium text-brand-body">Logo:</span> {item.customization.fileName} —{' '}
+                          <a href={item.customization.logoFile ? URL.createObjectURL(item.customization.logoFile as Blob) : '#'} target="_blank" rel="noopener noreferrer" className="text-brand-primary-dark underline hover:text-gray-600">View file</a>
+                        </p>
+                      )}
+                      {item.customization.logoPreviewUrl && (
+                        <p className="text-brand-grey mt-1">
+                          <span className="font-medium text-brand-body">Preview:</span>{' '}
+                          <button type="button" onClick={() => setPreviewItem(item)} className="text-brand-primary-dark underline hover:text-gray-600">View preview</button>
                         </p>
                       )}
                       {item.customization.cornerEdges && item.customization.cornerEdges !== 'None' && (
-                        <p className="text-brand-grey mt-1 pt-1 border-t border-[var(--brand-border)]"><span className="font-medium text-brand-body">Corner Edges:</span> {item.customization.cornerEdges}</p>
+                        <p className="text-brand-grey mt-1 pt-1"><span className="font-medium text-brand-body">Corner Edges:</span> {item.customization.cornerEdges}</p>
                       )}
                     </div>
                   )}
                 </div>
                 <strong className="shrink-0 text-sm">
-                  {formatPrice(quoteData?.quote.lines.find(l => l.productId === item.productId && l.variationId === item.variationId)?.unitPrice ? (quoteData.quote.lines.find(l => l.productId === item.productId && l.variationId === item.variationId)!.unitPrice * item.quantity) : item.lineTotal)}
+                  {formatPrice(quoteData?.quote.lines.find((l: any) => l.productId === item.productId && l.variationId === item.variationId)?.unitPrice ? (quoteData.quote.lines.find((l: any) => l.productId === item.productId && l.variationId === item.variationId)!.unitPrice * item.quantity) : item.lineTotal)}
                 </strong>
               </div>
             ))}
           </div>
           <div className="mt-6 flex gap-2">
             <input placeholder="Discount code" aria-label="Discount code" className="min-w-0 flex-1 border border-[var(--brand-border)] bg-white px-3 text-sm outline-none focus:border-brand-primary" value={couponInput} onChange={(e) => setCouponInput(e.target.value)} />
-            <button type="button" className="border border-brand-accent px-4 py-3 text-sm font-semibold text-brand-accent hover:bg-brand-tint disabled:opacity-50" onClick={() => setAppliedCoupon(couponInput)} disabled={!couponInput.trim() || isQuoteLoading || isProcessing}>
+            <button type="button" className="border border-brand-primary px-4 py-3 text-sm font-semibold text-brand-primary hover:bg-brand-primary hover:text-white transition-colors disabled:opacity-50" onClick={() => setAppliedCoupon(couponInput)} disabled={!couponInput.trim() || isQuoteLoading || isProcessing}>
               Apply
             </button>
           </div>
@@ -316,11 +447,12 @@ function CheckoutFormContent({
   );
 }
 
-export function CheckoutClient() {
+export function CheckoutClient({ initialDetails }: { initialDetails?: any }) {
   const { items, pricedItems, itemCount, subtotal, shippingCost, shippingLabel, vatCost, total } = useCart();
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<string | undefined>();
   const [quoteData, setQuoteData] = useState<{ id: string; quote: CheckoutQuote } | null>(null);
+  const [previewItem, setPreviewItem] = useState<any | null>(null);
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
@@ -346,8 +478,50 @@ export function CheckoutClient() {
       setIsQuoteLoading(true);
       setQuoteError(null);
       try {
+        const formData = new FormData();
+        let hasFilesToUpload = false;
+        
+        for (let index = 0; index < items.length; index++) {
+          const item = items[index];
+          if (item.customization?.enabled) {
+            if (item.customization.logoFile) {
+              try {
+                formData.append(`logo_${index}`, item.customization.logoFile as Blob, item.customization.fileName || 'logo.png');
+                hasFilesToUpload = true;
+              } catch (e) {
+                console.warn('Failed to append logoFile', e);
+              }
+            }
+            if (item.customization.fullPreviewUrl) {
+              try {
+                const res = await fetch(item.customization.fullPreviewUrl);
+                const blob = await res.blob();
+                formData.append(`preview_${index}`, blob, 'preview.png');
+                hasFilesToUpload = true;
+              } catch (e) {
+                console.warn('Failed to convert preview to blob', e);
+              }
+            }
+          }
+        }
+
+        let uploadedUrls: Record<string, string> = {};
+        if (hasFilesToUpload) {
+          const uploadRes = await fetch('/api/checkout/upload', {
+            method: 'POST',
+            body: formData
+          });
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json();
+            uploadedUrls = uploadData.files || {};
+          } else {
+            const errorText = await uploadRes.text();
+            throw new Error('Failed to upload logo files to WordPress: ' + errorText);
+          }
+        }
+
         const payload = {
-          items: items.map(item => ({
+          items: items.map((item, index) => ({
             productId: item.productId,
             variationId: item.variationId,
             quantity: item.quantity,
@@ -359,6 +533,8 @@ export function CheckoutClient() {
               foilColor: item.customization.foilColor,
               fileName: item.customization.fileName,
               fullPreviewUrl: item.customization.fullPreviewUrl,
+              logoUrl: uploadedUrls[`logo_${index}`],
+              previewUrl: uploadedUrls[`preview_${index}`]
             } : undefined
           })),
           couponCode: appliedCoupon
@@ -425,18 +601,17 @@ export function CheckoutClient() {
     quoteError,
     couponInput,
     setCouponInput,
-    setAppliedCoupon
+    setAppliedCoupon,
+    initialDetails,
+    setPreviewItem
   };
 
   return (
     <div className="min-h-screen bg-brand-cream text-brand-body">
       <CheckoutHeader />
-      <section className="border-b border-[var(--brand-border)] bg-brand-tint/55">
+      <section className="border-b border-[var(--brand-border)] bg-brand-cream">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-5 py-7 sm:px-8 lg:px-12">
           <h1 className="text-3xl sm:text-4xl">Checkout</h1>
-          <span className="hidden items-center gap-2 rounded-full bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-[0.13em] text-brand-accent sm:flex">
-            <LockKeyhole className="h-3.5 w-3.5" /> Secure checkout
-          </span>
         </div>
       </section>
       
@@ -453,6 +628,12 @@ export function CheckoutClient() {
       </Elements>
       
       <CheckoutFooter />
+      <ImagePreviewModal 
+        isOpen={!!previewItem} 
+        onClose={() => setPreviewItem(null)} 
+        item={previewItem} 
+        title="Customization Preview" 
+      />
     </div>
   );
 }

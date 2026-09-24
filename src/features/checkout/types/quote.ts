@@ -5,6 +5,8 @@ export type CheckoutCustomizationInput = {
   foilColor?: string;
   fileName?: string;
   fullPreviewUrl?: string;
+  logoUrl?: string;
+  previewUrl?: string;
 };
 
 export type CheckoutQuoteItemInput = {
