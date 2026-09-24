@@ -387,21 +387,17 @@ export function CheckoutClient() {
         </div>
       </section>
       
-      {stripePromise ? (
-        <Elements 
-          stripe={stripePromise} 
-          options={{ 
-            mode: 'payment', 
-            amount: Math.max(1, Math.round(displayTotal * 100)), 
-            currency: 'gbp',
-            appearance: { theme: 'stripe' }
-          }}
-        >
-          <CheckoutFormContent {...formProps} />
-        </Elements>
-      ) : (
+      <Elements 
+        stripe={stripePromise} 
+        options={{ 
+          mode: 'payment', 
+          amount: Math.max(1, Math.round(displayTotal * 100)), 
+          currency: 'gbp',
+          appearance: { theme: 'stripe' }
+        }}
+      >
         <CheckoutFormContent {...formProps} />
-      )}
+      </Elements>
       
       <CheckoutFooter />
     </div>
