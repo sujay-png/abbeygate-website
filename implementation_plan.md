@@ -15,6 +15,7 @@ This document is the source of truth for continuing the checkout work in a later
 - [x] Added blank Stripe environment-variable placeholders in `.env` and `.env.example`.
 - [x] Installed official Stripe dependencies: `stripe`, `@stripe/stripe-js`, and `@stripe/react-stripe-js`.
 - [x] Added the initial server-side quote endpoint (`POST /api/checkout/quote`). It validates cart shape, reloads current WooCommerce products and B2B tier metadata, and recalculates customisation, shipping and VAT on the server. It is not yet connected to the customer UI or payment flow.
+- [x] Added a Redis-backed checkout-session API (`POST`/`GET /api/checkout/session`) with opaque IDs and a ten-minute expiry. It persists the server-generated quote; no browser-submitted totals are stored as authoritative payment data.
 
 ### Current state and intentional limits
 
