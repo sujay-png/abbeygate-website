@@ -247,7 +247,22 @@ function CheckoutFormContent({
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold leading-5 text-brand-primary-dark">{item.name}</p>
-                  <p className="mt-1 text-xs text-brand-grey">Qty {item.quantity}{item.customization?.enabled ? ' · Customised' : ''}</p>
+                  <p className="mt-1 text-xs text-brand-grey">Qty {item.quantity}</p>
+                  {item.customization?.enabled && (
+                    <div className="mt-2 rounded bg-white p-2.5 text-[11px] border border-[var(--brand-border)]">
+                      <p className="font-semibold text-brand-primary-dark mb-1">Custom Logo</p>
+                      {item.customization.choice && <p className="text-brand-grey"><span className="font-medium text-brand-body">Blocking:</span> {item.customization.choice.replace(' blocked', '')}</p>}
+                      {item.customization.foilColor && <p className="text-brand-grey"><span className="font-medium text-brand-body">Foil Colour:</span> {item.customization.foilColor}</p>}
+                      {item.customization.fileName && (
+                        <p className="text-brand-grey truncate">
+                          <span className="font-medium text-brand-body">Logo:</span> {item.customization.fileName}
+                        </p>
+                      )}
+                      {item.customization.cornerEdges && item.customization.cornerEdges !== 'None' && (
+                        <p className="text-brand-grey mt-1 pt-1 border-t border-[var(--brand-border)]"><span className="font-medium text-brand-body">Corner Edges:</span> {item.customization.cornerEdges}</p>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <strong className="shrink-0 text-sm">
                   {formatPrice(quoteData?.quote.lines.find(l => l.productId === item.productId && l.variationId === item.variationId)?.unitPrice ? (quoteData.quote.lines.find(l => l.productId === item.productId && l.variationId === item.variationId)!.unitPrice * item.quantity) : item.lineTotal)}

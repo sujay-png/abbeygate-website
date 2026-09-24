@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useCallback, useMemo, useEffect, R
 import type { LogoCustomization } from '@/features/products/types/store-product';
 import type { StoreProduct, PriceTier } from '@/features/products/types/store-product';
 import { calculateShipping } from '@/features/products/utils/shipping';
-import { VAT_RATE, calculateProductPrice, CUSTOMIZATION_MIN_QTY } from '@/features/products/utils/pricing';
+import { VAT_RATE, calculateProductPrice, CUSTOMIZATION_MIN_QTY, getCornerEdgesPricing } from '@/features/products/utils/pricing';
 import * as idb from '@/lib/idb';
 import toast from 'react-hot-toast';
 
@@ -215,7 +215,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           customizationEnabled: !(item.isGifts ?? false) && item.quantity >= CUSTOMIZATION_MIN_QTY && !!item.customization?.enabled,
           blockingType: item.customization?.choice,
           cornerEdges: item.customization?.cornerEdges,
-          cornerEdgePrice: (item.customization as any)?.cornerEdgesPrice || 0,
+          cornerEdgePrice: item.customization?.cornerEdges && item.customization.cornerEdges !== 'None' ? getCornerEdgesPricing(item as any).pricePerPair : 0,
           isGifts: item.isGifts ?? false,
         }).unitPrice;
       }
@@ -247,7 +247,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     return calculateShipping(shippingItems);
   }, [items]);
 
-  const vatCost = useMemo(() => subtotal * VAT_RATE, [subtotal]);
+  const vatCost = useMemo(() => (subtotal + shippingCost) * VAT_RATE, [subtotal, shippingCost]);
   const total = subtotal + shippingCost + vatCost;
 
   const value: CartContextValue = {

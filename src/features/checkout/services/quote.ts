@@ -120,7 +120,7 @@ export async function createCheckoutQuote(payload: unknown): Promise<CheckoutQuo
   const coupon = await applyCoupon(couponCode, subtotal);
   const shipping = calculateShipping(lines.map((line) => ({ product: line.product, quantity: line.quantity })), coupon.freeShipping ? ['abbeygate100'] : []);
   const taxableSubtotal = subtotal - coupon.discount;
-  const vat = Number((taxableSubtotal * VAT_RATE).toFixed(2));
+  const vat = Number(((taxableSubtotal + shipping.cost) * VAT_RATE).toFixed(2));
 
   return {
     currency: 'GBP',
