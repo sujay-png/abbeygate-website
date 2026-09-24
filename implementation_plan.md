@@ -16,6 +16,7 @@ This document is the source of truth for continuing the checkout work in a later
 - [x] Installed official Stripe dependencies: `stripe`, `@stripe/stripe-js`, and `@stripe/react-stripe-js`.
 - [x] Added the initial server-side quote endpoint (`POST /api/checkout/quote`). It validates cart shape, reloads current WooCommerce products and B2B tier metadata, and recalculates customisation, shipping and VAT on the server. It is not yet connected to the customer UI or payment flow.
 - [x] Added a Redis-backed checkout-session API (`POST`/`GET /api/checkout/session`) with opaque IDs and a ten-minute expiry. It persists the server-generated quote; no browser-submitted totals are stored as authoritative payment data.
+- [x] Added initial server-side coupon lookup and validation to the quote flow (existence, expiry, global usage limit, minimum/maximum cart value, percentage/fixed-cart discount, and free shipping). WooCommerce must still re-validate all coupon constraints at order creation.
 
 ### Current state and intentional limits
 

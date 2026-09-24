@@ -1,5 +1,6 @@
 import { getProductPricingFromProduct } from '@/features/products/services/pricing';
 import { storeFetch } from '@/lib/woocommerce/store-api';
+import { woocommerceFetch } from '@/lib/woocommerce/client';
 import { calculateProductPrice, getCornerEdgesPricing, VAT_RATE } from '@/features/products/utils/pricing';
 import { calculateShipping } from '@/features/products/utils/shipping';
 import type { StoreProduct } from '@/features/products/types/store-product';
@@ -27,7 +28,40 @@ function validateInput(input: unknown): CheckoutQuoteRequest {
     }
   }
 
-  return { items };
+  const couponCode = typeof (input as CheckoutQuoteRequest).couponCode === 'string'
+    ? (input as CheckoutQuoteRequest).couponCode.trim().toUpperCase()
+    : undefined;
+  if (couponCode && !/^[A-Z0-9_-]{1,50}$/.test(couponCode)) throw new Error('Coupon code is invalid.');
+  return { items, couponCode };
+}
+
+type WooCoupon = {
+  code: string;
+  amount: string;
+  discount_type: 'percent' | 'fixed_cart' | 'fixed_product';
+  date_expires: string | null;
+  usage_limit: number | null;
+  usage_count: number;
+  minimum_amount: string;
+  maximum_amount: string;
+  free_shipping: boolean;
+};
+
+async function applyCoupon(code: string | undefined, subtotal: number): Promise<{ discount: number; couponCode?: string; freeShipping: boolean }> {
+  if (!code) return { discount: 0, freeShipping: false };
+  const coupons = await woocommerceFetch<WooCoupon[]>({ path: '/coupons', params: { code, per_page: 1 }, revalidate: false });
+  const coupon = coupons.find((candidate) => candidate.code.toUpperCase() === code);
+  if (!coupon) throw new Error('Coupon code was not found.');
+  if (coupon.date_expires && new Date(coupon.date_expires) <= new Date()) throw new Error('Coupon code has expired.');
+  if (coupon.usage_limit !== null && coupon.usage_count >= coupon.usage_limit) throw new Error('Coupon code has reached its usage limit.');
+  const minimum = Number(coupon.minimum_amount || 0);
+  const maximum = Number(coupon.maximum_amount || 0);
+  if (subtotal < minimum) throw new Error(`Coupon requires a minimum spend of £${minimum.toFixed(2)}.`);
+  if (maximum > 0 && subtotal > maximum) throw new Error(`Coupon is valid only up to £${maximum.toFixed(2)}.`);
+
+  const amount = Number(coupon.amount || 0);
+  const discount = coupon.discount_type === 'percent' ? subtotal * (amount / 100) : amount;
+  return { discount: Number(Math.min(subtotal, discount).toFixed(2)), couponCode: coupon.code, freeShipping: coupon.free_shipping };
 }
 
 async function getStoreProduct(productId: string): Promise<StoreProduct> {
@@ -46,7 +80,7 @@ function groupQuantity(item: CheckoutQuoteItemInput, allItems: CheckoutQuoteItem
  * request a fresh quote and persist it in a durable checkout session.
  */
 export async function createCheckoutQuote(payload: unknown): Promise<CheckoutQuote> {
-  const { items } = validateInput(payload);
+  const { items, couponCode } = validateInput(payload);
   const products = await Promise.all(items.map((item) => getStoreProduct(item.productId)));
 
   const lines = await Promise.all(items.map(async (item, index) => {
@@ -82,8 +116,10 @@ export async function createCheckoutQuote(payload: unknown): Promise<CheckoutQuo
   }));
 
   const subtotal = Number(lines.reduce((sum, line) => sum + line.lineTotal, 0).toFixed(2));
-  const shipping = calculateShipping(lines.map((line) => ({ product: line.product, quantity: line.quantity })));
-  const vat = Number((subtotal * VAT_RATE).toFixed(2));
+  const coupon = await applyCoupon(couponCode, subtotal);
+  const shipping = calculateShipping(lines.map((line) => ({ product: line.product, quantity: line.quantity })), coupon.freeShipping ? ['abbeygate100'] : []);
+  const taxableSubtotal = subtotal - coupon.discount;
+  const vat = Number((taxableSubtotal * VAT_RATE).toFixed(2));
 
   return {
     currency: 'GBP',
@@ -97,9 +133,11 @@ export async function createCheckoutQuote(payload: unknown): Promise<CheckoutQuo
       lineTotal: line.lineTotal,
     })),
     subtotal,
+    discount: coupon.discount,
+    couponCode: coupon.couponCode,
     shipping: { label: shipping.label, cost: Number(shipping.cost.toFixed(2)) },
     vat,
-    total: Number((subtotal + shipping.cost + vat).toFixed(2)),
-    warnings: ['Coupon validation and checkout-session persistence are the next required steps before payment can be enabled.'],
+    total: Number((taxableSubtotal + shipping.cost + vat).toFixed(2)),
+    warnings: ['Coupon product restrictions, customer-specific restrictions, and usage reservation must be re-validated when the WooCommerce order is created.'],
   };
 }

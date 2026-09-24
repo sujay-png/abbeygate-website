@@ -14,6 +14,7 @@ export type CheckoutQuoteItemInput = {
 
 export type CheckoutQuoteRequest = {
   items: CheckoutQuoteItemInput[];
+  couponCode?: string;
 };
 
 export type CheckoutQuoteLine = {
@@ -30,6 +31,8 @@ export type CheckoutQuote = {
   expiresAt: string;
   lines: CheckoutQuoteLine[];
   subtotal: number;
+  discount: number;
+  couponCode?: string;
   shipping: { label: string; cost: number };
   vat: number;
   total: number;
