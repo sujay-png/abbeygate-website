@@ -88,6 +88,17 @@ export default function RootLayout({
       style={{ colorScheme: "light" }}
       suppressHydrationWarning
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-KN7ZRPKC');`
+          }}
+        />
+      </head>
       {/* Preconnect to WordPress checkout domain so the TLS handshake is already
           done when the user clicks "Proceed to Checkout" from the cart page. */}
       <link rel="preconnect" href="https://dashboard.abbeygate-england.com" />
@@ -97,6 +108,14 @@ export default function RootLayout({
         className="min-h-screen flex flex-col bg-brand-cream text-brand-body"
         suppressHydrationWarning
       >
+        <noscript>
+          <iframe
+            src="https://www.googletagmanager.com/ns.html?id=GTM-KN7ZRPKC"
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
+          />
+        </noscript>
         <VatProvider>
           <LenisProvider>
             <CartProvider>
