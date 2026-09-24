@@ -1,14 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Didact_Gothic, Work_Sans, Josefin_Sans } from "next/font/google";
 import "./globals.css";
-import { Navbar } from "@/components/layout/Navbar";
 import { Suspense } from "react";
-import { Footer } from "@/components/layout/Footer";
 import { CartProvider } from '@/features/cart/context/CartContext';
-import { CartDrawer } from '@/features/cart/components/CartDrawer';
 import { Toaster } from 'react-hot-toast';
 import { LenisProvider } from '@/components/layout/LenisProvider';
 import { VatProvider } from '@/context/VatContext';
+import { SiteChrome } from '@/components/layout/SiteChrome';
 
 
 
@@ -100,12 +98,7 @@ export default function RootLayout({
         <VatProvider>
           <LenisProvider>
             <CartProvider>
-              <Suspense fallback={null}><Navbar /></Suspense>
-              <main className="flex-1 bg-brand-cream">
-                {children}
-              </main>
-              <Footer />
-              <CartDrawer />
+              <Suspense fallback={null}><SiteChrome>{children}</SiteChrome></Suspense>
               <Toaster position="bottom-left" toastOptions={{ duration: 4000, style: { background: '#341a3d', color: '#fff' } }} />
             </CartProvider>
           </LenisProvider>
