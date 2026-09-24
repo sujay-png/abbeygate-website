@@ -22,11 +22,12 @@ const features = [
 
 interface TrustIndicatorsProps {
   compact?: boolean;
+  noBorders?: boolean;
 }
 
-export const TrustIndicators = ({ compact = false }: TrustIndicatorsProps = {}) => {
+export const TrustIndicators = ({ compact = false, noBorders = false }: TrustIndicatorsProps = {}) => {
   const innerContent = (
-    <div className={`flex flex-col md:flex-row md:items-center md:justify-between divide-y divide-gray-200 md:divide-y-0 gap-0 md:gap-4 lg:gap-8 ${compact ? 'py-6 mt-8 border-t border-b border-gray-200' : ''}`}>
+    <div className={`flex flex-col md:flex-row md:items-center md:justify-between divide-y divide-gray-200 md:divide-y-0 gap-0 md:gap-4 lg:gap-8 ${compact ? `py-6 mt-8 ${noBorders ? '' : 'border-t border-b border-gray-200'}` : ''}`}>
       {features.map((feature, idx) => (
         <div
           key={idx}

@@ -1492,7 +1492,11 @@ export const ProductDetailClient = ({
                       }}
                       className={`w-8 h-8 rounded-full shadow-sm transition-transform hover:scale-110 ${isActive ? 'ring-2 ring-offset-2 ring-brand-body scale-110' : 'border border-gray-300'
                         }`}
-                      style={{ backgroundColor: color.hex }}
+                      style={{ 
+                        background: color.hex.includes(',') 
+                          ? `linear-gradient(135deg, ${color.hex.split(',')[0]} 50%, ${color.hex.split(',')[1]} 50%)`
+                          : color.hex 
+                      }}
                     />
                   );
                 })}

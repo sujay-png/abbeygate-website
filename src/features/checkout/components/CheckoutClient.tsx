@@ -8,7 +8,7 @@ import { useCart } from '@/features/cart/context/CartContext';
 import type { CheckoutQuote } from '@/features/checkout/types/quote';
 import type { CartItem, PricedItem } from '@/features/cart/context/CartContext';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Elements, PaymentElement, ExpressCheckoutElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { ImagePreviewModal } from '@/components/ui/ImagePreviewModal';
 
 const formatPrice = (value: number) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
@@ -74,6 +74,7 @@ function CheckoutFormContent({
   const [city, setCity] = useState(initialDetails?.city || '');
   const [postcodeStatus, setPostcodeStatus] = useState<'idle' | 'loading' | 'valid' | 'invalid'>('idle');
   const [deliveryEstimate, setDeliveryEstimate] = useState<string | null>(null);
+  const [isExpressAvailable, setIsExpressAvailable] = useState<boolean>(false);
 
   const getCustomDelivery = (pc: string) => {
     const clean = pc.toUpperCase().replace(/\s+/g, '');
@@ -168,6 +169,37 @@ function CheckoutFormContent({
     }
   }, [quoteData?.id]);
 
+  const handleExpressConfirm = async () => {
+    if (!stripe || !elements || !clientSecret) return;
+    setIsProcessing(true);
+    setPaymentError(null);
+
+    const { error: submitError } = await elements.submit();
+    if (submitError) {
+      setPaymentError(submitError.message ?? 'Payment failed');
+      setIsProcessing(false);
+      return;
+    }
+
+    try {
+      const { error } = await stripe.confirmPayment({
+        elements,
+        clientSecret,
+        confirmParams: {
+          return_url: `${window.location.origin}/checkout/success`,
+        }
+      });
+
+      if (error) {
+        setPaymentError(error.message ?? 'Payment failed');
+        setIsProcessing(false);
+      }
+    } catch (err) {
+      setPaymentError('An unexpected error occurred.');
+      setIsProcessing(false);
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (paymentMethod === 'card' && (!stripe || !elements || !clientSecret)) return;
@@ -259,6 +291,34 @@ function CheckoutFormContent({
     <div className="mx-auto grid max-w-[1440px] grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.78fr)]">
       <form className="bg-white px-5 py-10 sm:px-8 lg:px-12 lg:py-14" onSubmit={handleSubmit}>
         <div className="mx-auto max-w-[640px] space-y-10">
+          <section className="mb-6">
+            {isExpressAvailable && <h2 className="mb-4 text-center text-sm font-semibold text-brand-grey">Express checkout</h2>}
+            <div className={`overflow-hidden rounded ${isExpressAvailable ? 'min-h-[44px]' : 'h-0 opacity-0'}`}>
+              <ExpressCheckoutElement 
+                onConfirm={handleExpressConfirm} 
+                onReady={({ availablePaymentMethods }) => {
+                  setIsExpressAvailable(!!availablePaymentMethods && Object.values(availablePaymentMethods).some(Boolean));
+                }}
+                options={{
+                  paymentMethods: {
+                    link: 'never',
+                    amazonPay: 'never'
+                  }
+                }}
+              />
+            </div>
+            {isExpressAvailable && (
+              <div className="relative mt-8 mb-4">
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                  <div className="w-full border-t border-[var(--brand-border)]"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="bg-white px-4 text-brand-grey">or</span>
+                </div>
+              </div>
+            )}
+          </section>
+
           <section>
             <div className="mb-5 flex items-baseline justify-between gap-4">
               <h2 className="text-xl">Contact</h2>

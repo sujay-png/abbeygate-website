@@ -24,16 +24,18 @@ export const ProductCard = ({
 }: ProductCardProps) => {
   return (
     <Link href={href} className="group flex flex-col bg-transparent rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-      <div className={`${compact ? 'h-[200px] p-4' : 'h-[280px] p-8'} w-full flex items-center justify-center relative overflow-hidden bg-transparent`}>
+      <div className={`${compact ? 'h-[200px] p-4' : 'h-[280px] p-6 md:p-10'} w-full relative overflow-hidden bg-transparent`}>
         {imageUrl ? (
-          <Image
-            src={imageUrl}
-            alt={title}
-            fill
-            quality={75}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-contain scale-110 transition-transform duration-500 group-hover:scale-125 mix-blend-multiply"
-          />
+          <div className="relative w-full h-full">
+            <Image
+              src={imageUrl}
+              alt={title}
+              fill
+              quality={75}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-contain transition-transform duration-500 group-hover:scale-110 mix-blend-multiply"
+            />
+          </div>
         ) : (
           <div
             className={`w-[140px] h-[190px] ${fallbackColor} rounded-r-md shadow-md relative transition-transform duration-500 group-hover:scale-105`}

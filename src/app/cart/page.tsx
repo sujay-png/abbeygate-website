@@ -13,6 +13,7 @@ import { retryProof } from '@/features/cart/utils/add-colour-variant';
 import { validateCustomisationMinimums } from '@/features/cart/utils/colour-group';
 import { downloadCartItemProof, canDownloadProof } from '@/features/cart/utils/download-proof';
 import { checkAuthStatus } from '@/features/auth/services/login';
+import { TrustIndicators } from '@/components/home/TrustIndicators';
 
 const formatPrice = (value: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
@@ -276,23 +277,8 @@ export default function CartPage() {
               )}
               
               {/* Trust Indicators */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-12 mt-8 border-t border-[var(--brand-border)]">
-                <div>
-                  <h4 className="text-[13px] font-bold text-brand-primary-dark mb-1">Manufactured in the UK</h4>
-                  <p className="text-[12px] text-gray-500 leading-tight">Every piece made to order</p>
-                </div>
-                <div>
-                  <h4 className="text-[13px] font-bold text-brand-primary-dark mb-1">Premium materials</h4>
-                  <p className="text-[12px] text-gray-500 leading-tight">Soft-touch vegan leather</p>
-                </div>
-                <div>
-                  <h4 className="text-[13px] font-bold text-brand-primary-dark mb-1">Low minimum order</h4>
-                  <p className="text-[12px] text-gray-500 leading-tight">From 250 units</p>
-                </div>
-                <div>
-                  <h4 className="text-[13px] font-bold text-brand-primary-dark mb-1">Reliable lead times</h4>
-                  <p className="text-[12px] text-gray-500 leading-tight">2-3 weeks production</p>
-                </div>
+              <div className="pt-6 mt-8 border-t border-[var(--brand-border)]">
+                <TrustIndicators compact noBorders />
               </div>
             </div>
 
