@@ -76,6 +76,7 @@ function CheckoutFormContent({
         clientSecret,
         confirmParams: {
           return_url: `${window.location.origin}/checkout/success`,
+          receipt_email: formData.get('email') as string,
           payment_method_data: {
             billing_details: {
               name: `${formData.get('firstName')} ${formData.get('lastName')}`,
@@ -88,6 +89,16 @@ function CheckoutFormContent({
                 country: formData.get('country') as string,
               }
             }
+          },
+          shipping: {
+            name: `${formData.get('firstName')} ${formData.get('lastName')}`,
+            address: {
+              line1: formData.get('address1') as string,
+              line2: formData.get('address2') as string,
+              city: formData.get('city') as string,
+              postal_code: formData.get('postcode') as string,
+              country: formData.get('country') as string,
+            }
           }
         }
       });
@@ -96,11 +107,35 @@ function CheckoutFormContent({
         setPaymentError(error.message ?? 'Payment failed');
         setIsProcessing(false);
       }
-    } else if (paymentMethod === 'bacs') {
-      // Simulate BACS processing for now
-      setTimeout(() => {
+    } else if (paymentMethod === 'bacs' && quoteData?.id) {
+      const billingDetails = {
+        name: `${formData.get('firstName')} ${formData.get('lastName')}`,
+        email: formData.get('email') as string,
+        address: {
+          line1: formData.get('address1') as string,
+          line2: formData.get('address2') as string,
+          city: formData.get('city') as string,
+          postal_code: formData.get('postcode') as string,
+          country: formData.get('country') as string,
+        }
+      };
+
+      const res = await fetch('/api/checkout/bacs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: quoteData.id,
+          billingDetails,
+          shippingDetails: billingDetails // using same for shipping for now, as UI only has one address
+        })
+      });
+
+      if (!res.ok) {
+        setPaymentError('Failed to process BACS order');
+        setIsProcessing(false);
+      } else {
         window.location.href = '/checkout/success';
-      }, 1000);
+      }
     }
   };
 
@@ -305,7 +340,10 @@ export function CheckoutClient() {
             customization: item.customization ? {
               enabled: item.customization.enabled,
               choice: item.customization.choice,
-              cornerEdges: item.customization.cornerEdges
+              cornerEdges: item.customization.cornerEdges,
+              foilColor: item.customization.foilColor,
+              fileName: item.customization.fileName,
+              fullPreviewUrl: item.customization.fullPreviewUrl,
             } : undefined
           })),
           couponCode: appliedCoupon

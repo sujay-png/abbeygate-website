@@ -2,6 +2,9 @@ export type CheckoutCustomizationInput = {
   enabled: boolean;
   choice?: string;
   cornerEdges?: string;
+  foilColor?: string;
+  fileName?: string;
+  fullPreviewUrl?: string;
 };
 
 export type CheckoutQuoteItemInput = {
@@ -24,6 +27,7 @@ export type CheckoutQuoteLine = {
   quantity: number;
   unitPrice: number;
   lineTotal: number;
+  customization?: CheckoutCustomizationInput;
 };
 
 export type CheckoutQuote = {

@@ -111,6 +111,7 @@ export async function createCheckoutQuote(payload: unknown): Promise<CheckoutQuo
       quantity: item.quantity,
       unitPrice: Number(price.unitPrice.toFixed(2)),
       lineTotal: Number(price.totalPrice.toFixed(2)),
+      customization,
       product,
     };
   }));
@@ -131,6 +132,7 @@ export async function createCheckoutQuote(payload: unknown): Promise<CheckoutQuo
       quantity: line.quantity,
       unitPrice: line.unitPrice,
       lineTotal: line.lineTotal,
+      customization: line.customization,
     })),
     subtotal,
     discount: coupon.discount,
