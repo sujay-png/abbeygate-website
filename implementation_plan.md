@@ -2,6 +2,58 @@
 
 ## Decision
 
+## Continuation handoff / delivery tracker
+
+This document is the source of truth for continuing the checkout work in a later Codex/AI session. Read this file and `.agents/AGENTS.md` before making changes. Preserve the existing WordPress checkout redirect as fallback until the launch checklist is complete.
+
+### Completed
+
+- [x] Audited live WooCommerce gateways through the existing REST credentials: WooPayments card, Apple Pay, Google Pay, and BACS are enabled; WooPayments is in test mode; PayPal and the separate WordPress Stripe gateway are disabled.
+- [x] Chosen payment direction: direct Stripe SDK for the custom Next.js checkout; WooCommerce remains the order/fulfilment/email back office; BACS remains an offline WooCommerce payment method.
+- [x] Added `implementation_plan.md` and committed it (`56bdcac`).
+- [x] Built the responsive `/checkout` UI, simplified checkout-only header, compact footer, cart summary, and empty-cart state. The normal site chrome is hidden only for `/checkout` (`c299e89`).
+- [x] Added blank Stripe environment-variable placeholders in `.env` and `.env.example`.
+- [x] Installed official Stripe dependencies: `stripe`, `@stripe/stripe-js`, and `@stripe/react-stripe-js`.
+
+### Current state and intentional limits
+
+- `/checkout` is visual/form-only; it must not place an order or collect card details yet.
+- The current cart CTA still redirects to WordPress checkout. Keep it as a fallback until payment and order creation pass staging tests.
+- Browser cart prices, shipping, VAT and coupon state are display-only. They are not authoritative enough to charge a customer.
+- Never expose `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, WooCommerce secrets, or WordPress credentials to client components.
+
+### Immediate next implementation sequence
+
+1. Add a durable checkout-session store (database preferred; Redis/KV only if persistence/expiry are explicitly suitable).
+2. Add server-side quote validation: retrieve WooCommerce product/variation data, validate stock/options/quantities/customisation, calculate final price/shipping/tax/coupon totals, and return an expiring quote ID.
+3. Replace the UI totals with the returned quote only after its server contract and tests are complete.
+4. Create WooCommerce orders from the server quote, with line-item customisation metadata and safely uploaded logo/proof assets.
+5. Add Stripe PaymentIntent creation plus the Stripe Payment Element. Confirm payment only from the verified signed webhook, then update the WooCommerce order status.
+6. Add BACS `on-hold` order creation and payment instructions; add PayPal only if the client confirms it should be active.
+7. Add success/retry states, observability, staging test cases, then feature-flag the cart CTA to `/checkout`.
+
+### Required environment variables
+
+```dotenv
+# Browser-safe Stripe key only
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+
+# Server only — never prefix with NEXT_PUBLIC and never commit values
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+
+# Already present; server only
+WOOCOMMERCE_STORE_URL=
+WOOCOMMERCE_CONSUMER_KEY=
+WOOCOMMERCE_CONSUMER_SECRET=
+```
+
+### Credentials and access rules
+
+- Do not paste credentials in chat. Use the local `.env` or a secure secret manager.
+- A WordPress application password is not currently needed. Create a temporary least-privilege user only if an audit requires WordPress-only settings not covered by WooCommerce REST.
+- Use Stripe test-mode keys first. Production keys/webhook endpoint are a launch-stage change, not an early-development change.
+
 Yes, a full Next.js checkout is feasible. The optimal implementation is a **headless checkout with WooCommerce retained as the commerce back office**:
 
 - Next.js owns the checkout design and customer experience.
