@@ -185,6 +185,23 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
 
   const customTabs = await getProductCustomTabs(product.id);
 
+  const collectionNames = ['richmond', 'dorchester', 'harrogate', 'lewes', 'chelsea', 'windsor', 'conscious'];
+  const collectionCategory = product.categories?.find((c: { name: string; slug: string }) => 
+    collectionNames.some(name => c.name.toLowerCase().includes(name) || c.slug.toLowerCase().includes(name))
+  );
+  
+  const relatedCategoryId = collectionCategory ? collectionCategory.id : product.categories[0]?.id;
+
+  let currentColor = '';
+  let currentBaseName = '';
+  if (product.name.includes(',')) {
+    const parts = product.name.split(',');
+    currentBaseName = parts[0].trim();
+    currentColor = parts.pop()?.trim().toLowerCase() || '';
+  } else {
+    currentBaseName = product.name;
+  }
+
   return (
     <div className="min-h-screen bg-brand-cream">
       <Breadcrumb paths={breadcrumbPaths} />
@@ -196,7 +213,7 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
           colorVariants={colorVariants}
           customTabs={customTabs}
           amendKey={amendKey}
-          relatedProducts={<RelatedProducts categoryId={product.categories[0]?.id} />}
+          relatedProducts={<RelatedProducts categoryId={relatedCategoryId} currentProductId={product.id} currentProductName={product.name} currentColor={currentColor} />}
         />
       </Container>
       <FAQ />

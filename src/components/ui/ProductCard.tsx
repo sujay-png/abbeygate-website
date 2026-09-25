@@ -23,8 +23,8 @@ export const ProductCard = ({
   compact = false,
 }: ProductCardProps) => {
   return (
-    <Link href={href} className="group flex flex-col bg-transparent rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-      <div className={`${compact ? 'h-[200px] p-4' : 'h-[280px] p-6 md:p-10'} w-full relative overflow-hidden bg-transparent`}>
+    <Link href={href} className="group flex flex-col bg-[var(--brand-cream)] rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+      <div className={`${compact ? 'h-[200px] p-4' : 'h-[280px] p-6 md:p-10'} w-full relative overflow-hidden bg-[var(--brand-cream)]`}>
         {imageUrl ? (
           <div className="relative w-full h-full">
             <Image
