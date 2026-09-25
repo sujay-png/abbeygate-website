@@ -15,11 +15,13 @@ import { downloadCartItemProof, canDownloadProof } from '@/features/cart/utils/d
 import { checkAuthStatus } from '@/features/auth/services/login';
 import { TrustIndicators } from '@/components/home/TrustIndicators';
 import { SaveBasketModal } from '@/features/account/components/SaveBasketModal';
+import { useRouter } from 'next/navigation';
 
 const formatPrice = (value: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
 
 export default function CartPage() {
+  const router = useRouter();
   const { items: rawItems, pricedItems: items, isLoading, removeItem, updateQuantity, subtotal, shippingCost, vatCost, total, shippingLabel, updateItem, clearCart } = useCart();
   const [isSyncing, setIsSyncing] = useState(false);
   const [pickerFor, setPickerFor] = useState<string | null>(null);
@@ -38,7 +40,7 @@ export default function CartPage() {
       quantity: item.quantity,
       logoFile: undefined, // Don't try to stringify the File
     }));
-    window.location.href = `/product/${item.slug}?amend=${item.key}`;
+    router.push(`/product/${item.slug}?amend=${item.key}`);
   };
 
   const shortfalls = validateCustomisationMinimums(rawItems);
@@ -50,7 +52,7 @@ export default function CartPage() {
       alert("Please resolve the minimum quantity requirements before checking out.");
       return;
     }
-    window.location.href = '/checkout';
+    router.push('/checkout');
   };
 
 

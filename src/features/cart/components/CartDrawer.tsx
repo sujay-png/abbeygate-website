@@ -14,6 +14,7 @@ import { downloadCartItemProof, canDownloadProof } from '@/features/cart/utils/d
 import { checkAuthStatus } from '@/features/auth/services/login';
 import { useVat } from '@/context/VatContext';
 import { VAT_RATE } from '@/features/products/utils/pricing';
+import { useRouter } from 'next/navigation';
 
 const OPEN_TRANSITION: Transition = { duration: 0.5, ease: [0.16, 1, 0.3, 1] };
 const CLOSE_TRANSITION: Transition = { duration: 0.35, ease: [0.7, 0, 0.84, 0] };
@@ -22,6 +23,7 @@ const formatPrice = (value: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
 
 export const CartDrawer = () => {
+  const router = useRouter();
   const { items: rawItems, pricedItems: items, isOpen, isLoading, subtotal, shippingCost, shippingLabel, vatCost, total, closeCart, removeItem, updateQuantity, updateItem } = useCart();
   const { showPricesIncludingVat } = useVat();
   const [previewItem, setPreviewItem] = useState<any | null>(null);
@@ -52,7 +54,7 @@ export const CartDrawer = () => {
     }
     
     // Feature flag: redirecting directly to the new Next.js checkout
-    window.location.href = '/checkout';
+    router.push('/checkout');
     closeCart();
   };
 
@@ -255,7 +257,7 @@ export const CartDrawer = () => {
                                   quantity: item.quantity,
                                   logoFile: undefined,
                                 }));
-                                window.location.href = `/product/${item.slug}?amend=${item.key}`;
+                                router.push(`/product/${item.slug}?amend=${item.key}`);
                                 closeCart();
                               }}
                               className="hover:underline text-brand-primary-dark"
