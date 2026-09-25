@@ -68,7 +68,15 @@ export async function savesavedBasket(name: string, items: savedBasketItem[]): P
   const data = await getCustomerMeta();
   if (!data) return { success: false, error: 'Not authenticated' };
 
-  const currentLists = await getsavedBaskets();
+  let currentLists: savedBasket[] = [];
+  const listsMeta = data.customer.meta_data.find((meta) => meta.key === 'purchase_lists');
+  if (listsMeta && Array.isArray(listsMeta.value)) {
+    currentLists = listsMeta.value as savedBasket[];
+  } else if (listsMeta && typeof listsMeta.value === 'string') {
+    try {
+      currentLists = JSON.parse(listsMeta.value) as savedBasket[];
+    } catch {}
+  }
   
   const newList: savedBasket = {
     id: crypto.randomUUID(),
@@ -107,7 +115,16 @@ export async function deletesavedBasket(id: string): Promise<{ success: boolean;
   const data = await getCustomerMeta();
   if (!data) return { success: false, error: 'Not authenticated' };
 
-  const currentLists = await getsavedBaskets();
+  let currentLists: savedBasket[] = [];
+  const listsMeta = data.customer.meta_data.find((meta) => meta.key === 'purchase_lists');
+  if (listsMeta && Array.isArray(listsMeta.value)) {
+    currentLists = listsMeta.value as savedBasket[];
+  } else if (listsMeta && typeof listsMeta.value === 'string') {
+    try {
+      currentLists = JSON.parse(listsMeta.value) as savedBasket[];
+    } catch {}
+  }
+
   const updatedLists = currentLists.filter(list => list.id !== id);
 
   try {

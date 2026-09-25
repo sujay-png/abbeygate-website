@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { savedBasketItem, savesavedBasket } from '@/features/account/services/saved-baskets';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
@@ -15,6 +15,14 @@ export function SaveBasketModal({ isOpen, onClose, items }: Props) {
   const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
 
+  useEffect(() => {
+    if (isOpen) {
+      const today = new Date();
+      const dateString = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      setName(`Saved on ${dateString}`);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleSave = async () => {
@@ -27,8 +35,9 @@ export function SaveBasketModal({ isOpen, onClose, items }: Props) {
       .filter(r => r.productId && r.qty > 0)
       .map(item => {
         if (item.customization) {
-          // Destructure out fullPreviewUrl and logoFile (which is a File object that Next.js struggles to serialize)
-          const { fullPreviewUrl, logoFile, ...restCustomization } = item.customization;
+          // Destructure out logoFile (which is a File object that Next.js struggles to serialize)
+          // fullPreviewUrl is now compressed as JPEG, so it's safe to include
+          const { logoFile, ...restCustomization } = item.customization;
           return { ...item, customization: restCustomization };
         }
         return item;

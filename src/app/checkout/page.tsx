@@ -28,5 +28,5 @@ export default async function CheckoutPage() {
     }
   }
 
-  return <CheckoutClient initialDetails={initialDetails} />;
+  return <CheckoutClient initialDetails={initialDetails} isLoggedIn={!!session} />;
 }

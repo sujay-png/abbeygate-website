@@ -222,10 +222,19 @@ export const ProductDetailClient = ({
   useEffect(() => {
     if (amendKey && items.length > 0) {
       const cartItem = items.find(i => i.key === amendKey);
-      if (cartItem?.customization?.logoFile) {
-        setCustomization(prev => ({ ...prev, logoFile: cartItem.customization!.logoFile }));
-      }
       if (cartItem?.customization) {
+        if (cartItem.customization.logoFile) {
+          setCustomization(prev => ({ ...prev, logoFile: cartItem.customization!.logoFile }));
+        } else if (cartItem.customization.logoPreviewUrl && cartItem.customization.logoPreviewUrl.startsWith('data:image')) {
+          // Rehydrate from base64 string (often happens when restoring from a saved basket where File objects can't be serialized)
+          fetch(cartItem.customization.logoPreviewUrl)
+            .then(res => res.blob())
+            .then(blob => {
+              const file = new File([blob], cartItem.customization?.fileName || 'restored-logo.png', { type: blob.type });
+              setCustomization(prev => ({ ...prev, logoFile: file }));
+            })
+            .catch(e => console.error("Failed to restore logo file from base64 during amend", e));
+        }
         setIsCustomizingStarted(true);
       }
     }
@@ -976,15 +985,16 @@ export const ProductDetailClient = ({
                       key={img.id}
                       type="button"
                       onClick={() => setActiveImageIndex(index)}
-                      className={`relative h-20 w-20 lg:h-24 lg:w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${index === activeImageIndex ? 'border-brand-primary' : 'border-brand-primary/10 hover:border-brand-primary/30'
+                      className={`relative h-20 w-20 lg:h-24 lg:w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${index === activeImageIndex ? 'border-brand-primary' : 'border-gray-200 hover:border-gray-300'
                         }`}
+                      style={{ backgroundColor: 'white' }}
                     >
                       <ImageWithFallback
                         src={thumb}
                         alt={img.alt || product.name}
                         fill
                         sizes="96px"
-                        className="object-contain p-2 mix-blend-multiply"
+                        className={`object-contain p-2 ${index === 0 ? 'mix-blend-multiply' : ''}`}
                       />
                     </button>
                   );
@@ -1062,12 +1072,12 @@ export const ProductDetailClient = ({
                               fill
                               priority={true}
                               sizes="(max-width: 768px) 100vw, 50vw"
-                              className={`transition-all duration-500 object-contain mix-blend-multiply ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+                              className={`transition-all duration-500 object-contain ${idx === 0 ? 'mix-blend-multiply' : ''} ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
                             />
                           );
                         })}
                         {isCustomizingStarted && customizationActive && (
-                          <div className={`absolute inset-0 transition-opacity duration-500 z-20 ${activeImageIndex === 0 && !isCalculatingBounds ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+                          <div className={`absolute inset-0 transition-opacity z-20 ${amendKey ? 'duration-0' : 'duration-500'} ${activeImageIndex === 0 && !isCalculatingBounds ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
                             <ProductCustomizationOverlay
                               product={product}
                               customization={customization}
@@ -1181,7 +1191,7 @@ export const ProductDetailClient = ({
                     alt={product.images[activeImageIndex]?.alt || product.name}
                     fill
                     sizes="80vw"
-                    className="object-contain mix-blend-multiply"
+                    className={`object-contain ${activeImageIndex === 0 ? 'mix-blend-multiply' : ''}`}
                   />
                   {activeImageIndex === 0 && isCustomizingStarted && customizationActive && !isCalculatingBounds && (
                     <ProductCustomizationOverlay

@@ -62,7 +62,8 @@ function CheckoutFormContent({
   setCouponInput,
   setAppliedCoupon,
   initialDetails,
-  setPreviewItem
+  setPreviewItem,
+  isLoggedIn
 }: any) {
   const stripe = useStripe();
   const elements = useElements();
@@ -75,6 +76,7 @@ function CheckoutFormContent({
   const [postcodeStatus, setPostcodeStatus] = useState<'idle' | 'loading' | 'valid' | 'invalid'>('idle');
   const [deliveryEstimate, setDeliveryEstimate] = useState<string | null>(null);
   const [isExpressAvailable, setIsExpressAvailable] = useState<boolean>(false);
+  const [isMobileSummaryOpen, setIsMobileSummaryOpen] = useState(false);
 
   const getCustomDelivery = (pc: string) => {
     const clean = pc.toUpperCase().replace(/\s+/g, '');
@@ -288,8 +290,8 @@ function CheckoutFormContent({
   const isSubmitDisabled = isQuoteLoading || isProcessing || (paymentMethod === 'card' && !clientSecret);
 
   return (
-    <div className="mx-auto grid max-w-[1440px] grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.78fr)]">
-      <form className="bg-white px-5 py-10 sm:px-8 lg:px-12 lg:py-14" onSubmit={handleSubmit}>
+    <div className="mx-auto grid max-w-[1440px] grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.78fr)] flex-col-reverse lg:flex-row">
+      <form className="order-2 lg:order-1 bg-white px-5 py-10 sm:px-8 lg:px-12 lg:py-14" onSubmit={handleSubmit}>
         <div className="mx-auto max-w-[640px] space-y-10">
           <section className="mb-6">
             {isExpressAvailable && <h2 className="mb-4 text-center text-sm font-semibold text-brand-grey">Express checkout</h2>}
@@ -322,7 +324,9 @@ function CheckoutFormContent({
           <section>
             <div className="mb-5 flex items-baseline justify-between gap-4">
               <h2 className="text-xl">Contact</h2>
-              <Link href="/account" className="text-sm font-semibold text-brand-primary hover:underline">Sign in</Link>
+              {!isLoggedIn && (
+                <Link href="/account" className="text-sm font-semibold text-brand-primary hover:underline">Sign in</Link>
+              )}
             </div>
             <label className="block text-sm font-medium" htmlFor="email">Email address</label>
             <input id="email" name="email" type="email" autoComplete="email" required placeholder="you@company.com" defaultValue={initialDetails?.email} className={`mt-2 ${inputClass}`} />
@@ -417,12 +421,26 @@ function CheckoutFormContent({
         </div>
       </form>
       
-      <aside className="border-t border-[var(--brand-border)] bg-brand-cream px-5 py-10 sm:px-8 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:border-l lg:border-t-0 lg:px-10 lg:py-14">
+      <aside className="order-1 lg:order-2 border-t border-b lg:border-b-0 border-[var(--brand-border)] bg-brand-cream px-5 py-6 lg:py-14 sm:px-8 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:border-l lg:border-t-0 lg:px-10">
         <div className="mx-auto max-w-[500px]">
-          <div className="mb-7 flex items-baseline justify-between">
+          {/* Mobile Accordion Header */}
+          <div 
+            className="flex items-center justify-between lg:hidden cursor-pointer" 
+            onClick={() => setIsMobileSummaryOpen(!isMobileSummaryOpen)}
+          >
+            <h2 className="text-[15px] font-semibold flex items-center gap-1.5 text-brand-primary-dark hover:text-brand-primary transition-colors">
+              Order summary <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isMobileSummaryOpen ? 'rotate-180' : ''}`} />
+            </h2>
+            <span className="font-bold text-[17px] text-brand-primary-dark">{isQuoteLoading ? '...' : formatPrice(displayTotal)}</span>
+          </div>
+
+          {/* Desktop Header */}
+          <div className="hidden lg:flex mb-7 items-baseline justify-between">
             <h2 className="text-xl">Order summary</h2>
             <span className="text-sm text-brand-grey">{itemCount} item{itemCount === 1 ? '' : 's'}</span>
           </div>
+
+          <div className={`overflow-hidden transition-all duration-500 ${isMobileSummaryOpen ? 'max-h-[2000px] opacity-100 mt-6' : 'max-h-0 opacity-0'} lg:max-h-[none] lg:opacity-100 lg:mt-0`}>
           <div className="space-y-5 border-b border-[var(--brand-border)] pb-6 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar overscroll-contain" data-lenis-prevent>
             {pricedItems.map((item: PricedItem) => (
               <div key={item.key} className="flex gap-4">
@@ -438,9 +456,9 @@ function CheckoutFormContent({
                       {item.customization.choice && <p className="text-brand-grey"><span className="font-medium text-brand-body">Blocking:</span> {item.customization.choice.replace(' blocked', '')}</p>}
                       {item.customization.foilColor && <p className="text-brand-grey"><span className="font-medium text-brand-body">Foil Colour:</span> {item.customization.foilColor}</p>}
                       {item.customization.fileName && (
-                        <p className="text-brand-grey truncate">
-                          <span className="font-medium text-brand-body">Logo:</span> {item.customization.fileName} —{' '}
-                          <a href={item.customization.logoFile ? URL.createObjectURL(item.customization.logoFile as Blob) : '#'} target="_blank" rel="noopener noreferrer" className="text-brand-primary-dark underline hover:text-gray-600">View file</a>
+                        <p className="text-brand-grey break-all sm:break-words">
+                          <span className="font-medium text-brand-body shrink-0">Logo:</span> {item.customization.fileName} —{' '}
+                          <a href={item.customization.logoFile ? URL.createObjectURL(item.customization.logoFile as Blob) : '#'} target="_blank" rel="noopener noreferrer" className="text-brand-primary-dark underline hover:text-gray-600 shrink-0">View file</a>
                         </p>
                       )}
                       {item.customization.logoPreviewUrl && (
@@ -501,13 +519,14 @@ function CheckoutFormContent({
           <div className="mt-7 flex items-center gap-3 border-t border-[var(--brand-border)] pt-6 text-xs text-brand-grey">
             <LockKeyhole className="h-4 w-4 shrink-0 text-brand-accent" /> Your payment details are encrypted and processed securely.
           </div>
+          </div>
         </div>
       </aside>
     </div>
   );
 }
 
-export function CheckoutClient({ initialDetails }: { initialDetails?: any }) {
+export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?: any, isLoggedIn?: boolean }) {
   const { items, pricedItems, itemCount, subtotal, shippingCost, shippingLabel, vatCost, total } = useCart();
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<string | undefined>();
@@ -663,7 +682,8 @@ export function CheckoutClient({ initialDetails }: { initialDetails?: any }) {
     setCouponInput,
     setAppliedCoupon,
     initialDetails,
-    setPreviewItem
+    setPreviewItem,
+    isLoggedIn
   };
 
   return (

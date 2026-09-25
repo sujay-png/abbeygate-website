@@ -543,6 +543,23 @@ export const Navbar = () => {
                   </div>
                 );
               })}
+              {/* Mobile VAT Toggle */}
+              <div className="mt-8 pb-12">
+                <h4 className="text-xs font-bold tracking-wider text-gray-400 uppercase mb-4">
+                  Price Display
+                </h4>
+                <fieldset className="flex items-center gap-6 text-[14px] font-medium text-gray-800">
+                  <legend className="sr-only">Price display</legend>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="mobile-vat-display" checked={showPricesIncludingVat} onChange={() => setShowPricesIncludingVat(true)} className="accent-brand-primary w-4 h-4" />
+                    Inc. VAT
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="mobile-vat-display" checked={!showPricesIncludingVat} onChange={() => setShowPricesIncludingVat(false)} className="accent-brand-primary w-4 h-4" />
+                    Ex. VAT
+                  </label>
+                </fieldset>
+              </div>
             </nav>
           </motion.div>
         )}

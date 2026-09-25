@@ -70,9 +70,9 @@ export function SavedBasketDetailClient({ basket }: { basket: savedBasket }) {
                 <tr key={idx} className="hover:bg-gray-50/50">
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-4">
-                      {item.image && (
+                      {(item.customization?.fullPreviewUrl || item.image) && (
                         <div className="w-12 h-12 relative flex-shrink-0 bg-gray-50 rounded border border-gray-100">
-                          <img src={item.image} alt={item.productName} className="absolute inset-0 w-full h-full object-contain p-1 mix-blend-multiply" />
+                          <img src={item.customization?.fullPreviewUrl || item.image} alt={item.productName} className="absolute inset-0 w-full h-full object-contain p-1 mix-blend-multiply" />
                         </div>
                       )}
                       <div>
