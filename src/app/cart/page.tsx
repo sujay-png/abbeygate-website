@@ -14,6 +14,7 @@ import { validateCustomisationMinimums } from '@/features/cart/utils/colour-grou
 import { downloadCartItemProof, canDownloadProof } from '@/features/cart/utils/download-proof';
 import { checkAuthStatus } from '@/features/auth/services/login';
 import { TrustIndicators } from '@/components/home/TrustIndicators';
+import { SaveBasketModal } from '@/features/account/components/SaveBasketModal';
 
 const formatPrice = (value: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
@@ -24,6 +25,7 @@ export default function CartPage() {
   const [pickerFor, setPickerFor] = useState<string | null>(null);
   const [previewItem, setPreviewItem] = useState<any | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
 
   useEffect(() => {
     checkAuthStatus().then(setIsLoggedIn);
@@ -268,13 +270,30 @@ export default function CartPage() {
                     if (isLoggedIn === false) {
                       window.location.href = '/account?redirect=/cart';
                     } else if (isLoggedIn === true) {
-                      alert('Basket saved to your account!');
+                      setIsSaveModalOpen(true);
                     }
                   }} className="px-5 py-2.5 rounded-md border border-[var(--brand-border)] bg-white text-brand-primary-dark font-semibold text-[14px] tracking-wide hover:bg-gray-50 transition-colors">
                     Save basket
                   </button>
                 </div>
               )}
+              
+              <SaveBasketModal 
+                isOpen={isSaveModalOpen} 
+                onClose={() => setIsSaveModalOpen(false)}
+                items={items.map(i => ({
+                  productId: parseInt(i.productId),
+                  productName: i.name,
+                  sku: i.sku || i.productId,
+                  price: i.lineTotal / i.quantity,
+                  qty: i.quantity,
+                  image: i.image,
+                  customization: i.customization,
+                  attributes: i.attributes,
+                  variationId: i.variationId,
+                  slug: i.slug
+                }))}
+              />
               
               {/* Trust Indicators */}
               <div className="pt-6 mt-8 border-t border-[var(--brand-border)]">

@@ -976,16 +976,15 @@ export const ProductDetailClient = ({
                       key={img.id}
                       type="button"
                       onClick={() => setActiveImageIndex(index)}
-                      className={`relative h-20 w-20 lg:h-24 lg:w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${index === activeImageIndex ? 'border-brand-primary' : 'border-gray-200 hover:border-gray-300'
+                      className={`relative h-20 w-20 lg:h-24 lg:w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${index === activeImageIndex ? 'border-brand-primary' : 'border-brand-primary/10 hover:border-brand-primary/30'
                         }`}
-                      style={{ backgroundColor: 'white' }}
                     >
                       <ImageWithFallback
                         src={thumb}
                         alt={img.alt || product.name}
                         fill
                         sizes="96px"
-                        className="object-contain p-2"
+                        className="object-contain p-2 mix-blend-multiply"
                       />
                     </button>
                   );
@@ -1063,7 +1062,7 @@ export const ProductDetailClient = ({
                               fill
                               priority={true}
                               sizes="(max-width: 768px) 100vw, 50vw"
-                              className={`transition-all duration-500 object-contain ${idx === 0 ? 'mix-blend-multiply' : ''} ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+                              className={`transition-all duration-500 object-contain mix-blend-multiply ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
                             />
                           );
                         })}
@@ -1171,7 +1170,7 @@ export const ProductDetailClient = ({
                 }}
               >
                 <div
-                  className="absolute inset-0 transition-transform duration-300 ease-out"
+                  className="absolute inset-0 transition-transform duration-300 ease-out bg-[var(--brand-cream)]"
                   style={{
                     transformOrigin: zoomOrigin,
                     transform: isZooming ? 'scale(2.2)' : 'scale(1)'

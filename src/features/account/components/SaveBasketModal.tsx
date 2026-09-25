@@ -1,17 +1,16 @@
 'use client';
 import { useState } from 'react';
-import { BulkOrderRow } from './BulkOrderForm';
-import { savePurchaseList } from '@/features/account/services/purchase-lists';
+import { savedBasketItem, savesavedBasket } from '@/features/account/services/saved-baskets';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 
 type Props = {
   isOpen: boolean;
   onClose: () => void;
-  rows: BulkOrderRow[];
+  items: savedBasketItem[];
 };
 
-export function SaveListModal({ isOpen, onClose, rows }: Props) {
+export function SaveBasketModal({ isOpen, onClose, items }: Props) {
   const [name, setName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
@@ -24,31 +23,32 @@ export function SaveListModal({ isOpen, onClose, rows }: Props) {
       return;
     }
 
-    const validRows = rows.filter(r => r.productId && r.qty > 0);
-    if (validRows.length === 0) {
+    const validItems = items
+      .filter(r => r.productId && r.qty > 0)
+      .map(item => {
+        if (item.customization) {
+          // Destructure out fullPreviewUrl and logoFile (which is a File object that Next.js struggles to serialize)
+          const { fullPreviewUrl, logoFile, ...restCustomization } = item.customization;
+          return { ...item, customization: restCustomization };
+        }
+        return item;
+      });
+
+    if (validItems.length === 0) {
       toast.error('Please add at least one product with quantity > 0 before saving a list.');
       return;
     }
 
     setIsSaving(true);
     
-    const items = validRows.map(r => ({
-      productId: r.productId as number,
-      productName: r.productName,
-      sku: r.sku,
-      price: r.price,
-      qty: r.qty,
-      image: r.image
-    }));
-
-    const res = await savePurchaseList(name.trim(), items);
+    const res = await savesavedBasket(name.trim(), validItems);
     setIsSaving(false);
 
     if (res.success) {
-      toast.success(`Purchase list "${name}" saved!`);
+      toast.success(`Saved Basket "${name}" saved!`);
       setName('');
       onClose();
-      router.push('/account/purchase-lists');
+      router.push('/account/saved-baskets');
       router.refresh(); // Force Next.js to fetch the latest server data
     } else {
       toast.error(res.error || 'Failed to save list.');
@@ -59,9 +59,9 @@ export function SaveListModal({ isOpen, onClose, rows }: Props) {
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-lg shadow-xl border border-gray-200 w-full max-w-md overflow-hidden transform transition-all">
         <div className="px-6 py-5 border-b border-gray-100">
-          <h3 className="text-xl font-semibold text-brand-primary-dark">Save Purchase List</h3>
+          <h3 className="text-xl font-semibold text-brand-primary-dark">Save Saved Basket</h3>
           <p className="text-gray-600 text-sm mt-2">
-            Enter a name for your new purchase list.
+            Enter a name for your new Saved Basket.
           </p>
         </div>
 

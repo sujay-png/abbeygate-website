@@ -428,10 +428,15 @@ export const ProductCustomizer = ({
                     }}
                  >
                     {customization.logoPreviewUrl ? (
-                       <img 
-                         src={customization.logoPreviewUrl} 
-                         className="w-1/2 h-auto object-contain drop-shadow-sm"
-                         alt="UV Print preview" 
+                       <div 
+                         className="absolute inset-0 m-6 pointer-events-none"
+                         style={{
+                           backgroundImage: `url(${customization.logoPreviewUrl})`,
+                           backgroundSize: 'contain',
+                           backgroundRepeat: 'no-repeat',
+                           backgroundPosition: 'center',
+                           filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.15))'
+                         }}
                        />
                     ) : (
                        <div className="text-gray-400 text-sm font-medium">Logo Preview</div>

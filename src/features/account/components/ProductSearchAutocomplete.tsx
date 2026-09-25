@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { searchProductsForBulkOrder, ProductSearchResult } from '@/features/account/services/purchase-lists';
+import { searchProductsForBulkOrder, ProductSearchResult } from '@/features/account/services/saved-baskets';
 
 type Props = {
   searchBy: 'name' | 'sku';

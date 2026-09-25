@@ -2,78 +2,74 @@
 
 import { useState } from 'react';
 import { useCart } from '@/features/cart/context/CartContext';
-import { ProductSearchAutocomplete } from './ProductSearchAutocomplete';
-import { SaveListModal } from './SaveListModal';
 import toast from 'react-hot-toast';
+import { savedBasket } from '@/features/account/services/saved-baskets';
 
-export type BulkOrderRow = {
+export type BasketOrderRow = {
   id: string;
-  productId: number | null;
-  productName: string;
-  sku: string;
-  price: number;
+  basketId: string;
   qty: number;
-  image: string;
 };
 
 type Props = {
-  initialRows?: BulkOrderRow[];
+  baskets: savedBasket[];
+  initialBasketId?: string;
 };
 
-export function BulkOrderForm({ initialRows }: Props) {
+export function BulkOrderForm({ baskets, initialBasketId }: Props) {
   const { addItem } = useCart();
-  const [rows, setRows] = useState<BulkOrderRow[]>(
-    initialRows || [
-      { id: '1', productId: null, productName: '', sku: '', price: 0, qty: 0, image: '' },
-      { id: '2', productId: null, productName: '', sku: '', price: 0, qty: 0, image: '' },
-      { id: '3', productId: null, productName: '', sku: '', price: 0, qty: 0, image: '' },
-      { id: '4', productId: null, productName: '', sku: '', price: 0, qty: 0, image: '' },
-      { id: '5', productId: null, productName: '', sku: '', price: 0, qty: 0, image: '' },
-    ]
-  );
-  
-  const [searchBy, setSearchBy] = useState<'name' | 'sku'>('name');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [rows, setRows] = useState<BasketOrderRow[]>([
+    { id: '1', basketId: initialBasketId || '', qty: 1 },
+    { id: '2', basketId: '', qty: 1 },
+  ]);
 
-  const total = rows.reduce((acc, row) => acc + (row.price * (row.qty || 0)), 0);
+  const getBasketTotal = (basketId: string) => {
+    const basket = baskets.find(b => b.id === basketId);
+    if (!basket) return 0;
+    return basket.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  };
+
+  const total = rows.reduce((acc, row) => acc + (getBasketTotal(row.basketId) * (row.qty || 0)), 0);
 
   const handleAddRow = () => {
-    setRows([...rows, { id: Math.random().toString(36).substring(2), productId: null, productName: '', sku: '', price: 0, qty: 0, image: '' }]);
+    setRows([...rows, { id: Math.random().toString(36).substring(2), basketId: '', qty: 1 }]);
   };
 
   const handleQtyChange = (id: string, qty: number) => {
     setRows(rows.map(r => r.id === id ? { ...r, qty } : r));
   };
 
-  const handleProductSelect = (id: string, product: { id: number, name: string, sku: string, price: string, image: string }) => {
-    setRows(rows.map(r => r.id === id ? { 
-      ...r, 
-      productId: product.id, 
-      productName: product.name,
-      sku: product.sku,
-      price: parseFloat(product.price || '0'),
-      image: product.image
-    } : r));
+  const handleBasketSelect = (id: string, basketId: string) => {
+    setRows(rows.map(r => r.id === id ? { ...r, basketId } : r));
   };
 
   const handleAddToCart = async () => {
-    const validRows = rows.filter(r => r.productId && r.qty > 0);
+    const validRows = rows.filter(r => r.basketId && r.qty > 0);
     if (validRows.length === 0) {
-      toast.error('Please add at least one product with a quantity greater than 0.');
+      toast.error('Please select at least one saved basket with a quantity greater than 0.');
       return;
     }
 
     try {
       for (const row of validRows) {
-        await addItem({
-          productId: String(row.productId),
-          name: row.productName,
-          image: row.image,
-          price: row.price,
-          quantity: row.qty
-        });
+        const basket = baskets.find(b => b.id === row.basketId);
+        if (basket) {
+          for (const item of basket.items) {
+            await addItem({
+              productId: String(item.productId),
+              name: item.productName,
+              image: item.image || '',
+              price: item.price,
+              quantity: item.qty * row.qty,
+              customization: item.customization,
+              attributes: item.attributes,
+              variationId: item.variationId,
+              slug: item.slug
+            });
+          }
+        }
       }
-      toast.success('Items added to cart!');
+      toast.success('Baskets added to cart!');
     } catch (e) {
       toast.error('Failed to add some items to cart.');
     }
@@ -82,21 +78,13 @@ export function BulkOrderForm({ initialRows }: Props) {
   return (
     <div className="text-gray-700 shadow-sm border border-brand-primary/20 rounded-md overflow-hidden">
       <div className="bg-brand-primary-dark text-white px-4 py-3 text-[15px] font-medium">
-        Bulk Order Form
+        Order Saved Baskets
       </div>
       
       <div className="p-4 md:p-6 bg-[#f7f7f7]">
         <div className="flex items-center gap-2 mb-4 text-sm font-medium">
-          <span>Search by</span>
-          <select 
-            value={searchBy}
-            onChange={(e) => setSearchBy(e.target.value as 'name' | 'sku')}
-            className="border border-gray-300 rounded px-2 py-1.5 bg-white text-gray-700 focus:outline-none focus:border-brand-primary"
-          >
-            <option value="name">Product Name</option>
-            <option value="sku">SKU</option>
-          </select>
-          <div className="ml-auto w-16 text-center text-gray-600">Qty</div>
+          <div className="flex-1 text-gray-600">Select Basket</div>
+          <div className="w-16 text-center text-gray-600">Qty</div>
           <div className="w-24 text-right text-gray-600">Subtotal</div>
         </div>
 
@@ -104,11 +92,18 @@ export function BulkOrderForm({ initialRows }: Props) {
           {rows.map((row) => (
             <div key={row.id} className="flex gap-4 items-start">
               <div className="flex-1">
-                <ProductSearchAutocomplete 
-                  searchBy={searchBy}
-                  value={row.productName || row.sku}
-                  onSelect={(p) => handleProductSelect(row.id, p)}
-                />
+                <select
+                  value={row.basketId}
+                  onChange={(e) => handleBasketSelect(row.id, e.target.value)}
+                  className="w-full border border-gray-300 rounded px-3 py-2.5 bg-white text-gray-700 focus:outline-none focus:border-brand-primary h-11"
+                >
+                  <option value="">-- Choose a Saved Basket --</option>
+                  {baskets.map(b => (
+                    <option key={b.id} value={b.id}>
+                      {b.name} ({b.items.length} items)
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="w-16 flex-shrink-0">
                 <input 
@@ -120,7 +115,7 @@ export function BulkOrderForm({ initialRows }: Props) {
                 />
               </div>
               <div className="w-24 flex-shrink-0 text-right py-2.5 font-medium text-gray-800">
-                £{(row.price * (row.qty || 0)).toFixed(2)}
+                £{(getBasketTotal(row.basketId) * (row.qty || 0)).toFixed(2)}
               </div>
             </div>
           ))}
@@ -131,7 +126,7 @@ export function BulkOrderForm({ initialRows }: Props) {
             onClick={handleAddRow}
             className="text-brand-primary border border-brand-primary hover:bg-brand-tint px-4 py-1.5 rounded text-sm flex items-center gap-1.5 transition-colors font-medium"
           >
-            <span className="text-lg leading-none">+</span> New line
+            <span className="text-lg leading-none">+</span> Add another basket
           </button>
         </div>
       </div>
@@ -145,17 +140,7 @@ export function BulkOrderForm({ initialRows }: Props) {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            Add to Cart
-          </button>
-          
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="bg-white text-brand-primary border border-brand-primary hover:bg-brand-tint px-6 py-2.5 rounded font-medium transition-colors flex items-center gap-2 flex-1 md:flex-none justify-center"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-            </svg>
-            Save list
+            Add Baskets to Cart
           </button>
         </div>
         
@@ -163,12 +148,6 @@ export function BulkOrderForm({ initialRows }: Props) {
           Total: <strong className="text-black font-bold text-xl ml-1">£{total.toFixed(2)}</strong>
         </div>
       </div>
-
-      <SaveListModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)}
-        rows={rows}
-      />
     </div>
   );
 }

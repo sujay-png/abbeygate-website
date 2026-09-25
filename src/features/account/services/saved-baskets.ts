@@ -5,19 +5,23 @@ import { getSession } from '@/features/auth/utils/session';
 import { revalidatePath } from 'next/cache';
 import { StoreProduct } from '@/features/products/types/store-product';
 
-export type PurchaseListItem = {
+export type savedBasketItem = {
   productId: number;
   productName: string;
   sku: string;
   qty: number;
   price: number;
   image?: string;
+  customization?: any;
+  attributes?: any[];
+  variationId?: string;
+  slug?: string;
 };
 
-export type PurchaseList = {
+export type savedBasket = {
   id: string;
   name: string;
-  items: PurchaseListItem[];
+  items: savedBasketItem[];
   createdAt: string;
   user: string;
 };
@@ -34,24 +38,24 @@ async function getCustomerMeta() {
     );
     return { customer, session };
   } catch (error) {
-    console.error('Error fetching customer for purchase lists', error);
+    console.error('Error fetching customer for Saved Baskets', error);
     return null;
   }
 }
 
-export async function getPurchaseLists(): Promise<PurchaseList[]> {
+export async function getsavedBaskets(): Promise<savedBasket[]> {
   const data = await getCustomerMeta();
   if (!data) return [];
 
   const listsMeta = data.customer.meta_data.find((meta) => meta.key === 'purchase_lists');
   if (listsMeta && Array.isArray(listsMeta.value)) {
-    return listsMeta.value as PurchaseList[];
+    return listsMeta.value as savedBasket[];
   }
 
   // Handle case where it might be a JSON string
   if (listsMeta && typeof listsMeta.value === 'string') {
     try {
-      return JSON.parse(listsMeta.value) as PurchaseList[];
+      return JSON.parse(listsMeta.value) as savedBasket[];
     } catch {
       return [];
     }
@@ -60,13 +64,13 @@ export async function getPurchaseLists(): Promise<PurchaseList[]> {
   return [];
 }
 
-export async function savePurchaseList(name: string, items: PurchaseListItem[]): Promise<{ success: boolean; error?: string }> {
+export async function savesavedBasket(name: string, items: savedBasketItem[]): Promise<{ success: boolean; error?: string }> {
   const data = await getCustomerMeta();
   if (!data) return { success: false, error: 'Not authenticated' };
 
-  const currentLists = await getPurchaseLists();
+  const currentLists = await getsavedBaskets();
   
-  const newList: PurchaseList = {
+  const newList: savedBasket = {
     id: crypto.randomUUID(),
     name,
     items,
@@ -91,19 +95,19 @@ export async function savePurchaseList(name: string, items: PurchaseListItem[]):
       }
     });
     
-    revalidatePath('/account/purchase-lists');
+    revalidatePath('/account/saved-baskets');
     return { success: true };
   } catch (error) {
-    console.error('Failed to save purchase list', error);
-    return { success: false, error: 'Failed to save purchase list' };
+    console.error('Failed to save Saved Basket', error);
+    return { success: false, error: 'Failed to save Saved Basket' };
   }
 }
 
-export async function deletePurchaseList(id: string): Promise<{ success: boolean; error?: string }> {
+export async function deletesavedBasket(id: string): Promise<{ success: boolean; error?: string }> {
   const data = await getCustomerMeta();
   if (!data) return { success: false, error: 'Not authenticated' };
 
-  const currentLists = await getPurchaseLists();
+  const currentLists = await getsavedBaskets();
   const updatedLists = currentLists.filter(list => list.id !== id);
 
   try {
@@ -119,11 +123,11 @@ export async function deletePurchaseList(id: string): Promise<{ success: boolean
       }
     });
     
-    revalidatePath('/account/purchase-lists');
+    revalidatePath('/account/saved-baskets');
     return { success: true };
   } catch (error) {
-    console.error('Failed to delete purchase list', error);
-    return { success: false, error: 'Failed to delete purchase list' };
+    console.error('Failed to delete Saved Basket', error);
+    return { success: false, error: 'Failed to delete Saved Basket' };
   }
 }
 

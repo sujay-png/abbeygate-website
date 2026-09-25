@@ -89,6 +89,20 @@ export async function POST(req: NextRequest) {
       body: wcOrderPayload
     });
 
+    if (session.customerId) {
+      try {
+        await woocommerceApi.request(`customers/${session.customerId}`, {
+          method: 'PUT',
+          body: {
+            billing: wcOrderPayload.billing,
+            shipping: wcOrderPayload.shipping,
+          }
+        });
+      } catch (err) {
+        console.error('Failed to update customer addresses:', err);
+      }
+    }
+
     return NextResponse.json({ success: true, orderId: (orderRes as any).id });
   } catch (error: any) {
     console.error('Failed to create BACS order:', error);

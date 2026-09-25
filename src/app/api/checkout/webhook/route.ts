@@ -120,6 +120,20 @@ export async function POST(req: NextRequest) {
           body: wcOrderPayload
         });
         console.log('WooCommerce order created successfully:', (orderRes as any).id);
+
+        if (session.customerId) {
+          try {
+            await woocommerceApi.request(`customers/${session.customerId}`, {
+              method: 'PUT',
+              body: {
+                billing: wcOrderPayload.billing,
+                shipping: wcOrderPayload.shipping,
+              }
+            });
+          } catch (err) {
+            console.error('Failed to update customer addresses from Stripe webhook:', err);
+          }
+        }
       } catch (err: any) {
         console.error('Failed to create WooCommerce order:', err.message);
         // We still return 200 to Stripe so it doesn't retry infinitely, but we should 

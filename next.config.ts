@@ -24,6 +24,9 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  serverActions: {
+    bodySizeLimit: '10mb',
+  },
   allowedDevOrigins: ['local.abbeygate-england.com'],
   async headers() {
     return [
