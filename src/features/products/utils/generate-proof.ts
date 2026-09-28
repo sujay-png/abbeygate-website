@@ -377,7 +377,7 @@ export async function composeProof(args: {
           }
         }
 
-        fullPreviewUrl = canvas.toDataURL('image/png', 0.9);
+        fullPreviewUrl = canvas.toDataURL('image/jpeg', 0.8);
       }
     }
   } catch (e) {

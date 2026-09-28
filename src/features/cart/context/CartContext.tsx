@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useCallback, useMemo, useEffect, R
 import type { LogoCustomization } from '@/features/products/types/store-product';
 import type { StoreProduct, PriceTier } from '@/features/products/types/store-product';
 import { calculateShipping } from '@/features/products/utils/shipping';
-import { VAT_RATE, calculateProductPrice, CUSTOMIZATION_MIN_QTY } from '@/features/products/utils/pricing';
+import { VAT_RATE, calculateProductPrice, CUSTOMIZATION_MIN_QTY, getCornerEdgesPricing } from '@/features/products/utils/pricing';
 import * as idb from '@/lib/idb';
 import toast from 'react-hot-toast';
 
@@ -70,6 +70,7 @@ interface CartContextValue {
   updateItem: (key: string, patch: Partial<CartItem>) => Promise<void>;
   insertItemAfter: (afterKey: string, item: Omit<CartItem, 'key'> & { key?: string }) => Promise<string>;
   clearCart: () => void;
+  isHydrated: boolean;
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
@@ -198,7 +199,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const clearCart = useCallback(() => setItems([]), []);
+  const clearCart = useCallback(() => {
+    setItems([]);
+    idb.set(CART_STORAGE_KEY, []);
+  }, []);
 
   const pricedItems = useMemo<PricedItem[]>(() => {
     return items.map(item => {
@@ -215,7 +219,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           customizationEnabled: !(item.isGifts ?? false) && item.quantity >= CUSTOMIZATION_MIN_QTY && !!item.customization?.enabled,
           blockingType: item.customization?.choice,
           cornerEdges: item.customization?.cornerEdges,
-          cornerEdgePrice: (item.customization as any)?.cornerEdgesPrice || 0,
+          cornerEdgePrice: item.customization?.cornerEdges && item.customization.cornerEdges !== 'None' ? getCornerEdgesPricing(item as any).pricePerPair : 0,
           isGifts: item.isGifts ?? false,
         }).unitPrice;
       }
@@ -269,6 +273,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     updateItem,
     insertItemAfter,
     clearCart,
+    isHydrated: hydrated,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

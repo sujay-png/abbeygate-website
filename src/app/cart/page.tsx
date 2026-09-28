@@ -13,16 +13,21 @@ import { retryProof } from '@/features/cart/utils/add-colour-variant';
 import { validateCustomisationMinimums } from '@/features/cart/utils/colour-group';
 import { downloadCartItemProof, canDownloadProof } from '@/features/cart/utils/download-proof';
 import { checkAuthStatus } from '@/features/auth/services/login';
+import { TrustIndicators } from '@/components/home/TrustIndicators';
+import { SaveBasketModal } from '@/features/account/components/SaveBasketModal';
+import { useRouter } from 'next/navigation';
 
 const formatPrice = (value: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
 
 export default function CartPage() {
+  const router = useRouter();
   const { items: rawItems, pricedItems: items, isLoading, removeItem, updateQuantity, subtotal, shippingCost, vatCost, total, shippingLabel, updateItem, clearCart } = useCart();
   const [isSyncing, setIsSyncing] = useState(false);
   const [pickerFor, setPickerFor] = useState<string | null>(null);
   const [previewItem, setPreviewItem] = useState<any | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
 
   useEffect(() => {
     checkAuthStatus().then(setIsLoggedIn);
@@ -35,7 +40,7 @@ export default function CartPage() {
       quantity: item.quantity,
       logoFile: undefined, // Don't try to stringify the File
     }));
-    window.location.href = `/product/${item.slug}?amend=${item.key}`;
+    router.push(`/product/${item.slug}?amend=${item.key}`);
   };
 
   const shortfalls = validateCustomisationMinimums(rawItems);
@@ -47,85 +52,7 @@ export default function CartPage() {
       alert("Please resolve the minimum quantity requirements before checking out.");
       return;
     }
-
-    try {
-      setIsSyncing(true);
-      
-      const idb = await import('@/lib/idb');
-      let currentCart = await idb.get<any[]>('abbeygate-cart') || [];
-      let attempt = 0;
-      while (currentCart.some(i => i.proofStatus === 'pending') && attempt < 20) {
-        await new Promise(r => setTimeout(r, 500));
-        currentCart = await idb.get<any[]>('abbeygate-cart') || [];
-        attempt++;
-      }
-
-      if (currentCart.some(i => i.proofStatus === 'failed')) {
-        if (!window.confirm("Some items could not generate a visual proof. Your order details are still complete. Proceed to checkout?")) {
-          setIsSyncing(false);
-          return;
-        }
-      }
-      
-      const formData = new FormData();
-      
-      const payload = currentCart.map((item: any, index: number) => {
-        const outItem: any = {
-          productId: item.productId,
-          quantity: item.quantity,
-          variationId: item.variationId,
-        };
-
-        if (item.customization?.enabled) {
-          outItem.customization = {
-            blockingType: item.customization.choice,
-            position: item.customization.position,
-            foilColor: item.customization.foilColor,
-            cornerEdges: item.customization.cornerEdges,
-          };
-          if (item.customization.logoFile) {
-            formData.append(`logo_${index}`, item.customization.logoFile);
-            outItem.customization.hasLogo = true;
-          }
-          if (item.customization.fullPreviewUrl) {
-            try {
-              const previewDataUrl = item.customization.fullPreviewUrl;
-              const byteString = atob(previewDataUrl.split(',')[1]);
-              const mimeString = previewDataUrl.split(',')[0].split(':')[1].split(';')[0];
-              const ab = new ArrayBuffer(byteString.length);
-              const ia = new Uint8Array(ab);
-              for (let i = 0; i < byteString.length; i++) {
-                ia[i] = byteString.charCodeAt(i);
-              }
-              const blob = new Blob([ab], { type: mimeString });
-              formData.append(`preview_${index}`, blob, 'preview.png');
-              outItem.customization.hasPreview = true;
-            } catch (e) {
-              console.error('Failed to convert preview to blob', e);
-            }
-          }
-        }
-        return outItem;
-      });
-
-      formData.append('cart', JSON.stringify({ items: payload }));
-
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to sync cart');
-      }
-
-      window.location.href = 'https://dashboard.abbeygate-england.com/checkout/';
-      setTimeout(() => setIsSyncing(false), 500);
-    } catch (error) {
-      console.error(error);
-      alert('There was a problem syncing your cart. Please try again.');
-      setIsSyncing(false);
-    }
+    router.push('/checkout');
   };
 
 
@@ -345,7 +272,7 @@ export default function CartPage() {
                     if (isLoggedIn === false) {
                       window.location.href = '/account?redirect=/cart';
                     } else if (isLoggedIn === true) {
-                      alert('Basket saved to your account!');
+                      setIsSaveModalOpen(true);
                     }
                   }} className="px-5 py-2.5 rounded-md border border-[var(--brand-border)] bg-white text-brand-primary-dark font-semibold text-[14px] tracking-wide hover:bg-gray-50 transition-colors">
                     Save basket
@@ -353,24 +280,26 @@ export default function CartPage() {
                 </div>
               )}
               
+              <SaveBasketModal 
+                isOpen={isSaveModalOpen} 
+                onClose={() => setIsSaveModalOpen(false)}
+                items={items.map(i => ({
+                  productId: parseInt(i.productId),
+                  productName: i.name,
+                  sku: i.sku || i.productId,
+                  price: i.lineTotal / i.quantity,
+                  qty: i.quantity,
+                  image: i.image,
+                  customization: i.customization,
+                  attributes: i.attributes,
+                  variationId: i.variationId,
+                  slug: i.slug
+                }))}
+              />
+              
               {/* Trust Indicators */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-12 mt-8 border-t border-[var(--brand-border)]">
-                <div>
-                  <h4 className="text-[13px] font-bold text-brand-primary-dark mb-1">Manufactured in the UK</h4>
-                  <p className="text-[12px] text-gray-500 leading-tight">Every piece made to order</p>
-                </div>
-                <div>
-                  <h4 className="text-[13px] font-bold text-brand-primary-dark mb-1">Premium materials</h4>
-                  <p className="text-[12px] text-gray-500 leading-tight">Soft-touch vegan leather</p>
-                </div>
-                <div>
-                  <h4 className="text-[13px] font-bold text-brand-primary-dark mb-1">Low minimum order</h4>
-                  <p className="text-[12px] text-gray-500 leading-tight">From 250 units</p>
-                </div>
-                <div>
-                  <h4 className="text-[13px] font-bold text-brand-primary-dark mb-1">Reliable lead times</h4>
-                  <p className="text-[12px] text-gray-500 leading-tight">2-3 weeks production</p>
-                </div>
+              <div className="pt-6 mt-8 border-t border-[var(--brand-border)]">
+                <TrustIndicators compact noBorders />
               </div>
             </div>
 

@@ -21,11 +21,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: true,
+  },
+  serverActions: {
+    bodySizeLimit: '10mb',
   },
   allowedDevOrigins: ['local.abbeygate-england.com'],
   async headers() {

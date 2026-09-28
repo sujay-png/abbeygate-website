@@ -160,6 +160,14 @@ const ProductFiltersInner = ({
     return formatTermName(name);
   };
 
+  const getFilteredTerms = (key: FilterParamKey, terms: StoreAttributeTerm[]) => {
+    if (key === 'filter_product_type') {
+      const excludeWords = ['a4', 'a5', 'a6', 'quarto', 'pocket', 'slim', 'foil', 'leather', 'dpp', 'wtv', 'week to view', 'day per page', 'eco'];
+      return terms.filter(t => !excludeWords.some(word => t.name.toLowerCase().includes(word)));
+    }
+    return terms;
+  };
+
   useEffect(() => {
     const onDocClick = () => setOpenDropdown(null);
     if (openDropdown) {
@@ -316,7 +324,8 @@ const ProductFiltersInner = ({
           {(Object.keys(FILTER_TAXONOMY_MAP) as FilterParamKey[]).map((key) => {
             const disabled = isFilterDisabled(key);
             const attr = getAttributeForFilter(key);
-            const terms = attr ? (attributeTerms[attr.id] ?? []) : [];
+            const rawTerms = attr ? (attributeTerms[attr.id] ?? []) : [];
+            const terms = getFilteredTerms(key, rawTerms);
             const taxonomy = FILTER_TAXONOMY_MAP[key];
 
             return (
@@ -439,7 +448,8 @@ const ProductFiltersInner = ({
                   if (disabled) return null;
                   
                   const attr = getAttributeForFilter(key);
-                  const terms = attr ? (attributeTerms[attr.id] ?? []) : [];
+                  const rawTerms = attr ? (attributeTerms[attr.id] ?? []) : [];
+                  const terms = getFilteredTerms(key, rawTerms);
                   const taxonomy = FILTER_TAXONOMY_MAP[key];
 
                   return (

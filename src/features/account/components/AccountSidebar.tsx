@@ -7,8 +7,8 @@ import { logoutCustomer } from '@/features/auth/services/login';
 const navItems = [
   { label: 'Dashboard', href: '/account/dashboard' },
   { label: 'Orders', href: '/account/orders' },
-  { label: 'Purchase lists', href: '/account/purchase-lists' },
-  { label: 'Bulk order', href: '/account/bulk-order' },
+  { label: 'Saved Baskets', href: '/account/saved-baskets' },
+
   { label: 'Addresses', href: '/account/addresses' },
   { label: 'Account Details', href: '/account/details' },
 ];

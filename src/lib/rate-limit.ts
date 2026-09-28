@@ -1,25 +1,5 @@
 import { Ratelimit } from '@upstash/ratelimit';
-import { Redis } from '@upstash/redis';
-
-// A placeholder Redis client that fails safely if env variables are missing
-const getRedisClient = () => {
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  
-  if (!url || !token || url === 'https://placeholder.upstash.io' || token === 'placeholder') {
-    return null;
-  }
-  
-  try {
-    return new Redis({
-      url,
-      token,
-    });
-  } catch (error) {
-    console.error('Failed to initialize Redis. Ensure UPSTASH variables are set.');
-    return null;
-  }
-};
+import { getRedisClient } from '@/lib/redis';
 
 const redis = getRedisClient();
 

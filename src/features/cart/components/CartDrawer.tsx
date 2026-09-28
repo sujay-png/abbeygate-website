@@ -14,6 +14,7 @@ import { downloadCartItemProof, canDownloadProof } from '@/features/cart/utils/d
 import { checkAuthStatus } from '@/features/auth/services/login';
 import { useVat } from '@/context/VatContext';
 import { VAT_RATE } from '@/features/products/utils/pricing';
+import { useRouter } from 'next/navigation';
 
 const OPEN_TRANSITION: Transition = { duration: 0.5, ease: [0.16, 1, 0.3, 1] };
 const CLOSE_TRANSITION: Transition = { duration: 0.35, ease: [0.7, 0, 0.84, 0] };
@@ -22,6 +23,7 @@ const formatPrice = (value: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
 
 export const CartDrawer = () => {
+  const router = useRouter();
   const { items: rawItems, pricedItems: items, isOpen, isLoading, subtotal, shippingCost, shippingLabel, vatCost, total, closeCart, removeItem, updateQuantity, updateItem } = useCart();
   const { showPricesIncludingVat } = useVat();
   const [previewItem, setPreviewItem] = useState<any | null>(null);
@@ -51,84 +53,9 @@ export const CartDrawer = () => {
       return;
     }
     
-    try {
-      setIsSyncing(true);
-      
-      const idb = await import('@/lib/idb');
-      let currentCart = await idb.get<any[]>('abbeygate-cart') || [];
-      let attempt = 0;
-      while (currentCart.some(i => i.proofStatus === 'pending') && attempt < 20) {
-        await new Promise(r => setTimeout(r, 500));
-        currentCart = await idb.get<any[]>('abbeygate-cart') || [];
-        attempt++;
-      }
-
-      if (currentCart.some(i => i.proofStatus === 'failed')) {
-        if (!window.confirm("Some items could not generate a visual proof. Your order details are still complete. Proceed to checkout?")) {
-          setIsSyncing(false);
-          return;
-        }
-      }
-      
-      const formData = new FormData();
-      
-      const payload = currentCart.map((item: any, index: number) => {
-        const outItem: any = {
-          productId: item.productId,
-          quantity: item.quantity,
-          variationId: item.variationId,
-        };
-
-        if (item.customization?.enabled) {
-          outItem.customization = {
-            blockingType: item.customization.choice,
-            position: item.customization.position,
-            foilColor: item.customization.foilColor,
-            cornerEdges: item.customization.cornerEdges,
-          };
-          if (item.customization.logoFile) {
-            formData.append(`logo_${index}`, item.customization.logoFile);
-            outItem.customization.hasLogo = true;
-          }
-          if (item.customization.fullPreviewUrl) {
-            try {
-              const previewDataUrl = item.customization.fullPreviewUrl;
-              const byteString = atob(previewDataUrl.split(',')[1]);
-              const mimeString = previewDataUrl.split(',')[0].split(':')[1].split(';')[0];
-              const ab = new ArrayBuffer(byteString.length);
-              const ia = new Uint8Array(ab);
-              for (let i = 0; i < byteString.length; i++) {
-                ia[i] = byteString.charCodeAt(i);
-              }
-              const blob = new Blob([ab], { type: mimeString });
-              formData.append(`preview_${index}`, blob, 'preview.png');
-              outItem.customization.hasPreview = true;
-            } catch (e) {
-              console.error('Failed to convert preview to blob', e);
-            }
-          }
-        }
-        return outItem;
-      });
-
-      formData.append('cart', JSON.stringify({ items: payload }));
-
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to sync cart');
-      }
-
-      window.location.href = 'https://dashboard.abbeygate-england.com/checkout/';
-      setTimeout(() => setIsSyncing(false), 500);
-    } catch (error) {
-      console.error(error);
-      alert('There was a problem syncing your cart. Please try again.');
-      setIsSyncing(false);
-    }
+    // Feature flag: redirecting directly to the new Next.js checkout
+    router.push('/checkout');
+    closeCart();
   };
 
   return (
@@ -330,7 +257,7 @@ export const CartDrawer = () => {
                                   quantity: item.quantity,
                                   logoFile: undefined,
                                 }));
-                                window.location.href = `/product/${item.slug}?amend=${item.key}`;
+                                router.push(`/product/${item.slug}?amend=${item.key}`);
                                 closeCart();
                               }}
                               className="hover:underline text-brand-primary-dark"

@@ -17,6 +17,7 @@ import { Send, X, ChevronLeft, ChevronRight, ZoomIn, Check } from 'lucide-react'
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as idb from '@/lib/idb';
+import { RelatedProductsClient } from './RelatedProductsClient';
 
 import type { CustomTab } from '@/features/products/services/store-products';
 
@@ -222,10 +223,19 @@ export const ProductDetailClient = ({
   useEffect(() => {
     if (amendKey && items.length > 0) {
       const cartItem = items.find(i => i.key === amendKey);
-      if (cartItem?.customization?.logoFile) {
-        setCustomization(prev => ({ ...prev, logoFile: cartItem.customization!.logoFile }));
-      }
       if (cartItem?.customization) {
+        if (cartItem.customization.logoFile) {
+          setCustomization(prev => ({ ...prev, logoFile: cartItem.customization!.logoFile }));
+        } else if (cartItem.customization.logoPreviewUrl && cartItem.customization.logoPreviewUrl.startsWith('data:image')) {
+          // Rehydrate from base64 string (often happens when restoring from a saved basket where File objects can't be serialized)
+          fetch(cartItem.customization.logoPreviewUrl)
+            .then(res => res.blob())
+            .then(blob => {
+              const file = new File([blob], cartItem.customization?.fileName || 'restored-logo.png', { type: blob.type });
+              setCustomization(prev => ({ ...prev, logoFile: file }));
+            })
+            .catch(e => console.error("Failed to restore logo file from base64 during amend", e));
+        }
         setIsCustomizingStarted(true);
       }
     }
@@ -918,7 +928,7 @@ export const ProductDetailClient = ({
 
                   return (
                     <div key={s.num} className="flex items-center flex-1 last:flex-none">
-                      <div className="flex items-center gap-2 lg:gap-3 cursor-pointer" onClick={() => { if (isCompleted || isCurrent) setCustomizerStep(s.num as any); }}>
+                      <div className="flex items-center gap-2 lg:gap-3 cursor-pointer" onClick={() => { if (isCompleted || isCurrent) setCustomizerStep(s.num as 1 | 2 | 3 | 4); }}>
                         {isCompleted ? (
                           <div className="w-6 h-6 rounded-full bg-brand-primary flex items-center justify-center text-white shrink-0">
                             <Check size={14} strokeWidth={3} />
@@ -985,7 +995,7 @@ export const ProductDetailClient = ({
                         alt={img.alt || product.name}
                         fill
                         sizes="96px"
-                        className="object-contain p-2"
+                        className={`object-contain p-2 ${index === 0 ? 'mix-blend-multiply' : ''}`}
                       />
                     </button>
                   );
@@ -1068,7 +1078,7 @@ export const ProductDetailClient = ({
                           );
                         })}
                         {isCustomizingStarted && customizationActive && (
-                          <div className={`absolute inset-0 transition-opacity duration-500 z-20 ${activeImageIndex === 0 && !isCalculatingBounds ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+                          <div className={`absolute inset-0 transition-opacity z-20 ${amendKey ? 'duration-0' : 'duration-500'} ${activeImageIndex === 0 && !isCalculatingBounds ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
                             <ProductCustomizationOverlay
                               product={product}
                               customization={customization}
@@ -1171,7 +1181,7 @@ export const ProductDetailClient = ({
                 }}
               >
                 <div
-                  className="absolute inset-0 transition-transform duration-300 ease-out"
+                  className="absolute inset-0 transition-transform duration-300 ease-out bg-[var(--brand-cream)]"
                   style={{
                     transformOrigin: zoomOrigin,
                     transform: isZooming ? 'scale(2.2)' : 'scale(1)'
@@ -1182,7 +1192,7 @@ export const ProductDetailClient = ({
                     alt={product.images[activeImageIndex]?.alt || product.name}
                     fill
                     sizes="80vw"
-                    className="object-contain mix-blend-multiply"
+                    className={`object-contain ${activeImageIndex === 0 ? 'mix-blend-multiply' : ''}`}
                   />
                   {activeImageIndex === 0 && isCustomizingStarted && customizationActive && !isCalculatingBounds && (
                     <ProductCustomizationOverlay
@@ -1492,7 +1502,11 @@ export const ProductDetailClient = ({
                       }}
                       className={`w-8 h-8 rounded-full shadow-sm transition-transform hover:scale-110 ${isActive ? 'ring-2 ring-offset-2 ring-brand-body scale-110' : 'border border-gray-300'
                         }`}
-                      style={{ backgroundColor: color.hex }}
+                      style={{ 
+                        background: color.hex.includes(',') 
+                          ? `linear-gradient(135deg, ${color.hex.split(',')[0]} 50%, ${color.hex.split(',')[1]} 50%)`
+                          : color.hex 
+                      }}
                     />
                   );
                 })}
@@ -1684,7 +1698,19 @@ export const ProductDetailClient = ({
       {/* Render Related Products conditionally */}
       {!isCustomizingStarted && relatedProducts && (
         <div className="mt-4 md:mt-8 w-[100vw] relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
-          {relatedProducts}
+          <RelatedProductsClient 
+            categoryId={(() => {
+              const collectionNames = ['richmond', 'dorchester', 'harrogate', 'lewes', 'chelsea', 'windsor', 'conscious'];
+              const collectionCategory = product.categories?.find((c: { name: string; slug: string }) => 
+                collectionNames.some(name => c.name.toLowerCase().includes(name) || c.slug.toLowerCase().includes(name))
+              );
+              return collectionCategory ? collectionCategory.id : product.categories?.[0]?.id;
+            })()}
+            currentProductId={product.id}
+            currentProductName={product.name}
+            currentColor={product.name.includes(',') ? product.name.split(',').pop()?.trim().toLowerCase() : ''}
+            initialProductsNode={relatedProducts}
+          />
         </div>
       )}
     </div>

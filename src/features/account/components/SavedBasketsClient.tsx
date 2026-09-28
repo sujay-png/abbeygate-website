@@ -1,17 +1,17 @@
 'use client';
-import { PurchaseList, deletePurchaseList } from '@/features/account/services/purchase-lists';
+import { savedBasket, deletesavedBasket } from '@/features/account/services/saved-baskets';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
-export function PurchaseListsClient({ initialLists }: { initialLists: PurchaseList[] }) {
+export function SavedBasketsClient({ initialLists }: { initialLists: savedBasket[] }) {
   const [lists, setLists] = useState(initialLists);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this list?')) {
       setIsDeleting(id);
-      const res = await deletePurchaseList(id);
+      const res = await deletesavedBasket(id);
       if (res.success) {
         setLists(prev => prev.filter(list => list.id !== id));
         toast.success('List deleted successfully');
@@ -61,7 +61,7 @@ export function PurchaseListsClient({ initialLists }: { initialLists: PurchaseLi
               lists.map(list => (
                 <tr key={list.id} className="hover:bg-gray-50/50">
                   <td className="px-4 py-4 font-medium text-brand-primary-dark">
-                    <Link href={`/account/bulk-order?list=${list.id}`} className="hover:underline hover:text-brand-primary">
+                    <Link href={`/account/saved-baskets/${list.id}`} className="hover:underline hover:text-brand-primary">
                       {list.name}
                     </Link>
                   </td>

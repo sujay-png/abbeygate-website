@@ -3,26 +3,26 @@ import { redirect } from 'next/navigation';
 import { Breadcrumb } from '@/components/content';
 import { Container } from '@/components/ui/Container';
 import { AccountSidebar } from '@/features/account/components/AccountSidebar';
-import { getPurchaseLists } from '@/features/account/services/purchase-lists';
+import { getsavedBaskets } from '@/features/account/services/saved-baskets';
 import Link from 'next/link';
-import { PurchaseListsClient } from '@/features/account/components/PurchaseListsClient';
+import { SavedBasketsClient } from '@/features/account/components/SavedBasketsClient';
 
 export const metadata = {
-  title: 'Purchase Lists | Abbeygate',
+  title: 'Saved Baskets | Abbeygate',
 };
 
-export default async function PurchaseListsPage() {
+export default async function savedBasketsPage() {
   const session = await getSession();
 
   if (!session) {
     redirect('/account');
   }
 
-  const lists = await getPurchaseLists();
+  const lists = await getsavedBaskets();
 
   return (
     <main className="flex flex-col min-h-screen bg-brand-cream">
-      <Breadcrumb paths={[{ label: 'Home', href: '/' }, { label: 'My Account', href: '/account/dashboard' }, { label: 'Purchase lists' }]} />
+      <Breadcrumb paths={[{ label: 'Home', href: '/' }, { label: 'My Account', href: '/account/dashboard' }, { label: 'Saved Baskets' }]} />
       
       <Container maxWidthClass="max-w-[1400px]" className="py-8 md:py-12">
         <div className="flex flex-col md:flex-row gap-8 lg:gap-16">
@@ -30,7 +30,7 @@ export default async function PurchaseListsPage() {
           
           <div className="flex-1 w-full bg-white border border-gray-200/80 rounded-lg p-6 md:p-8">
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-semibold text-brand-primary-dark">Purchase lists</h2>
+              <h2 className="text-2xl font-semibold text-brand-primary-dark">Saved Baskets</h2>
               <Link 
                 href="/account/bulk-order"
                 className="bg-brand-primary hover:bg-brand-primary-dark text-white px-4 py-2 rounded-sm text-sm font-medium transition-colors flex items-center gap-2"
@@ -42,7 +42,7 @@ export default async function PurchaseListsPage() {
               </Link>
             </div>
 
-            <PurchaseListsClient initialLists={lists} />
+            <SavedBasketsClient initialLists={lists} />
           </div>
         </div>
       </Container>

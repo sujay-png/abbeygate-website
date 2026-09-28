@@ -94,7 +94,10 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
         'full-colour': '#fff',
       };
 
-      const tagId = product.tags[0].id; // The grouping tag
+      const genericTags = ['best seller', 'best-seller', 'bestseller', 'new', 'featured', 'popular', 'sale'];
+      const groupingTag = product.tags.find((t: { id: number; name: string; slug: string }) => !genericTags.includes(t.slug.toLowerCase()) && !genericTags.includes(t.name.toLowerCase()));
+      
+      const tagId = groupingTag ? groupingTag.id : product.tags[0].id;
       const { products: siblings } = await getStoreProducts({ tagId, perPage: 20 });
       
       colorVariants = siblings.map(sibling => {
@@ -108,23 +111,29 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
 
         const colorName = specificName || attrName || 'Selected';
         
-        // Prioritize the exact specific color from the title for our hex dictionary,
-        // because WooCommerce pa_colour is often a broad filter (e.g. Biscuit is tagged as Brown)
-        let colorSlug = 'black';
-        if (specificSlug && COLOR_HEX_MAP[specificSlug]) {
-          colorSlug = specificSlug;
-        } else if (attrSlug) {
-          colorSlug = attrSlug;
-        } else if (specificSlug) {
-          colorSlug = specificSlug;
-        }
+        const extractHex = (nameStr: string | null | undefined) => {
+          if (!nameStr) return null;
+          const cleanSlug = nameStr.toLowerCase().replace(/\s+/g, '-');
+          if (COLOR_HEX_MAP[cleanSlug]) return COLOR_HEX_MAP[cleanSlug];
+          
+          // Try splitting by hyphen, '&', or 'and' to detect bicolors (e.g., "Blue- Royal Blue")
+          const parts = nameStr.split(/[-&]| and /i).map(p => p.trim()).filter(Boolean);
+          if (parts.length > 1) {
+            const hexes = parts.map(p => COLOR_HEX_MAP[p.toLowerCase().replace(/\s+/g, '-')]).filter(Boolean);
+            if (hexes.length > 1) return hexes.join(',');
+            if (hexes.length === 1) return hexes[0];
+          }
+          return null;
+        };
+
+        const finalHex = extractHex(specificName) || extractHex(attrName) || '#cccccc';
         
         return {
           productId: String(sibling.id),
           productName: sibling.name,
           name: colorName,
           slug: sibling.slug,
-          hex: COLOR_HEX_MAP[colorSlug] || '#cccccc',
+          hex: finalHex,
           imageSrc: sibling.images?.[0]?.src,
           fullProduct: sibling
         };
@@ -176,6 +185,23 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
 
   const customTabs = await getProductCustomTabs(product.id);
 
+  const collectionNames = ['richmond', 'dorchester', 'harrogate', 'lewes', 'chelsea', 'windsor', 'conscious'];
+  const collectionCategory = product.categories?.find((c: { name: string; slug: string }) => 
+    collectionNames.some(name => c.name.toLowerCase().includes(name) || c.slug.toLowerCase().includes(name))
+  );
+  
+  const relatedCategoryId = collectionCategory ? collectionCategory.id : product.categories[0]?.id;
+
+  let currentColor = '';
+  let currentBaseName = '';
+  if (product.name.includes(',')) {
+    const parts = product.name.split(',');
+    currentBaseName = parts[0].trim();
+    currentColor = parts.pop()?.trim().toLowerCase() || '';
+  } else {
+    currentBaseName = product.name;
+  }
+
   return (
     <div className="min-h-screen bg-brand-cream">
       <Breadcrumb paths={breadcrumbPaths} />
@@ -187,7 +213,7 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
           colorVariants={colorVariants}
           customTabs={customTabs}
           amendKey={amendKey}
-          relatedProducts={<RelatedProducts categoryId={product.categories[0]?.id} />}
+          relatedProducts={<RelatedProducts categoryId={relatedCategoryId} currentProductId={product.id} currentProductName={product.name} currentColor={currentColor} />}
         />
       </Container>
       <FAQ />
