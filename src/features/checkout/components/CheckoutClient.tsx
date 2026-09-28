@@ -77,6 +77,7 @@ function CheckoutFormContent({
   const [deliveryEstimate, setDeliveryEstimate] = useState<string | null>(null);
   const [isExpressAvailable, setIsExpressAvailable] = useState<boolean>(false);
   const [isMobileSummaryOpen, setIsMobileSummaryOpen] = useState(false);
+  const [billingSameAsDelivery, setBillingSameAsDelivery] = useState(true);
 
   const getCustomDelivery = (pc: string) => {
     const clean = pc.toUpperCase().replace(/\s+/g, '');
@@ -210,6 +211,20 @@ function CheckoutFormContent({
     setPaymentError(null);
 
     const formData = new FormData(event.currentTarget);
+    const billingName = billingSameAsDelivery ? `${formData.get('firstName')} ${formData.get('lastName')}` : `${formData.get('billing_firstName')} ${formData.get('billing_lastName')}`;
+    const billingAddress = billingSameAsDelivery ? {
+      line1: formData.get('address1') as string,
+      line2: formData.get('address2') as string,
+      city: formData.get('city') as string,
+      postal_code: formData.get('postcode') as string,
+      country: formData.get('country') as string,
+    } : {
+      line1: formData.get('billing_address1') as string,
+      line2: formData.get('billing_address2') as string,
+      city: formData.get('billing_city') as string,
+      postal_code: formData.get('billing_postcode') as string,
+      country: formData.get('billing_country') as string,
+    };
 
     if (paymentMethod === 'card' && stripe && elements && clientSecret) {
       const { error: submitError } = await elements.submit();
@@ -227,15 +242,9 @@ function CheckoutFormContent({
           receipt_email: formData.get('email') as string,
           payment_method_data: {
             billing_details: {
-              name: `${formData.get('firstName')} ${formData.get('lastName')}`,
+              name: billingName,
               email: formData.get('email') as string,
-              address: {
-                line1: formData.get('address1') as string,
-                line2: formData.get('address2') as string,
-                city: formData.get('city') as string,
-                postal_code: formData.get('postcode') as string,
-                country: formData.get('country') as string,
-              }
+              address: billingAddress
             }
           },
           shipping: {
@@ -257,6 +266,12 @@ function CheckoutFormContent({
       }
     } else if (paymentMethod === 'bacs' && quoteData?.id) {
       const billingDetails = {
+        name: billingName,
+        email: formData.get('email') as string,
+        address: billingAddress
+      };
+      
+      const shippingDetails = {
         name: `${formData.get('firstName')} ${formData.get('lastName')}`,
         email: formData.get('email') as string,
         address: {
@@ -274,7 +289,7 @@ function CheckoutFormContent({
         body: JSON.stringify({
           sessionId: quoteData.id,
           billingDetails,
-          shippingDetails: billingDetails // using same for shipping for now, as UI only has one address
+          shippingDetails
         })
       });
 
@@ -282,7 +297,8 @@ function CheckoutFormContent({
         setPaymentError('Failed to process BACS order');
         setIsProcessing(false);
       } else {
-        window.location.href = '/checkout/success';
+        const data = await res.json();
+        window.location.href = `/checkout/bacs-success?orderId=${data.orderId}&key=${data.orderKey}`;
       }
     }
   };
@@ -380,6 +396,41 @@ function CheckoutFormContent({
           </section>
 
           <section>
+            <h2 className="mb-2 text-xl">Billing address</h2>
+            <div className="overflow-hidden border border-[var(--brand-border)]">
+              <label className={`flex items-center gap-3 border-b border-[var(--brand-border)] px-4 py-4 text-sm cursor-pointer ${billingSameAsDelivery ? 'bg-brand-tint/60' : 'bg-white'}`}>
+                <input checked={billingSameAsDelivery} onChange={() => setBillingSameAsDelivery(true)} type="radio" className="accent-brand-primary" /> Same as delivery address
+              </label>
+              <label className={`flex items-center gap-3 px-4 py-4 text-sm cursor-pointer ${!billingSameAsDelivery ? 'bg-brand-tint/60' : 'bg-white'}`}>
+                <input checked={!billingSameAsDelivery} onChange={() => setBillingSameAsDelivery(false)} type="radio" className="accent-brand-primary" /> Use a different billing address
+              </label>
+              {!billingSameAsDelivery && (
+                <div className="bg-brand-tint/30 p-4 border-t border-[var(--brand-border)]">
+                  <label className="block text-sm font-medium" htmlFor="billing_country">Country / region</label>
+                  <div className="relative mt-2">
+                    <select id="billing_country" name="billing_country" defaultValue="GB" className={`${inputClass} appearance-none pr-10`}>
+                      <option value="GB">United Kingdom</option>
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-grey" />
+                  </div>
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    <input name="billing_firstName" required={!billingSameAsDelivery} placeholder="First name" className={inputClass} />
+                    <input name="billing_lastName" required={!billingSameAsDelivery} placeholder="Last name" className={inputClass} />
+                  </div>
+                  <input name="billing_company" placeholder="Company (optional)" className={`mt-4 ${inputClass}`} />
+                  <input name="billing_address1" required={!billingSameAsDelivery} placeholder="Address" className={`mt-4 ${inputClass}`} />
+                  <input name="billing_address2" placeholder="Apartment, suite, etc. (optional)" className={`mt-4 ${inputClass}`} />
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2 items-start">
+                    <input name="billing_city" required={!billingSameAsDelivery} placeholder="Town / City" className={inputClass} />
+                    <input name="billing_postcode" required={!billingSameAsDelivery} placeholder="Postcode" className={inputClass} />
+                  </div>
+                  <input name="billing_phone" required={!billingSameAsDelivery} placeholder="Phone number" className={`mt-4 ${inputClass}`} />
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section>
             <h2 className="mb-2 text-xl">Payment</h2>
             <p className="mb-4 text-sm text-brand-grey">All transactions will be secure and encrypted.</p>
             <div className="overflow-hidden border border-[var(--brand-border)]">
@@ -406,6 +457,11 @@ function CheckoutFormContent({
                 </span>
                 <Landmark className="h-5 w-5 text-brand-primary" />
               </label>
+              {paymentMethod === 'bacs' && (
+                <div className="bg-white px-4 py-4 text-sm text-brand-grey border-t border-[var(--brand-border)]">
+                  Make your payment directly into our bank account. Please use your Order ID as the payment reference. Your order will not be shipped until the funds have cleared in our account.
+                </div>
+              )}
             </div>
           </section>
 

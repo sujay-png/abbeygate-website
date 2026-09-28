@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, orderId: (orderRes as any).id });
+    return NextResponse.json({ success: true, orderId: (orderRes as any).id, orderKey: (orderRes as any).order_key });
   } catch (error: any) {
     console.error('Failed to create BACS order:', error);
     return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
