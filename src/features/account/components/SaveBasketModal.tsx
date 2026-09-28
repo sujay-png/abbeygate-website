@@ -50,18 +50,20 @@ export function SaveBasketModal({ isOpen, onClose, items }: Props) {
 
     setIsSaving(true);
     
-    const res = await savesavedBasket(name.trim(), validItems);
-    setIsSaving(false);
+    // OPTIMISTIC UI: Instantly assume success!
+    toast.success(`Saved Basket "${name}" saved!`);
+    setName('');
+    onClose();
+    router.push('/account/saved-baskets');
 
-    if (res.success) {
-      toast.success(`Saved Basket "${name}" saved!`);
-      setName('');
-      onClose();
-      router.push('/account/saved-baskets');
-      router.refresh(); // Force Next.js to fetch the latest server data
-    } else {
-      toast.error(res.error || 'Failed to save list.');
-    }
+    // Run the actual save in the background
+    savesavedBasket(name.trim(), validItems).then((res) => {
+      if (res.success) {
+        router.refresh(); // Refresh in background so next time they visit it's fresh
+      } else {
+        toast.error(res.error || 'Failed to sync saved list with server.');
+      }
+    });
   };
 
   return (

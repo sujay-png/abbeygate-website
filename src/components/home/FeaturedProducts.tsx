@@ -44,7 +44,7 @@ export const FeaturedProducts = async ({ title = "Best Sellers" }: { title?: str
               ))
             : (
               <p className="col-span-full text-center text-gray-500 py-8">
-                Products will appear here once WooCommerce is connected.
+                Check back soon for our latest featured products!
               </p>
             )}
         </div>

@@ -15,6 +15,7 @@ export type ProductListOptions = {
   perPage?: number;
   search?: string;
   slug?: string;
+  featured?: boolean;
 };
 
 export async function getStoreProducts(
@@ -31,6 +32,7 @@ export async function getStoreProducts(
   if (tagId) params.tag = tagId;
   if (search) params.search = search;
   if (slug) params.slug = slug;
+  if (options.featured !== undefined) params.featured = String(options.featured);
 
   const { data, total, totalPages } = await storeFetchWithHeaders<StoreProduct[]>(
     "/products",
@@ -112,8 +114,19 @@ export async function getStoreAttributeTerms(
 export async function getFeaturedStoreProducts(
   limit = 4,
 ): Promise<StoreProduct[]> {
-  const { products } = await getStoreProducts({ perPage: limit, tagId: 158 });
-  return products.slice(0, limit);
+  // Rely exclusively on the Best Seller tag/category
+  const results = await Promise.allSettled([
+    getStoreProducts({ perPage: limit, tagId: 158 }),
+    getStoreProducts({ perPage: limit, categoryId: 159 })
+  ]);
+
+  const tagRes = results[0].status === 'fulfilled' ? results[0].value.products : [];
+  const categoryRes = results[1].status === 'fulfilled' ? results[1].value.products : [];
+
+  const combined = [...tagRes, ...categoryRes];
+  const uniqueProducts = Array.from(new Map(combined.map(p => [p.id, p])).values());
+
+  return uniqueProducts.slice(0, limit);
 }
 
 /** Prefer WooCommerce-generated thumbnails over full-size PNGs. */

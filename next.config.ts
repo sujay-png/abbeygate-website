@@ -24,10 +24,12 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  serverActions: {
-    bodySizeLimit: '10mb',
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb',
+      allowedOrigins: ['local.abbeygate-england.com'],
+    },
   },
-  allowedDevOrigins: ['local.abbeygate-england.com'],
   async headers() {
     return [
       {

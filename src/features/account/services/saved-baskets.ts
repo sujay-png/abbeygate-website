@@ -47,57 +47,59 @@ export async function getsavedBaskets(): Promise<savedBasket[]> {
   const data = await getCustomerMeta();
   if (!data) return [];
 
-  const listsMeta = data.customer.meta_data.find((meta) => meta.key === 'purchase_lists');
-  if (listsMeta && Array.isArray(listsMeta.value)) {
-    return listsMeta.value as savedBasket[];
-  }
+  const allBaskets: savedBasket[] = [];
 
-  // Handle case where it might be a JSON string
-  if (listsMeta && typeof listsMeta.value === 'string') {
-    try {
-      return JSON.parse(listsMeta.value) as savedBasket[];
-    } catch {
-      return [];
+  // Parse legacy 'purchase_lists' array
+  const legacyMeta = data.customer.meta_data.find((meta) => meta.key === 'purchase_lists');
+  if (legacyMeta) {
+    if (Array.isArray(legacyMeta.value)) {
+      allBaskets.push(...legacyMeta.value);
+    } else if (typeof legacyMeta.value === 'string') {
+      try {
+        allBaskets.push(...JSON.parse(legacyMeta.value));
+      } catch {}
     }
   }
 
-  return [];
+  // Parse new individual 'saved_basket_XYZ' keys
+  const newMetas = data.customer.meta_data.filter((meta) => meta.key.startsWith('saved_basket_'));
+  for (const meta of newMetas) {
+    try {
+      const parsed = typeof meta.value === 'string' ? JSON.parse(meta.value) : meta.value;
+      if (parsed && parsed.id) {
+        allBaskets.push(parsed);
+      }
+    } catch {}
+  }
+
+  // Sort them by createdAt descending
+  allBaskets.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  return allBaskets;
 }
 
 export async function savesavedBasket(name: string, items: savedBasketItem[]): Promise<{ success: boolean; error?: string }> {
-  const data = await getCustomerMeta();
-  if (!data) return { success: false, error: 'Not authenticated' };
+  // Skip GET request completely!
+  const session = await getSession();
+  if (!session) return { success: false, error: 'Not authenticated' };
 
-  let currentLists: savedBasket[] = [];
-  const listsMeta = data.customer.meta_data.find((meta) => meta.key === 'purchase_lists');
-  if (listsMeta && Array.isArray(listsMeta.value)) {
-    currentLists = listsMeta.value as savedBasket[];
-  } else if (listsMeta && typeof listsMeta.value === 'string') {
-    try {
-      currentLists = JSON.parse(listsMeta.value) as savedBasket[];
-    } catch {}
-  }
-  
+  const id = crypto.randomUUID();
   const newList: savedBasket = {
-    id: crypto.randomUUID(),
+    id,
     name,
     items,
     createdAt: new Date().toISOString(),
-    user: data.customer.first_name && data.customer.last_name 
-      ? `${data.customer.first_name} ${data.customer.last_name}` 
-      : data.customer.first_name || data.customer.username || data.session.email.split('@')[0], // Extract username from email as fallback
+    user: session.email.split('@')[0], 
   };
 
-  const updatedLists = [...currentLists, newList];
-
   try {
-    await woocommerceApi.request(`/customers/${data.session.userId}`, {
+    await woocommerceApi.request(`/customers/${session.userId}`, {
       method: 'PUT',
       body: {
         meta_data: [
           {
-            key: 'purchase_lists',
-            value: JSON.stringify(updatedLists)
+            key: `saved_basket_${id}`,
+            value: JSON.stringify(newList)
           }
         ]
       }
@@ -115,28 +117,35 @@ export async function deletesavedBasket(id: string): Promise<{ success: boolean;
   const data = await getCustomerMeta();
   if (!data) return { success: false, error: 'Not authenticated' };
 
-  let currentLists: savedBasket[] = [];
-  const listsMeta = data.customer.meta_data.find((meta) => meta.key === 'purchase_lists');
-  if (listsMeta && Array.isArray(listsMeta.value)) {
-    currentLists = listsMeta.value as savedBasket[];
-  } else if (listsMeta && typeof listsMeta.value === 'string') {
-    try {
-      currentLists = JSON.parse(listsMeta.value) as savedBasket[];
-    } catch {}
+  const metaUpdates: { key: string; value: string | null }[] = [];
+
+  // Check new keys first
+  const newMeta = data.customer.meta_data.find((meta) => meta.key === `saved_basket_${id}`);
+  if (newMeta) {
+    metaUpdates.push({ key: `saved_basket_${id}`, value: null }); // Null deletes the meta key
+  } else {
+    // Legacy array fallback
+    let currentLists: savedBasket[] = [];
+    const listsMeta = data.customer.meta_data.find((meta) => meta.key === 'purchase_lists');
+    if (listsMeta && Array.isArray(listsMeta.value)) {
+      currentLists = listsMeta.value as savedBasket[];
+    } else if (listsMeta && typeof listsMeta.value === 'string') {
+      try {
+        currentLists = JSON.parse(listsMeta.value) as savedBasket[];
+      } catch {}
+    }
+
+    const updatedLists = currentLists.filter(list => list.id !== id);
+    metaUpdates.push({ key: 'purchase_lists', value: JSON.stringify(updatedLists) });
   }
 
-  const updatedLists = currentLists.filter(list => list.id !== id);
+  if (metaUpdates.length === 0) return { success: true };
 
   try {
     await woocommerceApi.request(`/customers/${data.session.userId}`, {
       method: 'PUT',
       body: {
-        meta_data: [
-          {
-            key: 'purchase_lists',
-            value: JSON.stringify(updatedLists)
-          }
-        ]
+        meta_data: metaUpdates
       }
     });
     
