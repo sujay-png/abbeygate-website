@@ -708,14 +708,16 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
 
   if (!pricedItems.length) {
     return (
-      <div className="min-h-screen bg-brand-cream">
+      <div className="min-h-screen bg-brand-cream flex flex-col">
         <CheckoutHeader />
-        <section className="mx-auto max-w-[760px] px-5 py-24 text-center sm:px-8">
-          <ShoppingBag className="mx-auto mb-5 h-8 w-8 text-brand-primary" />
-          <h1 className="text-2xl">Your bag is empty</h1>
-          <p className="mt-3 text-brand-grey">Add a product before proceeding to checkout.</p>
-          <Link href="/notebooks" className="mt-8 inline-flex bg-brand-primary px-7 py-3 text-sm font-semibold text-white hover:bg-brand-primary-dark">Explore notebooks</Link>
-        </section>
+        <main className="flex-1 flex flex-col justify-center">
+          <section className="mx-auto max-w-[760px] px-5 py-24 text-center sm:px-8">
+            <ShoppingBag className="mx-auto mb-5 h-8 w-8 text-brand-primary" />
+            <h1 className="text-2xl">Your bag is empty</h1>
+            <p className="mt-3 text-brand-grey">Add a product before proceeding to checkout.</p>
+            <Link href="/notebooks" className="mt-8 inline-flex bg-brand-primary px-7 py-3 text-sm font-semibold text-white hover:bg-brand-primary-dark">Explore notebooks</Link>
+          </section>
+        </main>
         <CheckoutFooter />
       </div>
     );
