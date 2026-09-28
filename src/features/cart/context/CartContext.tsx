@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useCallback, useMemo, useEffect, R
 import type { LogoCustomization } from '@/features/products/types/store-product';
 import type { StoreProduct, PriceTier } from '@/features/products/types/store-product';
 import { calculateShipping } from '@/features/products/utils/shipping';
-import { VAT_RATE, calculateProductPrice, CUSTOMIZATION_MIN_QTY, getCornerEdgesPricing } from '@/features/products/utils/pricing';
+import { VAT_RATE, calculateProductPrice, CUSTOMIZATION_MIN_QTY, getCornerEdgesPricing, BRANDING_SETUP_FEE } from '@/features/products/utils/pricing';
 import * as idb from '@/lib/idb';
 import toast from 'react-hot-toast';
 
@@ -47,6 +47,7 @@ export interface CartItem {
 
 export type PricedItem = CartItem & {
   unitPrice: number;
+  setupFee: number;
   lineTotal: number;
   groupQuantity: number;
 };
@@ -205,28 +206,43 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const pricedItems = useMemo<PricedItem[]>(() => {
+    const seenGroups = new Set<string>();
+
     return items.map(item => {
+      const groupId = item.colourGroupId ?? item.key;
+      const isFirstInGroup = !seenGroups.has(groupId);
+      seenGroups.add(groupId);
+
       const groupQuantity = item.colourGroupId
-        ? items.filter(i => (i.colourGroupId ?? i.key) === (item.colourGroupId ?? item.key)).reduce((sum, i) => sum + i.quantity, 0)
+        ? items.filter(i => (i.colourGroupId ?? i.key) === groupId).reduce((sum, i) => sum + i.quantity, 0)
         : item.quantity;
       
       let unitPrice = item.price;
+      let setupFee = 0;
+
+      const customizationEnabled = !(item.isGifts ?? false) && groupQuantity >= CUSTOMIZATION_MIN_QTY && !!item.customization?.enabled;
+
       if (item.basePrice !== undefined) {
         unitPrice = calculateProductPrice({
           quantity: groupQuantity,
           basePrice: item.basePrice,
           tiers: item.priceTiers ?? [],
-          customizationEnabled: !(item.isGifts ?? false) && item.quantity >= CUSTOMIZATION_MIN_QTY && !!item.customization?.enabled,
+          customizationEnabled,
           blockingType: item.customization?.choice,
           cornerEdges: item.customization?.cornerEdges,
           cornerEdgePrice: item.customization?.cornerEdges && item.customization.cornerEdges !== 'None' ? getCornerEdgesPricing(item as any).pricePerPair : 0,
           isGifts: item.isGifts ?? false,
         }).unitPrice;
       }
+
+      if (isFirstInGroup && customizationEnabled) {
+        setupFee = BRANDING_SETUP_FEE;
+      }
       
       return {
         ...item,
         unitPrice,
+        setupFee,
         lineTotal: unitPrice * item.quantity,
         groupQuantity
       };
@@ -234,7 +250,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [items]);
 
   const itemCount = useMemo(() => items.reduce((sum, i) => sum + i.quantity, 0), [items]);
-  const subtotal = useMemo(() => pricedItems.reduce((sum, i) => sum + i.lineTotal, 0), [pricedItems]);
+  const subtotal = useMemo(() => pricedItems.reduce((sum, i) => sum + i.lineTotal + i.setupFee, 0), [pricedItems]);
 
   const { cost: shippingCost, label: shippingLabel } = useMemo(() => {
     const shippingItems = items.map((item) => ({
