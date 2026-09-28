@@ -477,7 +477,7 @@ function CheckoutFormContent({
         </div>
       </form>
       
-      <aside className="order-1 lg:order-2 border-t border-b lg:border-b-0 border-[var(--brand-border)] bg-brand-cream px-5 py-6 lg:py-14 sm:px-8 lg:sticky lg:top-0 lg:border-l lg:border-t-0 lg:px-10">
+      <aside className="order-1 lg:order-2 border-t border-b lg:border-b-0 border-[var(--brand-border)] bg-brand-cream px-5 py-6 lg:py-14 sm:px-8 lg:sticky lg:top-0 lg:self-start lg:border-l lg:border-t-0 lg:px-10">
         <div className="mx-auto max-w-[500px]">
           {/* Mobile Accordion Header */}
           <div 
