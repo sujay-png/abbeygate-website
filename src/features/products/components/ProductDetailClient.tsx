@@ -17,6 +17,7 @@ import { Send, X, ChevronLeft, ChevronRight, ZoomIn, Check } from 'lucide-react'
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as idb from '@/lib/idb';
+import { RelatedProductsClient } from './RelatedProductsClient';
 
 import type { CustomTab } from '@/features/products/services/store-products';
 
@@ -927,7 +928,7 @@ export const ProductDetailClient = ({
 
                   return (
                     <div key={s.num} className="flex items-center flex-1 last:flex-none">
-                      <div className="flex items-center gap-2 lg:gap-3 cursor-pointer" onClick={() => { if (isCompleted || isCurrent) setCustomizerStep(s.num as any); }}>
+                      <div className="flex items-center gap-2 lg:gap-3 cursor-pointer" onClick={() => { if (isCompleted || isCurrent) setCustomizerStep(s.num as 1 | 2 | 3 | 4); }}>
                         {isCompleted ? (
                           <div className="w-6 h-6 rounded-full bg-brand-primary flex items-center justify-center text-white shrink-0">
                             <Check size={14} strokeWidth={3} />
@@ -1697,7 +1698,19 @@ export const ProductDetailClient = ({
       {/* Render Related Products conditionally */}
       {!isCustomizingStarted && relatedProducts && (
         <div className="mt-4 md:mt-8 w-[100vw] relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
-          {relatedProducts}
+          <RelatedProductsClient 
+            categoryId={(() => {
+              const collectionNames = ['richmond', 'dorchester', 'harrogate', 'lewes', 'chelsea', 'windsor', 'conscious'];
+              const collectionCategory = product.categories?.find((c: { name: string; slug: string }) => 
+                collectionNames.some(name => c.name.toLowerCase().includes(name) || c.slug.toLowerCase().includes(name))
+              );
+              return collectionCategory ? collectionCategory.id : product.categories?.[0]?.id;
+            })()}
+            currentProductId={product.id}
+            currentProductName={product.name}
+            currentColor={product.name.includes(',') ? product.name.split(',').pop()?.trim().toLowerCase() : ''}
+            initialProductsNode={relatedProducts}
+          />
         </div>
       )}
     </div>

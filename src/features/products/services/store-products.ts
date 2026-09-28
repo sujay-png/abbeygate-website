@@ -138,7 +138,7 @@ export const getProductCustomTabs = cache(async (
   productId: number,
 ): Promise<CustomTab[]> => {
   try {
-    const product = await woocommerceApi.request<{ meta_data: { key: string; value: any }[] }>(`/products/${productId}`, {
+    const product = await woocommerceApi.request<{ meta_data: { key: string; value: unknown }[] }>(`/products/${productId}`, {
       revalidate: 120,
       timeoutMs: 1500, // Fail fast so we don't block the entire page render
     });
