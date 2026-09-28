@@ -17,11 +17,15 @@ import { TrustIndicators } from '@/components/home/TrustIndicators';
 import { SaveBasketModal } from '@/features/account/components/SaveBasketModal';
 import { useRouter } from 'next/navigation';
 
+import { useVat } from '@/context/VatContext';
+import { VAT_RATE, BRANDING_SETUP_FEE } from '@/features/products/utils/pricing';
+
 const formatPrice = (value: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
 
 export default function CartPage() {
   const router = useRouter();
+  const { showPricesIncludingVat } = useVat();
   const { items: rawItems, pricedItems: items, isLoading, removeItem, updateQuantity, subtotal, shippingCost, vatCost, total, shippingLabel, updateItem, clearCart } = useCart();
   const [isSyncing, setIsSyncing] = useState(false);
   const [pickerFor, setPickerFor] = useState<string | null>(null);
@@ -183,7 +187,7 @@ export default function CartPage() {
                             ) : null}
                           </div>
                           <p className="mt-5 text-[11px] text-gray-500 max-w-[200px]">
-                            Includes branding set-up (£48.00){(item.customization as any)?.cornerEdgesPrice ? ` and extras (${formatPrice((item.customization as any).cornerEdgesPrice * item.quantity)})` : ''}
+                            Includes branding set-up ({formatPrice(showPricesIncludingVat ? BRANDING_SETUP_FEE * (1 + VAT_RATE) : BRANDING_SETUP_FEE)}){(item.customization as any)?.cornerEdgesPrice ? ` and extras (${formatPrice(((item.customization as any).cornerEdgesPrice * item.quantity) * (showPricesIncludingVat ? 1 + VAT_RATE : 1))})` : ''}
                           </p>
                         </>
                       ) : (
@@ -195,8 +199,8 @@ export default function CartPage() {
                     <div className="flex justify-between lg:block">
                       <span className="lg:hidden font-bold text-[13px]">Unit Price</span>
                       <div>
-                        <div className="font-bold text-[14px] text-gray-900">{formatPrice(unitPrice)}</div>
-                        <div className="text-[11px] text-gray-500">ex VAT</div>
+                        <div className="font-bold text-[14px] text-gray-900">{showPricesIncludingVat ? formatPrice(unitPrice * (1 + VAT_RATE)) : formatPrice(unitPrice)}</div>
+                        <div className="text-[11px] text-gray-500">{showPricesIncludingVat ? 'inc VAT' : 'ex VAT'}</div>
                       </div>
                     </div>
                     
@@ -235,7 +239,7 @@ export default function CartPage() {
                     <div className="flex justify-between lg:block lg:text-right pr-2">
                       <span className="lg:hidden font-bold text-[13px]">Total</span>
                       <div>
-                        <div className="font-bold text-[14px] text-gray-900">{formatPrice(item.lineTotal)}</div>
+                        <div className="font-bold text-[14px] text-gray-900">{showPricesIncludingVat ? formatPrice(item.lineTotal * (1 + VAT_RATE)) : formatPrice(item.lineTotal)}</div>
                         {item.customization?.enabled && (
                           <div className="text-[11px] text-gray-500 whitespace-nowrap">incl. branding &<br/>extras</div>
                         )}
@@ -305,7 +309,7 @@ export default function CartPage() {
 
             <div className="border border-[var(--brand-border)] rounded-xl p-6 bg-white h-fit sticky top-[200px]">
               <h3 className="text-[15px] text-brand-primary-dark uppercase tracking-wide font-josefin font-semibold mb-4">
-                Order Summary (ex VAT)
+                Order Summary
               </h3>
               
               <div className="flex flex-col mb-5">
@@ -326,8 +330,18 @@ export default function CartPage() {
                   <span>{formatPrice(subtotal)}</span>
                 </div>
                 
-                <div className="flex justify-between font-bold text-gray-900 bg-brand-tint px-3.5 py-3 rounded-md mt-2 text-[14px]">
-                  <span>Including VAT (20%)</span>
+                <div className="flex items-center justify-between py-2 text-[14px]">
+                  <span className="text-gray-600">{shippingLabel}</span>
+                  <span className="font-medium text-gray-900">{formatPrice(shippingCost)}</span>
+                </div>
+                
+                <div className="flex items-center justify-between pb-4 border-b border-[var(--brand-border)] text-[14px]">
+                  <span className="text-gray-600">VAT (20%)</span>
+                  <span className="font-medium text-gray-900">{formatPrice(vatCost)}</span>
+                </div>
+                
+                <div className="flex justify-between font-bold text-gray-900 bg-brand-tint px-3.5 py-3 rounded-md mt-4 text-[14px]">
+                  <span>Total (inc VAT)</span>
                   <span>{formatPrice(total)}</span>
                 </div>
               </div>

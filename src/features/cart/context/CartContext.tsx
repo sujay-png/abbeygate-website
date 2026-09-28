@@ -243,14 +243,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         ...item,
         unitPrice,
         setupFee,
-        lineTotal: unitPrice * item.quantity,
+        lineTotal: (unitPrice * item.quantity) + setupFee,
         groupQuantity
       };
     });
   }, [items]);
 
   const itemCount = useMemo(() => items.reduce((sum, i) => sum + i.quantity, 0), [items]);
-  const subtotal = useMemo(() => pricedItems.reduce((sum, i) => sum + i.lineTotal + i.setupFee, 0), [pricedItems]);
+  const subtotal = useMemo(() => pricedItems.reduce((sum, i) => sum + i.lineTotal, 0), [pricedItems]);
 
   const { cost: shippingCost, label: shippingLabel } = useMemo(() => {
     const shippingItems = items.map((item) => ({
