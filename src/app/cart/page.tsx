@@ -195,59 +195,62 @@ export default function CartPage() {
                       )}
                     </div>
                     
-                    {/* 3. Unit Price */}
-                    <div className="flex justify-between lg:block">
-                      <span className="lg:hidden font-bold text-[13px]">Unit Price</span>
-                      <div>
-                        <div className="font-bold text-[14px] text-gray-900">{showPricesIncludingVat ? formatPrice(unitPrice * (1 + VAT_RATE)) : formatPrice(unitPrice)}</div>
-                        <div className="text-[11px] text-gray-500">{showPricesIncludingVat ? 'inc VAT' : 'ex VAT'}</div>
+                    {/* Price, Quantity, Total Wrapper for Mobile */}
+                    <div className="flex flex-col gap-4 lg:contents pt-2 lg:pt-0 border-t border-dashed border-[var(--brand-border)] lg:border-none mt-2 lg:mt-0">
+                      {/* 3. Unit Price */}
+                      <div className="flex justify-between lg:block">
+                        <span className="lg:hidden font-bold text-[13px]">Unit Price</span>
+                        <div>
+                          <div className="font-bold text-[14px] text-gray-900">{showPricesIncludingVat ? formatPrice(unitPrice * (1 + VAT_RATE)) : formatPrice(unitPrice)}</div>
+                          <div className="text-[11px] text-gray-500">{showPricesIncludingVat ? 'inc VAT' : 'ex VAT'}</div>
+                        </div>
                       </div>
-                    </div>
-                    
-                    {/* 4. Quantity */}
-                    <div className="flex justify-between lg:block">
-                      <span className="lg:hidden font-bold text-[13px]">Quantity</span>
-                      <div className="flex flex-col items-start lg:items-center w-fit">
-                        <div className="flex items-center border border-[var(--brand-border)] rounded overflow-hidden">
-                          <button type="button" onClick={() => updateQuantity(item.key, item.quantity - 1)} className="w-[26px] h-[26px] flex items-center justify-center bg-[var(--brand-cream)] hover:bg-gray-100 transition-colors border-r border-[var(--brand-border)] shrink-0">
-                            <Minus className="w-3 h-3" strokeWidth={3} />
-                          </button>
-                          <input 
-                            type="number" 
-                            value={item.quantity}
-                            onChange={(e) => {
-                              const val = parseInt(e.target.value);
-                              if (!isNaN(val)) updateQuantity(item.key, val);
-                            }}
-                            onBlur={(e) => {
-                              const val = parseInt(e.target.value);
-                              if (isNaN(val) || val < 1) updateQuantity(item.key, 1);
-                            }}
-                            className="w-12 text-center text-[13px] font-bold bg-transparent outline-none focus:ring-1 focus:ring-brand-primary p-0 h-[26px]"
-                          />
-                          <button type="button" onClick={() => updateQuantity(item.key, item.quantity + 1)} className="w-[26px] h-[26px] flex items-center justify-center bg-[var(--brand-cream)] hover:bg-gray-100 transition-colors border-l border-[var(--brand-border)] shrink-0">
-                            <Plus className="w-3 h-3" strokeWidth={3} />
+                      
+                      {/* 4. Quantity */}
+                      <div className="flex justify-between lg:block">
+                        <span className="lg:hidden font-bold text-[13px]">Quantity</span>
+                        <div className="flex flex-col items-end lg:items-center w-fit">
+                          <div className="flex items-center border border-[var(--brand-border)] rounded overflow-hidden">
+                            <button type="button" onClick={() => updateQuantity(item.key, item.quantity - 1)} className="w-[26px] h-[26px] flex items-center justify-center bg-[var(--brand-cream)] hover:bg-gray-100 transition-colors border-r border-[var(--brand-border)] shrink-0">
+                              <Minus className="w-3 h-3" strokeWidth={3} />
+                            </button>
+                            <input 
+                              type="number" 
+                              value={item.quantity}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                if (!isNaN(val)) updateQuantity(item.key, val);
+                              }}
+                              onBlur={(e) => {
+                                const val = parseInt(e.target.value);
+                                if (isNaN(val) || val < 1) updateQuantity(item.key, 1);
+                              }}
+                              className="w-12 text-center text-[13px] font-bold bg-transparent outline-none focus:ring-1 focus:ring-brand-primary p-0 h-[26px]"
+                            />
+                            <button type="button" onClick={() => updateQuantity(item.key, item.quantity + 1)} className="w-[26px] h-[26px] flex items-center justify-center bg-[var(--brand-cream)] hover:bg-gray-100 transition-colors border-l border-[var(--brand-border)] shrink-0">
+                              <Plus className="w-3 h-3" strokeWidth={3} />
+                            </button>
+                          </div>
+                          <button type="button" onClick={() => removeItem(item.key)} className="text-[12px] text-brand-primary-dark font-semibold hover:underline mt-2 w-full text-center">
+                            Remove
                           </button>
                         </div>
-                        <button type="button" onClick={() => removeItem(item.key)} className="text-[12px] text-brand-primary-dark font-semibold hover:underline mt-3 w-full text-center">
-                          Remove
-                        </button>
                       </div>
-                    </div>
-                    
-                    {/* 5. Total */}
-                    <div className="flex justify-between lg:block lg:text-right pr-2">
-                      <span className="lg:hidden font-bold text-[13px]">Total</span>
-                      <div>
-                        <div className="font-bold text-[14px] text-gray-900">{showPricesIncludingVat ? formatPrice(item.lineTotal * (1 + VAT_RATE)) : formatPrice(item.lineTotal)}</div>
-                        {item.customization?.enabled && (
-                          <div className="text-[11px] text-gray-500 whitespace-nowrap">incl. branding &<br/>extras</div>
-                        )}
-                        {item.groupQuantity > item.quantity && (
-                          <div className="text-[10px] text-gray-400 mt-2 max-w-[120px] ml-auto leading-tight">
-                            Priced at your {item.groupQuantity}-unit total across {groupSize} colours
-                          </div>
-                        )}
+                      
+                      {/* 5. Total */}
+                      <div className="flex justify-between lg:block lg:text-right pr-2">
+                        <span className="lg:hidden font-bold text-[13px]">Total</span>
+                        <div className="text-right">
+                          <div className="font-bold text-[14px] text-gray-900">{showPricesIncludingVat ? formatPrice(item.lineTotal * (1 + VAT_RATE)) : formatPrice(item.lineTotal)}</div>
+                          {item.customization?.enabled && (
+                            <div className="text-[11px] text-gray-500 whitespace-nowrap">incl. branding &<br/>extras</div>
+                          )}
+                          {item.groupQuantity > item.quantity && (
+                            <div className="text-[10px] text-gray-400 mt-2 max-w-[120px] ml-auto leading-tight">
+                              Priced at your {item.groupQuantity}-unit total across {groupSize} colours
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
 
