@@ -37,7 +37,7 @@ export default function CheckoutSuccessPage() {
           
           <div className="space-y-4">
             <Link 
-              href="/collections" 
+              href="/collection" 
               className="block w-full bg-brand-primary text-white font-bold py-3 px-4 hover:bg-brand-primary-dark transition-colors"
             >
               Return to Store
