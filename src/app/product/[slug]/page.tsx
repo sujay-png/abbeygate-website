@@ -5,7 +5,7 @@ import { ProductDetailClient, type ColorVariant } from '@/features/products/comp
 import { RelatedProducts } from '@/features/products/components/RelatedProducts';
 import { FAQ } from '@/components/home/FAQ';
 import { CustomisationCTA } from '@/components/shared/CustomisationCTA';
-import { getStoreProductBySlug, getStoreProducts, getProductCustomTabs } from '@/features/products/services/store-products';
+import { getStoreProductBySlug, getStoreProducts, getProductCustomTabs, getStoreProductById } from '@/features/products/services/store-products';
 import { getProductPricingFromProduct } from '@/features/products/services/pricing';
 import { CATEGORY_ROUTES } from '@/data/category-routes';
 import type { Metadata } from 'next';
@@ -19,7 +19,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
 
   try {
-    const product = await getStoreProductBySlug(slug);
+    let product = await getStoreProductBySlug(slug);
+    if (!product && /^\d+$/.test(slug)) {
+      product = await getStoreProductById(Number(slug));
+    }
     return {
       title: product ? `${product.name} | Abbeygate England` : 'Product',
       description: product?.short_description?.replace(/<[^>]*>/g, '').slice(0, 160) || 'Bespoke corporate gifting by Abbeygate England.',
@@ -40,6 +43,9 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
   let product;
   try {
     product = await getStoreProductBySlug(slug);
+    if (!product && /^\d+$/.test(slug)) {
+      product = await getStoreProductById(Number(slug));
+    }
   } catch (error) {
     console.error(`Failed to load product "${slug}":`, error);
     notFound();

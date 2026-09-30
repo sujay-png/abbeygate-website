@@ -257,7 +257,7 @@ export const CartDrawer = () => {
                                   quantity: item.quantity,
                                   logoFile: undefined,
                                 }));
-                                router.push(`/product/${item.slug}?amend=${item.key}`);
+                                router.push(`/product/${item.slug || item.productId}?amend=${item.key}`);
                                 closeCart();
                               }}
                               className="hover:underline text-brand-primary-dark"

@@ -44,7 +44,7 @@ export default function CartPage() {
       quantity: item.quantity,
       logoFile: undefined, // Don't try to stringify the File
     }));
-    router.push(`/product/${item.slug}?amend=${item.key}`);
+    router.push(`/product/${item.slug || item.productId}?amend=${item.key}`);
   };
 
   const shortfalls = validateCustomisationMinimums(rawItems);
@@ -102,7 +102,7 @@ export default function CartPage() {
                         <Image src={item.customization?.fullPreviewUrl || item.image || '/images/logo/abbeygate-logo.png'} alt={item.name} fill sizes="84px" className="object-cover mix-blend-multiply" />
                       </div>
                       <div className="flex-1 flex flex-col">
-                        <Link href={item.slug ? `/product/${item.slug}` : '#'} className="font-josefin font-bold text-[18px] text-brand-primary-dark leading-tight hover:underline">
+                        <Link href={`/product/${item.slug || item.productId}`} className="font-josefin font-bold text-[18px] text-brand-primary-dark leading-tight hover:underline">
                           {item.name}
                         </Link>
                         <div className="text-[12px] text-gray-500 mt-1.5 space-y-0.5">
