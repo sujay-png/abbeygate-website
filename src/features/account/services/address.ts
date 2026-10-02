@@ -3,6 +3,7 @@
 import { woocommerceApi } from '@/lib/woocommerce/client';
 import { getSession } from '@/features/auth/utils/session';
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 
 export type Address = {
   first_name: string;
@@ -81,10 +82,11 @@ export async function updateAddress(
     });
 
     revalidatePath('/account/addresses');
-    return { success: true, message: 'Address saved successfully.' };
   } catch (error: unknown) {
     console.error(`Failed to update ${type} address:`, error);
     const err = error as Error;
     return { success: false, message: err.message || 'An error occurred.', error: err.message };
   }
+
+  redirect('/account/addresses?success=1');
 }

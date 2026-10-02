@@ -12,6 +12,7 @@ export type CheckoutSession = {
   expiresAt: string;
   quote: CheckoutQuote;
   customerId?: number;
+  vatNumber?: string;
 };
 
 function key(id: string) {
@@ -41,4 +42,16 @@ export async function getCheckoutSession(id: string): Promise<CheckoutSession | 
   if (!redis) throw new Error('Checkout sessions are unavailable. Configure Upstash Redis before enabling checkout.');
 
   return redis.get<CheckoutSession>(key(id));
+}
+
+export async function updateCheckoutSession(id: string, updates: Partial<CheckoutSession>): Promise<CheckoutSession | null> {
+  const session = await getCheckoutSession(id);
+  if (!session) return null;
+  
+  const updatedSession = { ...session, ...updates };
+  const redis = getRedisClient();
+  if (!redis) throw new Error('Checkout sessions are unavailable.');
+  
+  await redis.set(key(id), updatedSession, { ex: SESSION_TTL_SECONDS });
+  return updatedSession;
 }

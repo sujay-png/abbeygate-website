@@ -1,8 +1,12 @@
+'use client';
+
 import Link from 'next/link';
 import { CustomerAddresses, Address } from '@/features/account/services/address';
+import { useState, useEffect } from 'react';
 
 type Props = {
   addresses: CustomerAddresses | null;
+  success?: boolean;
 };
 
 function formatAddress(address: Address | undefined) {
@@ -30,12 +34,35 @@ function formatAddress(address: Address | undefined) {
   );
 }
 
-export function AddressOverview({ addresses }: Props) {
+export function AddressOverview({ addresses, success }: Props) {
+  const [showSuccess, setShowSuccess] = useState(success);
+
+  useEffect(() => {
+    if (success) {
+      // Clear the ?success=1 from the URL without triggering a page reload
+      // so that if the user refreshes, the banner doesn't show up again.
+      window.history.replaceState(null, '', '/account/addresses');
+      
+      // Auto-hide the banner after 5 seconds
+      const timer = setTimeout(() => {
+        setShowSuccess(false);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
   const billingFormatted = formatAddress(addresses?.billing);
   const shippingFormatted = formatAddress(addresses?.shipping);
 
   return (
     <div className="space-y-8">
+      {showSuccess && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm transition-opacity duration-500 animate-in fade-in">
+          Address saved successfully.
+        </div>
+      )}
+      
       <p className="text-[14px] text-gray-500">
         The following addresses will be used on the checkout page by default.
       </p>

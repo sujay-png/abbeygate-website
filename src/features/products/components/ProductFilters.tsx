@@ -5,7 +5,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import type { StoreAttribute, StoreAttributeTerm, StoreProduct } from '../types/store-product';
 import { FILTER_TAXONOMY_MAP, type FilterParamKey } from '../types/store-product';
 import type { FilterConfig } from '@/data/category-routes';
-import { countProductsForTerm, filtersToSearchParams } from '../utils/product-helpers';
+import { countProductsForTerm } from '../utils/product-helpers';
 import { ChevronDown, X, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
 import { SortOption } from '../utils/product-helpers';
 
@@ -89,10 +89,27 @@ const ProductFiltersInner = ({
 
   const applyFilters = useCallback(
     (filters: Record<FilterParamKey, string[]>, newSort?: string) => {
-      const params = filtersToSearchParams(filters);
+      // Create new params based on the CURRENT params to preserve things like `q`
+      const params = new URLSearchParams(searchParams.toString());
+      
+      // Clear out old filter values
+      for (const key of Object.keys(FILTER_TAXONOMY_MAP)) {
+        params.delete(key);
+      }
+      
+      // Add the new filter values
+      for (const [key, values] of Object.entries(filters)) {
+        if (values?.length) {
+          params.set(key, values.join(","));
+        }
+      }
+
+      // Handle sort
       const sortToApply = newSort || searchParams.get('sort');
       if (sortToApply && sortToApply !== 'bestselling') {
         params.set('sort', sortToApply);
+      } else {
+        params.delete('sort');
       }
       
       const query = params.toString();

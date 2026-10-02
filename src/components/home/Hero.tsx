@@ -124,7 +124,7 @@ export const Hero = () => {
                 src={slide.bgImage}
                 alt=""
                 fill
-                priority
+                priority={index === 0}
                 quality={75}
                 sizes="100vw"
                 className="object-cover object-center"

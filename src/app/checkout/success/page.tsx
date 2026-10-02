@@ -1,24 +1,34 @@
-'use client';
-
-import { useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { CheckCircle2 } from 'lucide-react';
-import { useCart } from '@/features/cart/context/CartContext';
+import { ClearCartOnLoad } from '../bacs-success/ClearCartOnLoad';
+import { GuestAccountPrompt } from '@/features/checkout/components/GuestAccountPrompt';
+import { getSession } from '@/features/auth/utils/session';
+import { getStripeClient } from '@/lib/stripe/client';
 
-export default function CheckoutSuccessPage() {
-  const { clearCart, isHydrated } = useCart();
+export default async function CheckoutSuccessPage({ searchParams }: { searchParams: Promise<{ payment_intent?: string }> }) {
+  const { payment_intent } = await searchParams;
+  const session = await getSession();
+  const isGuest = !session;
+  let email = '';
 
-  useEffect(() => {
-    // Only empty the cart AFTER it has fully hydrated from storage
-    // Otherwise, the hydration process might overwrite the empty cart with the old cart
-    if (isHydrated) {
-      clearCart();
+  if (payment_intent) {
+    try {
+      const stripe = getStripeClient();
+      const intent = await stripe.paymentIntents.retrieve(payment_intent);
+      email = intent.receipt_email || intent.shipping?.name || ''; // Rough fallback
+    } catch (e) {
+      console.error('Failed to retrieve intent for success page', e);
     }
-  }, [clearCart, isHydrated]);
+  }
 
   return (
     <div className="min-h-screen bg-brand-cream flex flex-col">
+      <ClearCartOnLoad />
+      
+      {isGuest && (
+        <GuestAccountPrompt email={email} stripeIntentId={payment_intent} />
+      )}
       <header className="border-b border-[var(--brand-border)] bg-white">
         <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-12">
           <Link href="/" className="flex items-center" aria-label="Abbeygate England home">

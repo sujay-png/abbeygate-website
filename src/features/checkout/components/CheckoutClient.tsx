@@ -9,7 +9,9 @@ import type { CheckoutQuote } from '@/features/checkout/types/quote';
 import type { CartItem, PricedItem } from '@/features/cart/context/CartContext';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, ExpressCheckoutElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { useRef } from 'react';
 import { ImagePreviewModal } from '@/components/ui/ImagePreviewModal';
+import { PolicyModal, type PolicyType } from './PolicyModal';
 
 const formatPrice = (value: number) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
 const inputClass = 'h-12 w-full border border-[var(--brand-border)] bg-white px-4 text-sm outline-none transition focus:border-brand-primary focus:ring-1 focus:ring-brand-primary';
@@ -41,8 +43,20 @@ function CheckoutHeader() {
   );
 }
 
-function CheckoutFooter() {
-  return <footer className="border-t border-[var(--brand-border)] bg-white"><div className="mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-4 px-5 py-7 text-center text-[13px] text-brand-grey sm:flex-row sm:px-8 sm:text-left lg:px-12"><p>Abbeygate England © 2026</p><div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-brand-primary-dark"><Link href="/returns" className="hover:underline">Refund &amp; Returns</Link><Link href="/privacy" className="hover:underline">Privacy</Link><Link href="/terms" className="hover:underline">Terms</Link><Link href="/contact" className="hover:underline">Contact</Link></div></div></footer>;
+function CheckoutFooter({ onPolicyClick }: { onPolicyClick: (policy: PolicyType) => void }) {
+  return (
+    <footer className="border-t border-[var(--brand-border)] bg-white">
+      <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-4 px-5 py-7 text-center text-[13px] text-brand-grey sm:flex-row sm:px-8 sm:text-left lg:px-12">
+        <p>Abbeygate England © 2026</p>
+        <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-brand-primary-dark">
+          <button type="button" onClick={() => onPolicyClick('returns')} className="hover:underline">Refund &amp; Returns</button>
+          <button type="button" onClick={() => onPolicyClick('privacy')} className="hover:underline">Privacy</button>
+          <button type="button" onClick={() => onPolicyClick('terms')} className="hover:underline">Terms</button>
+          <Link href="/contact" className="hover:underline" target="_blank">Contact</Link>
+        </div>
+      </div>
+    </footer>
+  );
 }
 
 function CheckoutFormContent({
@@ -63,7 +77,8 @@ function CheckoutFormContent({
   setAppliedCoupon,
   initialDetails,
   setPreviewItem,
-  isLoggedIn
+  isLoggedIn,
+  setActivePolicy
 }: any) {
   const stripe = useStripe();
   const elements = useElements();
@@ -71,13 +86,14 @@ function CheckoutFormContent({
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'bacs'>('card');
-  const [postcode, setPostcode] = useState(initialDetails?.postcode || '');
-  const [city, setCity] = useState(initialDetails?.city || '');
+  const [postcode, setPostcode] = useState(initialDetails?.shipping?.postcode || '');
+  const [city, setCity] = useState(initialDetails?.shipping?.city || '');
   const [postcodeStatus, setPostcodeStatus] = useState<'idle' | 'loading' | 'valid' | 'invalid'>('idle');
   const [deliveryEstimate, setDeliveryEstimate] = useState<string | null>(null);
   const [isExpressAvailable, setIsExpressAvailable] = useState<boolean>(false);
   const [isMobileSummaryOpen, setIsMobileSummaryOpen] = useState(false);
   const [billingSameAsDelivery, setBillingSameAsDelivery] = useState(true);
+  const [isDiscountVisible, setIsDiscountVisible] = useState(false);
 
   const getCustomDelivery = (pc: string) => {
     const clean = pc.toUpperCase().replace(/\s+/g, '');
@@ -147,15 +163,15 @@ function CheckoutFormContent({
   };
 
   useEffect(() => {
-    if (initialDetails?.postcode && postcodeStatus === 'idle') {
-      const cleanPostcode = initialDetails.postcode.replace(/\s+/g, '');
+    if (initialDetails?.shipping?.postcode && postcodeStatus === 'idle') {
+      const cleanPostcode = initialDetails.shipping.postcode.replace(/\s+/g, '');
       if (/^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/i.test(cleanPostcode)) {
         setPostcodeStatus('valid');
-        const customDays = getCustomDelivery(initialDetails.postcode);
+        const customDays = getCustomDelivery(initialDetails.shipping.postcode);
         setDeliveryEstimate(customDays || 'Next Day');
       }
     }
-  }, [initialDetails?.postcode, postcodeStatus]);
+  }, [initialDetails?.shipping?.postcode, postcodeStatus]);
 
   useEffect(() => {
     if (quoteData?.id) {
@@ -226,7 +242,23 @@ function CheckoutFormContent({
       country: formData.get('billing_country') as string,
     };
 
+    const vatNumber = formData.get('vat_number') as string;
+    // Format it cleanly if they provided one
+    const fullVatNumber = vatNumber ? vatNumber.toUpperCase().replace(/\s+/g, '').replace(/^GB-?/, 'GB') : undefined;
+
     if (paymentMethod === 'card' && stripe && elements && clientSecret) {
+      if (fullVatNumber && quoteData?.id) {
+        try {
+          await fetch('/api/checkout/vat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId: quoteData.id, vatNumber: fullVatNumber })
+          });
+        } catch (e) {
+          console.error("Failed to save VAT number", e);
+        }
+      }
+
       const { error: submitError } = await elements.submit();
       if (submitError) {
         setPaymentError(submitError.message ?? 'Payment validation failed');
@@ -289,7 +321,8 @@ function CheckoutFormContent({
         body: JSON.stringify({
           sessionId: quoteData.id,
           billingDetails,
-          shippingDetails
+          shippingDetails,
+          vatNumber: fullVatNumber
         })
       });
 
@@ -346,9 +379,6 @@ function CheckoutFormContent({
             </div>
             <label className="block text-sm font-medium" htmlFor="email">Email address</label>
             <input id="email" name="email" type="email" autoComplete="email" required placeholder="you@company.com" defaultValue={initialDetails?.email} className={`mt-2 ${inputClass}`} />
-            <label className="mt-4 flex items-center gap-2 text-sm text-brand-grey">
-              <input type="checkbox" className="h-4 w-4 accent-brand-primary" /> Keep me updated with Abbeygate news and offers
-            </label>
           </section>
 
           <section>
@@ -361,12 +391,12 @@ function CheckoutFormContent({
               <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-grey" />
             </div>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <input name="firstName" required autoComplete="given-name" placeholder="First name" defaultValue={initialDetails?.firstName} className={inputClass} />
-              <input name="lastName" required autoComplete="family-name" placeholder="Last name" defaultValue={initialDetails?.lastName} className={inputClass} />
+              <input name="firstName" required autoComplete="given-name" placeholder="First name" defaultValue={initialDetails?.shipping?.firstName} className={inputClass} />
+              <input name="lastName" required autoComplete="family-name" placeholder="Last name" defaultValue={initialDetails?.shipping?.lastName} className={inputClass} />
             </div>
-            <input name="company" autoComplete="organization" placeholder="Company (optional)" defaultValue={initialDetails?.company} className={`mt-4 ${inputClass}`} />
-            <input name="address1" required autoComplete="address-line1" placeholder="Address" defaultValue={initialDetails?.address1} className={`mt-4 ${inputClass}`} />
-            <input name="address2" autoComplete="address-line2" placeholder="Apartment, suite, etc. (optional)" defaultValue={initialDetails?.address2} className={`mt-4 ${inputClass}`} />
+            <input name="company" autoComplete="organization" placeholder="Company (optional)" defaultValue={initialDetails?.shipping?.company} className={`mt-4 ${inputClass}`} />
+            <input name="address1" required autoComplete="address-line1" placeholder="Address" defaultValue={initialDetails?.shipping?.address1} className={`mt-4 ${inputClass}`} />
+            <input name="address2" autoComplete="address-line2" placeholder="Apartment, suite, etc. (optional)" defaultValue={initialDetails?.shipping?.address2} className={`mt-4 ${inputClass}`} />
             <div className="mt-4 grid gap-4 sm:grid-cols-2 items-start">
               <input name="city" value={city} onChange={(e) => setCity(e.target.value)} required autoComplete="address-level2" placeholder="Town / City" className={inputClass} />
               <div>
@@ -377,7 +407,7 @@ function CheckoutFormContent({
                 {postcodeStatus === 'invalid' && <p className="mt-1 text-xs text-red-500">Invalid postcode format.</p>}
               </div>
             </div>
-            <input name="phone" required autoComplete="tel" placeholder="Phone number" defaultValue={initialDetails?.phone} className={`mt-4 ${inputClass}`} />
+            <input name="phone" required autoComplete="tel" placeholder="Phone number" defaultValue={initialDetails?.shipping?.phone} className={`mt-4 ${inputClass}`} />
           </section>
 
           <section>
@@ -414,20 +444,35 @@ function CheckoutFormContent({
                     <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-grey" />
                   </div>
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <input name="billing_firstName" required={!billingSameAsDelivery} placeholder="First name" className={inputClass} />
-                    <input name="billing_lastName" required={!billingSameAsDelivery} placeholder="Last name" className={inputClass} />
+                    <input name="billing_firstName" required={!billingSameAsDelivery} placeholder="First name" defaultValue={initialDetails?.billing?.firstName} className={inputClass} />
+                    <input name="billing_lastName" required={!billingSameAsDelivery} placeholder="Last name" defaultValue={initialDetails?.billing?.lastName} className={inputClass} />
                   </div>
-                  <input name="billing_company" placeholder="Company (optional)" className={`mt-4 ${inputClass}`} />
-                  <input name="billing_address1" required={!billingSameAsDelivery} placeholder="Address" className={`mt-4 ${inputClass}`} />
-                  <input name="billing_address2" placeholder="Apartment, suite, etc. (optional)" className={`mt-4 ${inputClass}`} />
+                  <input name="billing_company" placeholder="Company (optional)" defaultValue={initialDetails?.billing?.company} className={`mt-4 ${inputClass}`} />
+                  <input name="billing_address1" required={!billingSameAsDelivery} placeholder="Address" defaultValue={initialDetails?.billing?.address1} className={`mt-4 ${inputClass}`} />
+                  <input name="billing_address2" placeholder="Apartment, suite, etc. (optional)" defaultValue={initialDetails?.billing?.address2} className={`mt-4 ${inputClass}`} />
                   <div className="mt-4 grid gap-4 sm:grid-cols-2 items-start">
-                    <input name="billing_city" required={!billingSameAsDelivery} placeholder="Town / City" className={inputClass} />
-                    <input name="billing_postcode" required={!billingSameAsDelivery} placeholder="Postcode" className={inputClass} />
+                    <input name="billing_city" required={!billingSameAsDelivery} placeholder="Town / City" defaultValue={initialDetails?.billing?.city} className={inputClass} />
+                    <input name="billing_postcode" required={!billingSameAsDelivery} placeholder="Postcode" defaultValue={initialDetails?.billing?.postcode} className={inputClass} />
                   </div>
-                  <input name="billing_phone" required={!billingSameAsDelivery} placeholder="Phone number" className={`mt-4 ${inputClass}`} />
+                  <input name="billing_phone" required={!billingSameAsDelivery} placeholder="Phone number" defaultValue={initialDetails?.billing?.phone} className={`mt-4 ${inputClass}`} />
                 </div>
               )}
             </div>
+          </section>
+
+          <section>
+            <h2 className="mb-2 text-xl">VAT Number <span className="text-sm font-normal text-brand-grey">(Optional)</span></h2>
+            <div className="max-w-sm">
+              <input 
+                name="vat_number"
+                placeholder="GB123456789" 
+                className={inputClass} 
+                maxLength={14}
+                pattern="^(GB|gb)?[- ]?[0-9]{9,12}$"
+                title="Please enter a valid UK VAT number (e.g. GB123456789)"
+              />
+            </div>
+            <p className="mt-2 text-xs text-brand-grey">For UK business customers.</p>
           </section>
 
           <section>
@@ -467,7 +512,10 @@ function CheckoutFormContent({
 
           <section>
             <label className="flex items-start gap-3 text-sm leading-6">
-              <input required type="checkbox" className="mt-1 h-4 w-4 accent-brand-primary" /> I agree to the <Link href="/terms" className="underline">Terms &amp; Conditions</Link> and <Link href="/returns" className="underline">Refund &amp; Returns policy</Link>.
+              <input required type="checkbox" className="mt-1 h-4 w-4 accent-brand-primary" />
+              <span>
+                I agree to the <button type="button" onClick={() => setActivePolicy('terms')} className="underline">Terms &amp; Conditions</button>, <button type="button" onClick={() => setActivePolicy('privacy')} className="underline">Privacy Policy</button>, and <button type="button" onClick={() => setActivePolicy('returns')} className="underline">Refund &amp; Returns policy</button>.
+              </span>
             </label>
             <button type="submit" disabled={isSubmitDisabled} className="mt-6 w-full bg-brand-primary px-6 py-4 text-sm font-bold tracking-wide text-white hover:bg-brand-primary-dark disabled:opacity-75 disabled:cursor-not-allowed">
               {isProcessing ? 'Processing payment...' : (isQuoteLoading ? 'Calculating total...' : `Pay ${formatPrice(displayTotal)}`)}
@@ -535,11 +583,19 @@ function CheckoutFormContent({
               </div>
             ))}
           </div>
-          <div className="mt-6 flex gap-2">
-            <input placeholder="Discount code" aria-label="Discount code" className="min-w-0 flex-1 border border-[var(--brand-border)] bg-white px-3 text-sm outline-none focus:border-brand-primary" value={couponInput} onChange={(e) => setCouponInput(e.target.value)} />
-            <button type="button" className="border border-brand-primary px-4 py-3 text-sm font-semibold text-brand-primary hover:bg-brand-primary hover:text-white transition-colors disabled:opacity-50" onClick={() => setAppliedCoupon(couponInput)} disabled={!couponInput.trim() || isQuoteLoading || isProcessing}>
-              Apply
-            </button>
+          <div className="mt-6">
+            {isDiscountVisible || couponInput || displayDiscount > 0 ? (
+              <div className="flex gap-2">
+                <input placeholder="Discount code" aria-label="Discount code" className="min-w-0 flex-1 border border-[var(--brand-border)] bg-white px-3 py-2 text-sm outline-none focus:border-brand-primary transition-colors" value={couponInput} onChange={(e) => setCouponInput(e.target.value)} autoFocus />
+                <button type="button" className="border border-brand-primary px-4 py-2 text-sm font-semibold text-brand-primary hover:bg-brand-primary hover:text-white transition-colors disabled:opacity-50" onClick={() => setAppliedCoupon(couponInput)} disabled={!couponInput.trim() || isQuoteLoading || isProcessing}>
+                  Apply
+                </button>
+              </div>
+            ) : (
+              <button type="button" className="text-sm font-semibold text-brand-primary hover:text-brand-primary-dark underline transition-colors" onClick={() => setIsDiscountVisible(true)}>
+                Apply discount code
+              </button>
+            )}
           </div>
           {quoteError && <p className="mt-2 text-sm text-red-600">{quoteError}</p>}
           {displayDiscount > 0 && (
@@ -583,6 +639,7 @@ function CheckoutFormContent({
 }
 
 export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?: any, isLoggedIn?: boolean }) {
+  const [activePolicy, setActivePolicy] = useState<PolicyType | null>(null);
   const { items, pricedItems, itemCount, subtotal, shippingCost, shippingLabel, vatCost, total } = useCart();
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<string | undefined>();
@@ -591,6 +648,7 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
+  const uploadedUrlsCache = useRef<Record<string, string>>({});
 
   useEffect(() => {
     fetch('/api/checkout/payment-config')
@@ -621,19 +679,22 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
         for (let index = 0; index < items.length; index++) {
           const item = items[index];
           if (item.customization?.enabled) {
-            if (item.customization.logoFile) {
+            const logoKey = `logo_${index}`;
+            const previewKey = `preview_${index}`;
+
+            if (item.customization.logoFile && !uploadedUrlsCache.current[logoKey]) {
               try {
-                formData.append(`logo_${index}`, item.customization.logoFile as Blob, item.customization.fileName || 'logo.png');
+                formData.append(logoKey, item.customization.logoFile as Blob, item.customization.fileName || 'logo.png');
                 hasFilesToUpload = true;
               } catch (e) {
                 console.warn('Failed to append logoFile', e);
               }
             }
-            if (item.customization.fullPreviewUrl) {
+            if (item.customization.fullPreviewUrl && !uploadedUrlsCache.current[previewKey]) {
               try {
                 const res = await fetch(item.customization.fullPreviewUrl);
                 const blob = await res.blob();
-                formData.append(`preview_${index}`, blob, 'preview.png');
+                formData.append(previewKey, blob, 'preview.png');
                 hasFilesToUpload = true;
               } catch (e) {
                 console.warn('Failed to convert preview to blob', e);
@@ -642,7 +703,6 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
           }
         }
 
-        let uploadedUrls: Record<string, string> = {};
         if (hasFilesToUpload) {
           const uploadRes = await fetch('/api/checkout/upload', {
             method: 'POST',
@@ -650,7 +710,7 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
           });
           if (uploadRes.ok) {
             const uploadData = await uploadRes.json();
-            uploadedUrls = uploadData.files || {};
+            Object.assign(uploadedUrlsCache.current, uploadData.files || {});
           } else {
             const errorText = await uploadRes.text();
             throw new Error('Failed to upload logo files to WordPress: ' + errorText);
@@ -670,8 +730,8 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
               foilColor: item.customization.foilColor,
               fileName: item.customization.fileName,
               fullPreviewUrl: item.customization.fullPreviewUrl,
-              logoUrl: uploadedUrls[`logo_${index}`],
-              previewUrl: uploadedUrls[`preview_${index}`]
+              logoUrl: uploadedUrlsCache.current[`logo_${index}`],
+              previewUrl: uploadedUrlsCache.current[`preview_${index}`]
             } : undefined
           })),
           couponCode: appliedCoupon
@@ -720,7 +780,7 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
             <Link href="/notebooks" className="mt-8 inline-flex bg-brand-primary px-7 py-3 text-sm font-semibold text-white hover:bg-brand-primary-dark">Explore notebooks</Link>
           </section>
         </main>
-        <CheckoutFooter />
+        <CheckoutFooter onPolicyClick={setActivePolicy} />
       </div>
     );
   }
@@ -743,7 +803,8 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
     setAppliedCoupon,
     initialDetails,
     setPreviewItem,
-    isLoggedIn
+    isLoggedIn,
+    setActivePolicy
   };
 
   return (
@@ -767,12 +828,17 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
         <CheckoutFormContent {...formProps} />
       </Elements>
       
-      <CheckoutFooter />
+      <CheckoutFooter onPolicyClick={setActivePolicy} />
       <ImagePreviewModal 
         isOpen={!!previewItem} 
         onClose={() => setPreviewItem(null)} 
         item={previewItem} 
         title="Customization Preview" 
+      />
+      <PolicyModal
+        type={activePolicy || 'terms'}
+        isOpen={activePolicy !== null}
+        onClose={() => setActivePolicy(null)}
       />
     </div>
   );

@@ -187,7 +187,7 @@ export function AddressForm({ type, initialData, billingData }: Props) {
           <button 
             type="submit"
             disabled={isPending}
-            className="h-11 px-8 bg-black text-white text-[15px] font-medium rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center min-w-[140px]"
+            className="h-11 px-8 bg-brand-primary text-white text-[15px] font-medium rounded-md hover:bg-brand-primary-dark transition-colors disabled:opacity-50 flex items-center justify-center min-w-[140px]"
           >
             {isPending ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

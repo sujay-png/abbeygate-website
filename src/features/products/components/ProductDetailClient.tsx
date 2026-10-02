@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useLenis } from 'lenis/react';
 import Image from 'next/image';
 import type { StoreProduct, PriceTier } from '../types/store-product';
@@ -76,6 +77,7 @@ export const ProductDetailClient = ({
   amendKey,
   relatedProducts,
 }: ProductDetailClientProps) => {
+  const router = useRouter();
   const [product, setProduct] = useState(initialProduct);
 
   useEffect(() => {
@@ -212,6 +214,10 @@ export const ProductDetailClient = ({
           }));
           if (parsed.quantity) setQuantity(parsed.quantity);
           setIsCustomizingStarted(true);
+          // Scroll to the customizer section just like when clicking "Start Customising"
+          setTimeout(() => {
+            document.getElementById('customizer-section')?.scrollIntoView({ behavior: 'smooth' });
+          }, 300);
         } catch (e) {
           console.error('Failed to parse amend data from sessionStorage', e);
         }
@@ -225,16 +231,32 @@ export const ProductDetailClient = ({
       const cartItem = items.find(i => i.key === amendKey);
       if (cartItem?.customization) {
         if (cartItem.customization.logoFile) {
-          setCustomization(prev => ({ ...prev, logoFile: cartItem.customization!.logoFile }));
+          setCustomization(prev => ({ 
+            ...prev, 
+            logoFile: cartItem.customization!.logoFile,
+            logoPreviewUrl: cartItem.customization!.logoPreviewUrl,
+            fullPreviewUrl: cartItem.customization!.fullPreviewUrl
+          }));
         } else if (cartItem.customization.logoPreviewUrl && cartItem.customization.logoPreviewUrl.startsWith('data:image')) {
           // Rehydrate from base64 string (often happens when restoring from a saved basket where File objects can't be serialized)
           fetch(cartItem.customization.logoPreviewUrl)
             .then(res => res.blob())
             .then(blob => {
               const file = new File([blob], cartItem.customization?.fileName || 'restored-logo.png', { type: blob.type });
-              setCustomization(prev => ({ ...prev, logoFile: file }));
+              setCustomization(prev => ({ 
+                ...prev, 
+                logoFile: file,
+                logoPreviewUrl: cartItem.customization!.logoPreviewUrl,
+                fullPreviewUrl: cartItem.customization!.fullPreviewUrl
+              }));
             })
             .catch(e => console.error("Failed to restore logo file from base64 during amend", e));
+        } else {
+          setCustomization(prev => ({
+            ...prev,
+            logoPreviewUrl: cartItem.customization!.logoPreviewUrl,
+            fullPreviewUrl: cartItem.customization!.fullPreviewUrl
+          }));
         }
         setIsCustomizingStarted(true);
       }
@@ -645,17 +667,6 @@ export const ProductDetailClient = ({
           attributes,
           proofStatus: 'ready' as const
         });
-
-        const amendItem = items.find(i => i.key === amendKey);
-        const groupId = amendItem?.colourGroupId ?? amendKey;
-        const siblings = items.filter(i =>
-          i.key !== amendKey && (i.colourGroupId === groupId || i.key === groupId)
-        );
-
-        if (customizationActive && siblings.length > 0) {
-          setPendingPropagate({ amendKey, customization: cartItemCustomization, siblingsCount: siblings.length });
-          return;
-        }
 
         sessionStorage.removeItem(`abbeygate-amend-${amendKey}`);
         window.dispatchEvent(new CustomEvent('cart-updated'));
@@ -1071,7 +1082,7 @@ export const ProductDetailClient = ({
                               src={img.src}
                               alt={img.alt || product.name}
                               fill
-                              priority={true}
+                              priority={idx === 0}
                               sizes="(max-width: 768px) 100vw, 50vw"
                               className={`transition-all duration-500 object-contain ${idx === 0 ? 'mix-blend-multiply' : ''} ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
                             />
@@ -1495,9 +1506,8 @@ export const ProductDetailClient = ({
                       key={color.slug}
                       title={color.name}
                       onClick={() => {
-                        if (color.fullProduct) {
-                          setProduct(color.fullProduct);
-                          window.history.replaceState({}, '', `/product/${color.slug}`);
+                        if (color.fullProduct && product.slug !== color.slug) {
+                          router.replace(`/product/${color.slug}`, { scroll: false });
                         }
                       }}
                       className={`w-8 h-8 rounded-full shadow-sm transition-transform hover:scale-110 ${isActive ? 'ring-2 ring-offset-2 ring-brand-body scale-110' : 'border border-gray-300'
@@ -1662,38 +1672,7 @@ export const ProductDetailClient = ({
         </div>
       </div>
 
-      {pendingPropagate && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full flex flex-col items-center text-center animate-in zoom-in-95 duration-200 border border-brand-primary/20">
-            <h3 className="text-xl font-bold text-brand-body mb-2">Update all colours</h3>
-            <p className="text-gray-600 mb-8">
-              These branding changes will be applied to all {pendingPropagate.siblingsCount} other {pendingPropagate.siblingsCount === 1 ? 'colour' : 'colours'} in this group, so every colour matches.
-            </p>
-            <div className="flex flex-col w-full gap-3">
-              <button
-                type="button"
-                disabled={isPropagating}
-                onClick={async () => {
-                  setIsPropagating(true);
-                  const { propagateAmendToGroup } = await import('@/features/cart/utils/amend-group');
-                  await propagateAmendToGroup(pendingPropagate.amendKey, pendingPropagate.customization, items, updateItem);
-                  sessionStorage.removeItem(`abbeygate-amend-${pendingPropagate.amendKey}`);
-                  window.location.href = '/cart';
-                }}
-                className="w-full h-12 bg-brand-primary text-white font-medium rounded-lg hover:bg-brand-primary-dark transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {isPropagating ? (
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                ) : null}
-                Apply to all colours
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Render Related Products conditionally */}
       {!isCustomizingStarted && relatedProducts && (

@@ -25,6 +25,8 @@ export default async function AddressesPage({ searchParams }: Props) {
   const resolvedSearchParams = await searchParams;
   const editMode = resolvedSearchParams.edit as string | undefined;
 
+  const success = resolvedSearchParams.success === '1';
+
   const addresses = await getAddresses();
 
   return (
@@ -38,7 +40,7 @@ export default async function AddressesPage({ searchParams }: Props) {
             
             <div className="flex-1 w-full max-w-4xl">
               {!editMode && (
-                <AddressOverview addresses={addresses} />
+                <AddressOverview addresses={addresses} success={success} />
               )}
               
               {editMode === 'billing' && (

@@ -49,7 +49,7 @@ export async function addColourVariant(
     blockingType: source.customization.choice || '',
     foilColor: source.customization.foilColor,
     cornerEdges: source.customization.cornerEdges,
-    positionLabel: source.customization.positionLabel || 'center',
+    positionLabel: source.customization.logoPosition?.label || 'center',
     logoScale: source.customization.logoScale ?? 1,
     logoPreviewUrl: source.customization.logoPreviewUrl,
   };
@@ -70,6 +70,22 @@ export async function addColourVariant(
           imageBounds: proof.imageBounds === null ? undefined : proof.imageBounds,
         },
       });
+
+      // Also persist the draft so if they visit the plain PDP for this new color, the customisation is carried across
+      try {
+        const idb = await import('@/lib/idb');
+        await idb.set(
+          `customization_draft_${option.slug}`,
+          JSON.stringify({
+            ...source.customization,
+            ...proof,
+            logoFile: undefined,
+          })
+        );
+      } catch (e) {
+        console.error('Failed to persist draft for variant', e);
+      }
+
     } else {
       cart.updateItem(newKey, { proofStatus: 'failed' });
     }
@@ -90,7 +106,7 @@ export async function retryProof(item: CartItem, updateItem: CartActions['update
     blockingType: item.customization.choice || '',
     foilColor: item.customization.foilColor,
     cornerEdges: item.customization.cornerEdges,
-    positionLabel: item.customization.positionLabel || 'center',
+    positionLabel: item.customization.logoPosition?.label || 'center',
     logoScale: item.customization.logoScale ?? 1,
     logoPreviewUrl: item.customization.logoPreviewUrl,
   };

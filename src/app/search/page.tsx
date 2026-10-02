@@ -43,17 +43,36 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   // so if someone searches "SKU: NH-BK", cleanQuery is "nhbk", which matches the product's clean SKU.
   const cleanQuery = query.toLowerCase().replace(/sku:?/g, '').replace(/[\W_]+/g, '');
   
+  // Collect all known color terms
+  const knownColors = new Set<string>();
+  uniqueProducts.forEach(p => {
+    p.attributes.filter(a => a.taxonomy === 'pa_colour').forEach(a => {
+      a.terms.forEach(t => knownColors.add(t.name.toLowerCase()));
+    });
+  });
+
   const searchedProductsRaw = uniqueProducts.filter((product) => {
-    // Include the word "sku" in the searchable text just in case!
-    const searchableText = `${product.name} sku ${product.sku || ''} ${product.description || ''} ${product.short_description || ''}`.toLowerCase();
+    const attributeText = product.attributes?.map(a => a.terms.map(t => t.name).join(' ')).join(' ') || '';
+    const nameAndAttrText = `${product.name} ${attributeText}`.toLowerCase();
+    
+    // STRICT COLOR CHECK: If the user searched a color, it MUST be in the name or attributes.
+    const hasFailingColorTerm = searchTerms.some(term => 
+      knownColors.has(term) && !nameAndAttrText.includes(term)
+    );
+    if (hasFailingColorTerm) {
+      return false;
+    }
+
+    const searchableText = `${product.name} sku ${product.sku || ''} ${product.description || ''} ${product.short_description || ''} ${attributeText}`.toLowerCase();
     const cleanSearchableText = searchableText.replace(/sku/g, '').replace(/[\W_]+/g, '');
     
-    // Check if the stripped query matches the stripped text (perfect for SKUs without hyphens)
     if (cleanQuery && cleanSearchableText.includes(cleanQuery)) {
       return true;
     }
     
     return searchTerms.every(term => {
+
+
       if (searchableText.includes(term)) return true;
       if (term.endsWith('ies') && searchableText.includes(term.replace(/ies$/, 'y'))) return true;
       if (term.endsWith('s') && searchableText.includes(term.slice(0, -1))) return true;

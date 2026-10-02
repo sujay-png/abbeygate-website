@@ -2,6 +2,7 @@ import { woocommerceApi } from '@/lib/woocommerce/client';
 import type { CheckoutQuote } from '../types/quote';
 
 export type WooCommerceOrderPayload = {
+  customer_id?: number;
   payment_method: string;
   payment_method_title: string;
   set_paid: boolean;
@@ -53,7 +54,8 @@ export async function createWooCommerceOrder(
   paymentMethod: 'stripe' | 'bacs',
   billingDetails: any,
   shippingDetails: any,
-  paymentIntentId?: string
+  paymentIntentId?: string,
+  customerId?: number
 ) {
   const line_items = quote.lines.map((line) => {
     const meta_data: Array<{ key: string; value: string }> = [];
@@ -130,12 +132,31 @@ export async function createWooCommerceOrder(
     ];
   }
 
+  if (customerId && customerId > 0) {
+    payload.customer_id = customerId;
+  }
+
   // We explicitly disable revalidation so order requests don't hit Next.js fetch cache
   const order = await woocommerceApi.request<any>('/orders', {
     method: 'POST',
     body: payload,
     revalidate: false 
   });
+
+  // Automatically update the customer's saved addresses in their account (Requirement #2)
+  if (customerId && customerId > 0) {
+    try {
+      await woocommerceApi.request(`/customers/${customerId}`, {
+        method: 'PUT',
+        body: {
+          billing: payload.billing,
+          shipping: payload.shipping
+        },
+      });
+    } catch (e) {
+      console.warn('Failed to auto-populate customer addresses after order creation', e);
+    }
+  }
 
   return order;
 }

@@ -16,14 +16,26 @@ export default async function CheckoutPage() {
     if (account || addresses) {
       initialDetails = {
         email: account?.email || session.email || '',
-        firstName: account?.first_name || addresses?.shipping?.first_name || addresses?.billing?.first_name || '',
-        lastName: account?.last_name || addresses?.shipping?.last_name || addresses?.billing?.last_name || '',
-        company: addresses?.shipping?.company || addresses?.billing?.company || '',
-        address1: addresses?.shipping?.address_1 || addresses?.billing?.address_1 || '',
-        address2: addresses?.shipping?.address_2 || addresses?.billing?.address_2 || '',
-        city: addresses?.shipping?.city || addresses?.billing?.city || '',
-        postcode: addresses?.shipping?.postcode || addresses?.billing?.postcode || '',
-        phone: addresses?.shipping?.phone || addresses?.billing?.phone || '',
+        shipping: {
+          firstName: addresses?.shipping?.first_name || account?.first_name || '',
+          lastName: addresses?.shipping?.last_name || account?.last_name || '',
+          company: addresses?.shipping?.company || '',
+          address1: addresses?.shipping?.address_1 || '',
+          address2: addresses?.shipping?.address_2 || '',
+          city: addresses?.shipping?.city || '',
+          postcode: addresses?.shipping?.postcode || '',
+          phone: addresses?.shipping?.phone || '',
+        },
+        billing: {
+          firstName: addresses?.billing?.first_name || account?.first_name || '',
+          lastName: addresses?.billing?.last_name || account?.last_name || '',
+          company: addresses?.billing?.company || '',
+          address1: addresses?.billing?.address_1 || '',
+          address2: addresses?.billing?.address_2 || '',
+          city: addresses?.billing?.city || '',
+          postcode: addresses?.billing?.postcode || '',
+          phone: addresses?.billing?.phone || '',
+        }
       };
     }
   }

@@ -5,7 +5,7 @@ import { woocommerceApi } from '@/lib/woocommerce/client';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { sessionId, billingDetails, shippingDetails } = body;
+    const { sessionId, billingDetails, shippingDetails, vatNumber } = body;
 
     if (!sessionId || !billingDetails) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -81,6 +81,7 @@ export async function POST(req: NextRequest) {
       meta_data: [
         { key: '_wc_order_attribution_source_type', value: 'typein' },
         { key: '_wc_order_attribution_utm_source', value: '(direct)' },
+        ...(vatNumber ? [{ key: 'VAT Number', value: vatNumber }] : []),
       ]
     };
 

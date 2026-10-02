@@ -54,6 +54,18 @@ export async function POST(req: NextRequest) {
       const firstName = nameParts[0] || 'Customer';
       const lastName = nameParts.slice(1).join(' ') || '';
 
+      let paymentMethod: Stripe.PaymentMethod | null = null;
+      if (typeof paymentIntent.payment_method === 'string') {
+        paymentMethod = await stripe.paymentMethods.retrieve(paymentIntent.payment_method);
+      } else if (paymentIntent.payment_method) {
+        paymentMethod = paymentIntent.payment_method as Stripe.PaymentMethod;
+      }
+
+      const billingDetails = paymentMethod?.billing_details;
+      const billingNameParts = (billingDetails?.name || '').split(' ');
+      const billingFirstName = billingNameParts[0] || firstName;
+      const billingLastName = billingNameParts.slice(1).join(' ') || lastName;
+
       const wcOrderPayload = {
         payment_method: 'stripe',
         payment_method_title: 'Credit/Debit Card (Stripe)',
@@ -61,14 +73,14 @@ export async function POST(req: NextRequest) {
         status: 'processing', // Payment is already succeeded!
         customer_id: session.customerId || 0,
         billing: {
-          first_name: firstName,
-          last_name: lastName,
-          address_1: paymentIntent.shipping?.address?.line1 || '',
-          address_2: paymentIntent.shipping?.address?.line2 || '',
-          city: paymentIntent.shipping?.address?.city || '',
-          postcode: paymentIntent.shipping?.address?.postal_code || '',
-          country: paymentIntent.shipping?.address?.country || '',
-          email: paymentIntent.receipt_email || '', 
+          first_name: billingFirstName,
+          last_name: billingLastName,
+          address_1: billingDetails?.address?.line1 || paymentIntent.shipping?.address?.line1 || '',
+          address_2: billingDetails?.address?.line2 || paymentIntent.shipping?.address?.line2 || '',
+          city: billingDetails?.address?.city || paymentIntent.shipping?.address?.city || '',
+          postcode: billingDetails?.address?.postal_code || paymentIntent.shipping?.address?.postal_code || '',
+          country: billingDetails?.address?.country || paymentIntent.shipping?.address?.country || '',
+          email: billingDetails?.email || paymentIntent.receipt_email || '', 
         },
         shipping: {
           first_name: firstName,
@@ -111,6 +123,7 @@ export async function POST(req: NextRequest) {
         meta_data: [
           { key: '_wc_order_attribution_source_type', value: 'typein' },
           { key: '_wc_order_attribution_utm_source', value: '(direct)' },
+          ...(session.vatNumber ? [{ key: 'VAT Number', value: session.vatNumber }] : []),
         ]
       };
 

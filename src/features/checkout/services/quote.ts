@@ -47,7 +47,7 @@ type WooCoupon = {
   free_shipping: boolean;
 };
 
-async function applyCoupon(code: string | undefined, subtotal: number): Promise<{ discount: number; couponCode?: string; freeShipping: boolean }> {
+async function applyCoupon(code: string | undefined, amountToDiscount: number): Promise<{ discount: number; couponCode?: string; freeShipping: boolean }> {
   if (!code) return { discount: 0, freeShipping: false };
   const coupons = await woocommerceFetch<WooCoupon[]>({ path: '/coupons', params: { code, per_page: 1 }, revalidate: false });
   const coupon = coupons.find((candidate) => candidate.code.toUpperCase() === code);
@@ -56,12 +56,12 @@ async function applyCoupon(code: string | undefined, subtotal: number): Promise<
   if (coupon.usage_limit !== null && coupon.usage_count >= coupon.usage_limit) throw new Error('Coupon code has reached its usage limit.');
   const minimum = Number(coupon.minimum_amount || 0);
   const maximum = Number(coupon.maximum_amount || 0);
-  if (subtotal < minimum) throw new Error(`Coupon requires a minimum spend of £${minimum.toFixed(2)}.`);
-  if (maximum > 0 && subtotal > maximum) throw new Error(`Coupon is valid only up to £${maximum.toFixed(2)}.`);
+  if (amountToDiscount < minimum) throw new Error(`Coupon requires a minimum spend of £${minimum.toFixed(2)}.`);
+  if (maximum > 0 && amountToDiscount > maximum) throw new Error(`Coupon is valid only up to £${maximum.toFixed(2)}.`);
 
   const amount = Number(coupon.amount || 0);
-  const discount = coupon.discount_type === 'percent' ? subtotal * (amount / 100) : amount;
-  return { discount: Number(Math.min(subtotal, discount).toFixed(2)), couponCode: coupon.code, freeShipping: coupon.free_shipping };
+  const discount = coupon.discount_type === 'percent' ? amountToDiscount * (amount / 100) : amount;
+  return { discount: Number(Math.min(amountToDiscount, discount).toFixed(2)), couponCode: coupon.code, freeShipping: coupon.free_shipping };
 }
 
 async function getStoreProduct(productId: string): Promise<StoreProduct> {
@@ -128,10 +128,21 @@ export async function createCheckoutQuote(payload: unknown): Promise<CheckoutQuo
   }));
 
   const subtotal = Number(lines.reduce((sum, line) => sum + line.lineTotal, 0).toFixed(2));
-  const coupon = await applyCoupon(couponCode, subtotal);
-  const shipping = calculateShipping(lines.map((line) => ({ product: line.product, quantity: line.quantity })), coupon.freeShipping ? ['abbeygate100'] : []);
-  const taxableSubtotal = subtotal - coupon.discount;
-  const vat = Number((taxableSubtotal * VAT_RATE).toFixed(2));
+  
+  // Calculate base shipping before applying the coupon
+  let shipping = calculateShipping(lines.map((line) => ({ product: line.product, quantity: line.quantity })), []);
+  
+  // Apply coupon to the overall total (subtotal + shipping)
+  const coupon = await applyCoupon(couponCode, subtotal + shipping.cost);
+  
+  // Re-calculate shipping if the coupon explicitly grants free shipping
+  if (coupon.freeShipping) {
+    shipping = calculateShipping(lines.map((line) => ({ product: line.product, quantity: line.quantity })), ['abbeygate100']);
+  }
+  
+  // Taxable amount is the overall total minus the discount
+  const taxableAmount = Math.max(0, subtotal + shipping.cost - coupon.discount);
+  const vat = Number((taxableAmount * VAT_RATE).toFixed(2));
 
   return {
     currency: 'GBP',
@@ -150,7 +161,7 @@ export async function createCheckoutQuote(payload: unknown): Promise<CheckoutQuo
     couponCode: coupon.couponCode,
     shipping: { label: shipping.label, cost: Number(shipping.cost.toFixed(2)) },
     vat,
-    total: Number((taxableSubtotal + shipping.cost + vat).toFixed(2)),
+    total: Number((taxableAmount + vat).toFixed(2)),
     warnings: ['Coupon product restrictions, customer-specific restrictions, and usage reservation must be re-validated when the WooCommerce order is created.'],
   };
 }

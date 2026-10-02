@@ -33,12 +33,32 @@ type WooCommerceOrderDetail = {
     email: string;
     phone?: string;
   };
+  shipping: {
+    first_name: string;
+    last_name: string;
+    company?: string;
+    address_1: string;
+    address_2?: string;
+    city: string;
+    state?: string;
+    postcode: string;
+    country: string;
+  };
+  shipping_total: string;
+  total_tax: string;
+  shipping_tax: string;
+  coupon_lines?: Array<{
+    code: string;
+    discount: string;
+  }>;
   line_items: Array<{
     id: number;
     product_id: number;
     name: string;
     quantity: number;
+    subtotal: string;
     total: string;
+    total_tax: string;
     meta_data?: Array<{
       key: string;
       value: string;
@@ -75,6 +95,17 @@ export default async function OrderDetailsPage({ params }: OrderDetailsProps) {
     day: 'numeric',
     year: 'numeric'
   });
+
+  const subtotalExVat = order.line_items.reduce((sum, item) => sum + parseFloat(item.subtotal || item.total), 0);
+  const deliveryIncVat = parseFloat(order.shipping_total || '0') + parseFloat(order.shipping_tax || '0');
+  const deliveryVat = parseFloat(order.shipping_tax || '0');
+  const totalTax = parseFloat(order.total_tax || '0');
+  const totalIncVat = parseFloat(order.total || '0');
+  const totalExVat = totalIncVat - totalTax;
+  const discountAmount = parseFloat(order.discount_total || '0');
+  const couponCodes = order.coupon_lines && order.coupon_lines.length > 0 
+    ? order.coupon_lines.map(c => c.code).join(', ') 
+    : '';
 
   return (
     <main className="flex flex-col min-h-screen bg-brand-cream">
@@ -145,20 +176,35 @@ export default async function OrderDetailsPage({ params }: OrderDetailsProps) {
                   ))}
 
                   <tr className="bg-white">
-                    <td className="py-3 px-4 font-semibold text-gray-900 text-right border-t border-gray-200">Subtotal:</td>
-                    <td className="py-3 px-4 text-gray-900 text-right font-medium border-t border-gray-200">£{(Number(order.total) - Number(order.discount_total)).toFixed(2)}</td>
+                    <td className="py-3 px-4 font-semibold text-gray-900 text-right border-t border-gray-200">Subtotal (ex VAT):</td>
+                    <td className="py-3 px-4 text-gray-900 text-right font-medium border-t border-gray-200">£{subtotalExVat.toFixed(2)}</td>
                   </tr>
                   
-                  {parseFloat(order.discount_total) > 0 && (
+                  <tr className="bg-white">
+                    <td className="py-3 px-4 font-semibold text-gray-900 text-right border-t border-gray-100">Delivery (inc VAT):</td>
+                    <td className="py-3 px-4 text-gray-900 text-right font-medium border-t border-gray-100">£{deliveryIncVat.toFixed(2)}</td>
+                  </tr>
+
+                  <tr className="bg-white">
+                    <td className="py-3 px-4 font-semibold text-gray-900 text-right border-t border-gray-100">VAT (includes £{deliveryVat.toFixed(2)} delivery VAT):</td>
+                    <td className="py-3 px-4 text-gray-900 text-right font-medium border-t border-gray-100">£{totalTax.toFixed(2)}</td>
+                  </tr>
+
+                  {discountAmount > 0 && (
                     <tr className="bg-white">
-                      <td className="py-3 px-4 font-semibold text-gray-900 text-right border-t border-gray-100">Discount:</td>
-                      <td className="py-3 px-4 text-gray-900 text-right font-medium border-t border-gray-100">-£{parseFloat(order.discount_total).toFixed(2)}</td>
+                      <td className="py-3 px-4 font-semibold text-gray-900 text-right border-t border-gray-100">Discount {couponCodes ? `(${couponCodes.toUpperCase()})` : ''}:</td>
+                      <td className="py-3 px-4 text-gray-900 text-right font-medium border-t border-gray-100">-£{discountAmount.toFixed(2)}</td>
                     </tr>
                   )}
 
                   <tr className="bg-white">
-                    <td className="py-3 px-4 font-semibold text-gray-900 text-right border-t border-gray-100">Total:</td>
-                    <td className="py-3 px-4 text-gray-900 text-right font-semibold border-t border-gray-100">£{parseFloat(order.total).toFixed(2)} {order.currency}</td>
+                    <td className="py-3 px-4 font-semibold text-brand-primary-dark text-right border-t border-gray-100">Total (inc VAT):</td>
+                    <td className="py-3 px-4 text-brand-primary-dark text-right font-semibold border-t border-gray-100">£{totalIncVat.toFixed(2)}</td>
+                  </tr>
+
+                  <tr className="bg-white">
+                    <td className="py-3 px-4 font-semibold text-gray-900 text-right border-t border-gray-100">Total (ex VAT):</td>
+                    <td className="py-3 px-4 text-gray-900 text-right font-medium border-t border-gray-100">£{totalExVat.toFixed(2)}</td>
                   </tr>
 
                   {order.customer_note && (
@@ -171,38 +217,59 @@ export default async function OrderDetailsPage({ params }: OrderDetailsProps) {
               </table>
             </div>
 
-            <h2 className="text-2xl font-semibold text-brand-primary-dark mb-6">Billing address</h2>
-            
-            <div className="border border-gray-200 rounded-md p-6 bg-gray-50/30">
-              <address className="not-italic text-gray-600 text-[14px] leading-relaxed space-y-1">
-                <p>{order.billing.first_name} {order.billing.last_name}</p>
-                {order.billing.company && <p>{order.billing.company}</p>}
-                <p>{order.billing.address_1}</p>
-                {order.billing.address_2 && <p>{order.billing.address_2}</p>}
-                <p>{order.billing.city}{order.billing.state ? `, ${order.billing.state}` : ''}</p>
-                <p>{order.billing.postcode}</p>
-                <p>{order.billing.country}</p>
-                
-                <div className="pt-4 flex items-center gap-2 text-gray-500">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                  <a href={`mailto:${order.billing.email}`} className="hover:text-brand-primary transition-colors">
-                    {order.billing.email}
-                  </a>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <h2 className="text-xl font-semibold text-brand-primary-dark mb-4">Billing address</h2>
+                <div className="border border-gray-200 rounded-md p-6 bg-gray-50/30 h-full">
+                  <address className="not-italic text-gray-600 text-[14px] leading-relaxed space-y-1">
+                    <p>{order.billing.first_name} {order.billing.last_name}</p>
+                    {order.billing.company && <p>{order.billing.company}</p>}
+                    <p>{order.billing.address_1}</p>
+                    {order.billing.address_2 && <p>{order.billing.address_2}</p>}
+                    <p>{order.billing.city}{order.billing.state ? `, ${order.billing.state}` : ''}</p>
+                    <p>{order.billing.postcode}</p>
+                    <p>{order.billing.country}</p>
+                    
+                    <div className="pt-4 flex items-center gap-2 text-gray-500">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      <a href={`mailto:${order.billing.email}`} className="hover:text-brand-primary transition-colors">
+                        {order.billing.email}
+                      </a>
+                    </div>
+                    {order.billing.phone && (
+                      <div className="pt-1 flex items-center gap-2 text-gray-500">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        <a href={`tel:${order.billing.phone}`} className="hover:text-brand-primary transition-colors">
+                          {order.billing.phone}
+                        </a>
+                      </div>
+                    )}
+                  </address>
                 </div>
-                {order.billing.phone && (
-                  <div className="pt-1 flex items-center gap-2 text-gray-500">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                    <a href={`tel:${order.billing.phone}`} className="hover:text-brand-primary transition-colors">
-                      {order.billing.phone}
-                    </a>
+              </div>
+
+              {order.shipping && (
+                <div>
+                  <h2 className="text-xl font-semibold text-brand-primary-dark mb-4">Shipping address</h2>
+                  <div className="border border-gray-200 rounded-md p-6 bg-gray-50/30 h-full">
+                    <address className="not-italic text-gray-600 text-[14px] leading-relaxed space-y-1">
+                      <p>{order.shipping.first_name} {order.shipping.last_name}</p>
+                      {order.shipping.company && <p>{order.shipping.company}</p>}
+                      <p>{order.shipping.address_1}</p>
+                      {order.shipping.address_2 && <p>{order.shipping.address_2}</p>}
+                      <p>{order.shipping.city}{order.shipping.state ? `, ${order.shipping.state}` : ''}</p>
+                      <p>{order.shipping.postcode}</p>
+                      <p>{order.shipping.country}</p>
+                    </address>
                   </div>
-                )}
-              </address>
+                </div>
+              )}
             </div>
+
 
           </div>
           

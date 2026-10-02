@@ -43,6 +43,8 @@ export default function CartPage() {
       ...item.customization,
       quantity: item.quantity,
       logoFile: undefined, // Don't try to stringify the File
+      fullPreviewUrl: undefined, // Don't stringify large base64 images
+      logoPreviewUrl: undefined,
     }));
     router.push(`/product/${item.slug || item.productId}?amend=${item.key}`);
   };

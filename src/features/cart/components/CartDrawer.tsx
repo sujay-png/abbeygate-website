@@ -256,6 +256,8 @@ export const CartDrawer = () => {
                                   ...item.customization,
                                   quantity: item.quantity,
                                   logoFile: undefined,
+                                  fullPreviewUrl: undefined,
+                                  logoPreviewUrl: undefined,
                                 }));
                                 router.push(`/product/${item.slug || item.productId}?amend=${item.key}`);
                                 closeCart();

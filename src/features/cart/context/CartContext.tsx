@@ -209,12 +209,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const seenGroups = new Set<string>();
 
     return items.map(item => {
-      const groupId = item.colourGroupId ?? item.key;
-      const isFirstInGroup = !seenGroups.has(groupId);
-      seenGroups.add(groupId);
+      const getSetupHash = (customization: any) => {
+        if (!customization?.enabled) return item.key;
+        const logoHash = customization.logoPreviewUrl || 'no-logo';
+        const sizeHash = customization.logoScale ?? 1;
+        const positionHash = customization.logoPosition?.label || customization.positionLabel || 'center';
+        return `${logoHash}_${sizeHash}_${positionHash}`;
+      };
+
+      const setupId = getSetupHash(item.customization);
+      const isFirstInSetup = !seenGroups.has(setupId);
+      seenGroups.add(setupId);
 
       const groupQuantity = item.colourGroupId
-        ? items.filter(i => (i.colourGroupId ?? i.key) === groupId).reduce((sum, i) => sum + i.quantity, 0)
+        ? items.filter(i => (i.colourGroupId ?? i.key) === (item.colourGroupId ?? item.key)).reduce((sum, i) => sum + i.quantity, 0)
         : item.quantity;
       
       let unitPrice = item.price;
@@ -235,7 +243,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         }).unitPrice;
       }
 
-      if (isFirstInGroup && customizationEnabled) {
+      if (isFirstInSetup && customizationEnabled) {
         setupFee = BRANDING_SETUP_FEE;
       }
       
