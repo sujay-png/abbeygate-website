@@ -93,6 +93,7 @@ export async function createWooCommerceOrder(
     payment_method_title: paymentMethod === 'stripe' ? 'Credit Card (Stripe)' : 'Direct Bank Transfer',
     set_paid: paymentMethod === 'stripe',
     status: paymentMethod === 'stripe' ? 'processing' : 'on-hold',
+    transaction_id: paymentMethod === 'stripe' && paymentIntentId ? paymentIntentId : undefined,
     billing: {
       first_name: billingDetails.name?.split(' ')[0] || '',
       last_name: billingDetails.name?.split(' ').slice(1).join(' ') || '',
