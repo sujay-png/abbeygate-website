@@ -46,13 +46,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   // Collect all known color terms
   const knownColors = new Set<string>();
   uniqueProducts.forEach(p => {
-    p.attributes.filter(a => a.taxonomy === 'pa_colour').forEach(a => {
-      a.terms.forEach(t => knownColors.add(t.name.toLowerCase()));
+    p.attributes.filter((a: any) => a.taxonomy === 'pa_colour').forEach((a: any) => {
+      a.terms.forEach((t: any) => knownColors.add(t.name.toLowerCase()));
     });
   });
 
   const searchedProductsRaw = uniqueProducts.filter((product) => {
-    const attributeText = product.attributes?.map(a => a.terms.map(t => t.name).join(' ')).join(' ') || '';
+    const attributeText = product.attributes?.map((a: any) => a.terms.map((t: any) => t.name).join(' ')).join(' ') || '';
     const nameAndAttrText = `${product.name} ${attributeText}`.toLowerCase();
     
     // STRICT COLOR CHECK: If the user searched a color, it MUST be in the name or attributes.

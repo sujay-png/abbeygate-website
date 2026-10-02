@@ -7,6 +7,7 @@ export type WooCommerceOrderPayload = {
   payment_method_title: string;
   set_paid: boolean;
   status: string;
+  transaction_id?: string;
   billing: {
     first_name: string;
     last_name: string;

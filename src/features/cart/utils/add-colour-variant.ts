@@ -49,7 +49,7 @@ export async function addColourVariant(
     blockingType: source.customization.choice || '',
     foilColor: source.customization.foilColor,
     cornerEdges: source.customization.cornerEdges,
-    positionLabel: source.customization.logoPosition?.label || 'center',
+    positionLabel: source.customization.positionLabel || 'center',
     logoScale: source.customization.logoScale ?? 1,
     logoPreviewUrl: source.customization.logoPreviewUrl,
   };
@@ -106,7 +106,7 @@ export async function retryProof(item: CartItem, updateItem: CartActions['update
     blockingType: item.customization.choice || '',
     foilColor: item.customization.foilColor,
     cornerEdges: item.customization.cornerEdges,
-    positionLabel: item.customization.logoPosition?.label || 'center',
+    positionLabel: item.customization.positionLabel || 'center',
     logoScale: item.customization.logoScale ?? 1,
     logoPreviewUrl: item.customization.logoPreviewUrl,
   };
