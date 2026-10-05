@@ -97,6 +97,21 @@ export const ProductCustomizer = ({
   const [isGeneratingProof, setIsGeneratingProof] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const handleProceedToReview = async () => {
+    onStepChange(4);
+    if (onGenerateProof) {
+      setIsGeneratingProof(true);
+      try {
+        const result = await onGenerateProof();
+        if (result) {
+          onCustomizationChange({ ...customization, ...result });
+        }
+      } finally {
+        setIsGeneratingProof(false);
+      }
+    }
+  };
+
   const getExtraCostLabel = (type: string) => {
     if (type === 'UV Print') {
       let minExtra = Infinity;
@@ -540,10 +555,11 @@ export const ProductCustomizer = ({
              <button
                 id="customizer-btn-step-2"
                 type="button"
-                onClick={() => onStepChange(3)}
-                className="w-full sm:w-auto px-4 sm:px-8 py-3 bg-brand-primary text-white font-bold rounded-lg hover:bg-brand-primary-dark transition-colors whitespace-nowrap text-center"
+                onClick={() => cornerEdgesPricing.size ? onStepChange(3) : handleProceedToReview()}
+                disabled={isGeneratingProof}
+                className="w-full sm:w-auto px-4 sm:px-8 py-3 bg-brand-primary text-white font-bold rounded-lg hover:bg-brand-primary-dark transition-colors disabled:opacity-50 whitespace-nowrap text-center"
              >
-                Proceed to Extras &rarr;
+                Proceed to {cornerEdgesPricing.size ? 'Extras' : 'Review'} &rarr;
              </button>
           </div>
         </div>
@@ -713,10 +729,12 @@ export const ProductCustomizer = ({
                         customization.logoPosition.label.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Center'}
                   </div>
                </div>
-               <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <div className="text-brand-body font-medium">Corner edges</div>
-                  <div className="text-brand-body font-bold">{customization.cornerEdges}</div>
-               </div>
+               {cornerEdgesPricing.size && (
+                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <div className="text-brand-body font-medium">Corner edges</div>
+                    <div className="text-brand-body font-bold">{customization.cornerEdges}</div>
+                 </div>
+               )}
             </div>
             
             <div className="flex flex-col sm:flex-row gap-6 items-center p-6 bg-white rounded-xl border border-gray-200 min-h-[160px] shadow-sm">
@@ -790,10 +808,10 @@ export const ProductCustomizer = ({
           <div className="pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 mt-4">
              <button
                 type="button"
-                onClick={() => onStepChange(3)}
+                onClick={() => onStepChange(cornerEdgesPricing.size ? 3 : 2)}
                 className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-white border border-gray-300 text-brand-body font-bold rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap text-center"
              >
-                &larr; Back to Extras
+                &larr; Back to {cornerEdgesPricing.size ? 'Extras' : 'Position'}
              </button>
              {onAddToCart && (
                <button

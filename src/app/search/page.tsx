@@ -20,6 +20,8 @@ type SearchPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
+import { SearchTracker } from './SearchTracker';
+
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   const query = (params.q as string) || '';
@@ -107,6 +109,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   return (
     <div className="bg-brand-cream min-h-screen">
+      <SearchTracker searchTerm={query} products={filteredProducts} />
       <Breadcrumb paths={[{ label: 'Home', href: '/' }, { label: 'Search Results' }]} />
 
       <Container className="py-8">

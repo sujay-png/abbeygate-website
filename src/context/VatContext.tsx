@@ -10,7 +10,7 @@ type VatContextType = {
 const VatContext = createContext<VatContextType | undefined>(undefined);
 
 export const VatProvider = ({ children }: { children: React.ReactNode }) => {
-  const [showPricesIncludingVat, setShowPricesIncludingVat] = useState(true);
+  const [showPricesIncludingVat, setShowPricesIncludingVat] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {

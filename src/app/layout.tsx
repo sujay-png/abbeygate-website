@@ -7,8 +7,7 @@ import { Toaster } from 'react-hot-toast';
 import { LenisProvider } from '@/components/layout/LenisProvider';
 import { VatProvider } from '@/context/VatContext';
 import { SiteChrome } from '@/components/layout/SiteChrome';
-
-
+import Script from 'next/script';
 
 const didactGothic = Didact_Gothic({
   weight: "400",
@@ -106,6 +105,22 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         className="min-h-screen flex flex-col bg-brand-cream text-brand-body"
         suppressHydrationWarning
       >
+        {/* GA4 Script (Marketing Team Request) */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-9H299B89WM"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-9H299B89WM', {
+              page_path: window.location.pathname,
+            });
+          `}
+        </Script>
+
         <noscript>
           <iframe
             src="https://www.googletagmanager.com/ns.html?id=GTM-KN7ZRPKC"

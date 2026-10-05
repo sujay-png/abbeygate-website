@@ -50,7 +50,7 @@ export default async function BacsSuccessPage({ searchParams }: { searchParams: 
   return (
     <div className="min-h-screen bg-brand-cream text-brand-body flex flex-col">
       {/* We need a Client Component to clear the cart in IDB, since we're rendering a Server Component */}
-      <ClearCartOnLoad />
+      <ClearCartOnLoad transactionId={orderId} />
       
       {isGuest && (
         <GuestAccountPrompt email={email} orderId={orderId} />

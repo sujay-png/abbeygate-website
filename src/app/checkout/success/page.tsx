@@ -24,7 +24,7 @@ export default async function CheckoutSuccessPage({ searchParams }: { searchPara
 
   return (
     <div className="min-h-screen bg-brand-cream flex flex-col">
-      <ClearCartOnLoad />
+      <ClearCartOnLoad transactionId={payment_intent} />
       
       {isGuest && (
         <GuestAccountPrompt email={email} stripeIntentId={payment_intent} />

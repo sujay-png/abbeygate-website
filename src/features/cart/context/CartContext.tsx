@@ -151,6 +151,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         toast.success(`${itemToRemove.name} removed from basket`, {
           style: { background: '#333', color: '#fff' }
         });
+        import('@/lib/analytics').then(({ trackRemoveFromCart }) => {
+          trackRemoveFromCart(itemToRemove);
+        });
       }
       setItems((prev) => prev.filter((i) => i.key !== key));
     } finally {

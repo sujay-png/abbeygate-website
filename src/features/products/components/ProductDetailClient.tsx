@@ -68,6 +68,8 @@ type ProductDetailClientProps = {
   relatedProducts?: React.ReactNode;
 };
 
+import { trackViewItem } from '@/lib/analytics';
+
 export const ProductDetailClient = ({
   product: initialProduct,
   tiers,
@@ -82,7 +84,8 @@ export const ProductDetailClient = ({
 
   useEffect(() => {
     setProduct(initialProduct);
-  }, [initialProduct.slug]);
+    trackViewItem(initialProduct);
+  }, [initialProduct.slug, initialProduct]);
 
   useEffect(() => {
     // Silently preload variant images to warm up Next.js optimization cache and browser cache
@@ -702,6 +705,10 @@ export const ProductDetailClient = ({
             };
           })(),
           proofStatus: 'ready',
+        });
+        
+        import('@/lib/analytics').then(({ trackAddToCart }) => {
+          trackAddToCart(product, quantity, Math.round(priceDetails.unitPrice * 100));
         });
       }
     } finally {

@@ -1,3 +1,5 @@
+'use client';
+
 import { Container } from '@/components/ui/Container';
 import { Breadcrumb } from '@/components/content/Breadcrumb';
 import { ProductGrid } from './ProductGrid';
@@ -20,6 +22,9 @@ type CategoryPageContentProps = {
   sort?: string;
 };
 
+import { useEffect } from 'react';
+import { trackViewItemList } from '@/lib/analytics';
+
 export const CategoryPageContent = ({
   title,
   description,
@@ -31,6 +36,12 @@ export const CategoryPageContent = ({
   filterConfig,
   sort = 'bestselling',
 }: CategoryPageContentProps) => {
+  useEffect(() => {
+    if (allProducts.length > 0) {
+      trackViewItemList(title, allProducts);
+    }
+  }, [title, allProducts]);
+
   const filteredProducts = sortProducts(
     allProducts.filter((p) => productMatchesFilters(p, filters)),
     sort as SortOption

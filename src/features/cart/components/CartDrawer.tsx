@@ -35,6 +35,9 @@ export const CartDrawer = () => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       checkAuthStatus().then(setIsLoggedIn);
+      if (rawItems.length > 0) {
+        import('@/lib/analytics').then(({ trackViewCart }) => trackViewCart(rawItems, total));
+      }
     } else {
       document.body.style.overflow = '';
     }
@@ -42,7 +45,7 @@ export const CartDrawer = () => {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isOpen]);
+  }, [isOpen, rawItems, total]);
 
   const shortfalls = validateCustomisationMinimums(rawItems);
   const hasShortfalls = shortfalls.length > 0;

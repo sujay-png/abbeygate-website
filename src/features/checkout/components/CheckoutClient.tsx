@@ -95,6 +95,12 @@ function CheckoutFormContent({
   const [billingSameAsDelivery, setBillingSameAsDelivery] = useState(true);
   const [isDiscountVisible, setIsDiscountVisible] = useState(false);
 
+  useEffect(() => {
+    if (items && items.length > 0) {
+      import('@/lib/analytics').then(({ trackBeginCheckout }) => trackBeginCheckout(items, displayTotal));
+    }
+  }, []); // Only run once on mount
+
   const getCustomDelivery = (pc: string) => {
     const clean = pc.toUpperCase().replace(/\s+/g, '');
     const match = clean.match(/^([A-Z]{1,2})(\d{1,2})/);

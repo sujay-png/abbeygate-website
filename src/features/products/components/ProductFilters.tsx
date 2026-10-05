@@ -134,6 +134,10 @@ const ProductFiltersInner = ({
       current.splice(index, 1);
     } else {
       current.push(slug);
+      // Track filter addition
+      import('@/lib/analytics').then(({ trackFilter }) => {
+        trackFilter(FILTER_LABELS[key], slug);
+      });
     }
 
     applyFilters({ ...selectedFilters, [key]: current });
