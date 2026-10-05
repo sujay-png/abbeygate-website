@@ -7,6 +7,7 @@ import { Toaster } from 'react-hot-toast';
 import { LenisProvider } from '@/components/layout/LenisProvider';
 import { VatProvider } from '@/context/VatContext';
 import { SiteChrome } from '@/components/layout/SiteChrome';
+import { NavigationTracker } from '@/components/layout/NavigationTracker';
 import Script from 'next/script';
 
 const didactGothic = Didact_Gothic({
@@ -105,6 +106,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         className="min-h-screen flex flex-col bg-brand-cream text-brand-body"
         suppressHydrationWarning
       >
+        <Suspense fallback={null}>
+          <NavigationTracker />
+        </Suspense>
         {/* GA4 Script (Marketing Team Request) */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-9H299B89WM"
