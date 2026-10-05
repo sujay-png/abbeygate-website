@@ -90,10 +90,17 @@ export async function loginCustomer(
       cache: 'no-store',
     });
 
-    const data = await response.json();
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error('Non-JSON response from login endpoint:', text.substring(0, 200));
+      throw new Error('The authentication service is temporarily unavailable. Please try again later.');
+    }
 
     if (!response.ok || !data.success) {
-      throw new Error(data.message || 'Invalid username or password.');
+      throw new Error(data?.message || 'Invalid username or password.');
     }
 
     // The Next.js session authorises the headless site. A separate WordPress

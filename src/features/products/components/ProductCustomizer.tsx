@@ -589,7 +589,7 @@ export const ProductCustomizer = ({
                      backgroundSize: product.images?.[0]?.src ? '300%' : undefined
                    }}
                  >
-                    <div className="absolute top-[-1px] right-[-1px] w-[65%] h-[65%]">
+                    <div className="absolute -top-[2px] -right-[2px] w-[65%] h-[65%]">
                       <svg width="100%" height="100%" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ overflow: 'visible' }}>
                         <defs>
                           <linearGradient id="btnGrad-gold" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -631,7 +631,7 @@ export const ProductCustomizer = ({
                      backgroundSize: product.images?.[0]?.src ? '300%' : undefined
                    }}
                  >
-                    <div className="absolute top-[-1px] right-[-1px] w-[65%] h-[65%]">
+                    <div className="absolute -top-[2px] -right-[2px] w-[65%] h-[65%]">
                       <svg width="100%" height="100%" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ overflow: 'visible' }}>
                         <defs>
                           <linearGradient id="btnGrad-silver" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -756,7 +756,8 @@ export const ProductCustomizer = ({
                                 isGifts: false,
                                 cornerEdges: customization.cornerEdges,
                             });
-                            const pdfBuffer = await generateDigitalProof(product, customization, quantity, priceDetails.unitPrice, activeColorName);
+                            const finalUnitPrice = priceDetails.unitPrice + (customization.cornerEdges !== 'None' ? getCornerEdgesPricing(product).pricePerPair : 0);
+                            const pdfBuffer = await generateDigitalProof(product, customization, quantity, finalUnitPrice, activeColorName);
                             const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');

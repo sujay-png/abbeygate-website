@@ -57,7 +57,7 @@ export const CategoryPageContent = ({
         />
 
         <div className="mt-8">
-          <ProductGrid products={filteredProducts} />
+          <ProductGrid products={filteredProducts} hasProductsInCategory={allProducts.length > 0} />
         </div>
       </Container>
     </div>

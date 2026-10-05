@@ -36,7 +36,7 @@ export async function getAddresses(): Promise<CustomerAddresses | null> {
 
   try {
     const customer = await woocommerceApi.request<{ billing: Address; shipping: Address }>(`/customers/${session.userId}`, {
-      revalidate: 0 // Don't cache
+      revalidate: 3600 // Cached, busted by revalidatePath
     });
     return {
       billing: customer.billing,

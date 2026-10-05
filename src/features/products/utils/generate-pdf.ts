@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf';
 import type { StoreProduct } from '../types/store-product';
 import type { CustomizationState } from '../components/ProductCustomizer';
-import { formatGBP, VAT_RATE } from './pricing';
+import { formatGBP, VAT_RATE, BRANDING_SETUP_FEE, isGiftsProduct } from './pricing';
 
 const fetchImageAsBase64 = async (url: string): Promise<string> => {
   const response = await fetch(url);

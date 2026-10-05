@@ -12,12 +12,21 @@ export async function generateCategoryMetadata(basePath: string, slug?: string[]
   if (slug?.length) {
     const pathSlug = slug[slug.length - 1];
     try {
-      const categories = await getStoreCategories();
-      const category = categories.find(c => c.slug === pathSlug);
-      
-      if (category) {
-        title = `${category.name} | Abbeygate England`;
-        description = category.description || `Explore our high-quality ${category.name.toLowerCase()} for your corporate or personal needs.`;
+      const { getCategoryRoute } = await import('@/data/category-routes');
+      const route = getCategoryRoute(path);
+
+      if (route) {
+        title = `${route.title} | Abbeygate England`;
+        if (route.description) {
+           description = route.description;
+        }
+      } else {
+        const categories = await getStoreCategories();
+        const category = categories.find(c => c.slug === pathSlug);
+        if (category) {
+          title = `${category.name} | Abbeygate England`;
+          description = category.description || description;
+        }
       }
     } catch (error) {
       console.error('Error fetching categories for metadata:', error);

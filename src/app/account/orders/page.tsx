@@ -38,8 +38,7 @@ export default async function OrdersPage() {
   let orders: WooCommerceOrder[] = [];
   try {
     orders = await woocommerceApi.request<WooCommerceOrder[]>('/orders', {
-      params: { customer: session.userId },
-      revalidate: 0 // Don't cache orders page heavily, or use a short revalidate
+      revalidate: 60 // Cache for 1 minute for snappier navigation
     });
   } catch (error) {
     console.error('Failed to fetch orders:', error);

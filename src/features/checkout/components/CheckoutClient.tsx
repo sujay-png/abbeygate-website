@@ -751,7 +751,12 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
         const data = await res.json();
         setQuoteData(data);
       } catch (error) {
-        setQuoteError(error instanceof Error ? error.message : 'Unknown error');
+        const msg = error instanceof Error ? error.message : 'Unknown error';
+        if (msg.includes('Unexpected token') || msg.includes('is not valid JSON') || msg.includes('JSON')) {
+          setQuoteError('Failed to process checkout request due to a server connection issue. Please try again.');
+        } else {
+          setQuoteError(msg);
+        }
       } finally {
         setIsQuoteLoading(false);
       }

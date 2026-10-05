@@ -53,7 +53,7 @@ export async function loadCategoryPageData(path: string, searchParams: Record<st
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ');
     return index === pathParts.length - 1
-      ? { label: wooCategory?.name || route.title }
+      ? { label: route.title || wooCategory?.name || label }
       : { label, href };
   });
 
@@ -67,7 +67,7 @@ export async function loadCategoryPageData(path: string, searchParams: Record<st
   }
 
   return {
-    title: wooCategory?.name || route.title,
+    title: route.title || wooCategory?.name || '',
     description,
     breadcrumbItems,
     allProducts,

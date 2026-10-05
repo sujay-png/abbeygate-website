@@ -7,13 +7,16 @@ import { ExpandableProductDescription } from './ExpandableProductDescription';
 
 type ProductGridProps = {
   products: StoreProduct[];
+  hasProductsInCategory?: boolean;
 };
 
-export const ProductGrid = ({ products }: ProductGridProps) => {
+export const ProductGrid = ({ products, hasProductsInCategory = true }: ProductGridProps) => {
   if (products.length === 0) {
     return (
-      <div className="text-center py-20 bg-white">
-        <p className="text-gray-500 text-lg">No products found matching your filters.</p>
+      <div className="text-center py-20">
+        <p className="text-gray-500 text-lg">
+          {hasProductsInCategory ? "No products found matching your filters." : "No products found for this category."}
+        </p>
       </div>
     );
   }

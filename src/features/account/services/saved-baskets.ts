@@ -34,7 +34,7 @@ async function getCustomerMeta() {
   try {
     const customer = await woocommerceApi.request<{ meta_data: Array<{ key: string, value: any }>; first_name?: string; last_name?: string; username?: string; }>(
       `/customers/${session.userId}`,
-      { revalidate: 0 }
+      { revalidate: 3600 } // Cached, busted by revalidatePath
     );
     return { customer, session };
   } catch (error) {

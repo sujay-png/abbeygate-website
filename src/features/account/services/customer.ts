@@ -29,7 +29,7 @@ export async function getAccountDetails(userId: number): Promise<AccountDetails 
         'Content-Type': 'application/json',
         'x-headless-secret': process.env.WP_HEADLESS_SECRET || '',
       },
-      cache: 'no-store', // Always get fresh data for account details
+      next: { revalidate: 3600 }, // Cache for 1 hour, busted by revalidatePath on update
     });
 
     if (!response.ok) {
