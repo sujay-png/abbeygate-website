@@ -201,14 +201,14 @@ export const ProductDetailClient = ({
     } 
     // If they canceled customisation (it changed from true to false)
     else if (prevCustomizingStarted.current === true && !isCustomizingStarted) {
+      // CAPTURE SYNCHRONOUSLY before the async import runs!
+      const stepToTrack = prevCustomizerStep.current;
       import('@/lib/analytics').then(({ trackCustomiserStep }) => {
         let stepName = '';
-        // Use prevCustomizerStep because the state might have been batched and reset to 1 already!
-        const step = prevCustomizerStep.current;
-        if (step === 1) stepName = 'exit_branding';
-        if (step === 2) stepName = 'exit_position';
-        if (step === 3) stepName = 'exit_extras';
-        if (step === 4) stepName = 'exit_review';
+        if (stepToTrack === 1) stepName = 'exit_branding';
+        if (stepToTrack === 2) stepName = 'exit_position';
+        if (stepToTrack === 3) stepName = 'exit_extras';
+        if (stepToTrack === 4) stepName = 'exit_review';
         
         if (stepName) trackCustomiserStep(stepName, product.name);
       });
