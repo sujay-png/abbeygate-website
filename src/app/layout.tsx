@@ -32,6 +32,9 @@ import { getSEOMetadata } from '@/lib/seo';
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://dashboard.abbeygate-england.com'),
   ...getSEOMetadata("/"),
+  verification: {
+    google: '31kkVfB6guiKvc8ysrsj2jJm63OU2lmDc7cAGkeWyLU',
+  },
   icons: {
     icon: [
       { url: '/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
