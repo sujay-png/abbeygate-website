@@ -1,9 +1,7 @@
 import { MetadataRoute } from 'next';
-import { getStoreProducts, getStoreCategories } from '@/features/products/services/store-products';
-
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://corporate.abbeygate-england.com';
-
-import { seoConfig } from '@/lib/seo';
+import { getStoreProducts } from '@/features/products/services/store-products';
+import { CATEGORY_ROUTES } from '@/data/category-routes';
+import { seoConfig, SITE_URL as BASE_URL } from '@/lib/seo';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Generate static pages from our centralized SEO config
@@ -16,17 +14,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: path === '/' ? 1 : 0.8,
     }));
 
-  try {
-    // Fetch Categories
-    const categories = await getStoreCategories();
-    categories.forEach((cat) => {
-      sitemap.push({
-        url: `${BASE_URL}/${cat.slug}`,
-        lastModified: new Date(),
-        changeFrequency: 'daily',
-        priority: 0.9,
-      });
+  // Category pages come from our own route table: WooCommerce category slugs (e.g. /a4-diary)
+  // are not routes on this site and would 404.
+  new Set(CATEGORY_ROUTES.map((route) => route.path)).forEach((path) => {
+    sitemap.push({
+      url: `${BASE_URL}${path}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
     });
+  });
+
+  try {
 
     // Fetch Products (Fetch up to 300 products to ensure we get them all)
     const pagePromises = [1, 2, 3].map(page => getStoreProducts({ perPage: 100, page }));

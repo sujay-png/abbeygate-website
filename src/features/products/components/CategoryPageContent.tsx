@@ -6,8 +6,7 @@ import { ProductGrid } from './ProductGrid';
 import { ProductFilters } from './ProductFilters';
 import type { StoreProduct, StoreAttribute, StoreAttributeTerm } from '../types/store-product';
 import type { FilterConfig } from '@/data/category-routes';
-import { productMatchesFilters, sortProducts, type SortOption } from '../utils/product-helpers';
-import type { ProductFilters as ProductFiltersType } from '../types/store-product';
+import { parseFiltersFromSearchParams, productMatchesFilters, sortProducts, type SortOption } from '../utils/product-helpers';
 import { ExpandableDescription } from './ExpandableDescription';
 
 type CategoryPageContentProps = {
@@ -15,14 +14,13 @@ type CategoryPageContentProps = {
   description?: string;
   breadcrumbItems: { label: string; href?: string }[];
   allProducts: StoreProduct[];
-  filters: ProductFiltersType;
   attributes: StoreAttribute[];
   attributeTerms: Record<number, StoreAttributeTerm[]>;
   filterConfig: FilterConfig;
-  sort?: string;
 };
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { trackViewItemList } from '@/lib/analytics';
 
 export const CategoryPageContent = ({
@@ -30,22 +28,24 @@ export const CategoryPageContent = ({
   description,
   breadcrumbItems,
   allProducts,
-  filters,
   attributes,
   attributeTerms,
   filterConfig,
-  sort = 'bestselling',
 }: CategoryPageContentProps) => {
+  // Filters live in the URL but are applied here on the client, so changing them is instant.
+  const searchParams = useSearchParams();
+
   useEffect(() => {
     if (allProducts.length > 0) {
       trackViewItemList(title, allProducts);
     }
   }, [title, allProducts]);
 
-  const filteredProducts = sortProducts(
-    allProducts.filter((p) => productMatchesFilters(p, filters)),
-    sort as SortOption
-  );
+  const filteredProducts = useMemo(() => {
+    const filters = parseFiltersFromSearchParams(Object.fromEntries(searchParams.entries()));
+    const sort = (searchParams.get('sort') || 'bestselling') as SortOption;
+    return sortProducts(allProducts.filter((p) => productMatchesFilters(p, filters)), sort);
+  }, [allProducts, searchParams]);
 
   return (
     <div className="bg-brand-cream min-h-screen">
@@ -65,6 +65,7 @@ export const CategoryPageContent = ({
           attributeTerms={attributeTerms}
           filterConfig={filterConfig}
           resultCount={filteredProducts.length}
+          clientSideFiltering
         />
 
         <div className="mt-8">

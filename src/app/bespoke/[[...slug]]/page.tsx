@@ -1,5 +1,9 @@
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { Container } from "@/components/ui/Container";
+import type { Metadata } from "next";
+import { getSEOMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = getSEOMetadata("/bespoke");
 
 export default function BespokeComingSoonPage() {
   return (

@@ -53,7 +53,7 @@ export default async function BacsSuccessPage({ searchParams }: { searchParams: 
       <ClearCartOnLoad transactionId={orderId} />
       
       {isGuest && (
-        <GuestAccountPrompt email={email} orderId={orderId} />
+        <GuestAccountPrompt email={email} orderId={orderId} orderKey={key} />
       )}
       
       <header className="border-b border-[var(--brand-border)] bg-white">

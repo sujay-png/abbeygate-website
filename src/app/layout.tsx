@@ -27,11 +27,16 @@ const josefinSans = Josefin_Sans({
   weight: ["300", "400", "500", "600", "700"],
 });
 
-import { getSEOMetadata } from '@/lib/seo';
+import { getSEOMetadata, SITE_URL } from '@/lib/seo';
+
+// Site-wide defaults only. The canonical URL is deliberately left out: anything set here is
+// inherited by every page without its own metadata, which previously made all of them
+// canonicalise to the homepage. Each page sets its own canonical via getSEOMetadata.
+const { alternates: _homeAlternates, ...siteDefaults } = getSEOMetadata("/");
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://dashboard.abbeygate-england.com'),
-  ...getSEOMetadata("/"),
+  metadataBase: new URL(SITE_URL),
+  ...siteDefaults,
   verification: {
     google: '31kkVfB6guiKvc8ysrsj2jJm63OU2lmDc7cAGkeWyLU',
   },

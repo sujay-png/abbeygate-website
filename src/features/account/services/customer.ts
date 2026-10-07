@@ -21,6 +21,11 @@ function getStoreUrl() {
 }
 
 export async function getAccountDetails(userId: number): Promise<AccountDetails | null> {
+  // Exports of a 'use server' file are callable from the browser with any arguments,
+  // so never trust userId on its own — it must belong to the signed-in customer.
+  const session = await getSession();
+  if (!session || Number(session.userId) !== Number(userId)) return null;
+
   try {
     const storeUrl = getStoreUrl();
     const response = await fetch(`${storeUrl}/wp-json/headless/v1/account/${userId}`, {

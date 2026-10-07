@@ -4,6 +4,10 @@ import { CustomisationCTA } from '@/components/shared/CustomisationCTA';
 import { LatestBlog } from '@/components/shared/LatestBlog';
 import { heritageData } from '@/data/heritage';
 import { Link2 } from 'lucide-react';
+import type { Metadata } from "next";
+import { getSEOMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = getSEOMetadata("/heritage");
 
 const SocialIcons = ({ className = '' }: { className?: string }) => (
   <div className={`flex items-center gap-4 text-brand-primary-dark ${className}`}>

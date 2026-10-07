@@ -4,7 +4,7 @@ import { Breadcrumb } from '@/components/content/Breadcrumb';
 import { ProductGrid } from '@/features/products/components/ProductGrid';
 import { ProductFilters } from '@/features/products/components/ProductFilters';
 import { getStoreProducts } from '@/features/products/services/store-products';
-import { getFilterDataForProducts } from '@/features/products/services/filter-helpers';
+import { getFilterDataForProducts, preloadFilterAttributes, toListingProduct } from '@/features/products/services/filter-helpers';
 import { parseFiltersFromSearchParams, productMatchesFilters, sortProducts, type SortOption } from '@/features/products/utils/product-helpers';
 import { Metadata } from 'next';
 
@@ -20,6 +20,8 @@ import { SearchTracker } from './SearchTracker';
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   const query = (params.q as string) || '';
+
+  preloadFilterAttributes();
 
   // Fetch all products (up to 3 pages) for manual filtering
   const pagePromises = [1, 2, 3].map(page => getStoreProducts({ perPage: 100, page }));
@@ -79,7 +81,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   });
 
   // Get filter terms and inject Product Type based on the found products
-  const { allProducts: searchedProducts, filterAttributes, attributeTerms } = await getFilterDataForProducts(searchedProductsRaw);
+  const filterData = await getFilterDataForProducts(searchedProductsRaw);
+  const { filterAttributes, attributeTerms } = filterData;
+  const searchedProducts = filterData.allProducts.map(toListingProduct);
 
   const filters = parseFiltersFromSearchParams(params);
   const sort = typeof params?.sort === 'string' ? params.sort : 'bestselling';

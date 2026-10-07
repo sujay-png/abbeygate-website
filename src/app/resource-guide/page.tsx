@@ -2,6 +2,10 @@ import { Breadcrumb, PageHero } from '@/components/content';
 import { CustomisationCTA } from '@/components/shared/CustomisationCTA';
 import { StickySidebarLayout } from '@/components/layout/StickySidebarLayout';
 import { resourceGuideData } from '@/data/resource-guide';
+import type { Metadata } from "next";
+import { getSEOMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = getSEOMetadata("/resource-guide");
 
 export default function ResourceGuidePage() {
   return (

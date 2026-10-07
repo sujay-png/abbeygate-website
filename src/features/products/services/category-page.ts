@@ -1,10 +1,9 @@
 import { getCategoryRoute, getFilterConfigForPath } from '@/data/category-routes';
 import { getAllStoreProductsByCategory, getStoreCategoryById } from '../services/store-products';
-import { parseFiltersFromSearchParams } from '../utils/product-helpers';
 import type { StoreAttribute, StoreAttributeTerm, StoreProduct } from '../types/store-product';
-import { getFilterDataForProducts } from './filter-helpers';
+import { getFilterDataForProducts, preloadFilterAttributes, toListingProduct } from './filter-helpers';
 
-export async function loadCategoryPageData(path: string, searchParams: Record<string, string | string[] | undefined>) {
+export async function loadCategoryPageData(path: string) {
   const route = getCategoryRoute(path);
 
   if (!route) {
@@ -14,21 +13,19 @@ export async function loadCategoryPageData(path: string, searchParams: Record<st
   let allProducts: StoreProduct[] = [];
   let filterAttributes: StoreAttribute[] = [];
   let attributeTerms: Record<number, StoreAttributeTerm[]> = {};
-  let wooCategory = null;
 
-  try {
-    if (typeof route.categoryId === 'number' || !String(route.categoryId).includes(',')) {
-      wooCategory = await getStoreCategoryById(Number(route.categoryId));
-    }
-  } catch (error) {
-    console.warn(`Failed to load WooCommerce category ${route.categoryId}:`, error);
-  }
+  // Fire the independent WooCommerce requests together instead of one after another.
+  preloadFilterAttributes();
+  const categoryPromise =
+    typeof route.categoryId === 'number' || !String(route.categoryId).includes(',')
+      ? getStoreCategoryById(Number(route.categoryId))
+      : Promise.resolve(null);
 
   try {
     const rawProducts = await getAllStoreProductsByCategory(route.categoryId);
     const filterData = await getFilterDataForProducts(rawProducts);
     
-    allProducts = filterData.allProducts;
+    allProducts = filterData.allProducts.map(toListingProduct);
     filterAttributes = filterData.filterAttributes;
     attributeTerms = filterData.attributeTerms;
     
@@ -37,8 +34,8 @@ export async function loadCategoryPageData(path: string, searchParams: Record<st
     throw error;
   }
 
-  const filters = parseFiltersFromSearchParams(searchParams);
-  const sort = typeof searchParams?.sort === 'string' ? searchParams.sort : 'bestselling';
+  const wooCategory = await categoryPromise;
+
   const baseFilterConfig = getFilterConfigForPath(path);
   const filterConfig = {
     ...baseFilterConfig,
@@ -71,10 +68,8 @@ export async function loadCategoryPageData(path: string, searchParams: Record<st
     description,
     breadcrumbItems,
     allProducts,
-    filters,
     attributes: filterAttributes,
     attributeTerms,
     filterConfig,
-    sort,
   };
 }

@@ -9,8 +9,11 @@ type CategoryPageProps = {
 };
 
 export async function CategoryPage({ path, searchParams }: CategoryPageProps) {
-  const params = await searchParams;
-  const data = await loadCategoryPageData(path, params);
+  // Filters are applied client-side, but awaiting searchParams keeps this route dynamically
+  // rendered so the product grid stays in the server HTML (useSearchParams on a static
+  // route would bail the grid out to client-only rendering, hurting SEO).
+  await searchParams;
+  const data = await loadCategoryPageData(path);
 
   if (!data) notFound();
 

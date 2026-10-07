@@ -7,10 +7,11 @@ import { useRouter } from 'next/navigation';
 type Props = {
   email?: string;
   orderId?: string;
+  orderKey?: string;
   stripeIntentId?: string;
 };
 
-export function GuestAccountPrompt({ email, orderId, stripeIntentId }: Props) {
+export function GuestAccountPrompt({ email, orderId, orderKey, stripeIntentId }: Props) {
   const [isOpen, setIsOpen] = useState(true);
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,6 +36,7 @@ export function GuestAccountPrompt({ email, orderId, stripeIntentId }: Props) {
           email,
           password,
           orderId,
+          orderKey,
           stripeIntentId
         })
       });

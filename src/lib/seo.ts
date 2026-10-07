@@ -1,6 +1,18 @@
 import { Metadata } from 'next';
 import { getStoreCategories } from '@/features/products/services/store-products';
 
+/**
+ * Public origin of the storefront. Canonicals, sitemap, robots, OG images and JSON-LD all derive
+ * from this, so they can never disagree. dashboard.abbeygate-england.com is the WordPress backend
+ * and must never be used here — canonicals pointing at it tell Google to index the wrong host.
+ */
+export const SITE_URL = (process.env.NEXT_PUBLIC_BASE_URL || 'https://corporate.abbeygate-england.com').replace(/\/+$/, '');
+
+/** Serialise JSON-LD safely: escaping `<` stops CMS-supplied text from closing the <script> tag. */
+export function jsonLd(data: unknown): string {
+  return JSON.stringify(data).replace(/</g, '\\u003c');
+}
+
 // 1. Centralized SEO Configuration
 export const seoConfig: Record<string, { title: string; description: string; noindex?: boolean }> = {
   "/": {
@@ -45,13 +57,46 @@ export const seoConfig: Record<string, { title: string; description: string; noi
   "/heritage": {
     title: "Our Heritage | Abbeygate England",
     description: "Discover the rich history and craftsmanship behind Abbeygate England.",
-  }
+  },
+  "/artwork-specification": {
+    title: "Artwork Specification | Abbeygate England",
+    description: "How to supply logo artwork for debossing, foil blocking and printing on your Abbeygate England products.",
+  },
+  "/modern-slavery": {
+    title: "Modern Slavery Statement | Abbeygate England",
+    description: "Abbeygate England's statement on preventing modern slavery and human trafficking in our business and supply chains.",
+  },
+  "/privacy": {
+    title: "Privacy Policy | Abbeygate England",
+    description: "How Abbeygate England collects, uses and protects your personal information.",
+  },
+  "/terms": {
+    title: "Terms & Conditions | Abbeygate England",
+    description: "The terms and conditions that apply to orders placed with Abbeygate England.",
+  },
+  "/cookies": {
+    title: "Cookie Policy | Abbeygate England",
+    description: "How Abbeygate England uses cookies on this website.",
+  },
+  "/returns": {
+    title: "Returns Policy | Abbeygate England",
+    description: "Information on returns and refunds for Abbeygate England orders.",
+  },
+  "/bespoke": {
+    title: "Bespoke Service | Abbeygate England",
+    description: "Our bespoke corporate gifting service is coming soon.",
+    noindex: true,
+  },
+  "/internal-page-layouts": {
+    title: "Internal Page Layouts | Abbeygate England",
+    description: "Internal page layout options for Abbeygate England diaries and notebooks.",
+  },
 };
 
 // 2. Helper to generate metadata for any page
 export function getSEOMetadata(
   path: string, 
-  dynamicOverrides?: { title?: string; description?: string; noindex?: boolean }
+  dynamicOverrides?: { title?: string; description?: string; noindex?: boolean; image?: string }
 ): Metadata {
   const baseData = seoConfig[path] || {
     title: "Abbeygate England | Your Brand, Our Craftsmanship",
@@ -62,8 +107,10 @@ export function getSEOMetadata(
   const finalDescription = dynamicOverrides?.description || baseData.description;
   const finalNoIndex = dynamicOverrides?.noindex ?? baseData.noindex ?? false;
   
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://dashboard.abbeygate-england.com';
-  const canonicalUrl = `${baseUrl}${path}`;
+  const canonicalUrl = path === '/' ? SITE_URL : `${SITE_URL}${path}`;
+  const shareImage = dynamicOverrides?.image
+    ? { url: dynamicOverrides.image, alt: finalTitle }
+    : { url: "/images/banners/hero-banner.png", width: 1200, height: 630, alt: "Abbeygate England Hero Image" };
 
   return {
     // absolute: true prevents Next.js from appending the layout template again
@@ -77,14 +124,7 @@ export function getSEOMetadata(
       description: finalDescription,
       url: canonicalUrl,
       siteName: "Abbeygate England",
-      images: [
-        {
-          url: "/images/banners/hero-banner.png",
-          width: 1200,
-          height: 630,
-          alt: "Abbeygate England Hero Image",
-        },
-      ],
+      images: [shareImage],
       locale: "en_GB",
       type: "website",
     },
@@ -92,7 +132,7 @@ export function getSEOMetadata(
       card: "summary_large_image",
       title: finalTitle,
       description: finalDescription,
-      images: ["/images/banners/hero-banner.png"],
+      images: [shareImage.url],
     },
     robots: {
       index: !finalNoIndex,

@@ -1,6 +1,10 @@
 import { Breadcrumb } from '@/components/content';
 import { Container } from '@/components/ui/Container';
 import { returnsData } from '@/data/returns';
+import type { Metadata } from "next";
+import { getSEOMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = getSEOMetadata("/returns");
 
 export default function ReturnsPage() {
   return (

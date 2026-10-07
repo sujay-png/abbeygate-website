@@ -2,6 +2,10 @@ import { Breadcrumb, PageHero } from '@/components/content';
 import { CustomisationCTA } from '@/components/shared/CustomisationCTA';
 import { PageLayoutViewer } from '@/components/resources/PageLayoutViewer';
 import { internalPageLayoutsData } from '@/data/internal-page-layouts';
+import type { Metadata } from "next";
+import { getSEOMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = getSEOMetadata("/internal-page-layouts");
 
 export default function InternalPageLayoutsPage() {
   return (

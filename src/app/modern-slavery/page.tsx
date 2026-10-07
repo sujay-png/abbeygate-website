@@ -2,6 +2,10 @@ import { Breadcrumb, PageHero } from '@/components/content';
 import { Container } from '@/components/ui/Container';
 import { modernSlaveryData } from '@/data/modern-slavery';
 import Image from 'next/image';
+import type { Metadata } from "next";
+import { getSEOMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = getSEOMetadata("/modern-slavery");
 
 export default function ModernSlaveryPage() {
   return (

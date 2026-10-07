@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { Container } from '@/components/ui/Container';
 import { Breadcrumb } from '@/components/content/Breadcrumb';
@@ -9,7 +10,7 @@ import { getStoreProductBySlug, getStoreProducts, getProductCustomTabs, getStore
 import { getProductPricingFromProduct } from '@/features/products/services/pricing';
 import { CATEGORY_ROUTES } from '@/data/category-routes';
 import type { Metadata } from 'next';
-import { getSEOMetadata } from '@/lib/seo';
+import { getSEOMetadata, jsonLd, SITE_URL } from '@/lib/seo';
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -27,7 +28,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const title = product ? `${product.name} | Abbeygate England` : 'Product | Abbeygate England';
     const description = product?.short_description?.replace(/<[^>]*>/g, '').slice(0, 160) || 'Bespoke corporate gifting by Abbeygate England.';
     
-    return getSEOMetadata(`/product/${slug}`, { title, description });
+    return getSEOMetadata(`/product/${product?.slug ?? slug}`, { title, description, image: product?.images?.[0]?.src });
   } catch {
     return getSEOMetadata(`/product/${slug}`, { title: 'Product | Abbeygate England' });
   }
@@ -51,11 +52,13 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
 
   if (!product) notFound();
 
-  const pricing = await getProductPricingFromProduct(product);
+  // These only depend on the product, so fetch them in parallel rather than back to back.
+  const pricingPromise = getProductPricingFromProduct(product);
+  const customTabsPromise = getProductCustomTabs(product.id);
 
   // Fetch color variants based on the product's tag
-  let colorVariants: ColorVariant[] = [];
-  if (product.tags && product.tags.length > 0) {
+  const colorVariantsPromise = (async (): Promise<ColorVariant[]> => {
+    if (!product.tags || product.tags.length === 0) return [];
     try {
       const COLOR_HEX_MAP: Record<string, string> = {
         red: '#b31b1b',
@@ -104,7 +107,7 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
       const tagId = groupingTag ? groupingTag.id : product.tags[0].id;
       const { products: siblings } = await getStoreProducts({ tagId, perPage: 20 });
       
-      colorVariants = siblings.map(sibling => {
+      return siblings.map(sibling => {
         const nameParts = sibling.name.split(', ');
         const specificName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : null;
         const specificSlug = specificName ? specificName.toLowerCase().replace(/\s+/g, '-') : null;
@@ -144,8 +147,15 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
       });
     } catch (error) {
       console.error("Error fetching color variants:", error);
+      return [];
     }
-  }
+  })();
+
+  const [pricing, colorVariants, customTabs] = await Promise.all([
+    pricingPromise,
+    colorVariantsPromise,
+    customTabsPromise,
+  ]);
 
   // Build dynamic breadcrumbs based on product categories
   const breadcrumbPaths: { label: string; href?: string }[] = [
@@ -187,8 +197,6 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
 
   breadcrumbPaths.push({ label: product.name });
 
-  const customTabs = await getProductCustomTabs(product.id);
-
   const collectionNames = ['richmond', 'dorchester', 'harrogate', 'lewes', 'chelsea', 'windsor', 'conscious'];
   const collectionCategory = product.categories?.find((c: { name: string; slug: string }) => 
     collectionNames.some(name => c.name.toLowerCase().includes(name) || c.slug.toLowerCase().includes(name))
@@ -217,7 +225,12 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
           colorVariants={colorVariants}
           customTabs={customTabs}
           amendKey={amendKey}
-          relatedProducts={<RelatedProducts categoryId={relatedCategoryId} currentProductId={product.id} currentProductName={product.name} currentColor={currentColor} />}
+          relatedProducts={
+            // Streamed in after the main product so the slow related-products lookup never blocks the page.
+            <Suspense fallback={null}>
+              <RelatedProducts categoryId={relatedCategoryId} currentProductId={product.id} currentProductName={product.name} currentColor={currentColor} />
+            </Suspense>
+          }
         />
       </Container>
       <FAQ />
@@ -227,7 +240,7 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: jsonLd({
             "@context": "https://schema.org/",
             "@type": "Product",
             "name": product.name,
@@ -242,7 +255,7 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
             },
             "offers": {
               "@type": "Offer",
-              "url": `https://dashboard.abbeygate-england.com/product/${product.slug}`,
+              "url": `${SITE_URL}/product/${product.slug}`,
               "priceCurrency": "GBP",
               "price": pricing.basePrice,
               "itemCondition": "https://schema.org/NewCondition",

@@ -2,6 +2,10 @@ import { Breadcrumb, PageHero, ImageTextSection, FeatureCards } from '@/componen
 import { Container } from '@/components/ui/Container';
 import { CustomisationCTA } from '@/components/shared/CustomisationCTA';
 import { artworkData } from '@/data/artwork-specification';
+import type { Metadata } from "next";
+import { getSEOMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = getSEOMetadata("/artwork-specification");
 
 export default function ArtworkSpecificationPage() {
   return (

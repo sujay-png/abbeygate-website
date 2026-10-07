@@ -15,6 +15,11 @@ type ProductFiltersProps = {
   attributeTerms: Record<number, StoreAttributeTerm[]>;
   filterConfig: FilterConfig;
   resultCount?: number;
+  /**
+   * When the parent filters `products` on the client (category pages), update the URL
+   * without a server round-trip. Server-filtered pages (search) leave this off.
+   */
+  clientSideFiltering?: boolean;
 };
 
 const FILTER_LABELS: Record<FilterParamKey, string> = {
@@ -45,6 +50,7 @@ const ProductFiltersInner = ({
   attributeTerms,
   filterConfig,
   resultCount,
+  clientSideFiltering = false,
 }: ProductFiltersProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -115,6 +121,13 @@ const ProductFiltersInner = ({
       const query = params.toString();
       const newUrl = query ? `${pathname}?${query}` : pathname;
 
+      if (clientSideFiltering) {
+        // Next.js syncs useSearchParams with history.pushState, so the grid re-filters instantly
+        // without re-rendering the page on the server.
+        window.history.pushState(null, '', newUrl);
+        return;
+      }
+
       setIsLoading(true);
 
       if (filterTimeout.current) clearTimeout(filterTimeout.current);
@@ -123,7 +136,7 @@ const ProductFiltersInner = ({
         setIsLoading(false);
       }, 400);
     },
-    [pathname, router, searchParams],
+    [pathname, router, searchParams, clientSideFiltering],
   );
 
   const toggleFilter = (key: FilterParamKey, slug: string) => {

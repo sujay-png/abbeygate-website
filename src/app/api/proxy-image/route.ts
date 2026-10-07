@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server';
 
 const ALLOWED_DOMAINS = [
-  'localhost',
-  '127.0.0.1',
+  // Loopback targets are only useful in local development; in production they would let
+  // callers make the server request its own internal endpoints (SSRF).
+  ...(process.env.NODE_ENV === 'production' ? [] : ['localhost', '127.0.0.1']),
   'abbeygate-website.vercel.app',
   'dashboard.abbeygate-england.com',
   'abbeygate-england.com'
 ];
+
+const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -66,6 +69,12 @@ export async function GET(request: Request) {
     }
 
     const contentType = response.headers.get('content-type') || 'image/jpeg';
+    if (!contentType.startsWith('image/')) {
+      return NextResponse.json({ error: 'Not an image' }, { status: 415 });
+    }
+    if (Number(response.headers.get('content-length') || 0) > MAX_IMAGE_BYTES) {
+      return NextResponse.json({ error: 'Image too large' }, { status: 413 });
+    }
     const buffer = await response.arrayBuffer();
     const base64 = Buffer.from(buffer).toString('base64');
     const dataUrl = `data:${contentType};base64,${base64}`;
@@ -73,6 +82,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ dataUrl });
   } catch (error: any) {
     console.error('Proxy image error:', error);
-    return NextResponse.json({ error: error.message || error.toString() }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to load image' }, { status: 500 });
   }
 }

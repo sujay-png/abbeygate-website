@@ -1,7 +1,7 @@
-import { woocommerceFetch } from "@/lib/woocommerce/client";
 import type { PriceTier } from "../types/store-product";
 import type { StoreProduct } from "../types/store-product";
 import { parsePriceTiersFromMeta, parseStorePrice } from "../utils/pricing";
+import { getRestProductMeta } from "./store-products";
 
 export type ProductPricingData = {
   productId: number;
@@ -38,13 +38,7 @@ export async function getProductPricingFromProduct(
   }
 
   try {
-    const restProduct = await woocommerceFetch<{
-      id: number;
-      meta_data?: { key: string; value: unknown }[];
-    }>({
-      path: `/products/${storeProduct.id}`,
-      revalidate: 300,
-    });
+    const restProduct = await getRestProductMeta(storeProduct.id);
 
     const tiers = parsePriceTiersFromMeta(restProduct.meta_data, basePrice);
 

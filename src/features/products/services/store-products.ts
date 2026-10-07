@@ -48,18 +48,17 @@ export async function getAllStoreProductsByCategory(
   options: { maxPages?: number; perPage?: number } = {},
 ): Promise<StoreProduct[]> {
   const { maxPages = 3, perPage = 50 } = options;
-  const allProducts: StoreProduct[] = [];
-  let page = 1;
-  let totalPages = 1;
 
-  while (page <= totalPages && page <= maxPages) {
-    const result = await getStoreProducts({ categoryId, page, perPage });
-    allProducts.push(...result.products);
-    totalPages = result.totalPages;
-    page++;
-  }
+  // Page 1 tells us how many pages exist; fetch the rest in parallel rather than one by one.
+  const first = await getStoreProducts({ categoryId, page: 1, perPage });
+  const lastPage = Math.min(first.totalPages, maxPages);
+  const rest = await Promise.all(
+    Array.from({ length: Math.max(lastPage - 1, 0) }, (_, i) =>
+      getStoreProducts({ categoryId, page: i + 2, perPage }),
+    ),
+  );
 
-  return allProducts;
+  return [first, ...rest].flatMap((result) => result.products);
 }
 
 export const getStoreProductBySlug = cache(async (
@@ -96,20 +95,20 @@ export const getStoreCategoryById = cache(async (
   }
 });
 
-export async function getStoreAttributes(): Promise<StoreAttribute[]> {
+export const getStoreAttributes = cache(async (): Promise<StoreAttribute[]> => {
   return storeFetch<StoreAttribute[]>("/products/attributes", {
     revalidate: 300,
   });
-}
+});
 
-export async function getStoreAttributeTerms(
+export const getStoreAttributeTerms = cache(async (
   attributeId: number,
-): Promise<StoreAttributeTerm[]> {
+): Promise<StoreAttributeTerm[]> => {
   return storeFetch<StoreAttributeTerm[]>(
     `/products/attributes/${attributeId}/terms`,
     { params: { per_page: 100 }, revalidate: 300 },
   );
-}
+});
 
 export async function getFeaturedStoreProducts(
   limit = 4,
@@ -147,15 +146,22 @@ export type CustomTab = {
 };
 
 /** Fetch custom product tabs (e.g., YIKES Custom Product Tabs) via the authenticated v3 API. */
+/**
+ * Authenticated v3 product record (meta_data holds B2B King tiers and custom tabs).
+ * Cached per request so pricing and custom tabs share a single round-trip.
+ */
+export const getRestProductMeta = cache(async (
+  productId: number,
+): Promise<{ id: number; meta_data?: { key: string; value: unknown }[] }> => {
+  return woocommerceApi.request(`/products/${productId}`, { revalidate: 300 });
+});
+
 export const getProductCustomTabs = cache(async (
   productId: number,
 ): Promise<CustomTab[]> => {
   try {
-    const product = await woocommerceApi.request<{ meta_data: { key: string; value: unknown }[] }>(`/products/${productId}`, {
-      revalidate: 120,
-      timeoutMs: 1500, // Fail fast so we don't block the entire page render
-    });
-    const tabsMeta = product.meta_data.find(meta => meta.key === 'yikes_woo_products_tabs');
+    const product = await getRestProductMeta(productId);
+    const tabsMeta = product.meta_data?.find(meta => meta.key === 'yikes_woo_products_tabs');
     
     if (tabsMeta && Array.isArray(tabsMeta.value)) {
       return tabsMeta.value;

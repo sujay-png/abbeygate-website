@@ -1,6 +1,10 @@
 import { Breadcrumb } from '@/components/content';
 import { Container } from '@/components/ui/Container';
 import { cookiesData } from '@/data/cookies';
+import type { Metadata } from "next";
+import { getSEOMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = getSEOMetadata("/cookies");
 
 export default function CookiesPage() {
   return (

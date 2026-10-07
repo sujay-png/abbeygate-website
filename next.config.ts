@@ -21,9 +21,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  poweredByHeader: false,
   experimental: {
     serverActions: {
       bodySizeLimit: '10mb',

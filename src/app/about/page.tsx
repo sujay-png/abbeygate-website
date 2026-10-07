@@ -2,6 +2,10 @@ import { Breadcrumb, PageHero, ImageTextSection, TextWithImageGrid, FeatureCallo
 import { Container } from '@/components/ui/Container';
 import { CustomisationCTA } from '@/components/shared/CustomisationCTA';
 import { aboutData } from '@/data/about';
+import type { Metadata } from "next";
+import { getSEOMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = getSEOMetadata("/about");
 
 export default function AboutPage() {
   return (

@@ -1,6 +1,10 @@
 import { Breadcrumb } from '@/components/content';
 import { Container } from '@/components/ui/Container';
 import { privacyData } from '@/data/privacy';
+import type { Metadata } from "next";
+import { getSEOMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = getSEOMetadata("/privacy");
 
 export default function PrivacyPolicyPage() {
   return (
