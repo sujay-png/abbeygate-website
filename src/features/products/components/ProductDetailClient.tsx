@@ -183,6 +183,7 @@ export const ProductDetailClient = ({
   const [isCustomizingStarted, setIsCustomizingStarted] = useState(false);
   const [customizerStep, setCustomizerStep] = useState<1 | 2 | 3 | 4>(1);
   const prevCustomizingStarted = useRef(false);
+  const prevCustomizerStep = useRef(customizerStep);
 
   // Track customiser steps precisely whenever the user proceeds, and track exits
   useEffect(() => {
@@ -202,16 +203,19 @@ export const ProductDetailClient = ({
     else if (prevCustomizingStarted.current === true && !isCustomizingStarted) {
       import('@/lib/analytics').then(({ trackCustomiserStep }) => {
         let stepName = '';
-        if (customizerStep === 1) stepName = 'exit_branding';
-        if (customizerStep === 2) stepName = 'exit_position';
-        if (customizerStep === 3) stepName = 'exit_extras';
-        if (customizerStep === 4) stepName = 'exit_review';
+        // Use prevCustomizerStep because the state might have been batched and reset to 1 already!
+        const step = prevCustomizerStep.current;
+        if (step === 1) stepName = 'exit_branding';
+        if (step === 2) stepName = 'exit_position';
+        if (step === 3) stepName = 'exit_extras';
+        if (step === 4) stepName = 'exit_review';
         
         if (stepName) trackCustomiserStep(stepName, product.name);
       });
     }
 
     prevCustomizingStarted.current = isCustomizingStarted;
+    prevCustomizerStep.current = customizerStep;
   }, [customizerStep, isCustomizingStarted, product.name]);
 
   const { showPricesIncludingVat } = useVat();
