@@ -157,8 +157,7 @@ export const trackFilter = (filterName: string, filterValue: string) => {
 
 // 10. customiser flow (custom event)
 export const trackCustomiserStep = (stepName: string, productName?: string) => {
-  pushToDataLayer('customiser_step_completed', {
-    step_name: stepName,
+  pushToDataLayer(stepName, {
     product_name: productName || 'Unknown'
   });
 };
