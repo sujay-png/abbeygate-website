@@ -7,9 +7,8 @@ import { getsavedBaskets } from '@/features/account/services/saved-baskets';
 import Link from 'next/link';
 import { SavedBasketsClient } from '@/features/account/components/SavedBasketsClient';
 
-export const metadata = {
-  title: 'Saved Baskets | Abbeygate',
-};
+import { getSEOMetadata } from '@/lib/seo';
+export const metadata = getSEOMetadata("/account/saved-baskets", { title: 'Saved Baskets | Abbeygate England', noindex: true });
 
 export default async function savedBasketsPage() {
   const session = await getSession();

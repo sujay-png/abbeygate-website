@@ -8,13 +8,8 @@ import { getFilterDataForProducts } from '@/features/products/services/filter-he
 import { parseFiltersFromSearchParams, productMatchesFilters, sortProducts, type SortOption } from '@/features/products/utils/product-helpers';
 import { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'Search | Abbeygate England',
-  robots: {
-    index: false,
-    follow: true,
-  }
-};
+import { getSEOMetadata } from '@/lib/seo';
+export const metadata: Metadata = getSEOMetadata("/search");
 
 type SearchPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

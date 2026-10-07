@@ -27,35 +27,11 @@ const josefinSans = Josefin_Sans({
   weight: ["300", "400", "500", "600", "700"],
 });
 
+import { getSEOMetadata } from '@/lib/seo';
+
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://dashboard.abbeygate-england.com'),
-  title: {
-    template: "%s | Abbeygate England",
-    default: "Abbeygate England | Your Brand, Our Craftsmanship",
-  },
-  description: "Elevate your corporate gifting and bespoke merchandise with our expertly customised leather goods.",
-  openGraph: {
-    title: "Abbeygate England",
-    description: "Your Brand, Our Craftsmanship",
-    url: "/",
-    siteName: "Abbeygate England",
-    images: [
-      {
-        url: "/images/banners/hero-banner.png",
-        width: 1200,
-        height: 630,
-        alt: "Abbeygate England Hero Image",
-      },
-    ],
-    locale: "en_GB",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Abbeygate England",
-    description: "Your Brand, Our Craftsmanship",
-    images: ["/images/banners/hero-banner.png"],
-  },
+  ...getSEOMetadata("/"),
   icons: {
     icon: [
       { url: '/favicon-96x96.png', sizes: '96x96', type: 'image/png' },

@@ -10,6 +10,9 @@ type OrderDetailsProps = {
   params: Promise<{ id: string }>;
 };
 
+import { getSEOMetadata } from '@/lib/seo';
+export const metadata = getSEOMetadata("/account/orders/[id]", { title: 'Order Details | Abbeygate England', noindex: true });
+
 type WooCommerceOrderDetail = {
   id: number;
   number: string;

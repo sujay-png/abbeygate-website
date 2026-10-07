@@ -1,13 +1,112 @@
 import { Metadata } from 'next';
 import { getStoreCategories } from '@/features/products/services/store-products';
 
+// 1. Centralized SEO Configuration
+export const seoConfig: Record<string, { title: string; description: string; noindex?: boolean }> = {
+  "/": {
+    title: "Abbeygate England | Personalised Corporate Gifting & Diaries",
+    description: "Elevate your corporate gifting and bespoke merchandise with our expertly customised leather goods.",
+  },
+  "/about": {
+    title: "About Us | Abbeygate England",
+    description: "Learn more about Abbeygate England, our heritage, and our commitment to craftsmanship.",
+  },
+  "/search": {
+    title: "Search Results | Abbeygate England",
+    description: "Search our collection of bespoke diaries, notebooks, and corporate gifts.",
+    noindex: true,
+  },
+  "/cart": {
+    title: "Your Bag | Abbeygate England",
+    description: "Review your selected Abbeygate England items before checkout.",
+    noindex: true,
+  },
+  "/checkout": {
+    title: "Checkout | Abbeygate England",
+    description: "Complete your Abbeygate England purchase.",
+    noindex: true,
+  },
+  "/contact": {
+    title: "Contact Us | Abbeygate England",
+    description: "Get in touch with the Abbeygate England team for corporate gifting inquiries and support.",
+  },
+  "/faqs": {
+    title: "Frequently Asked Questions | Abbeygate England",
+    description: "Find answers to common questions about our products, customisation, and shipping.",
+  },
+  "/resource-guide": {
+    title: "Resource Guide | Abbeygate England",
+    description: "Helpful resources and guides for corporate gifting and bespoke products.",
+  },
+  "/quote": {
+    title: "Request a Quote | Abbeygate England",
+    description: "Request a bespoke quote for corporate gifting and custom leather goods.",
+  },
+  "/heritage": {
+    title: "Our Heritage | Abbeygate England",
+    description: "Discover the rich history and craftsmanship behind Abbeygate England.",
+  }
+};
+
+// 2. Helper to generate metadata for any page
+export function getSEOMetadata(
+  path: string, 
+  dynamicOverrides?: { title?: string; description?: string; noindex?: boolean }
+): Metadata {
+  const baseData = seoConfig[path] || {
+    title: "Abbeygate England | Your Brand, Our Craftsmanship",
+    description: "Elevate your corporate gifting and bespoke merchandise with our expertly customised leather goods."
+  };
+
+  const finalTitle = dynamicOverrides?.title || baseData.title;
+  const finalDescription = dynamicOverrides?.description || baseData.description;
+  const finalNoIndex = dynamicOverrides?.noindex ?? baseData.noindex ?? false;
+  
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://dashboard.abbeygate-england.com';
+  const canonicalUrl = `${baseUrl}${path}`;
+
+  return {
+    // absolute: true prevents Next.js from appending the layout template again
+    title: { absolute: finalTitle },
+    description: finalDescription,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title: finalTitle,
+      description: finalDescription,
+      url: canonicalUrl,
+      siteName: "Abbeygate England",
+      images: [
+        {
+          url: "/images/banners/hero-banner.png",
+          width: 1200,
+          height: 630,
+          alt: "Abbeygate England Hero Image",
+        },
+      ],
+      locale: "en_GB",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: finalTitle,
+      description: finalDescription,
+      images: ["/images/banners/hero-banner.png"],
+    },
+    robots: {
+      index: !finalNoIndex,
+      follow: true,
+    }
+  };
+}
+
 export async function generateCategoryMetadata(basePath: string, slug?: string[]): Promise<Metadata> {
   const formattedBaseName = basePath.charAt(1).toUpperCase() + basePath.slice(2).replace('-', ' ');
   let title = `${formattedBaseName} | Abbeygate England`;
   let description = `Browse our exclusive collection of luxury ${formattedBaseName.toLowerCase()}.`;
   
   const path = slug?.length ? `${basePath}/${slug.join('/')}` : basePath;
-  const canonicalUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://dashboard.abbeygate-england.com'}${path}`;
 
   if (slug?.length) {
     const pathSlug = slug[slug.length - 1];
@@ -33,11 +132,6 @@ export async function generateCategoryMetadata(basePath: string, slug?: string[]
     }
   }
 
-  return {
-    title,
-    description,
-    alternates: {
-      canonical: canonicalUrl,
-    },
-  };
+  // Use the central helper to ensure canonicals, OG, and robots are properly attached!
+  return getSEOMetadata(path, { title, description });
 }

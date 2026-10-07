@@ -5,6 +5,7 @@ import { LatestBlog } from "@/components/shared/LatestBlog";
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
+      <h1 className="sr-only">Abbeygate England | Personalised Corporate Gifting & Diaries</h1>
       <Hero />
       <Categories />
       <FeaturedProducts />

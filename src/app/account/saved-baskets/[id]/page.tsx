@@ -8,9 +8,8 @@ import { SavedBasketDetailClient } from '@/features/account/components/SavedBask
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
-export const metadata = {
-  title: 'Saved Basket | Abbeygate',
-};
+import { getSEOMetadata } from '@/lib/seo';
+export const metadata = getSEOMetadata("/account/saved-baskets/[id]", { title: 'Saved Basket | Abbeygate England', noindex: true });
 
 type PageProps = {
   params: Promise<{ id: string }>;

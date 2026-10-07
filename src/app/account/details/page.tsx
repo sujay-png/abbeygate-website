@@ -6,9 +6,8 @@ import { AccountSidebar } from '@/features/account/components/AccountSidebar';
 import { AccountDetailsForm } from '@/features/account/components/AccountDetailsForm';
 import { getAccountDetails } from '@/features/account/services/customer';
 
-export const metadata = {
-  title: 'Account Details | Abbeygate',
-};
+import { getSEOMetadata } from '@/lib/seo';
+export const metadata = getSEOMetadata("/account/details", { title: 'Account Details | Abbeygate England', noindex: true });
 
 export default async function AccountDetailsPage() {
   const session = await getSession();

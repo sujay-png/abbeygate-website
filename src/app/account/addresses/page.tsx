@@ -7,9 +7,8 @@ import { AddressOverview } from '@/features/account/components/AddressOverview';
 import { AddressForm } from '@/features/account/components/AddressForm';
 import { getAddresses } from '@/features/account/services/address';
 
-export const metadata = {
-  title: 'Addresses | Abbeygate',
-};
+import { getSEOMetadata } from '@/lib/seo';
+export const metadata = getSEOMetadata("/account/addresses", { title: 'Addresses | Abbeygate England', noindex: true });
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;

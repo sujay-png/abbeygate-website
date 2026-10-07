@@ -1,12 +1,7 @@
 import { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'Your Cart | Abbeygate England',
-  robots: {
-    index: false,
-    follow: false,
-  }
-};
+import { getSEOMetadata } from '@/lib/seo';
+export const metadata: Metadata = getSEOMetadata("/cart");
 
 export default function CartLayout({
   children,

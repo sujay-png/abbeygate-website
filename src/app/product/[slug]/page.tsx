@@ -9,6 +9,7 @@ import { getStoreProductBySlug, getStoreProducts, getProductCustomTabs, getStore
 import { getProductPricingFromProduct } from '@/features/products/services/pricing';
 import { CATEGORY_ROUTES } from '@/data/category-routes';
 import type { Metadata } from 'next';
+import { getSEOMetadata } from '@/lib/seo';
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -23,15 +24,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     if (!product && /^\d+$/.test(slug)) {
       product = await getStoreProductById(Number(slug));
     }
-    return {
-      title: product ? `${product.name} | Abbeygate England` : 'Product',
-      description: product?.short_description?.replace(/<[^>]*>/g, '').slice(0, 160) || 'Bespoke corporate gifting by Abbeygate England.',
-      alternates: {
-        canonical: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://dashboard.abbeygate-england.com'}/product/${slug}`,
-      }
-    };
+    const title = product ? `${product.name} | Abbeygate England` : 'Product | Abbeygate England';
+    const description = product?.short_description?.replace(/<[^>]*>/g, '').slice(0, 160) || 'Bespoke corporate gifting by Abbeygate England.';
+    
+    return getSEOMetadata(`/product/${slug}`, { title, description });
   } catch {
-    return { title: 'Product | Abbeygate England' };
+    return getSEOMetadata(`/product/${slug}`, { title: 'Product | Abbeygate England' });
   }
 }
 

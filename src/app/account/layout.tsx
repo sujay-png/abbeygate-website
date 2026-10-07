@@ -1,12 +1,7 @@
 import { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'My Account | Abbeygate England',
-  robots: {
-    index: false,
-    follow: false,
-  }
-};
+import { getSEOMetadata } from '@/lib/seo';
+export const metadata: Metadata = getSEOMetadata("/account", { title: "My Account | Abbeygate England", noindex: true });
 
 export default function AccountLayout({
   children,

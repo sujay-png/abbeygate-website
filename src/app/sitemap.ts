@@ -3,21 +3,18 @@ import { getStoreProducts, getStoreCategories } from '@/features/products/servic
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://corporate.abbeygate-england.com';
 
+import { seoConfig } from '@/lib/seo';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const sitemap: MetadataRoute.Sitemap = [
-    {
-      url: BASE_URL,
+  // Generate static pages from our centralized SEO config
+  const sitemap: MetadataRoute.Sitemap = Object.keys(seoConfig)
+    .filter(path => !seoConfig[path].noindex)
+    .map(path => ({
+      url: `${BASE_URL}${path === '/' ? '' : path}`,
       lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 1,
-    },
-    {
-      url: `${BASE_URL}/search`,
-      lastModified: new Date(),
-      changeFrequency: 'always',
-      priority: 0.8,
-    },
-  ];
+      changeFrequency: path === '/' ? 'daily' : 'weekly',
+      priority: path === '/' ? 1 : 0.8,
+    }));
 
   try {
     // Fetch Categories
