@@ -182,6 +182,38 @@ export const ProductDetailClient = ({
   const [activeTab, setActiveTab] = useState('Description');
   const [isCustomizingStarted, setIsCustomizingStarted] = useState(false);
   const [customizerStep, setCustomizerStep] = useState<1 | 2 | 3 | 4>(1);
+  const prevCustomizingStarted = useRef(false);
+
+  // Track customiser steps precisely whenever the user proceeds, and track exits
+  useEffect(() => {
+    // If they just started or moved to a new step
+    if (isCustomizingStarted) {
+      import('@/lib/analytics').then(({ trackCustomiserStep }) => {
+        let stepName = '';
+        if (customizerStep === 1) stepName = 'start_customising';
+        if (customizerStep === 2) stepName = 'proceed_to_position';
+        if (customizerStep === 3) stepName = 'proceed_to_extras';
+        if (customizerStep === 4) stepName = 'proceed_to_review';
+        
+        if (stepName) trackCustomiserStep(stepName, product.name);
+      });
+    } 
+    // If they canceled customisation (it changed from true to false)
+    else if (prevCustomizingStarted.current === true && !isCustomizingStarted) {
+      import('@/lib/analytics').then(({ trackCustomiserStep }) => {
+        let stepName = '';
+        if (customizerStep === 1) stepName = 'exit_branding';
+        if (customizerStep === 2) stepName = 'exit_position';
+        if (customizerStep === 3) stepName = 'exit_extras';
+        if (customizerStep === 4) stepName = 'exit_review';
+        
+        if (stepName) trackCustomiserStep(stepName, product.name);
+      });
+    }
+
+    prevCustomizingStarted.current = isCustomizingStarted;
+  }, [customizerStep, isCustomizingStarted, product.name]);
+
   const { showPricesIncludingVat } = useVat();
   const isCustomizationSurface = activeImageIndex === 0;
   const [customization, setCustomization] = useState<CustomizationState>({

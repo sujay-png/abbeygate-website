@@ -71,7 +71,7 @@ describe('generateDigitalProof', () => {
 
     // It should include pricing
     expect(text).toContain('Quantity250');
-    expect(text).toContain('Unit price (ex VAT)£3.24');
+    expect(text).toContain('Unit price (inc customisation & extras)£3.24');
     expect(text).toContain('Subtotal (ex VAT)£810.00'); // 250 * 3.24 = 810
     expect(text).toContain('Total (incl. VAT 20%)£972.00'); // 810 * 1.2 = 972
 

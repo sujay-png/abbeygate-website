@@ -190,7 +190,11 @@ export const generateDigitalProof = async (
   const total = subtotal + vat;
 
   addPriceRow('Quantity', quantity.toString());
-  addPriceRow('Unit price (ex VAT)', formatGBP(unitPrice));
+  
+  const hasExtras = customization.enabled || (customization.cornerEdges && customization.cornerEdges !== 'None');
+  const unitPriceLabel = hasExtras ? 'Unit price (inc customisation & extras)' : 'Unit price (ex VAT)';
+  addPriceRow(unitPriceLabel, formatGBP(unitPrice));
+
   if (setupFee) {
     addPriceRow('Branding Setup (ex VAT)', formatGBP(setupFee));
   }

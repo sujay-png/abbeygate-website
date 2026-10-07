@@ -503,7 +503,7 @@ function CheckoutFormContent({
                 </div>
               )}
               
-              <label className={`flex items-center justify-between gap-4 px-4 py-4 text-sm font-semibold cursor-pointer ${paymentMethod === 'bacs' ? 'bg-brand-tint/60' : 'bg-white'}`}>
+              {/* <label className={`flex items-center justify-between gap-4 px-4 py-4 text-sm font-semibold cursor-pointer ${paymentMethod === 'bacs' ? 'bg-brand-tint/60' : 'bg-white'}`}>
                 <span className="flex items-center gap-3">
                   <input checked={paymentMethod === 'bacs'} onChange={() => setPaymentMethod('bacs')} name="payment" type="radio" value="bacs" className="accent-brand-primary" /> Direct bank transfer
                 </span>
@@ -513,7 +513,7 @@ function CheckoutFormContent({
                 <div className="bg-white px-4 py-4 text-sm text-brand-grey border-t border-[var(--brand-border)]">
                   Make your payment directly into our bank account. Please use your Order ID as the payment reference. Your order will not be shipped until the funds have cleared in our account.
                 </div>
-              )}
+              )} */}
             </div>
           </section>
 
