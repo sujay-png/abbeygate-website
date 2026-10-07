@@ -189,7 +189,7 @@ export default function CartPage() {
                             ) : null}
                           </div>
                           <p className="mt-5 text-[11px] text-gray-500 max-w-[200px]">
-                            Includes branding set-up ({formatPrice(showPricesIncludingVat ? BRANDING_SETUP_FEE * (1 + VAT_RATE) : BRANDING_SETUP_FEE)}){(item.customization as any)?.cornerEdgesPrice ? ` and extras (${formatPrice(((item.customization as any).cornerEdgesPrice * item.quantity) * (showPricesIncludingVat ? 1 + VAT_RATE : 1))})` : ''}
+                            Includes branding set-up ({formatPrice(showPricesIncludingVat ? item.setupFee * (1 + VAT_RATE) : item.setupFee)}){(item.customization as any)?.cornerEdgesPrice ? ` and extras (${formatPrice(((item.customization as any).cornerEdgesPrice * item.quantity) * (showPricesIncludingVat ? 1 + VAT_RATE : 1))})` : ''}
                           </p>
                         </>
                       ) : (
@@ -330,24 +330,29 @@ export default function CartPage() {
                   </div>
                 ))}
                 
-                <div className="flex justify-between font-bold text-gray-900 pt-4 pb-2 text-[14px]">
+                <div className="flex justify-between font-medium text-gray-900 pt-4 pb-2 text-[14px]">
                   <span>Subtotal (ex VAT)</span>
                   <span>{formatPrice(subtotal)}</span>
                 </div>
-                
+
                 <div className="flex items-center justify-between py-2 text-[14px]">
-                  <span className="text-gray-600">{shippingLabel}</span>
+                  <span className="text-gray-600">Delivery (ex VAT)</span>
                   <span className="font-medium text-gray-900">{formatPrice(shippingCost)}</span>
                 </div>
                 
                 <div className="flex items-center justify-between pb-4 border-b border-[var(--brand-border)] text-[14px]">
-                  <span className="text-gray-600">VAT (20%)</span>
+                  <span className="text-gray-600">VAT</span>
                   <span className="font-medium text-gray-900">{formatPrice(vatCost)}</span>
                 </div>
                 
-                <div className="flex justify-between font-bold text-gray-900 bg-brand-tint px-3.5 py-3 rounded-md mt-4 text-[14px]">
+                <div className="flex justify-between font-bold text-brand-primary-dark px-3.5 py-3 rounded-md mt-4 text-[14px]">
                   <span>Total (inc VAT)</span>
                   <span>{formatPrice(total)}</span>
+                </div>
+
+                <div className="flex justify-between font-medium text-gray-900 px-3.5 py-3 rounded-md text-[14px]">
+                  <span>Total (ex VAT)</span>
+                  <span>{formatPrice(total - vatCost)}</span>
                 </div>
               </div>
 

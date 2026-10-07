@@ -37,7 +37,7 @@ export default async function OrdersPage() {
   // Fetch orders for this customer
   let orders: WooCommerceOrder[] = [];
   try {
-    orders = await woocommerceApi.request<WooCommerceOrder[]>('/orders', {
+    orders = await woocommerceApi.request<WooCommerceOrder[]>(`/orders?customer=${session.userId}`, {
       revalidate: 60 // Cache for 1 minute for snappier navigation
     });
   } catch (error) {
@@ -84,7 +84,7 @@ export default async function OrdersPage() {
                     orders.map((order) => (
                       <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
                         <td className="py-4">
-                          <Link href={`/account/orders/${order.id}`} className="text-[#3498db] hover:underline font-medium">
+                          <Link href={`/account/orders/${order.id}`} className="text-brand-primary hover:underline font-medium">
                             #{order.number}
                           </Link>
                         </td>
@@ -107,7 +107,7 @@ export default async function OrdersPage() {
                         <td className="py-4">
                           <Link 
                             href={`/account/orders/${order.id}`}
-                            className="inline-flex items-center justify-center px-4 py-1.5 border border-[#3498db] text-[#3498db] text-sm font-medium rounded hover:bg-[#3498db] hover:text-white transition-colors"
+                            className="inline-flex items-center justify-center px-4 py-1.5 border border-brand-primary text-brand-primary text-sm font-medium rounded hover:bg-brand-primary hover:text-white transition-colors"
                           >
                             View
                           </Link>

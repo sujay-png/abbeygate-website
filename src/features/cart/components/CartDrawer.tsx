@@ -309,20 +309,24 @@ export const CartDrawer = () => {
             {items.length > 0 && (
               <div className="border-t border-gray-100 px-6 py-6 shrink-0 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[15px] text-brand-body font-work">Subtotal (ex VAT)</span>
-                  <span className="text-[17px] text-brand-body font-bold">{formatPrice(subtotal)}</span>
+                  <span className="text-[14px] text-brand-body font-work">Subtotal (ex VAT)</span>
+                  <span className="text-[15px] text-brand-body font-medium">{formatPrice(subtotal)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[14px] text-gray-600">{shippingLabel}</span>
+                  <span className="text-[14px] text-gray-600">Delivery (ex VAT)</span>
                   <span className="text-[15px] text-brand-body font-medium">{formatPrice(shippingCost)}</span>
                 </div>
                 <div className="flex items-center justify-between pt-2">
-                  <span className="text-[14px] text-gray-600">VAT (20%)</span>
+                  <span className="text-[14px] text-gray-600">VAT</span>
                   <span className="text-[15px] text-brand-body font-medium">{formatPrice(vatCost)}</span>
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                  <span className="text-[15px] text-brand-body font-bold">Total (inc. VAT)</span>
-                  <span className="text-[17px] text-brand-body font-bold">{formatPrice(total)}</span>
+                  <span className="text-[15px] text-brand-primary-dark font-bold">Total (inc VAT)</span>
+                  <span className="text-[17px] text-brand-primary-dark font-bold">{formatPrice(total)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[14px] text-brand-body font-medium">Total (ex VAT)</span>
+                  <span className="text-[15px] text-brand-body font-medium">{formatPrice(total - vatCost)}</span>
                 </div>
                   <button
                     onClick={handleCheckout}

@@ -278,7 +278,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     return calculateShipping(shippingItems);
   }, [items]);
 
-  const vatCost = useMemo(() => subtotal * VAT_RATE, [subtotal]);
+  const vatCost = useMemo(() => (subtotal + shippingCost) * VAT_RATE, [subtotal, shippingCost]);
   const total = subtotal + shippingCost + vatCost;
 
   const value: CartContextValue = {

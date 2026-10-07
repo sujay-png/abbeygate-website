@@ -36,7 +36,7 @@ export async function downloadCartItemProof(item: PricedItem): Promise<void> {
   const { generateDigitalProof } = await import('@/features/products/utils/generate-pdf');
   // 5th arg (colourName) is added in Part B — pass the line's real colour:
   const pdfBuffer = await generateDigitalProof(
-    product, customization, item.quantity, item.unitPrice, item.colour?.name,
+    product, customization, item.quantity, item.unitPrice, item.colour?.name, item.setupFee
   );
 
   const blob = new Blob([pdfBuffer], { type: 'application/pdf' });

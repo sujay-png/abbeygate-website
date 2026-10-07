@@ -30,7 +30,8 @@ export const generateDigitalProof = async (
   customization: CustomizationState,
   quantity: number,
   unitPrice: number,
-  colourName?: string
+  colourName?: string,
+  setupFee?: number
 ) => {
   // A4 size: 210 x 297 mm
   const doc = new jsPDF({
@@ -183,13 +184,19 @@ export const generateDigitalProof = async (
     priceY += 6;
   };
 
-  const subtotal = quantity * unitPrice;
-  const total = subtotal * (1 + VAT_RATE);
+  const itemTotal = quantity * unitPrice;
+  const subtotal = itemTotal + (setupFee || 0);
+  const vat = subtotal * VAT_RATE;
+  const total = subtotal + vat;
 
   addPriceRow('Quantity', quantity.toString());
   addPriceRow('Unit price (ex VAT)', formatGBP(unitPrice));
-  addPriceRow('Subtotal (ex VAT)', formatGBP(subtotal), true);
-  addPriceRow('Total (incl. VAT 20%)', formatGBP(total), true);
+  if (setupFee) {
+    addPriceRow('Branding Setup (ex VAT)', formatGBP(setupFee));
+  }
+  addPriceRow('Total (ex VAT)', formatGBP(subtotal), true);
+  addPriceRow('VAT', formatGBP(vat));
+  addPriceRow('Total (inc VAT)', formatGBP(total), true);
 
   // 7. Footer
   doc.setFontSize(8);

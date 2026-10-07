@@ -12,6 +12,7 @@ import { Elements, PaymentElement, ExpressCheckoutElement, useStripe, useElement
 import { useRef } from 'react';
 import { ImagePreviewModal } from '@/components/ui/ImagePreviewModal';
 import { PolicyModal, type PolicyType } from './PolicyModal';
+import { VAT_RATE } from '@/features/products/utils/pricing';
 
 const formatPrice = (value: number) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
 const inputClass = 'h-12 w-full border border-[var(--brand-border)] bg-white px-4 text-sm outline-none transition focus:border-brand-primary focus:ring-1 focus:ring-brand-primary';
@@ -612,26 +613,30 @@ function CheckoutFormContent({
           )}
           <dl className="mt-7 space-y-3 text-sm">
             <div className="flex justify-between gap-5">
-              <dt>Subtotal</dt>
+              <dt>Subtotal (ex VAT)</dt>
               <dd className="font-semibold">{formatPrice(displaySubtotal)}</dd>
             </div>
             {displayDiscount > 0 && (
               <div className="flex justify-between gap-5 text-brand-accent">
-                <dt>Discount</dt>
+                <dt>Discount {quoteData?.quote.couponCode ? `(${quoteData.quote.couponCode.toUpperCase()})` : ''}</dt>
                 <dd className="font-semibold">-{formatPrice(displayDiscount)}</dd>
               </div>
             )}
             <div className="flex justify-between gap-5">
-              <dt>{displayShippingLabel}</dt>
+              <dt>Delivery (ex VAT)</dt>
               <dd className="font-semibold">{formatPrice(displayShipping)}</dd>
             </div>
             <div className="flex justify-between gap-5 text-brand-grey">
-              <dt>VAT (20%)</dt>
+              <dt>VAT</dt>
               <dd>{formatPrice(displayVat)}</dd>
             </div>
             <div className="mt-5 flex justify-between gap-5 border-t border-[var(--brand-border)] pt-5 text-xl font-bold text-brand-primary-dark">
-              <dt>Total</dt>
+              <dt>Total (inc VAT)</dt>
               <dd>{isQuoteLoading ? '...' : formatPrice(displayTotal)}</dd>
+            </div>
+            <div className="flex justify-between gap-5 text-md font-bold text-brand-primary-dark border-t border-[var(--brand-border)] pt-2 mt-2">
+              <dt>Total (ex VAT)</dt>
+              <dd>{isQuoteLoading ? '...' : formatPrice(displayTotal - displayVat)}</dd>
             </div>
           </dl>
           <div className="mt-7 flex items-center gap-3 border-t border-[var(--brand-border)] pt-6 text-xs text-brand-grey">

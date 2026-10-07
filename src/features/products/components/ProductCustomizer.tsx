@@ -764,7 +764,7 @@ export const ProductCustomizer = ({
                          setIsGeneratingProof(true);
                          try {
                             const { generateDigitalProof } = await import('../utils/generate-pdf');
-                            const { calculateProductPrice } = await import('../utils/pricing');
+                            const { calculateProductPrice, BRANDING_SETUP_FEE } = await import('../utils/pricing');
                             const priceDetails = calculateProductPrice({
                                 quantity,
                                 basePrice,
@@ -775,7 +775,8 @@ export const ProductCustomizer = ({
                                 cornerEdges: customization.cornerEdges,
                             });
                             const finalUnitPrice = priceDetails.unitPrice + (customization.cornerEdges !== 'None' ? getCornerEdgesPricing(product).pricePerPair : 0);
-                            const pdfBuffer = await generateDigitalProof(product, customization, quantity, finalUnitPrice, activeColorName);
+                            const setupFee = customization.enabled ? BRANDING_SETUP_FEE : 0;
+                            const pdfBuffer = await generateDigitalProof(product, customization, quantity, finalUnitPrice, activeColorName, setupFee);
                             const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
