@@ -27,6 +27,7 @@ export const CartDrawer = () => {
   const { items: rawItems, pricedItems: items, isOpen, isLoading, subtotal, shippingCost, shippingLabel, vatCost, total, closeCart, removeItem, updateQuantity, updateItem } = useCart();
   const { showPricesIncludingVat } = useVat();
   const [previewItem, setPreviewItem] = useState<any | null>(null);
+  const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
   const [pickerFor, setPickerFor] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
@@ -161,7 +162,20 @@ export const CartDrawer = () => {
                             {item.customization.fileName && (
                               <p className="text-[12px] text-gray-600">
                                 <span className="font-medium">Logo:</span> {item.customization.fileName} —{' '}
-                                <a href={item.customization.logoFile ? URL.createObjectURL(item.customization.logoFile) : '#'} target="_blank" rel="noopener noreferrer" className="text-brand-primary-dark underline hover:text-gray-600">View file</a>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const url = item.customization?.logoFile
+                                      ? URL.createObjectURL(item.customization.logoFile as Blob)
+                                      : item.customization?.logoPreviewUrl || '';
+                                    if (url) {
+                                      setPreviewImage({ url, title: `Uploaded Logo: ${item.customization?.fileName || ''}` });
+                                    }
+                                  }}
+                                  className="text-brand-primary-dark underline hover:text-gray-600 cursor-pointer"
+                                >
+                                  View file
+                                </button>
                               </p>
                             )}
                             {(item.proofStatus || 'ready') === 'pending' ? (
@@ -358,10 +372,14 @@ export const CartDrawer = () => {
       )}
     </AnimatePresence>
     <ImagePreviewModal 
-      isOpen={!!previewItem} 
-      onClose={() => setPreviewItem(null)} 
+      isOpen={!!previewItem || !!previewImage} 
+      onClose={() => {
+        setPreviewItem(null);
+        setPreviewImage(null);
+      }} 
       item={previewItem} 
-      title="Customization Preview" 
+      imageUrl={previewImage?.url}
+      title={previewImage?.title || "Customization Preview"} 
     />
     </>
   );

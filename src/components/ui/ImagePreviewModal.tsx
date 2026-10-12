@@ -10,11 +10,12 @@ import { getConfiguredImageBounds } from '@/features/products/utils/product-imag
 type ImagePreviewModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  item: CartItem | null;
+  item?: CartItem | null;
+  imageUrl?: string | null;
   title?: string;
 };
 
-export const ImagePreviewModal = ({ isOpen, onClose, item, title = 'Customization Preview' }: ImagePreviewModalProps) => {
+export const ImagePreviewModal = ({ isOpen, onClose, item, imageUrl, title = 'Customization Preview' }: ImagePreviewModalProps) => {
   const onCloseRef = useRef(onClose);
   
   useEffect(() => {
@@ -49,8 +50,6 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, title = 'Customizatio
     item?.attributes?.find(a => a.name === 'Corner Edges')?.value;
   const hasCornerEdges = Boolean(cornerEdges && cornerEdges !== 'None');
 
-
-
   useEffect(() => {
     if (isOpen && item && cornerEdges && cornerEdges !== 'None') {
       if (item.customization?.imageBounds) {
@@ -83,7 +82,69 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, title = 'Customizatio
     }
   }, [isOpen, item?.image, useComposedPreview]);
 
-  if (!isOpen || !item) return null;
+  if (!isOpen || (!item && !imageUrl)) return null;
+
+  // Direct image URL preview (e.g. uploaded logo or order details file)
+  if (imageUrl) {
+    const isPdf = imageUrl.toLowerCase().includes('.pdf');
+    return (
+      <div 
+        className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+        onClick={onClose}
+      >
+        <div 
+          className="relative bg-white rounded-xl shadow-2xl overflow-hidden w-full max-w-lg md:max-w-xl flex flex-col animate-in fade-in zoom-in-95 duration-150"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between p-4 border-b border-gray-100 shrink-0">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-gray-900">{title}</h3>
+              <a 
+                href={imageUrl} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-xs text-brand-primary hover:underline inline-flex items-center gap-1 font-medium ml-2"
+                title="Open full size in new tab"
+              >
+                Open original ↗
+              </a>
+            </div>
+            <button 
+              onClick={onClose}
+              className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+            >
+              <X className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
+          <div className="p-6 md:p-8 overflow-auto flex items-center justify-center bg-[#f9f9f9] min-h-[300px] max-h-[75vh]">
+            {isPdf ? (
+              <div className="flex flex-col items-center justify-center gap-4 py-8">
+                <p className="text-sm text-gray-600">This file is a PDF document.</p>
+                <a 
+                  href={imageUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="bg-brand-primary hover:bg-brand-primary-dark text-white px-5 py-2.5 rounded-md font-medium text-sm transition-colors"
+                >
+                  View PDF in new tab
+                </a>
+              </div>
+            ) : (
+              <div className="relative w-full max-h-[60vh] flex items-center justify-center">
+                <img
+                  src={imageUrl}
+                  alt={title}
+                  className="max-h-[60vh] max-w-full object-contain rounded bg-white p-2 border border-gray-100 shadow-sm"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!item) return null;
 
   return (
     <div 

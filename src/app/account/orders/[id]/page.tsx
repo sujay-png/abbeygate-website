@@ -5,6 +5,7 @@ import { Breadcrumb } from '@/components/content';
 import { Container } from '@/components/ui/Container';
 import { AccountSidebar } from '@/features/account/components/AccountSidebar';
 import { getOrderDetail, type WooCommerceOrderDetail } from '@/features/account/services/orders';
+import { OrderMetaFileLink } from '@/features/account/components/OrderMetaFileLink';
 
 type OrderDetailsProps = {
   params: Promise<{ id: string }>;
@@ -115,9 +116,7 @@ export default async function OrderDetailsPage({ params }: OrderDetailsProps) {
                                 <div key={idx}>
                                   <strong className="font-medium text-gray-700">{meta.key}:</strong>{' '}
                                   {meta.value.toString().startsWith('http') ? (
-                                    <a href={meta.value} target="_blank" rel="noopener noreferrer" className="text-brand-primary hover:underline">
-                                      View File
-                                    </a>
+                                    <OrderMetaFileLink url={meta.value.toString()} label={meta.key} />
                                   ) : (
                                     <span>{meta.value}</span>
                                   )}

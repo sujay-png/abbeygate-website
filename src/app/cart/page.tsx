@@ -30,6 +30,7 @@ export default function CartPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [pickerFor, setPickerFor] = useState<string | null>(null);
   const [previewItem, setPreviewItem] = useState<any | null>(null);
+  const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
 
@@ -164,9 +165,20 @@ export default function CartPage() {
                                 <span className="font-bold text-gray-900">Logo</span>
                                 <span className="break-all pr-4">
                                   {item.customization.fileName} —{' '}
-                                  <a href={item.customization.logoFile ? URL.createObjectURL(item.customization.logoFile) : '#'} target="_blank" rel="noopener noreferrer" className="text-brand-primary-dark underline hover:text-gray-600 font-semibold inline-block">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const url = item.customization?.logoFile
+                                        ? URL.createObjectURL(item.customization.logoFile as Blob)
+                                        : item.customization?.logoPreviewUrl || '';
+                                      if (url) {
+                                        setPreviewImage({ url, title: `Uploaded Logo: ${item.customization?.fileName || ''}` });
+                                      }
+                                    }}
+                                    className="text-brand-primary-dark underline hover:text-gray-600 font-semibold inline-block cursor-pointer"
+                                  >
                                     View file
-                                  </a>
+                                  </button>
                                 </span>
                               </>
                             )}
@@ -395,10 +407,14 @@ export default function CartPage() {
         )}
       </Container>
       <ImagePreviewModal 
-        isOpen={!!previewItem} 
-        onClose={() => setPreviewItem(null)} 
+        isOpen={!!previewItem || !!previewImage} 
+        onClose={() => {
+          setPreviewItem(null);
+          setPreviewImage(null);
+        }} 
         item={previewItem} 
-        title="Customization Preview" 
+        imageUrl={previewImage?.url}
+        title={previewImage?.title || "Customization Preview"} 
       />
     </div>
   );

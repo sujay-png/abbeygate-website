@@ -78,6 +78,7 @@ function CheckoutFormContent({
   setAppliedCoupon,
   initialDetails,
   setPreviewItem,
+  setPreviewImage,
   isLoggedIn,
   setActivePolicy
 }: any) {
@@ -569,7 +570,20 @@ function CheckoutFormContent({
                       {item.customization.fileName && (
                         <p className="text-brand-grey break-all sm:break-words">
                           <span className="font-medium text-brand-body shrink-0">Logo:</span> {item.customization.fileName} —{' '}
-                          <a href={item.customization.logoFile ? URL.createObjectURL(item.customization.logoFile as Blob) : '#'} target="_blank" rel="noopener noreferrer" className="text-brand-primary-dark underline hover:text-gray-600 shrink-0">View file</a>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const url = item.customization?.logoFile
+                                ? URL.createObjectURL(item.customization.logoFile as Blob)
+                                : item.customization?.logoPreviewUrl || '';
+                              if (url) {
+                                setPreviewImage({ url, title: `Uploaded Logo: ${item.customization?.fileName || ''}` });
+                              }
+                            }}
+                            className="text-brand-primary-dark underline hover:text-gray-600 shrink-0 cursor-pointer"
+                          >
+                            View file
+                          </button>
                         </p>
                       )}
                       {item.customization.logoPreviewUrl && (
@@ -656,6 +670,7 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
   const [appliedCoupon, setAppliedCoupon] = useState<string | undefined>();
   const [quoteData, setQuoteData] = useState<{ id: string; quote: CheckoutQuote } | null>(null);
   const [previewItem, setPreviewItem] = useState<any | null>(null);
+  const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
@@ -819,6 +834,7 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
     setAppliedCoupon,
     initialDetails,
     setPreviewItem,
+    setPreviewImage,
     isLoggedIn,
     setActivePolicy
   };
@@ -846,10 +862,14 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
       
       <CheckoutFooter onPolicyClick={setActivePolicy} />
       <ImagePreviewModal 
-        isOpen={!!previewItem} 
-        onClose={() => setPreviewItem(null)} 
+        isOpen={!!previewItem || !!previewImage} 
+        onClose={() => {
+          setPreviewItem(null);
+          setPreviewImage(null);
+        }} 
         item={previewItem} 
-        title="Customization Preview" 
+        imageUrl={previewImage?.url}
+        title={previewImage?.title || "Customization Preview"} 
       />
       <PolicyModal
         type={activePolicy || 'terms'}
