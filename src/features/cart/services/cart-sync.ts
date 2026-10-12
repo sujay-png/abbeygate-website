@@ -31,8 +31,13 @@ function sanitizeCartItemsForCloud(items: CartItem[]): CartItem[] {
   });
 }
 
+export type CloudCartResponse = {
+  items: CartItem[];
+  userId: number | string;
+};
+
 /** Fetches the persisted cloud cart for the currently authenticated user. */
-export async function getCloudCart(): Promise<CartItem[] | null> {
+export async function getCloudCart(): Promise<CloudCartResponse | null> {
   const session = await getSession();
   if (!session) return null;
 
@@ -43,10 +48,10 @@ export async function getCloudCart(): Promise<CartItem[] | null> {
 
   try {
     const cached = await redis.get<CartItem[]>(cacheKey);
-    if (cached && Array.isArray(cached)) {
-      return cached;
-    }
-    return [];
+    return {
+      items: cached && Array.isArray(cached) ? cached : [],
+      userId: session.userId,
+    };
   } catch (err) {
     console.warn('Redis read error for cloud cart:', err);
     return null;

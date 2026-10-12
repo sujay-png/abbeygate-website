@@ -102,9 +102,37 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     loadCartFromStorage().then(async (storedItems) => {
       let finalItems = storedItems;
       try {
-        const cloudItems = await getCloudCart();
-        if (cloudItems && cloudItems.length > 0) {
-          finalItems = mergeCarts(storedItems, cloudItems);
+        const cloudData = await getCloudCart();
+        if (cloudData) {
+          const lastSyncedUser = typeof window !== 'undefined' ? localStorage.getItem('abbeygate-cart-user') : null;
+          if (lastSyncedUser === String(cloudData.userId)) {
+            // Already synced on this device: cloud cart is the authoritative truth.
+            // Do NOT resurrect deleted local items; preserve local File objects if present.
+            finalItems = cloudData.items.map(cloudItem => {
+              const matchingLocal = storedItems.find(l => l.key === cloudItem.key);
+              if (matchingLocal?.customization?.logoFile) {
+                return {
+                  ...cloudItem,
+                  customization: {
+                    ...cloudItem.customization,
+                    logoFile: matchingLocal.customization.logoFile,
+                  } as LogoCustomization
+                };
+              }
+              return cloudItem;
+            });
+          } else {
+            // New login or fresh device login: merge local guest items with cloud cart once
+            finalItems = mergeCarts(storedItems, cloudData.items);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('abbeygate-cart-user', String(cloudData.userId));
+            }
+          }
+        } else {
+          // Logged out / guest user
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('abbeygate-cart-user');
+          }
         }
       } catch (err) {
         console.warn('Failed to load cloud cart:', err);
