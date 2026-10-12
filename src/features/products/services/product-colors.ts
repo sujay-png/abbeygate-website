@@ -3,7 +3,7 @@ import { parseHexValue } from "../utils/color-helpers";
 
 type ProductMetaItem = {
   id: number;
-  meta_data?: Array<{ key: string; value: any }>;
+  meta_data?: Array<{ key: string; value: unknown }>;
 };
 
 /**
