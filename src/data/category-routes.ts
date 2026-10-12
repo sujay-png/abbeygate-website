@@ -111,13 +111,15 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
   },
 
   // Custom Gifts
-  { path: "/custom-gifts", categoryId: 126, title: "Custom Gifts", description: "Make a lasting impression with Abbeygate's exquisite range of custom business gifts. From elegant travel wallets to sophisticated card holders, our collection is perfect for client appreciation, employee rewards, and promotional events. Add your bespoke branding for a truly memorable gifting experience." },
-  { path: "/custom-gifts/luggage-tags", categoryId: 144, title: "Luggage Tags" },
-  { path: "/custom-gifts/card-holders", categoryId: 152, title: "Card Holders" },
-  { path: "/custom-gifts/keyrings", categoryId: 149, title: "Keyrings" },
+  { path: "/custom-gifts", categoryId: "176,126", title: "Custom Gifts", description: "Make a lasting impression with Abbeygate's exquisite range of custom business gifts. From elegant travel wallets to sophisticated card holders, our collection is perfect for client appreciation, employee rewards, and promotional events. Add your bespoke branding for a truly memorable gifting experience." },
+  { path: "/custom-gifts/luggage-tags", categoryId: "182,144", title: "Luggage Tags" },
+  { path: "/custom-gifts/card-holders", categoryId: "178,152", title: "Card Holders" },
+  { path: "/custom-gifts/keyrings", categoryId: "183,149", title: "Keyrings" },
+  { path: "/custom-gifts/travel-gifts", categoryId: 177, title: "Travel Gifts" },
+  { path: "/custom-gifts/leather-gifts", categoryId: 179, title: "Leather Gifts" },
+  { path: "/custom-gifts/passport-wallets", categoryId: 181, title: "Passport Wallets" },
   { path: "/custom-gifts/pocket-wallets", categoryId: 153, title: "Pocket Wallets" },
   { path: "/custom-gifts/document-wallets", categoryId: 990126, title: "Document Wallets" },
-  { path: "/custom-gifts/passport-wallets", categoryId: 990127, title: "Passport Wallets" },
   { path: "/custom-gifts/zipped-travel-wallets", categoryId: 990128, title: "Zipped Travel Wallets" },
   { path: "/custom-gifts/cosmetic-bags", categoryId: 990129, title: "Cosmetic Bags" },
   { path: "/custom-gifts/wash-bags", categoryId: 990130, title: "Wash Bags" },
@@ -125,7 +127,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
   { path: "/custom-gifts/menu-holders", categoryId: 990132, title: "Menu Holders" },
   { path: "/custom-gifts/coasters", categoryId: 990133, title: "Coasters" },
   { path: "/custom-gifts/pens", categoryId: 990134, title: "Pens" },
-  { path: "/custom-gifts/all", categoryId: 126, title: "All Gifts" },
+  { path: "/custom-gifts/all", categoryId: "176,126", title: "All Gifts" },
 
   // Collections
   { path: "/collection", categoryId: "49,50,51,52,53,54,55,140", title: "Our Collections", description: "Discover the full Abbeygate collection, featuring our complete range of premium diaries, notebooks, and travel accessories. From the eco-conscious materials of our Conscious Collection to the timeless elegance of the Dorchester and Chelsea ranges, our entire selection is crafted with meticulous attention to detail. Explore our comprehensive range to find the perfect companion for your personal and professional needs." },

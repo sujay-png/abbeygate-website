@@ -35,10 +35,14 @@ export function SaveBasketModal({ isOpen, onClose, items }: Props) {
       .filter(r => r.productId && r.qty > 0)
       .map(item => {
         if (item.customization) {
-          // Destructure out logoFile (which is a File object that Next.js struggles to serialize)
-          // fullPreviewUrl is now compressed as JPEG, so it's safe to include
-          const { logoFile, ...restCustomization } = item.customization;
-          return { ...item, customization: restCustomization };
+          // Destructure out logoFile (File object) and raw base64 logoPreviewUrl (which can be 1MB+)
+          // fullPreviewUrl is already compressed JPEG and safe to keep
+          const { logoFile, logoPreviewUrl, ...restCustomization } = item.customization;
+          const safeCustomization = {
+            ...restCustomization,
+            ...(logoPreviewUrl && !logoPreviewUrl.startsWith('data:') ? { logoPreviewUrl } : {})
+          };
+          return { ...item, customization: safeCustomization };
         }
         return item;
       });
@@ -49,21 +53,21 @@ export function SaveBasketModal({ isOpen, onClose, items }: Props) {
     }
 
     setIsSaving(true);
-    
-    // OPTIMISTIC UI: Instantly assume success!
-    toast.success(`Saved Basket "${name}" saved!`);
-    setName('');
-    onClose();
-    router.push('/account/saved-baskets');
-
-    // Run the actual save in the background
-    savesavedBasket(name.trim(), validItems).then((res) => {
+    try {
+      const res = await savesavedBasket(name.trim(), validItems);
       if (res.success) {
-        router.refresh(); // Refresh in background so next time they visit it's fresh
+        toast.success(`Saved Basket "${name}" saved!`);
+        setName('');
+        onClose();
+        router.push('/account/saved-baskets');
       } else {
-        toast.error(res.error || 'Failed to sync saved list with server.');
+        toast.error(res.error || 'Failed to save basket');
       }
-    });
+    } catch {
+      toast.error('An unexpected error occurred while saving.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (

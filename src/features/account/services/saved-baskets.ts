@@ -29,6 +29,22 @@ export type savedBasket = {
   user: string;
 };
 
+function sanitizeBasketItems(items: savedBasketItem[]): savedBasketItem[] {
+  return (items || []).map(item => {
+    if (item.customization) {
+      const { logoFile, logoPreviewUrl, ...rest } = item.customization;
+      return {
+        ...item,
+        customization: {
+          ...rest,
+          ...(logoPreviewUrl && !logoPreviewUrl.startsWith('data:') ? { logoPreviewUrl } : {})
+        }
+      };
+    }
+    return item;
+  });
+}
+
 // Internal helper to get raw customer meta
 async function getCustomerMeta() {
   const session = await getSession();
@@ -94,30 +110,37 @@ export async function getsavedBaskets(): Promise<savedBasket[]> {
     } catch {}
   }
 
+  // Sanitize all items so massive raw base64 data URLs are stripped
+  const sanitizedBaskets = allBaskets.map(basket => ({
+    ...basket,
+    items: sanitizeBasketItems(basket.items)
+  }));
+
   // Sort them by createdAt descending
-  allBaskets.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  sanitizedBaskets.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // 3. Populate Redis cache for subsequent visits
   if (redis) {
     try {
-      await redis.set(cacheKey, allBaskets);
+      await redis.set(cacheKey, sanitizedBaskets);
     } catch (cacheErr) {
       console.warn('Redis write error for saved baskets:', cacheErr);
     }
   }
 
-  return allBaskets;
+  return sanitizedBaskets;
 }
 
 export async function savesavedBasket(name: string, items: savedBasketItem[]): Promise<{ success: boolean; error?: string }> {
   const session = await getSession();
   if (!session) return { success: false, error: 'Not authenticated' };
 
+  const sanitizedItems = sanitizeBasketItems(items);
   const id = crypto.randomUUID();
   const newList: savedBasket = {
     id,
     name,
-    items,
+    items: sanitizedItems,
     createdAt: new Date().toISOString(),
     user: session.email.split('@')[0], 
   };
@@ -165,7 +188,7 @@ export async function deletesavedBasket(id: string): Promise<{ success: boolean;
   const redis = getRedisClient();
   const cacheKey = getBasketCacheKey(session.userId);
 
-  // 1. Immediately delete from Redis
+  // 1. Immediately delete from Redis so subsequent reads are instant
   if (redis) {
     try {
       const currentCached = (await redis.get<savedBasket[]>(cacheKey)) || [];
@@ -177,43 +200,39 @@ export async function deletesavedBasket(id: string): Promise<{ success: boolean;
   }
 
   // 2. Persist deletion to WooCommerce customer meta
-  const data = await getCustomerMeta();
-  if (!data) return { success: false, error: 'Not authenticated' };
-
-  const metaUpdates: { key: string; value: string | null }[] = [];
-
-  // Check new keys first
-  const newMeta = data.customer.meta_data.find((meta) => meta.key === `saved_basket_${id}`);
-  if (newMeta) {
-    metaUpdates.push({ key: `saved_basket_${id}`, value: null }); // Null deletes the meta key
-  } else {
-    // Legacy array fallback
-    let currentLists: savedBasket[] = [];
-    const listsMeta = data.customer.meta_data.find((meta) => meta.key === 'purchase_lists');
-    if (listsMeta && Array.isArray(listsMeta.value)) {
-      currentLists = listsMeta.value as savedBasket[];
-    } else if (listsMeta && typeof listsMeta.value === 'string') {
-      try {
-        currentLists = JSON.parse(listsMeta.value) as savedBasket[];
-      } catch {}
-    }
-
-    const updatedLists = currentLists.filter(list => list.id !== id);
-    metaUpdates.push({ key: 'purchase_lists', value: JSON.stringify(updatedLists) });
-  }
-
-  if (metaUpdates.length === 0) {
-    revalidatePath('/account/saved-baskets');
-    return { success: true };
-  }
-
+  // In WooCommerce, sending { key, value: null } removes the individual meta key.
   try {
-    await woocommerceApi.request(`/customers/${data.session.userId}`, {
+    await woocommerceApi.request(`/customers/${session.userId}`, {
       method: 'PUT',
       body: {
-        meta_data: metaUpdates
+        meta_data: [
+          { key: `saved_basket_${id}`, value: null }
+        ]
       }
     });
+
+    // Also check and clean legacy purchase_lists if it exists
+    const data = await getCustomerMeta();
+    if (data) {
+      const listsMeta = data.customer.meta_data.find((meta) => meta.key === 'purchase_lists');
+      if (listsMeta) {
+        let currentLists: savedBasket[] = [];
+        if (Array.isArray(listsMeta.value)) {
+          currentLists = listsMeta.value as savedBasket[];
+        } else if (typeof listsMeta.value === 'string') {
+          try { currentLists = JSON.parse(listsMeta.value); } catch {}
+        }
+        if (currentLists.some(list => list.id === id)) {
+          const updatedLists = currentLists.filter(list => list.id !== id);
+          await woocommerceApi.request(`/customers/${session.userId}`, {
+            method: 'PUT',
+            body: {
+              meta_data: [{ key: 'purchase_lists', value: JSON.stringify(updatedLists) }]
+            }
+          });
+        }
+      }
+    }
     
     revalidatePath('/account/saved-baskets');
     return { success: true };

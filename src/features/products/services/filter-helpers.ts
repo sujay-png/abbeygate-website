@@ -53,7 +53,7 @@ export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
   // so the frontend filter system can filter by sub-category for Custom Gifts and Search.
   const allProducts = rawProducts.map((product) => {
     const productTypeTerms = product.categories
-      .filter((cat) => cat.id !== 126 && !cat.name.toLowerCase().includes('collection')) // Exclude parent and collections
+      .filter((cat) => cat.id !== 126 && cat.id !== 176 && !cat.name.toLowerCase().includes('collection')) // Exclude parent and collections
       .map((cat) => ({ id: cat.id, name: cat.name, slug: cat.slug }));
 
     if (productTypeTerms.length > 0) {
