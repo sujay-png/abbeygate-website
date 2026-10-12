@@ -1,12 +1,14 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useMemo, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef, ReactNode } from 'react';
 import type { LogoCustomization } from '@/features/products/types/store-product';
 import type { StoreProduct, PriceTier } from '@/features/products/types/store-product';
 import { calculateShipping } from '@/features/products/utils/shipping';
 import { VAT_RATE, calculateProductPrice, CUSTOMIZATION_MIN_QTY, getCornerEdgesPricing, BRANDING_SETUP_FEE } from '@/features/products/utils/pricing';
 import * as idb from '@/lib/idb';
 import toast from 'react-hot-toast';
+import { getCloudCart, saveCloudCart, clearCloudCart } from '@/features/cart/services/cart-sync';
+import { mergeCarts } from '@/features/cart/utils/merge-cart';
 
 export type CartColourOption = {
   productId: string;
@@ -94,10 +96,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    loadCartFromStorage().then(storedItems => {
-      setItems(storedItems);
+    loadCartFromStorage().then(async (storedItems) => {
+      let finalItems = storedItems;
+      try {
+        const cloudItems = await getCloudCart();
+        if (cloudItems && cloudItems.length > 0) {
+          finalItems = mergeCarts(storedItems, cloudItems);
+        }
+      } catch (err) {
+        console.warn('Failed to load cloud cart:', err);
+      }
+      setItems(finalItems);
       setHydrated(true);
     });
   }, []);
@@ -105,7 +117,23 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (hydrated) {
       saveCartToStorage(items);
+
+      // Debounce cloud sync to Redis (800ms) to conserve free tier commands
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+      syncTimeoutRef.current = setTimeout(() => {
+        saveCloudCart(items).catch((err) => {
+          console.warn('Background cloud cart sync error:', err);
+        });
+      }, 800);
     }
+
+    return () => {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+    };
   }, [items, hydrated]);
 
   const openCart = useCallback(() => setIsOpen(true), []);
@@ -206,6 +234,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const clearCart = useCallback(() => {
     setItems([]);
     idb.set(CART_STORAGE_KEY, []);
+    clearCloudCart().catch((err) => console.warn('Failed to clear cloud cart:', err));
   }, []);
 
   const pricedItems = useMemo<PricedItem[]>(() => {
