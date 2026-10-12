@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { storeFetch, storeFetchWithHeaders } from "@/lib/woocommerce/store-api";
+import { getWooStoreUrl } from "@/lib/woocommerce/config";
 import type {
   StoreProduct,
   StoreCategory,
@@ -171,3 +172,104 @@ export const getProductCustomTabs = cache(async (
   }
   return [];
 });
+
+export type SitemapProduct = {
+  id: number;
+  slug: string;
+  modified?: string;
+};
+
+/**
+ * Lightweight, dynamically paginated product fetch for XML sitemap generation.
+ * Queries the public WP REST endpoint for only the required fields (id, slug, modified)
+ * so we avoid transferring massive image/description payloads and capture genuine modified dates.
+ */
+export async function getSitemapProducts(): Promise<SitemapProduct[]> {
+  const storeUrl = getWooStoreUrl();
+  try {
+    const page1Url = new URL(`${storeUrl}/wp-json/wp/v2/product`);
+    page1Url.searchParams.set("per_page", "100");
+    page1Url.searchParams.set("page", "1");
+    page1Url.searchParams.set("status", "publish");
+    page1Url.searchParams.set("_fields", "id,slug,modified,status");
+
+    const res1 = await fetch(page1Url.toString(), { next: { revalidate: 3600 } });
+    if (!res1.ok) {
+      throw new Error(`Failed to fetch products page 1: ${res1.status}`);
+    }
+
+    const totalPages = parseInt(res1.headers.get("x-wp-totalpages") || "1", 10);
+    const page1Products = (await res1.json()) as Array<{
+      id: number;
+      slug: string;
+      modified: string;
+      status?: string;
+    }>;
+
+    const allWpProducts = [...page1Products];
+
+    if (totalPages > 1) {
+      const restPromises = [];
+      for (let page = 2; page <= totalPages; page++) {
+        const pageUrl = new URL(page1Url.toString());
+        pageUrl.searchParams.set("page", String(page));
+        restPromises.push(
+          fetch(pageUrl.toString(), { next: { revalidate: 3600 } })
+            .then(async (res) => {
+              if (!res.ok) return [];
+              return (await res.json()) as typeof page1Products;
+            })
+            .catch(() => [])
+        );
+      }
+      const restResults = await Promise.all(restPromises);
+      for (const pageItems of restResults) {
+        allWpProducts.push(...pageItems);
+      }
+    }
+
+    const uniqueBySlug = new Map<string, SitemapProduct>();
+    for (const p of allWpProducts) {
+      if (p.slug && (!p.status || p.status === "publish")) {
+        uniqueBySlug.set(p.slug, {
+          id: p.id,
+          slug: p.slug,
+          modified: p.modified,
+        });
+      }
+    }
+
+    if (uniqueBySlug.size > 0) {
+      return Array.from(uniqueBySlug.values());
+    }
+  } catch (error) {
+    console.error("Failed to fetch sitemap products via WP REST API, falling back to Store API:", error);
+  }
+
+  // Fallback: Dynamically paginate through storeFetchWithHeaders
+  try {
+    const first = await getStoreProducts({ perPage: 100, page: 1 });
+    const totalPages = Math.max(first.totalPages, 1);
+    const restPromises = [];
+    for (let page = 2; page <= totalPages; page++) {
+      restPromises.push(getStoreProducts({ perPage: 100, page }));
+    }
+    const rest = await Promise.all(restPromises);
+    const allStoreProducts = [first.products, ...rest.flatMap((r) => r.products)].flat();
+
+    const uniqueMap = new Map<string, SitemapProduct>();
+    for (const p of allStoreProducts) {
+      if (p.slug) {
+        uniqueMap.set(p.slug, {
+          id: p.id,
+          slug: p.slug,
+        });
+      }
+    }
+    return Array.from(uniqueMap.values());
+  } catch (fallbackError) {
+    console.error("Fallback store products fetch also failed:", fallbackError);
+    return [];
+  }
+}
+
