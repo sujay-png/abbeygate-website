@@ -4,6 +4,9 @@ import { woocommerceApi } from '@/lib/woocommerce/client';
 import { getSession } from '@/features/auth/utils/session';
 import { revalidatePath } from 'next/cache';
 import { StoreProduct } from '@/features/products/types/store-product';
+import { getRedisClient } from '@/lib/redis';
+
+const getBasketCacheKey = (userId: number | string) => `user:${userId}:saved_baskets`;
 
 export type savedBasketItem = {
   productId: number;
@@ -44,6 +47,25 @@ async function getCustomerMeta() {
 }
 
 export async function getsavedBaskets(): Promise<savedBasket[]> {
+  const session = await getSession();
+  if (!session) return [];
+
+  const redis = getRedisClient();
+  const cacheKey = getBasketCacheKey(session.userId);
+
+  // 1. Check Redis cache first (~5ms response)
+  if (redis) {
+    try {
+      const cached = await redis.get<savedBasket[]>(cacheKey);
+      if (cached && Array.isArray(cached)) {
+        return cached;
+      }
+    } catch (cacheErr) {
+      console.warn('Redis read error for saved baskets, falling back to WordPress:', cacheErr);
+    }
+  }
+
+  // 2. Cache Miss: Fetch from WordPress customer meta
   const data = await getCustomerMeta();
   if (!data) return [];
 
@@ -75,11 +97,19 @@ export async function getsavedBaskets(): Promise<savedBasket[]> {
   // Sort them by createdAt descending
   allBaskets.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
+  // 3. Populate Redis cache for subsequent visits
+  if (redis) {
+    try {
+      await redis.set(cacheKey, allBaskets);
+    } catch (cacheErr) {
+      console.warn('Redis write error for saved baskets:', cacheErr);
+    }
+  }
+
   return allBaskets;
 }
 
 export async function savesavedBasket(name: string, items: savedBasketItem[]): Promise<{ success: boolean; error?: string }> {
-  // Skip GET request completely!
   const session = await getSession();
   if (!session) return { success: false, error: 'Not authenticated' };
 
@@ -92,6 +122,21 @@ export async function savesavedBasket(name: string, items: savedBasketItem[]): P
     user: session.email.split('@')[0], 
   };
 
+  const redis = getRedisClient();
+  const cacheKey = getBasketCacheKey(session.userId);
+
+  // 1. Immediately write to Redis so UI responds instantly
+  if (redis) {
+    try {
+      const currentCached = (await redis.get<savedBasket[]>(cacheKey)) || [];
+      const updated = [newList, ...currentCached.filter(b => b.id !== id)];
+      await redis.set(cacheKey, updated);
+    } catch (cacheErr) {
+      console.warn('Redis write error during save:', cacheErr);
+    }
+  }
+
+  // 2. Persist to WooCommerce customer meta in the background
   try {
     await woocommerceApi.request(`/customers/${session.userId}`, {
       method: 'PUT',
@@ -108,12 +153,30 @@ export async function savesavedBasket(name: string, items: savedBasketItem[]): P
     revalidatePath('/account/saved-baskets');
     return { success: true };
   } catch (error) {
-    console.error('Failed to save Saved Basket', error);
+    console.error('Failed to save Saved Basket to WooCommerce', error);
     return { success: false, error: 'Failed to save Saved Basket' };
   }
 }
 
 export async function deletesavedBasket(id: string): Promise<{ success: boolean; error?: string }> {
+  const session = await getSession();
+  if (!session) return { success: false, error: 'Not authenticated' };
+
+  const redis = getRedisClient();
+  const cacheKey = getBasketCacheKey(session.userId);
+
+  // 1. Immediately delete from Redis
+  if (redis) {
+    try {
+      const currentCached = (await redis.get<savedBasket[]>(cacheKey)) || [];
+      const updated = currentCached.filter(b => b.id !== id);
+      await redis.set(cacheKey, updated);
+    } catch (cacheErr) {
+      console.warn('Redis delete error during basket removal:', cacheErr);
+    }
+  }
+
+  // 2. Persist deletion to WooCommerce customer meta
   const data = await getCustomerMeta();
   if (!data) return { success: false, error: 'Not authenticated' };
 
@@ -139,7 +202,10 @@ export async function deletesavedBasket(id: string): Promise<{ success: boolean;
     metaUpdates.push({ key: 'purchase_lists', value: JSON.stringify(updatedLists) });
   }
 
-  if (metaUpdates.length === 0) return { success: true };
+  if (metaUpdates.length === 0) {
+    revalidatePath('/account/saved-baskets');
+    return { success: true };
+  }
 
   try {
     await woocommerceApi.request(`/customers/${data.session.userId}`, {
@@ -152,7 +218,7 @@ export async function deletesavedBasket(id: string): Promise<{ success: boolean;
     revalidatePath('/account/saved-baskets');
     return { success: true };
   } catch (error) {
-    console.error('Failed to delete Saved Basket', error);
+    console.error('Failed to delete Saved Basket from WooCommerce', error);
     return { success: false, error: 'Failed to delete Saved Basket' };
   }
 }
