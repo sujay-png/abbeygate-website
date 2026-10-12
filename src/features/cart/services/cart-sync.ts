@@ -13,12 +13,17 @@ function sanitizeCartItemsForCloud(items: CartItem[]): CartItem[] {
   return (items || []).map(item => {
     if (item.customization) {
       const { logoFile, logoPreviewUrl, ...rest } = item.customization;
+      // Preserve logoPreviewUrl if it's a real URL or a compressed data URI (< 150 KB)
+      const safeLogoPreviewUrl =
+        logoPreviewUrl && (!logoPreviewUrl.startsWith('data:') || logoPreviewUrl.length < 150000)
+          ? logoPreviewUrl
+          : undefined;
+
       return {
         ...item,
         customization: {
           ...rest,
-          // Only preserve short logoPreviewUrl (e.g. real URLs), strip massive data:image strings
-          ...(logoPreviewUrl && !logoPreviewUrl.startsWith('data:') ? { logoPreviewUrl } : {})
+          ...(safeLogoPreviewUrl ? { logoPreviewUrl: safeLogoPreviewUrl } : {})
         }
       };
     }

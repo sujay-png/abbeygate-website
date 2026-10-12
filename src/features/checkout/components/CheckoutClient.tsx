@@ -569,21 +569,26 @@ function CheckoutFormContent({
                       {item.customization.foilColor && <p className="text-brand-grey"><span className="font-medium text-brand-body">Foil Colour:</span> {item.customization.foilColor}</p>}
                       {item.customization.fileName && (
                         <p className="text-brand-grey break-all sm:break-words">
-                          <span className="font-medium text-brand-body shrink-0">Logo:</span> {item.customization.fileName} —{' '}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const url = item.customization?.logoFile
-                                ? URL.createObjectURL(item.customization.logoFile as Blob)
-                                : (item.customization?.logoPreviewUrl || item.customization?.fullPreviewUrl || '');
-                              if (url) {
-                                setPreviewImage({ url, title: `Uploaded Logo: ${item.customization?.fileName || ''}` });
-                              }
-                            }}
-                            className="text-brand-primary-dark underline hover:text-gray-600 shrink-0 cursor-pointer"
-                          >
-                            View file
-                          </button>
+                          <span className="font-medium text-brand-body shrink-0">Logo:</span> {item.customization.fileName}
+                          {(item.customization?.logoFile || item.customization?.logoPreviewUrl) && (
+                            <>
+                              {' — '}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const url = item.customization?.logoFile
+                                    ? URL.createObjectURL(item.customization.logoFile as Blob)
+                                    : item.customization?.logoPreviewUrl || '';
+                                  if (url) {
+                                    setPreviewImage({ url, title: `Uploaded Logo: ${item.customization?.fileName || ''}` });
+                                  }
+                                }}
+                                className="text-brand-primary-dark underline hover:text-gray-600 shrink-0 cursor-pointer"
+                              >
+                                View file
+                              </button>
+                            </>
+                          )}
                         </p>
                       )}
                       {(item.customization.fullPreviewUrl || item.customization.logoPreviewUrl) && (

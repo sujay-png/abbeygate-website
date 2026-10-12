@@ -161,21 +161,26 @@ export const CartDrawer = () => {
                             )}
                             {item.customization.fileName && (
                               <p className="text-[12px] text-gray-600">
-                                <span className="font-medium">Logo:</span> {item.customization.fileName} —{' '}
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const url = item.customization?.logoFile
-                                      ? URL.createObjectURL(item.customization.logoFile as Blob)
-                                      : (item.customization?.logoPreviewUrl || item.customization?.fullPreviewUrl || '');
-                                    if (url) {
-                                      setPreviewImage({ url, title: `Uploaded Logo: ${item.customization?.fileName || ''}` });
-                                    }
-                                  }}
-                                  className="text-brand-primary-dark underline hover:text-gray-600 cursor-pointer"
-                                >
-                                  View file
-                                </button>
+                                <span className="font-medium">Logo:</span> {item.customization.fileName}
+                                {(item.customization?.logoFile || item.customization?.logoPreviewUrl) && (
+                                  <>
+                                    {' — '}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const url = item.customization?.logoFile
+                                          ? URL.createObjectURL(item.customization.logoFile as Blob)
+                                          : item.customization?.logoPreviewUrl || '';
+                                        if (url) {
+                                          setPreviewImage({ url, title: `Uploaded Logo: ${item.customization?.fileName || ''}` });
+                                        }
+                                      }}
+                                      className="text-brand-primary-dark underline hover:text-gray-600 cursor-pointer"
+                                    >
+                                      View file
+                                    </button>
+                                  </>
+                                )}
                               </p>
                             )}
                             {(item.proofStatus || 'ready') === 'pending' ? (

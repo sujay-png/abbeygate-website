@@ -164,21 +164,26 @@ export default function CartPage() {
                               <>
                                 <span className="font-bold text-gray-900">Logo</span>
                                 <span className="break-all pr-4">
-                                  {item.customization.fileName} —{' '}
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const url = item.customization?.logoFile
-                                        ? URL.createObjectURL(item.customization.logoFile as Blob)
-                                        : (item.customization?.logoPreviewUrl || item.customization?.fullPreviewUrl || '');
-                                      if (url) {
-                                        setPreviewImage({ url, title: `Uploaded Logo: ${item.customization?.fileName || ''}` });
-                                      }
-                                    }}
-                                    className="text-brand-primary-dark underline hover:text-gray-600 font-semibold inline-block cursor-pointer"
-                                  >
-                                    View file
-                                  </button>
+                                  {item.customization.fileName}
+                                  {(item.customization?.logoFile || item.customization?.logoPreviewUrl) && (
+                                    <>
+                                      {' — '}
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const url = item.customization?.logoFile
+                                            ? URL.createObjectURL(item.customization.logoFile as Blob)
+                                            : item.customization?.logoPreviewUrl || '';
+                                          if (url) {
+                                            setPreviewImage({ url, title: `Uploaded Logo: ${item.customization?.fileName || ''}` });
+                                          }
+                                        }}
+                                        className="text-brand-primary-dark underline hover:text-gray-600 font-semibold inline-block cursor-pointer"
+                                      >
+                                        View file
+                                      </button>
+                                    </>
+                                  )}
                                 </span>
                               </>
                             )}

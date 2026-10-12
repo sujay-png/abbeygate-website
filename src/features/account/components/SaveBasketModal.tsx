@@ -35,12 +35,15 @@ export function SaveBasketModal({ isOpen, onClose, items }: Props) {
       .filter(r => r.productId && r.qty > 0)
       .map(item => {
         if (item.customization) {
-          // Destructure out logoFile (File object) and raw base64 logoPreviewUrl (which can be 1MB+)
-          // fullPreviewUrl is already compressed JPEG and safe to keep
+          // Destructure out logoFile (File object) and keep logoPreviewUrl if compressed (< 150KB)
           const { logoFile, logoPreviewUrl, ...restCustomization } = item.customization;
+          const safeLogoPreviewUrl =
+            logoPreviewUrl && (!logoPreviewUrl.startsWith('data:') || logoPreviewUrl.length < 150000)
+              ? logoPreviewUrl
+              : undefined;
           const safeCustomization = {
             ...restCustomization,
-            ...(logoPreviewUrl && !logoPreviewUrl.startsWith('data:') ? { logoPreviewUrl } : {})
+            ...(safeLogoPreviewUrl ? { logoPreviewUrl: safeLogoPreviewUrl } : {})
           };
           return { ...item, customization: safeCustomization };
         }

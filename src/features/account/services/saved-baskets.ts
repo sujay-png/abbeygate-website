@@ -33,11 +33,15 @@ function sanitizeBasketItems(items: savedBasketItem[]): savedBasketItem[] {
   return (items || []).map(item => {
     if (item.customization) {
       const { logoFile, logoPreviewUrl, ...rest } = item.customization;
+      const safeLogoPreviewUrl =
+        logoPreviewUrl && (!logoPreviewUrl.startsWith('data:') || logoPreviewUrl.length < 150000)
+          ? logoPreviewUrl
+          : undefined;
       return {
         ...item,
         customization: {
           ...rest,
-          ...(logoPreviewUrl && !logoPreviewUrl.startsWith('data:') ? { logoPreviewUrl } : {})
+          ...(safeLogoPreviewUrl ? { logoPreviewUrl: safeLogoPreviewUrl } : {})
         }
       };
     }

@@ -87,6 +87,28 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, imageUrl, title = 'Cu
   // Direct image URL preview (e.g. uploaded logo or order details file)
   if (imageUrl) {
     const isPdf = imageUrl.toLowerCase().includes('.pdf');
+    const handleOpenOriginal = (e: React.MouseEvent) => {
+      if (!imageUrl) return;
+      if (imageUrl.startsWith('data:')) {
+        e.preventDefault();
+        try {
+          const arr = imageUrl.split(',');
+          const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+          const bstr = atob(arr[1]);
+          let n = bstr.length;
+          const u8arr = new Uint8Array(n);
+          while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+          }
+          const blob = new Blob([u8arr], { type: mime });
+          const blobUrl = URL.createObjectURL(blob);
+          window.open(blobUrl, '_blank');
+        } catch {
+          window.open(imageUrl, '_blank');
+        }
+      }
+    };
+
     return (
       <div 
         className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
@@ -103,7 +125,8 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, imageUrl, title = 'Cu
                 href={imageUrl} 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="text-xs text-brand-primary hover:underline inline-flex items-center gap-1 font-medium ml-2"
+                onClick={handleOpenOriginal}
+                className="text-xs text-brand-primary hover:underline inline-flex items-center gap-1 font-medium ml-2 cursor-pointer"
                 title="Open full size in new tab"
               >
                 Open original ↗
