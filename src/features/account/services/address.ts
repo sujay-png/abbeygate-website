@@ -4,6 +4,9 @@ import { woocommerceApi } from '@/lib/woocommerce/client';
 import { getSession } from '@/features/auth/utils/session';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { getRedisClient } from '@/lib/redis';
+
+const getAddressesCacheKey = (userId: number | string) => `user:${userId}:addresses`;
 
 export type Address = {
   first_name: string;
@@ -34,14 +37,42 @@ export async function getAddresses(): Promise<CustomerAddresses | null> {
   const session = await getSession();
   if (!session) return null;
 
+  const redis = getRedisClient();
+  const cacheKey = getAddressesCacheKey(session.userId);
+
+  // 1. Check Redis cache first (~5ms)
+  if (redis) {
+    try {
+      const cached = await redis.get<CustomerAddresses>(cacheKey);
+      if (cached && typeof cached === 'object' && 'billing' in cached && 'shipping' in cached) {
+        return cached;
+      }
+    } catch (err) {
+      console.warn('Redis read error for addresses:', err);
+    }
+  }
+
+  // 2. Cache Miss: Fetch from WooCommerce customer API
   try {
     const customer = await woocommerceApi.request<{ billing: Address; shipping: Address }>(`/customers/${session.userId}`, {
-      revalidate: 3600 // Cached, busted by revalidatePath
+      revalidate: 3600
     });
-    return {
+    
+    const addresses: CustomerAddresses = {
       billing: customer.billing,
       shipping: customer.shipping,
     };
+
+    // 3. Populate Redis cache for instant future loads
+    if (redis) {
+      try {
+        await redis.set(cacheKey, addresses);
+      } catch (err) {
+        console.warn('Redis write error for addresses:', err);
+      }
+    }
+
+    return addresses;
   } catch (error) {
     console.error('Failed to fetch addresses:', error);
     return null;
@@ -80,6 +111,28 @@ export async function updateAddress(
         [type]: addressData,
       },
     });
+
+    // Immediately update Redis cache so the updated address is visible instantly
+    const redis = getRedisClient();
+    if (redis) {
+      try {
+        const cached = await redis.get<CustomerAddresses>(getAddressesCacheKey(session.userId));
+        if (cached) {
+          const updated: CustomerAddresses = {
+            ...cached,
+            [type]: {
+              ...(cached[type] || {}),
+              ...addressData,
+            } as Address,
+          };
+          await redis.set(getAddressesCacheKey(session.userId), updated);
+        } else {
+          await redis.del(getAddressesCacheKey(session.userId));
+        }
+      } catch (err) {
+        console.warn('Redis update error for address:', err);
+      }
+    }
 
     revalidatePath('/account/addresses');
   } catch (error: unknown) {

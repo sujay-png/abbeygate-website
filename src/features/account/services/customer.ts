@@ -2,6 +2,9 @@
 
 import { getSession } from '@/features/auth/utils/session';
 import { revalidatePath } from 'next/cache';
+import { getRedisClient } from '@/lib/redis';
+
+const getAccountDetailsCacheKey = (userId: number | string) => `user:${userId}:details`;
 
 export type AccountDetails = {
   first_name: string;
@@ -26,6 +29,22 @@ export async function getAccountDetails(userId: number): Promise<AccountDetails 
   const session = await getSession();
   if (!session || Number(session.userId) !== Number(userId)) return null;
 
+  const redis = getRedisClient();
+  const cacheKey = getAccountDetailsCacheKey(userId);
+
+  // 1. Check Redis cache first (~5ms)
+  if (redis) {
+    try {
+      const cached = await redis.get<AccountDetails>(cacheKey);
+      if (cached && typeof cached === 'object' && 'email' in cached) {
+        return cached;
+      }
+    } catch (err) {
+      console.warn('Redis read error for account details:', err);
+    }
+  }
+
+  // 2. Cache Miss: Fetch from WordPress headless account endpoint
   try {
     const storeUrl = getStoreUrl();
     const response = await fetch(`${storeUrl}/wp-json/headless/v1/account/${userId}`, {
@@ -34,15 +53,25 @@ export async function getAccountDetails(userId: number): Promise<AccountDetails 
         'Content-Type': 'application/json',
         'x-headless-secret': process.env.WP_HEADLESS_SECRET || '',
       },
-      next: { revalidate: 3600 }, // Cache for 1 hour, busted by revalidatePath on update
+      next: { revalidate: 3600 },
     });
 
     if (!response.ok) {
       return null;
     }
 
-    const data = await response.json();
-    return data as AccountDetails;
+    const data = (await response.json()) as AccountDetails;
+
+    // 3. Populate Redis cache for instant future loads
+    if (redis && data) {
+      try {
+        await redis.set(cacheKey, data);
+      } catch (err) {
+        console.warn('Redis write error for account details:', err);
+      }
+    }
+
+    return data;
   } catch (error) {
     console.error('Failed to fetch account details:', error);
     return null;
@@ -95,7 +124,23 @@ export async function updateAccountDetails(
       throw new Error(data.message || 'Failed to update account details.');
     }
 
+    // Immediately update Redis cache with new details so Dashboard & Details reflect it instantly
+    const redis = getRedisClient();
+    if (redis) {
+      try {
+        await redis.set(getAccountDetailsCacheKey(session.userId), {
+          first_name,
+          last_name,
+          display_name,
+          email,
+        });
+      } catch (err) {
+        console.warn('Redis update error for account details:', err);
+      }
+    }
+
     revalidatePath('/account/details');
+    revalidatePath('/account/dashboard');
 
     return {
       success: true,

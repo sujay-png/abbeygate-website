@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Breadcrumb } from '@/components/content';
 import { Container } from '@/components/ui/Container';
 import { AccountSidebar } from '@/features/account/components/AccountSidebar';
-import { woocommerceApi } from '@/lib/woocommerce/client';
+import { getOrderDetail, type WooCommerceOrderDetail } from '@/features/account/services/orders';
 
 type OrderDetailsProps = {
   params: Promise<{ id: string }>;
@@ -12,74 +12,6 @@ type OrderDetailsProps = {
 
 import { getSEOMetadata } from '@/lib/seo';
 export const metadata = getSEOMetadata("/account/orders/[id]", { title: 'Order Details | Abbeygate England', noindex: true });
-
-type WooCommerceOrderDetail = {
-  id: number;
-  number: string;
-  status: string;
-  date_created: string;
-  total: string;
-  currency: string;
-  discount_total: string;
-  customer_note?: string;
-  customer_id: number;
-  billing: {
-    first_name: string;
-    last_name: string;
-    company?: string;
-    address_1: string;
-    address_2?: string;
-    city: string;
-    state?: string;
-    postcode: string;
-    country: string;
-    email: string;
-    phone?: string;
-  };
-  shipping: {
-    first_name: string;
-    last_name: string;
-    company?: string;
-    address_1: string;
-    address_2?: string;
-    city: string;
-    state?: string;
-    postcode: string;
-    country: string;
-  };
-  shipping_total: string;
-  total_tax: string;
-  shipping_tax: string;
-  shipping_lines?: Array<{
-    id: number;
-    method_title: string;
-    total: string;
-    total_tax: string;
-  }>;
-  fee_lines?: Array<{
-    id: number;
-    name: string;
-    total: string;
-    total_tax: string;
-  }>;
-  coupon_lines?: Array<{
-    code: string;
-    discount: string;
-  }>;
-  line_items: Array<{
-    id: number;
-    product_id: number;
-    name: string;
-    quantity: number;
-    subtotal: string;
-    total: string;
-    total_tax: string;
-    meta_data?: Array<{
-      key: string;
-      value: string;
-    }>;
-  }>;
-};
 
 export default async function OrderDetailsPage({ params }: OrderDetailsProps) {
   const session = await getSession();
@@ -89,15 +21,7 @@ export default async function OrderDetailsPage({ params }: OrderDetailsProps) {
   }
 
   const { id } = await params;
-  let order: WooCommerceOrderDetail | null = null;
-
-  try {
-    order = await woocommerceApi.request<WooCommerceOrderDetail>(`/orders/${id}`, {
-      revalidate: 0,
-    });
-  } catch (error) {
-    console.error('Failed to fetch order details:', error);
-  }
+  const order = await getOrderDetail(id);
 
   if (!order) {
     redirect('/account/orders');

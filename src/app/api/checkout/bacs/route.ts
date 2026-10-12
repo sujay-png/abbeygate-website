@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCheckoutSession } from '@/features/checkout/services/session';
 import { woocommerceApi } from '@/lib/woocommerce/client';
+import { invalidateCustomerOrdersCache } from '@/features/account/services/orders';
 
 export async function POST(req: NextRequest) {
   try {
@@ -99,6 +100,7 @@ export async function POST(req: NextRequest) {
             shipping: wcOrderPayload.shipping,
           }
         });
+        await invalidateCustomerOrdersCache(session.customerId);
       } catch (err) {
         console.error('Failed to update customer addresses:', err);
       }

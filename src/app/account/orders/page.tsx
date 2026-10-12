@@ -5,27 +5,7 @@ import { Breadcrumb } from '@/components/content';
 import { Container } from '@/components/ui/Container';
 import { AccountSidebar } from '@/features/account/components/AccountSidebar';
 import { LinkOrdersBanner } from '@/features/account/components/LinkOrdersBanner';
-import { woocommerceApi } from '@/lib/woocommerce/client';
-
-// Define a basic Order type based on WooCommerce REST API
-type WooCommerceOrder = {
-  id: number;
-  number: string;
-  date_created: string;
-  status: string;
-  total: string;
-  currency: string;
-  line_items: Array<{
-    id: number;
-    name: string;
-    quantity: number;
-  }>;
-  billing: {
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
-};
+import { getCustomerOrders } from '@/features/account/services/orders';
 
 export default async function OrdersPage() {
   const session = await getSession();
@@ -34,16 +14,8 @@ export default async function OrdersPage() {
     redirect('/account');
   }
 
-  // Fetch orders for this customer
-  let orders: WooCommerceOrder[] = [];
-  try {
-    orders = await woocommerceApi.request<WooCommerceOrder[]>(`/orders?customer=${session.userId}`, {
-      revalidate: 60 // Cache for 1 minute for snappier navigation
-    });
-  } catch (error) {
-    console.error('Failed to fetch orders:', error);
-    // Continue with empty orders array
-  }
+  // Fetch orders for this customer (Redis-cached, ~5ms)
+  const orders = await getCustomerOrders(session.userId);
 
   return (
     <main className="flex flex-col min-h-screen bg-brand-cream">
