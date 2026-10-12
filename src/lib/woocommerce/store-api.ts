@@ -8,6 +8,7 @@ import { getWooStoreUrl } from "./config";
 type StoreFetchOptions = {
   params?: Record<string, string | number | boolean | undefined>;
   revalidate?: number | false;
+  tags?: string[];
 };
 
 function buildUrl(path: string, params?: StoreFetchOptions["params"]): string {
@@ -30,11 +31,14 @@ export async function storeFetch<T>(
   path: string,
   options: StoreFetchOptions = {},
 ): Promise<T> {
-  const { params, revalidate = 60 } = options;
+  const { params, revalidate = 3600, tags } = options;
   const requestUrl = buildUrl(path, params);
 
   const response = await fetch(requestUrl, {
-    next: revalidate === false ? { revalidate: 0 } : { revalidate },
+    next: {
+      revalidate: revalidate === false ? 0 : revalidate,
+      ...(tags && tags.length > 0 ? { tags } : {}),
+    },
   });
 
   if (!response.ok) {
@@ -74,11 +78,14 @@ export async function storeFetchWithHeaders<T>(
   path: string,
   options: StoreFetchOptions = {},
 ): Promise<{ data: T; total: number; totalPages: number }> {
-  const { params, revalidate = 60 } = options;
+  const { params, revalidate = 3600, tags } = options;
   const requestUrl = buildUrl(path, params);
 
   const response = await fetch(requestUrl, {
-    next: revalidate === false ? { revalidate: 0 } : { revalidate },
+    next: {
+      revalidate: revalidate === false ? 0 : revalidate,
+      ...(tags && tags.length > 0 ? { tags } : {}),
+    },
   });
 
   if (!response.ok) {

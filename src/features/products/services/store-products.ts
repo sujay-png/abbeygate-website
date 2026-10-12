@@ -37,7 +37,7 @@ export async function getStoreProducts(
 
   const { data, total, totalPages } = await storeFetchWithHeaders<StoreProduct[]>(
     "/products",
-    { params, revalidate: 120 },
+    { params, revalidate: 86400, tags: ["products"] },
   );
 
   return { products: data, total, totalPages };
@@ -67,7 +67,8 @@ export const getStoreProductBySlug = cache(async (
 ): Promise<StoreProduct | null> => {
   const products = await storeFetch<StoreProduct[]>("/products", {
     params: { slug },
-    revalidate: 120,
+    revalidate: 86400,
+    tags: ["products", `product-${slug}`],
   });
   if (!products || products.length === 0) return null;
   return products[0] ?? null;
@@ -76,13 +77,17 @@ export const getStoreProductBySlug = cache(async (
 export const getStoreProductById = cache(async (
   id: number,
 ): Promise<StoreProduct> => {
-  return storeFetch<StoreProduct>(`/products/${id}`, { revalidate: 120 });
+  return storeFetch<StoreProduct>(`/products/${id}`, {
+    revalidate: 86400,
+    tags: ["products", `product-${id}`],
+  });
 });
 
 export async function getStoreCategories(): Promise<StoreCategory[]> {
   return storeFetch<StoreCategory[]>("/products/categories", {
     params: { per_page: 100 },
-    revalidate: 300,
+    revalidate: 86400,
+    tags: ["categories"],
   });
 }
 
@@ -90,7 +95,10 @@ export const getStoreCategoryById = cache(async (
   id: number,
 ): Promise<StoreCategory | null> => {
   try {
-    return await storeFetch<StoreCategory>(`/products/categories/${id}`, { revalidate: 300 });
+    return await storeFetch<StoreCategory>(`/products/categories/${id}`, {
+      revalidate: 86400,
+      tags: ["categories", `category-${id}`],
+    });
   } catch (error) {
     return null;
   }
@@ -98,7 +106,8 @@ export const getStoreCategoryById = cache(async (
 
 export const getStoreAttributes = cache(async (): Promise<StoreAttribute[]> => {
   return storeFetch<StoreAttribute[]>("/products/attributes", {
-    revalidate: 300,
+    revalidate: 86400,
+    tags: ["attributes"],
   });
 });
 
@@ -107,7 +116,11 @@ export const getStoreAttributeTerms = cache(async (
 ): Promise<StoreAttributeTerm[]> => {
   return storeFetch<StoreAttributeTerm[]>(
     `/products/attributes/${attributeId}/terms`,
-    { params: { per_page: 100 }, revalidate: 300 },
+    {
+      params: { per_page: 100 },
+      revalidate: 86400,
+      tags: ["attributes", `attribute-${attributeId}`],
+    },
   );
 });
 
@@ -154,7 +167,10 @@ export type CustomTab = {
 export const getRestProductMeta = cache(async (
   productId: number,
 ): Promise<{ id: number; meta_data?: { key: string; value: unknown }[] }> => {
-  return woocommerceApi.request(`/products/${productId}`, { revalidate: 300 });
+  return woocommerceApi.request(`/products/${productId}`, {
+    revalidate: 86400,
+    tags: ["products", `product-${productId}`],
+  });
 });
 
 export const getProductCustomTabs = cache(async (

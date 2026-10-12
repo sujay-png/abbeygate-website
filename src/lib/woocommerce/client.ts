@@ -16,6 +16,8 @@ export type WooCommerceRequestOptions = {
   body?: unknown;
   /** Next.js fetch cache revalidation in seconds. Defaults to 60. */
   revalidate?: number | false;
+  /** Optional Next.js cache tags for on-demand revalidation. */
+  tags?: string[];
   /** Request timeout in ms. */
   timeoutMs?: number;
 };
@@ -74,7 +76,7 @@ export async function woocommerceFetch<T>(
   options: WooCommerceRequestOptions,
 ): Promise<T> {
   const { storeUrl, consumerKey, consumerSecret } = getConfig();
-  const { path, method = "GET", params, body, revalidate = 60, timeoutMs } = options;
+  const { path, method = "GET", params, body, revalidate = 60, timeoutMs, tags } = options;
 
   const fetchOptions: RequestInit = {
     method,
@@ -83,7 +85,10 @@ export async function woocommerceFetch<T>(
       "Content-Type": "application/json",
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
-    next: revalidate === false ? { revalidate: 0 } : { revalidate },
+    next: {
+      revalidate: revalidate === false ? 0 : revalidate,
+      ...(tags && tags.length > 0 ? { tags } : {}),
+    },
   };
 
   if (timeoutMs) {
