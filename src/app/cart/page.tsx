@@ -170,7 +170,7 @@ export default function CartPage() {
                                     onClick={() => {
                                       const url = item.customization?.logoFile
                                         ? URL.createObjectURL(item.customization.logoFile as Blob)
-                                        : item.customization?.logoPreviewUrl || '';
+                                        : (item.customization?.logoPreviewUrl || item.customization?.fullPreviewUrl || '');
                                       if (url) {
                                         setPreviewImage({ url, title: `Uploaded Logo: ${item.customization?.fileName || ''}` });
                                       }
@@ -193,7 +193,7 @@ export default function CartPage() {
                                 <span className="font-bold text-red-600">Preview</span>
                                 <span className="text-red-600">Failed <button type="button" className="underline ml-1" onClick={() => retryProof(item, updateItem)}>Retry</button></span>
                               </>
-                            ) : item.customization.logoPreviewUrl ? (
+                            ) : (item.customization.fullPreviewUrl || item.customization.logoPreviewUrl) ? (
                               <>
                                 <span className="font-bold text-gray-900">Preview</span>
                                 <button type="button" onClick={() => setPreviewItem(item)} className="text-brand-primary-dark underline hover:text-gray-600 w-fit text-left">View preview</button>

@@ -575,7 +575,7 @@ function CheckoutFormContent({
                             onClick={() => {
                               const url = item.customization?.logoFile
                                 ? URL.createObjectURL(item.customization.logoFile as Blob)
-                                : item.customization?.logoPreviewUrl || '';
+                                : (item.customization?.logoPreviewUrl || item.customization?.fullPreviewUrl || '');
                               if (url) {
                                 setPreviewImage({ url, title: `Uploaded Logo: ${item.customization?.fileName || ''}` });
                               }
@@ -586,7 +586,7 @@ function CheckoutFormContent({
                           </button>
                         </p>
                       )}
-                      {item.customization.logoPreviewUrl && (
+                      {(item.customization.fullPreviewUrl || item.customization.logoPreviewUrl) && (
                         <p className="text-brand-grey mt-1">
                           <span className="font-medium text-brand-body">Preview:</span>{' '}
                           <button type="button" onClick={() => setPreviewItem(item)} className="text-brand-primary-dark underline hover:text-gray-600">View preview</button>
