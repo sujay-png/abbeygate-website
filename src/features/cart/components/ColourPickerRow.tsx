@@ -4,6 +4,7 @@ import { useCart, type CartItem } from '../context/CartContext';
 import { addColourVariant } from '../utils/add-colour-variant';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { getColorBackground } from '@/features/products/utils/color-helpers';
 
 type ColourPickerRowProps = {
   item: CartItem;
@@ -65,7 +66,7 @@ export const ColourPickerRow = ({ item, onPick }: ColourPickerRowProps) => {
                 onMouseEnter={() => handleHover(color.imageSrc)}
                 onClick={() => handlePick(color)}
                 className={`w-7 h-7 rounded-full shadow-sm transition-transform hover:scale-110 border border-gray-300 flex items-center justify-center ${addingSlug === color.slug ? 'opacity-50 cursor-wait' : ''}`}
-                style={{ backgroundColor: color.hex }}
+                style={{ background: getColorBackground(color.hex) }}
               >
                 {addingSlug === color.slug && <Loader2 className="w-3 h-3 animate-spin text-gray-800 drop-shadow-sm" />}
               </button>

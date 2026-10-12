@@ -16,6 +16,7 @@ import {
   VAT_RATE,
 } from '../utils/pricing';
 import { processLogo } from '../utils/image-processing';
+import { getColorBackground } from '../utils/color-helpers';
 import { useVat } from '@/context/VatContext';
 
 export type CustomizationState = {
@@ -293,7 +294,7 @@ export const ProductCustomizer = ({
                   <div 
                     className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative bg-center"
                     style={{ 
-                      backgroundColor: activeColorHex || '#f3f4f6',
+                      background: getColorBackground(activeColorHex, '#f3f4f6'),
                       backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
                       backgroundSize: product.images?.[0]?.src ? '300%' : undefined
                     }}
@@ -358,7 +359,7 @@ export const ProductCustomizer = ({
                   <div 
                     className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative bg-center"
                     style={{ 
-                      backgroundColor: activeColorHex || '#f3f4f6',
+                      background: getColorBackground(activeColorHex, '#f3f4f6'),
                       backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
                       backgroundSize: product.images?.[0]?.src ? '300%' : undefined
                     }}
@@ -437,7 +438,7 @@ export const ProductCustomizer = ({
                   <div 
                     className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative bg-center"
                     style={{ 
-                      backgroundColor: activeColorHex || '#f3f4f6',
+                      background: getColorBackground(activeColorHex, '#f3f4f6'),
                       backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
                       backgroundSize: product.images?.[0]?.src ? '300%' : undefined
                     }}
@@ -583,7 +584,7 @@ export const ProductCustomizer = ({
                  <div 
                    className="w-10 h-10 rounded mb-3 shadow-sm border border-black/10 bg-center" 
                    style={{ 
-                     backgroundColor: activeColorHex || 'var(--brand-primary-dark)',
+                     background: getColorBackground(activeColorHex, 'var(--brand-primary-dark)'),
                      backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
                      backgroundSize: product.images?.[0]?.src ? '300%' : undefined
                    }} 
@@ -600,7 +601,7 @@ export const ProductCustomizer = ({
                  <div 
                    className="w-10 h-10 rounded mb-3 relative shadow-sm border border-black/10 bg-center"
                    style={{ 
-                     backgroundColor: activeColorHex || 'var(--brand-primary-dark)',
+                     background: getColorBackground(activeColorHex, 'var(--brand-primary-dark)'),
                      backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
                      backgroundSize: product.images?.[0]?.src ? '300%' : undefined
                    }}
@@ -642,7 +643,7 @@ export const ProductCustomizer = ({
                  <div 
                    className="w-10 h-10 rounded mb-3 relative shadow-sm border border-black/10 bg-center"
                    style={{ 
-                     backgroundColor: activeColorHex || 'var(--brand-primary-dark)',
+                     background: getColorBackground(activeColorHex, 'var(--brand-primary-dark)'),
                      backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
                      backgroundSize: product.images?.[0]?.src ? '300%' : undefined
                    }}

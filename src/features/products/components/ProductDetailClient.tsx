@@ -13,6 +13,7 @@ import { BRANDING_SETUP_FEE, CORNER_PAIRS_PER_PRODUCT, CUSTOMIZATION_MIN_QTY, fo
 import { getLogoAnchors, getImageBoundingBox, getProductPhysicalDimensionsMm, sanitizeImageUrl, stripHtml } from '../utils/product-helpers';
 import { getConfiguredImageBounds } from '../utils/product-image-bounds';
 import { composeProof } from '../utils/generate-proof';
+import { getColorBackground } from '../utils/color-helpers';
 import { TrustIndicators } from '@/components/home/TrustIndicators';
 import { Send, X, ChevronLeft, ChevronRight, ZoomIn, Check } from 'lucide-react';
 import Link from 'next/link';
@@ -1555,11 +1556,7 @@ export const ProductDetailClient = ({
                       }}
                       className={`w-8 h-8 rounded-full shadow-sm transition-transform hover:scale-110 ${isActive ? 'ring-2 ring-offset-2 ring-brand-body scale-110' : 'border border-gray-300'
                         }`}
-                      style={{ 
-                        background: color.hex.includes(',') 
-                          ? `linear-gradient(135deg, ${color.hex.split(',')[0]} 50%, ${color.hex.split(',')[1]} 50%)`
-                          : color.hex 
-                      }}
+                      style={{ background: getColorBackground(color.hex) }}
                     />
                   );
                 })}

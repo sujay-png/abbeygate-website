@@ -8,6 +8,7 @@ import { FAQ } from '@/components/home/FAQ';
 import { CustomisationCTA } from '@/components/shared/CustomisationCTA';
 import { getStoreProductBySlug, getStoreProducts, getProductCustomTabs, getStoreProductById } from '@/features/products/services/store-products';
 import { getProductPricingFromProduct } from '@/features/products/services/pricing';
+import { getProductHexValues } from '@/features/products/services/product-colors';
 import { CATEGORY_ROUTES } from '@/data/category-routes';
 import type { Metadata } from 'next';
 import { getSEOMetadata, jsonLd, SITE_URL } from '@/lib/seo';
@@ -106,6 +107,8 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
       
       const tagId = groupingTag ? groupingTag.id : product.tags[0].id;
       const { products: siblings } = await getStoreProducts({ tagId, perPage: 20 });
+      const siblingIds = [product.id, ...siblings.map(s => s.id)];
+      const hexMap = await getProductHexValues(siblingIds);
       
       return siblings.map(sibling => {
         const nameParts = sibling.name.split(', ');
@@ -133,7 +136,9 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
           return null;
         };
 
-        const finalHex = extractHex(specificName) || extractHex(attrName) || '#cccccc';
+        const apiHex = hexMap[String(sibling.id)];
+        const fallbackHex = extractHex(specificName) || extractHex(attrName) || '#cccccc';
+        const finalHex = apiHex || fallbackHex;
         
         return {
           productId: String(sibling.id),
