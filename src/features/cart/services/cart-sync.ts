@@ -13,9 +13,9 @@ function sanitizeCartItemsForCloud(items: CartItem[]): CartItem[] {
   return (items || []).map(item => {
     if (item.customization) {
       const { logoFile, logoPreviewUrl, ...rest } = item.customization;
-      // Preserve logoPreviewUrl if it's a real URL or a compressed data URI (< 150 KB)
+      // Preserve logoPreviewUrl if it's a real URL or a data URI under 1MB
       const safeLogoPreviewUrl =
-        logoPreviewUrl && (!logoPreviewUrl.startsWith('data:') || logoPreviewUrl.length < 150000)
+        logoPreviewUrl && (!logoPreviewUrl.startsWith('data:') || logoPreviewUrl.length < 1000000)
           ? logoPreviewUrl
           : undefined;
 
