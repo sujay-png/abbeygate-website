@@ -32,7 +32,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
   },
   { 
     path: "/diaries/a5", 
-    categoryId: 40, 
+    categoryId: 164, 
     title: "A5 Diaries", 
     
     filterConfig: { disableSize: true } 
@@ -46,7 +46,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
   },
   { 
     path: "/diaries/a4", 
-    categoryId: 42, 
+    categoryId: 172, 
     title: "A4 Diaries", 
     
     filterConfig: { disableSize: true } 

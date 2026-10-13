@@ -21,6 +21,7 @@ const CATEGORY_SHIPPING_RULES: Record<
   "quarto-wtv": { unitsPerBox: 20, boxWeight: 12.7, boxesPerPallet: 54 },
   "quarto-dpp": { unitsPerBox: 10, boxWeight: 11.4, boxesPerPallet: 84 },
   "a4-diary": { unitsPerBox: 10, boxWeight: 11.9, boxesPerPallet: 84 },
+  "a4-diaries": { unitsPerBox: 10, boxWeight: 11.9, boxesPerPallet: 84 },
   "a5-notebooks": { unitsPerBox: 30, boxWeight: 7.46, boxesPerPallet: 84 },
   eco: { unitsPerBox: 30, boxWeight: 7.46, boxesPerPallet: 84 },
   "eco-friendly-notebooks": { unitsPerBox: 30, boxWeight: 7.46, boxesPerPallet: 84 },
