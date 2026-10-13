@@ -18,7 +18,7 @@ describe('composeProof geometry calculations', () => {
     // Mock global fetch for product image blob
     global.fetch = vi.fn().mockResolvedValue({
       blob: async () => new Blob()
-    } as any);
+    } as unknown as Response);
 
     const dummyCtx = {
       fillRect: vi.fn(),
@@ -43,7 +43,7 @@ describe('composeProof geometry calculations', () => {
         };
       }
       return {};
-    }) as any;
+    }) as unknown as typeof document.createElement;
 
     // Mock Image
     const MockImage = function() {
@@ -68,7 +68,7 @@ describe('composeProof geometry calculations', () => {
       });
       return img;
     };
-    (global as any).Image = MockImage;
+    (global as unknown as { Image: unknown }).Image = MockImage;
   });
 
   const baseArgs = {

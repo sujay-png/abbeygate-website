@@ -4,14 +4,14 @@ import { generateDigitalProof } from './generate-pdf';
 
 // Polyfill FileReader for Node
 class MockFileReader {
-  onloadend: any;
+  onloadend: (() => void) | null = null;
   result: string = '';
   readAsDataURL() {
     this.result = 'data:image/png;base64,mock';
     if (this.onloadend) this.onloadend();
   }
 }
-(global as any).FileReader = MockFileReader;
+(global as unknown as { FileReader: unknown }).FileReader = MockFileReader;
 
 // Mock fetch so we don't try to load the real image during tests
 const validPngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
@@ -22,7 +22,7 @@ global.fetch = vi.fn(() =>
     blob: () => Promise.resolve(new Blob([validPngBuffer], { type: 'image/png' })),
     arrayBuffer: () => Promise.resolve(validPngBuffer.buffer.slice(validPngBuffer.byteOffset, validPngBuffer.byteOffset + validPngBuffer.byteLength))
   })
-) as any;
+) as unknown as typeof fetch;
 
 describe('generateDigitalProof', () => {
   const mockProduct = {
@@ -37,7 +37,7 @@ describe('generateDigitalProof', () => {
     minOrderQuantity: 25,
     metadata: { isGifts: false, isFoilBlocked: true },
     description: 'Test'
-  } as any;
+  } as unknown as Parameters<typeof generateDigitalProof>[0];
 
   const mockCustomization = {
     enabled: true,

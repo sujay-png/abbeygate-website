@@ -4,12 +4,12 @@ import { getProductBaseAmount } from '@/features/products/utils/product-helpers'
 
 declare global {
   interface Window {
-    gtag?: (...args: any[]) => void;
-    dataLayer?: any[];
+    gtag?: (...args: unknown[]) => void;
+    dataLayer?: unknown[];
   }
 }
 
-export const pushToDataLayer = (event: string, data: any = {}) => {
+export const pushToDataLayer = (event: string, data: Record<string, unknown> = {}) => {
   if (typeof window !== 'undefined') {
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({ ecommerce: null }); // Clear previous ecommerce object per GA4 best practices

@@ -94,7 +94,7 @@ export async function composeProof(args: {
   const { productImageUrl, branding, geometry } = args;
 
   let fullPreviewUrl: string | undefined = undefined;
-  let finalBounds: any = null;
+  let finalBounds: { top: number; bottom: number; left: number; right: number } | null = null;
   let leftPercent = 50;
   let topPercent = 50;
   let widthPercent = 25 * (branding.logoScale || 1);

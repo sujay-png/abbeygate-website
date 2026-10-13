@@ -43,13 +43,23 @@ export type CornerEdgesPricing = {
  * Mirrors the WooCommerce corner-price rules until the product meta is exposed
  * through the Store API. Product names are the temporary source for the format.
  */
-export function getCornerEdgesPricing(product: { name: string; slug?: string; attributes?: any[] }): CornerEdgesPricing {
+type ProductAttributeLike = {
+  terms?: { name?: string }[];
+  value?: string;
+  [key: string]: unknown;
+};
+
+export function getCornerEdgesPricing(product: {
+  name: string;
+  slug?: string;
+  attributes?: ProductAttributeLike[];
+}): CornerEdgesPricing {
   const attributeValues = product.attributes?.flatMap((attribute) => {
     if (attribute && typeof attribute === 'object') {
       if ('terms' in attribute && Array.isArray(attribute.terms)) {
-        return attribute.terms.map((term: any) => term.name);
+        return attribute.terms.map((term) => term?.name ?? '').filter(Boolean);
       }
-      if ('value' in attribute) {
+      if ('value' in attribute && typeof attribute.value === 'string') {
         return [attribute.value];
       }
     }

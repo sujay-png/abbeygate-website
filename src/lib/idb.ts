@@ -27,7 +27,7 @@ export async function get<T>(key: string): Promise<T | undefined> {
   }
 }
 
-export async function set(key: string, value: any): Promise<void> {
+export async function set<T = unknown>(key: string, value: T): Promise<void> {
   if (typeof window === 'undefined') return;
   try {
     const db = await getDB();
