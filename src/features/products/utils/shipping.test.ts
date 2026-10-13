@@ -26,6 +26,9 @@ function createMockProduct(overrides: Partial<StoreProduct>): StoreProduct {
     tags: [],
     attributes: [],
     is_purchasable: true,
+    is_in_stock: true,
+    average_rating: '5',
+    review_count: 0,
     ...overrides,
   };
 }

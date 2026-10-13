@@ -1,6 +1,15 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { getGroupQuantity, validateCustomisationMinimums } from './colour-group';
 import type { CartItem } from '../context/CartContext';
+
+vi.mock('@/features/products/utils/pricing', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/products/utils/pricing')>();
+  return {
+    ...actual,
+    CUSTOMIZATION_MIN_QTY: 25,
+  };
+});
+
 import { CUSTOMIZATION_MIN_QTY } from '@/features/products/utils/pricing';
 
 const createMockItem = (overrides: Partial<CartItem>): CartItem => ({

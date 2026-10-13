@@ -10,9 +10,9 @@ vi.mock('@/lib/idb', () => ({
 }));
 
 const mockTiers = [
-  { min: 1, max: 24, price: 10 },
-  { min: 25, max: 49, price: 8 },
-  { min: 50, max: null, price: 6 },
+  { min: 1, max: 24, price: 10, noCustomisationPrice: 9.48 },
+  { min: 25, max: 49, price: 8, noCustomisationPrice: 7.48 },
+  { min: 50, max: null, price: 6, noCustomisationPrice: 5.48 },
 ];
 
 describe('CartContext & pricedItems', () => {
