@@ -66,7 +66,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   return (
     <div className="bg-brand-cream min-h-screen">
-      <SearchTracker searchTerm={query} products={filteredProducts} />
+      <SearchTracker searchTerm={query} totalResultsCount={searchedProducts.length} products={filteredProducts} />
       <Breadcrumb paths={[{ label: 'Home', href: '/' }, { label: 'Search Results' }]} />
 
       <Container className="py-8">

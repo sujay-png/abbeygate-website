@@ -140,11 +140,28 @@ export const trackPurchase = (transactionId: string, items: CartItem[], totalVal
   });
 };
 
-// 8. search
-export const trackSearch = (searchTerm: string) => {
-  pushToDataLayer('view_search_results', {
-    search_term: searchTerm
-  });
+// 8. search & zero-results monitoring
+export const trackSearch = (searchTerm: string, resultsCount: number = 0) => {
+  const hasResults = resultsCount > 0;
+  const payload = {
+    search_term: searchTerm,
+    results_count: resultsCount,
+    has_results: hasResults,
+  };
+
+  // GA4 standard recommended site search event
+  pushToDataLayer('search', payload);
+
+  // GTM / view_search_results compatibility
+  pushToDataLayer('view_search_results', payload);
+
+  // Dedicated zero-results event for immediate monitoring in GA4
+  if (!hasResults) {
+    pushToDataLayer('search_no_results', {
+      search_term: searchTerm,
+      results_count: 0,
+    });
+  }
 };
 
 // 9. filter (custom event)
