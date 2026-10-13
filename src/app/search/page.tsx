@@ -6,6 +6,7 @@ import { ProductFilters } from '@/features/products/components/ProductFilters';
 import { getStoreProducts } from '@/features/products/services/store-products';
 import { getFilterDataForProducts, preloadFilterAttributes, toListingProduct } from '@/features/products/services/filter-helpers';
 import { parseFiltersFromSearchParams, productMatchesFilters, sortProducts, type SortOption } from '@/features/products/utils/product-helpers';
+import { searchProducts } from '@/features/products/utils/search-helpers';
 import { Metadata } from 'next';
 
 import { getSEOMetadata } from '@/lib/seo';
@@ -34,51 +35,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   allProducts.forEach(p => productMap.set(p.id, p));
   const uniqueProducts = Array.from(productMap.values());
 
-  // Remove the word "sku" from the search terms so it doesn't fail normal word checks,
-  // but keep it in the cleanQuery if we want. Actually, it's safer to just let the text include "sku".
-  const searchTerms = query.toLowerCase().replace(/sku:?/g, '').split(/\s+/).filter(Boolean);
-  
-  // For the clean string match (SKUs), we remove all punctuation and also the letters "sku"
-  // so if someone searches "SKU: NH-BK", cleanQuery is "nhbk", which matches the product's clean SKU.
-  const cleanQuery = query.toLowerCase().replace(/sku:?/g, '').replace(/[\W_]+/g, '');
-  
-  // Collect all known color terms
-  const knownColors = new Set<string>();
-  uniqueProducts.forEach(p => {
-    p.attributes.filter((a: any) => a.taxonomy === 'pa_colour').forEach((a: any) => {
-      a.terms.forEach((t: any) => knownColors.add(t.name.toLowerCase()));
-    });
-  });
-
-  const searchedProductsRaw = uniqueProducts.filter((product) => {
-    const attributeText = product.attributes?.map((a: any) => a.terms.map((t: any) => t.name).join(' ')).join(' ') || '';
-    const nameAndAttrText = `${product.name} ${attributeText}`.toLowerCase();
-    
-    // STRICT COLOR CHECK: If the user searched a color, it MUST be in the name or attributes.
-    const hasFailingColorTerm = searchTerms.some(term => 
-      knownColors.has(term) && !nameAndAttrText.includes(term)
-    );
-    if (hasFailingColorTerm) {
-      return false;
-    }
-
-    const searchableText = `${product.name} sku ${product.sku || ''} ${product.description || ''} ${product.short_description || ''} ${attributeText}`.toLowerCase();
-    const cleanSearchableText = searchableText.replace(/sku/g, '').replace(/[\W_]+/g, '');
-    
-    if (cleanQuery && cleanSearchableText.includes(cleanQuery)) {
-      return true;
-    }
-    
-    return searchTerms.every(term => {
-
-
-      if (searchableText.includes(term)) return true;
-      if (term.endsWith('ies') && searchableText.includes(term.replace(/ies$/, 'y'))) return true;
-      if (term.endsWith('s') && searchableText.includes(term.slice(0, -1))) return true;
-      if (!term.endsWith('s') && searchableText.includes(term + 's')) return true;
-      return false;
-    });
-  });
+  // Search products with synonym support (Colourlux = Graphic Print, Dorchester = New Hide = Newhide)
+  const searchedProductsRaw = searchProducts(uniqueProducts, query);
 
   // Get filter terms and inject Product Type based on the found products
   const filterData = await getFilterDataForProducts(searchedProductsRaw);

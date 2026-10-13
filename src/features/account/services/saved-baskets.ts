@@ -265,15 +265,40 @@ export async function searchProductsForBulkOrder(query: string, searchBy: 'name'
       per_page: '10'
     };
 
-    if (searchBy === 'sku') {
-      params.sku = query;
-    } else {
-      params.search = query;
+    const queriesToSearch = [query];
+    if (searchBy === 'name') {
+      const lower = query.toLowerCase();
+      if (/colourlux|colorlux|coverlux/i.test(lower)) {
+        queriesToSearch.push('Graphic Print');
+      } else if (/graphic\s*print/i.test(lower)) {
+        queriesToSearch.push('Colourlux');
+      }
+      if (/dorchester/i.test(lower)) {
+        queriesToSearch.push('Newhide');
+      } else if (/new\s*hide|newhide/i.test(lower)) {
+        queriesToSearch.push('Dorchester');
+      }
     }
 
-    const products = await woocommerceApi.request<Array<{ id: number, name: string, sku: string, price: string, images: Array<{ src: string }> }>>('/products', {
-      params
-    });
+    const responses = await Promise.all(
+      queriesToSearch.map((q) =>
+        woocommerceApi.request<
+          Array<{ id: number; name: string; sku: string; price: string; images: Array<{ src: string }> }>
+        >('/products', {
+          params: {
+            ...params,
+            ...(searchBy === 'sku' ? { sku: q } : { search: q }),
+          },
+        })
+      )
+    );
+
+    const productMap = new Map<
+      number,
+      { id: number; name: string; sku: string; price: string; images: Array<{ src: string }> }
+    >();
+    responses.flat().forEach((p) => productMap.set(p.id, p));
+    const products = Array.from(productMap.values());
 
     return products.map(p => ({
       id: p.id,
