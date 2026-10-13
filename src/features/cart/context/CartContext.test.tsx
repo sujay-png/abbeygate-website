@@ -9,6 +9,12 @@ vi.mock('@/lib/idb', () => ({
   set: vi.fn(),
 }));
 
+// Mock cloud cart sync to prevent Next.js cookies() outside request scope in JSDOM
+vi.mock('@/features/cart/services/cart-sync', () => ({
+  getCloudCart: vi.fn().mockResolvedValue(null),
+  syncCartToCloud: vi.fn().mockResolvedValue(undefined),
+}));
+
 const mockTiers = [
   { min: 1, max: 24, price: 10, noCustomisationPrice: 9.48 },
   { min: 25, max: 49, price: 8, noCustomisationPrice: 7.48 },
