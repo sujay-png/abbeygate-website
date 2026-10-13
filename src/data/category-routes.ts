@@ -39,8 +39,8 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
   },
   { 
     path: "/diaries/quarto", 
-    categoryId: 41, 
-    title: "Quarto Diary", 
+    categoryId: 170, 
+    title: "Quarto Diaries", 
     
     filterConfig: { disableSize: true } 
   },

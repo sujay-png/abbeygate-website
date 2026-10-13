@@ -20,12 +20,65 @@ const CATEGORY_SHIPPING_RULES: Record<
   wtv: { unitsPerBox: 20, boxWeight: 11.6, boxesPerPallet: 84 },
   "quarto-wtv": { unitsPerBox: 20, boxWeight: 12.7, boxesPerPallet: 54 },
   "quarto-dpp": { unitsPerBox: 10, boxWeight: 11.4, boxesPerPallet: 84 },
-  "a4-diary": { unitsPerBox: 10, boxWeight: 11.9, boxesPerPallet: 84 },
   "a4-diaries": { unitsPerBox: 10, boxWeight: 11.9, boxesPerPallet: 84 },
   "a5-notebooks": { unitsPerBox: 30, boxWeight: 7.46, boxesPerPallet: 84 },
-  eco: { unitsPerBox: 30, boxWeight: 7.46, boxesPerPallet: 84 },
   "eco-friendly-notebooks": { unitsPerBox: 30, boxWeight: 7.46, boxesPerPallet: 84 },
 };
+
+export function getShippingRule(product: StoreProduct) {
+  const categorySlugs = (product.categories || []).map((c) => c.slug);
+  const nameLower = (product.name || "").toLowerCase();
+
+  // 1. Quarto Diaries (differentiate DPP vs WTV from product title)
+  if (categorySlugs.includes("quarto-diaries") || categorySlugs.includes("quarto-diary")) {
+    if (nameLower.includes("day per page") || nameLower.includes("dpp")) {
+      return CATEGORY_SHIPPING_RULES["quarto-dpp"];
+    }
+    return CATEGORY_SHIPPING_RULES["quarto-wtv"];
+  }
+
+  // 2. A5 Diaries (differentiate DPP vs WTV from product title)
+  if (categorySlugs.includes("a5-diaries") || categorySlugs.includes("a5-diary")) {
+    if (nameLower.includes("day per page") || nameLower.includes("dpp")) {
+      return CATEGORY_SHIPPING_RULES["dpp"];
+    }
+    return CATEGORY_SHIPPING_RULES["wtv"];
+  }
+
+  // 3. A4 Diaries
+  if (categorySlugs.includes("a4-diaries") || categorySlugs.includes("a4-diary")) {
+    return CATEGORY_SHIPPING_RULES["a4-diaries"];
+  }
+
+  // 4. Pocket Diaries
+  if (categorySlugs.includes("pocket-diaries")) {
+    return CATEGORY_SHIPPING_RULES["pocket-diaries"];
+  }
+
+  // 5. Eco Friendly Notebooks
+  if (categorySlugs.includes("eco-friendly-notebooks") || categorySlugs.includes("eco")) {
+    return CATEGORY_SHIPPING_RULES["eco-friendly-notebooks"];
+  }
+
+  // 6. A5 Notebooks
+  if (categorySlugs.includes("a5-notebooks")) {
+    return CATEGORY_SHIPPING_RULES["a5-notebooks"];
+  }
+
+  // 7. A6 Notebooks
+  if (categorySlugs.includes("a6-notebooks")) {
+    return CATEGORY_SHIPPING_RULES["a6-notebooks"];
+  }
+
+  // Direct category slug fallback
+  for (const slug of categorySlugs) {
+    if (CATEGORY_SHIPPING_RULES[slug]) {
+      return CATEGORY_SHIPPING_RULES[slug];
+    }
+  }
+
+  return null;
+}
 
 export function calculateShipping(
   items: ShippingCartItem[],
@@ -40,15 +93,13 @@ export function calculateShipping(
   let totalBoxes = 0;
 
   for (const { product, quantity } of items) {
-    for (const category of product.categories) {
-      const rule = CATEGORY_SHIPPING_RULES[category.slug];
-      if (!rule) continue;
+    const rule = getShippingRule(product);
+    if (!rule) continue;
 
-      const boxes = Math.ceil(quantity / rule.unitsPerBox);
-      totalWeight += boxes * rule.boxWeight;
-      totalPallets += boxes / rule.boxesPerPallet;
-      totalBoxes += boxes;
-    }
+    const boxes = Math.ceil(quantity / rule.unitsPerBox);
+    totalWeight += boxes * rule.boxWeight;
+    totalPallets += boxes / rule.boxesPerPallet;
+    totalBoxes += boxes;
   }
 
   totalPallets = Math.ceil(totalPallets);
