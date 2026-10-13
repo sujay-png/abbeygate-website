@@ -23,6 +23,7 @@ const CATEGORY_SHIPPING_RULES: Record<
   "a4-diary": { unitsPerBox: 10, boxWeight: 11.9, boxesPerPallet: 84 },
   "a5-notebooks": { unitsPerBox: 30, boxWeight: 7.46, boxesPerPallet: 84 },
   eco: { unitsPerBox: 30, boxWeight: 7.46, boxesPerPallet: 84 },
+  "eco-friendly-notebooks": { unitsPerBox: 30, boxWeight: 7.46, boxesPerPallet: 84 },
 };
 
 export function calculateShipping(

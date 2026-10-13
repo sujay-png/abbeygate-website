@@ -104,9 +104,9 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
   },
   { 
     path: "/notebooks/eco-friendly", 
-    categoryId: 46, 
-    title: "Eco", 
-    
+    categoryId: 173, 
+    title: "Eco Friendly Notebooks", 
+    description: "Eco Notebooks are a modern and eco-conscious promotional gift, offering your customers a sustainable way to showcase their brand every day of the year. Thoughtfully crafted from environmentally responsible materials, they not only reflect quality and care but also promote your commitment to a greener future. Each design can be tailored to suit individual branding requirements, ensuring a unique and professional finish. Let us help you create an eco-friendly notebook your customers will value and proudly use—enhancing brand awareness while supporting sustainability year after year.",
     filterConfig: { disableLayout: true, disableSize: true } 
   },
 
