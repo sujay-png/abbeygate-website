@@ -48,30 +48,82 @@ export function toListingProduct(product: StoreProduct): StoreProduct {
   };
 }
 
+function extractCollectionTerms(product: StoreProduct): StoreAttributeTerm[] {
+  const termsMap = new Map<string, StoreAttributeTerm>();
+
+  // 1. Existing pa_collection attributes on the product
+  const existingAttr = (product.attributes || []).find(
+    (a) => a.taxonomy === 'pa_collection' || a.name?.toLowerCase() === 'collection'
+  );
+  if (existingAttr) {
+    existingAttr.terms.forEach((term) => {
+      const cleanSlug = term.slug.toLowerCase().replace(/-collection$/, '');
+      const cleanName = term.name.replace(/\s+Collection$/i, '').trim();
+      termsMap.set(cleanSlug, { id: term.id, name: cleanName, slug: cleanSlug, count: 0 });
+    });
+  }
+
+  // 2. Categories with "collection" in name or slug
+  (product.categories || []).forEach((cat) => {
+    const nameLower = cat.name.toLowerCase();
+    const slugLower = cat.slug.toLowerCase();
+    if (nameLower.includes('collection') || slugLower.includes('collection')) {
+      const cleanSlug = slugLower.replace(/-collection$/, '');
+      let cleanName = cat.name.replace(/\s+Collection$/i, '').trim();
+      if (cleanSlug === 'graphic-print' || cleanSlug === 'graphic-prints') {
+        cleanName = 'Graphic Print';
+      } else if (cleanSlug === 'conscious') {
+        cleanName = 'Conscious';
+      }
+
+      if (!termsMap.has(cleanSlug)) {
+        termsMap.set(cleanSlug, { id: cat.id, name: cleanName, slug: cleanSlug, count: 0 });
+      }
+    }
+  });
+
+  return Array.from(termsMap.values());
+}
+
 export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
-  // Inject a fake 'pa_product-type' attribute using the product's categories
-  // so the frontend filter system can filter by sub-category for Custom Gifts and Search.
+  // Inject synthetic 'pa_product-type' and enriched 'pa_collection' attributes using product categories
+  // so the frontend filter system can accurately filter all categories and collections.
   const allProducts = rawProducts.map((product) => {
     const productTypeTerms = product.categories
       .filter((cat) => cat.id !== 126 && cat.id !== 176 && !cat.name.toLowerCase().includes('collection')) // Exclude parent and collections
       .map((cat) => ({ id: cat.id, name: cat.name, slug: cat.slug }));
 
+    const collectionTerms = extractCollectionTerms(product);
+
+    const otherAttributes = (product.attributes || []).filter(
+      (a) => a.taxonomy !== 'pa_product-type' && a.taxonomy !== 'pa_collection' && a.name?.toLowerCase() !== 'collection'
+    );
+
+    const extraAttributes = [];
     if (productTypeTerms.length > 0) {
-      return {
-        ...product,
-        attributes: [
-          ...product.attributes,
-          {
-            id: 999999,
-            name: 'Product Type',
-            taxonomy: 'pa_product-type',
-            has_variations: false,
-            terms: productTypeTerms,
-          },
-        ],
-      };
+      extraAttributes.push({
+        id: 999999,
+        name: 'Product Type',
+        taxonomy: 'pa_product-type',
+        has_variations: false,
+        terms: productTypeTerms,
+      });
     }
-    return product;
+
+    if (collectionTerms.length > 0) {
+      extraAttributes.push({
+        id: 5,
+        name: 'Collection',
+        taxonomy: 'pa_collection',
+        has_variations: false,
+        terms: collectionTerms,
+      });
+    }
+
+    return {
+      ...product,
+      attributes: [...otherAttributes, ...extraAttributes],
+    };
   });
 
   let attributes: StoreAttribute[] = [];
@@ -95,6 +147,43 @@ export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
       }
     }),
   );
+
+  // Extract unique Collection terms across all loaded products
+  const allCollectionTermsMap = new Map<string, StoreAttributeTerm>();
+  allProducts.forEach((product) => {
+    const collAttr = product.attributes.find((a) => a.taxonomy === 'pa_collection');
+    if (collAttr) {
+      collAttr.terms.forEach((term) => {
+        if (!allCollectionTermsMap.has(term.slug)) {
+          allCollectionTermsMap.set(term.slug, {
+            id: term.id,
+            name: term.name,
+            slug: term.slug,
+            count: 0,
+          });
+        }
+      });
+    }
+  });
+
+  const sortedCollectionTerms = Array.from(allCollectionTermsMap.values()).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
+
+  // Synchronize pa_collection attribute in filterAttributes and attributeTerms
+  const collAttr = filterAttributes.find((a) => a.taxonomy === 'pa_collection');
+  if (collAttr) {
+    collAttr.count = sortedCollectionTerms.length;
+    attributeTerms[collAttr.id] = sortedCollectionTerms;
+  } else if (sortedCollectionTerms.length > 0) {
+    filterAttributes.unshift({
+      id: 5,
+      name: 'Collection',
+      taxonomy: 'pa_collection',
+      count: sortedCollectionTerms.length,
+    });
+    attributeTerms[5] = sortedCollectionTerms;
+  }
 
   // Extract unique Product Type terms from the injected fake attributes
   const allProductTypeTermsMap = new Map<string, StoreAttributeTerm>();

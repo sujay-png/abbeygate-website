@@ -183,7 +183,7 @@ const ProductFiltersInner = ({
 
   const formatTermName = (name: string): string => {
     if (name.toLowerCase() === 'keychains') return 'Key Fobs';
-    return name;
+    return name.replace(/\s+Collection$/i, '');
   };
 
   const getTermName = (key: FilterParamKey, slug: string): string => {

@@ -48,7 +48,7 @@ export async function getAllStoreProductsByCategory(
   categoryId: number | string,
   options: { maxPages?: number; perPage?: number } = {},
 ): Promise<StoreProduct[]> {
-  const { maxPages = 3, perPage = 50 } = options;
+  const { maxPages = 5, perPage = 100 } = options;
 
   // Page 1 tells us how many pages exist; fetch the rest in parallel rather than one by one.
   const first = await getStoreProducts({ categoryId, page: 1, perPage });
