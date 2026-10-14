@@ -100,4 +100,67 @@ describe('filter-helpers collection extraction and counting', () => {
     expect(productMatchesFilters(allProducts[0], { filter_collection: ['richmond'] })).toBe(false);
     expect(productMatchesFilters(allProducts[0], { filter_collection: ['dorchester-collection'] })).toBe(true);
   });
+
+  it('extracts layout from titles and categories (WTV, DPP, Feint Ruled) and counts accurately', async () => {
+    const wtvDiary = createMockProduct({
+      id: 201,
+      name: 'Richmond Pocket Diary, Week to View, Dark Blue',
+      categories: [{ id: 39, name: 'Pocket Diaries', slug: 'pocket-diaries', link: '' }],
+    });
+
+    const dppDiary = createMockProduct({
+      id: 202,
+      name: 'Richmond A4 Desk Diary, Day Per Page, Red',
+      categories: [{ id: 172, name: 'A4 Diaries', slug: 'a4-diaries', link: '' }],
+    });
+
+    const notebook = createMockProduct({
+      id: 203,
+      name: 'Dorchester A5 Soft Cover Notebook, Pink',
+      categories: [{ id: 165, name: 'A5 Notebooks', slug: 'a5-notebooks', link: '' }],
+    });
+
+    const walletNoLayout = createMockProduct({
+      id: 204,
+      name: 'Dorchester Collection Faux Leather Travel Wallet, Black',
+      categories: [{ id: 48, name: 'Wallets', slug: 'wallets', link: '' }],
+    });
+
+    const { allProducts, filterAttributes, attributeTerms } = await getFilterDataForProducts([
+      wtvDiary,
+      dppDiary,
+      notebook,
+      walletNoLayout,
+    ]);
+
+    expect(allProducts).toHaveLength(4);
+
+    // Verify pa_layout attribute in filterAttributes
+    const layoutAttr = filterAttributes.find((a) => a.taxonomy === 'pa_layout');
+    expect(layoutAttr).toBeDefined();
+
+    const terms = attributeTerms[layoutAttr!.id];
+    expect(terms.map((t) => t.slug)).toEqual(
+      expect.arrayContaining(['day-per-page', 'feint-ruled', 'week-to-view'])
+    );
+
+    // Verify counts
+    const wtvCount = countProductsForTerm(allProducts, 'pa_layout', 'week-to-view', {}, 'filter_layout');
+    const dppCount = countProductsForTerm(allProducts, 'pa_layout', 'day-per-page', {}, 'filter_layout');
+    const feintCount = countProductsForTerm(allProducts, 'pa_layout', 'feint-ruled', {}, 'filter_layout');
+
+    expect(wtvCount).toBe(1);
+    expect(dppCount).toBe(1);
+    expect(feintCount).toBe(1);
+
+    // Verify productMatchesFilters
+    expect(productMatchesFilters(allProducts[0], { filter_layout: ['week-to-view'] })).toBe(true);
+    expect(productMatchesFilters(allProducts[0], { filter_layout: ['day-per-page'] })).toBe(false);
+
+    expect(productMatchesFilters(allProducts[1], { filter_layout: ['day-per-page'] })).toBe(true);
+    expect(productMatchesFilters(allProducts[1], { filter_layout: ['week-to-view'] })).toBe(false);
+
+    expect(productMatchesFilters(allProducts[2], { filter_layout: ['feint-ruled'] })).toBe(true);
+    expect(productMatchesFilters(allProducts[3], { filter_layout: ['week-to-view'] })).toBe(false);
+  });
 });

@@ -85,18 +85,76 @@ function extractCollectionTerms(product: StoreProduct): StoreAttributeTerm[] {
   return Array.from(termsMap.values());
 }
 
+function extractLayoutTerms(product: StoreProduct): StoreAttributeTerm[] {
+  const termsMap = new Map<string, StoreAttributeTerm>();
+
+  const nameLower = (product.name || '').toLowerCase();
+  const shortDescLower = (product.short_description || '').toLowerCase();
+
+  // 1. Check title first (authoritative)
+  if (nameLower.includes('week to view') || /\bwtv\b/i.test(nameLower)) {
+    termsMap.set('week-to-view', { id: 108, name: 'Week To View', slug: 'week-to-view', count: 0 });
+  } else if (nameLower.includes('day per page') || nameLower.includes('day a page') || /\bdpp\b/i.test(nameLower)) {
+    termsMap.set('day-per-page', { id: 107, name: 'Day Per Page', slug: 'day-per-page', count: 0 });
+  }
+
+  // 2. Existing pa_layout attributes on product if not already determined by title
+  if (termsMap.size === 0) {
+    const existingAttr = (product.attributes || []).find(
+      (a) => a.taxonomy === 'pa_layout' || a.name?.toLowerCase() === 'layout'
+    );
+    if (existingAttr && existingAttr.terms) {
+      existingAttr.terms.forEach((t) => {
+        const s = t.slug.toLowerCase();
+        if (s.includes('day')) {
+          termsMap.set('day-per-page', { id: 107, name: 'Day Per Page', slug: 'day-per-page', count: 0 });
+        } else if (s.includes('week') || s.includes('wtv')) {
+          termsMap.set('week-to-view', { id: 108, name: 'Week To View', slug: 'week-to-view', count: 0 });
+        } else if (s.includes('feint') || s.includes('ruled')) {
+          termsMap.set('feint-ruled', { id: 162, name: 'Feint Ruled', slug: 'feint-ruled', count: 0 });
+        }
+      });
+    }
+  }
+
+  // 3. Fallback to short description if not found in title or attributes
+  if (termsMap.size === 0) {
+    if (shortDescLower.includes('week to view') || /\bwtv\b/i.test(shortDescLower)) {
+      termsMap.set('week-to-view', { id: 108, name: 'Week To View', slug: 'week-to-view', count: 0 });
+    } else if (shortDescLower.includes('day per page') || shortDescLower.includes('day a page') || /\bdpp\b/i.test(shortDescLower)) {
+      termsMap.set('day-per-page', { id: 107, name: 'Day Per Page', slug: 'day-per-page', count: 0 });
+    }
+  }
+
+  // 4. Notebooks (Feint Ruled)
+  const isNotebook =
+    (product.categories || []).some((c) => c.name.toLowerCase().includes('notebook')) ||
+    nameLower.includes('notebook');
+  if (isNotebook || nameLower.includes('feint ruled') || shortDescLower.includes('feint ruled')) {
+    termsMap.set('feint-ruled', { id: 162, name: 'Feint Ruled', slug: 'feint-ruled', count: 0 });
+  }
+
+  return Array.from(termsMap.values());
+}
+
 export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
-  // Inject synthetic 'pa_product-type' and enriched 'pa_collection' attributes using product categories
-  // so the frontend filter system can accurately filter all categories and collections.
+  // Inject synthetic 'pa_product-type', enriched 'pa_collection', and enriched 'pa_layout'
+  // so the frontend filter system can accurately filter all categories, collections, and layouts.
   const allProducts = rawProducts.map((product) => {
     const productTypeTerms = product.categories
       .filter((cat) => cat.id !== 126 && cat.id !== 176 && !cat.name.toLowerCase().includes('collection')) // Exclude parent and collections
       .map((cat) => ({ id: cat.id, name: cat.name, slug: cat.slug }));
 
     const collectionTerms = extractCollectionTerms(product);
+    const layoutTerms = extractLayoutTerms(product);
 
     const otherAttributes = (product.attributes || []).filter(
-      (a) => a.taxonomy !== 'pa_product-type' && a.taxonomy !== 'pa_collection' && a.name?.toLowerCase() !== 'collection'
+      (a) =>
+        a.taxonomy !== 'pa_product-type' &&
+        a.taxonomy !== 'pa_collection' &&
+        a.name?.toLowerCase() !== 'collection' &&
+        a.taxonomy !== 'pa_layout' &&
+        a.name?.toLowerCase() !== 'layout'
     );
 
     const extraAttributes = [];
@@ -117,6 +175,16 @@ export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
         taxonomy: 'pa_collection',
         has_variations: false,
         terms: collectionTerms,
+      });
+    }
+
+    if (layoutTerms.length > 0) {
+      extraAttributes.push({
+        id: 6,
+        name: 'Layout',
+        taxonomy: 'pa_layout',
+        has_variations: false,
+        terms: layoutTerms,
       });
     }
 
@@ -183,6 +251,43 @@ export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
       count: sortedCollectionTerms.length,
     });
     attributeTerms[5] = sortedCollectionTerms;
+  }
+
+  // Extract unique Layout terms across all loaded products
+  const allLayoutTermsMap = new Map<string, StoreAttributeTerm>();
+  allProducts.forEach((product) => {
+    const lAttr = product.attributes.find((a) => a.taxonomy === 'pa_layout');
+    if (lAttr) {
+      lAttr.terms.forEach((term) => {
+        if (!allLayoutTermsMap.has(term.slug)) {
+          allLayoutTermsMap.set(term.slug, {
+            id: term.id,
+            name: term.name,
+            slug: term.slug,
+            count: 0,
+          });
+        }
+      });
+    }
+  });
+
+  const sortedLayoutTerms = Array.from(allLayoutTermsMap.values()).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
+
+  // Synchronize pa_layout attribute in filterAttributes and attributeTerms
+  const layoutAttr = filterAttributes.find((a) => a.taxonomy === 'pa_layout');
+  if (layoutAttr) {
+    layoutAttr.count = sortedLayoutTerms.length;
+    attributeTerms[layoutAttr.id] = sortedLayoutTerms;
+  } else if (sortedLayoutTerms.length > 0) {
+    filterAttributes.push({
+      id: 6,
+      name: 'Layout',
+      taxonomy: 'pa_layout',
+      count: sortedLayoutTerms.length,
+    });
+    attributeTerms[6] = sortedLayoutTerms;
   }
 
   // Extract unique Product Type terms from the injected fake attributes
