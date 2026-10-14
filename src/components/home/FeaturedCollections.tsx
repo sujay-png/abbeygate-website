@@ -8,6 +8,8 @@ import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { useEffect, useState } from "react";
 
+// Customer reviews / testimonials commented out until genuine reviews are provided
+/*
 const testimonials = [
   {
     id: 1,
@@ -56,8 +58,10 @@ const StarRating = ({ rating }: { rating: number }) => {
     </div>
   );
 };
+*/
 
 export const FeaturedCollections = () => {
+  /*
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [
     Autoplay({ delay: 5000, stopOnInteraction: true }),
   ]);
@@ -69,6 +73,7 @@ export const FeaturedCollections = () => {
     emblaApi.on("select", onSelect);
     onSelect();
   }, [emblaApi]);
+  */
 
   return (
     <section className="py-16 bg-brand-cream">
@@ -107,9 +112,9 @@ export const FeaturedCollections = () => {
           ))}
         </div>
 
-        {/* Flush Content Grid */}
+        {/* Customer Feedback / Reviews Section - Commented out until genuine reviews are provided */}
+        {/*
         <div className="grid grid-cols-1 md:grid-cols-2">
-          {/* Left Image */}
           <div className="relative min-h-[350px] md:min-h-[450px] w-full">
             <Image
               src="/images/collections/collectionlanding.png"
@@ -121,7 +126,6 @@ export const FeaturedCollections = () => {
             />
           </div>
 
-          {/* Right Feedback Box */}
           <div className="bg-brand-soft p-8 lg:p-12 flex flex-col justify-center rounded-b-sm md:rounded-r-sm md:rounded-bl-none text-brand-body relative">
             <p className="text-sm text-gray-600 mb-1 font-sans">Reviews</p>
             <h3 className="text-3xl font-bold font-josefin mb-2">Customer Feedback</h3>
@@ -145,7 +149,6 @@ export const FeaturedCollections = () => {
               </div>
             </div>
 
-            {/* Pagination Dots */}
             <div className="flex justify-center gap-2 mt-6">
               {testimonials.map((_, index) => (
                 <button
@@ -160,6 +163,7 @@ export const FeaturedCollections = () => {
             </div>
           </div>
         </div>
+        */}
       </Container>
     </section>
   );
