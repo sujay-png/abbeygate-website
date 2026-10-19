@@ -70,6 +70,75 @@ export function normalizeColourTerms(product: StoreProduct): StoreProductAttribu
   return colourAttr.terms;
 }
 
+export function extractSizeTerms(product: StoreProduct): StoreProductAttribute['terms'] {
+  // 1. Existing pa_size attribute on the product
+  const existingAttr = (product.attributes || []).find(
+    (a) => a.taxonomy === 'pa_size' || a.name?.toLowerCase() === 'size'
+  );
+  if (existingAttr && existingAttr.terms?.length > 0) {
+    return existingAttr.terms;
+  }
+
+  // 2. Check product name & categories
+  const nameLower = (product.name || '').toLowerCase();
+  const catNames = (product.categories || []).map((c) => c.name.toLowerCase()).join(' ');
+  const combined = `${nameLower} ${catNames}`;
+
+  // Match sizes in order of specificity (word boundary check)
+  if (/\b(quarto)\b/i.test(combined)) {
+    return [{ id: 98, name: 'Quarto', slug: 'quarto' }];
+  }
+  if (/\b(pocket)\b/i.test(combined)) {
+    return [{ id: 99, name: 'Pocket', slug: 'pocket' }];
+  }
+  if (/\b(slim)\b/i.test(combined)) {
+    return [{ id: 102, name: 'Slim', slug: 'slim' }];
+  }
+  if (/\b(a4)\b/i.test(combined)) {
+    return [{ id: 95, name: 'A4', slug: 'a4' }];
+  }
+  if (/\b(a5)\b/i.test(combined)) {
+    return [{ id: 96, name: 'A5', slug: 'a5' }];
+  }
+  if (/\b(a6)\b/i.test(combined)) {
+    return [{ id: 97, name: 'A6', slug: 'a6' }];
+  }
+
+  return [];
+}
+
+export function extractColourTerms(product: StoreProduct): StoreProductAttribute['terms'] {
+  // 1. Existing pa_colour attribute if present
+  const existingAttr = (product.attributes || []).find(
+    (a) => a.taxonomy === 'pa_colour' || a.name?.toLowerCase() === 'colour'
+  );
+  if (existingAttr && existingAttr.terms?.length > 0) {
+    const cleaned = normalizeColourTerms(product);
+    if (cleaned && cleaned.length > 0) {
+      return cleaned;
+    }
+  }
+
+  // 2. Extract from product name: Abbeygate products strictly use "<Title>, <Colour>" format
+  const name = product.name || '';
+  const nameParts = name.split(',');
+  if (nameParts.length > 1) {
+    const rawColor = nameParts[nameParts.length - 1].trim();
+    // Exclude parts that describe layout or paper specifications
+    const isLayoutOrSpec = /view|page|ruled|paper|grid|plain/i.test(rawColor);
+    if (!isLayoutOrSpec && rawColor.length > 0 && rawColor.length < 35) {
+      const cleanSlug = rawColor
+        .toLowerCase()
+        .replace(/[\s/]+/g, '-')
+        .replace(/[^a-z0-9-]/g, '');
+
+      return [{ id: 1000 + (cleanSlug.charCodeAt(0) || 0), name: rawColor, slug: cleanSlug }];
+    }
+  }
+
+  return [];
+}
+
 /**
  * Strip a Store API product down to what listing pages render, filter and sort on.
  * The raw payload carries every gallery image (with srcsets), long descriptions and
@@ -77,14 +146,42 @@ export function normalizeColourTerms(product: StoreProduct): StoreProductAttribu
  */
 export function toListingProduct(product: StoreProduct): StoreProduct {
   const image = product.images[0];
-  const cleanColourTerms = normalizeColourTerms(product);
-  const attributes = cleanColourTerms
-    ? (product.attributes || []).map((attr) =>
-        attr.taxonomy === 'pa_colour' || attr.name?.toLowerCase() === 'colour'
-          ? { ...attr, terms: cleanColourTerms }
-          : attr
-      )
-    : product.attributes;
+  const sizeTerms = extractSizeTerms(product);
+  const colourTerms = extractColourTerms(product);
+
+  const existingOtherAttrs = (product.attributes || []).filter(
+    (a) =>
+      a.taxonomy !== 'pa_size' &&
+      a.name?.toLowerCase() !== 'size' &&
+      a.taxonomy !== 'pa_colour' &&
+      a.name?.toLowerCase() !== 'colour'
+  );
+
+  const finalAttrs = [...existingOtherAttrs];
+  if (sizeTerms.length > 0) {
+    const origSizeAttr = (product.attributes || []).find(
+      (a) => a.taxonomy === 'pa_size' || a.name?.toLowerCase() === 'size'
+    );
+    finalAttrs.push({
+      id: origSizeAttr?.id ?? 2,
+      name: origSizeAttr?.name ?? 'Size',
+      taxonomy: 'pa_size',
+      has_variations: origSizeAttr?.has_variations ?? false,
+      terms: sizeTerms,
+    });
+  }
+  if (colourTerms.length > 0) {
+    const origColourAttr = (product.attributes || []).find(
+      (a) => a.taxonomy === 'pa_colour' || a.name?.toLowerCase() === 'colour'
+    );
+    finalAttrs.push({
+      id: origColourAttr?.id ?? 1,
+      name: origColourAttr?.name ?? 'Colour',
+      taxonomy: 'pa_colour',
+      has_variations: origColourAttr?.has_variations ?? false,
+      terms: colourTerms,
+    });
+  }
 
   return {
     id: product.id,
@@ -102,7 +199,7 @@ export function toListingProduct(product: StoreProduct): StoreProduct {
       : [],
     categories: product.categories,
     tags: product.tags,
-    attributes,
+    attributes: finalAttrs,
     is_purchasable: product.is_purchasable,
     is_in_stock: product.is_in_stock,
     average_rating: product.average_rating,
@@ -200,8 +297,9 @@ function extractLayoutTerms(product: StoreProduct): StoreAttributeTerm[] {
 }
 
 export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
-  // Inject synthetic 'pa_product-type', enriched 'pa_collection', and enriched 'pa_layout'
-  // so the frontend filter system can accurately filter all categories, collections, and layouts.
+  // Inject synthetic 'pa_product-type', enriched 'pa_collection', enriched 'pa_layout',
+  // enriched 'pa_size', and enriched 'pa_colour' so the frontend filter system can accurately
+  // filter all categories, collections, layouts, sizes, and colours.
   const allProducts = rawProducts.map((product) => {
     const productTypeTerms = product.categories
       .filter((cat) => cat.id !== 126 && cat.id !== 176 && !cat.name.toLowerCase().includes('collection')) // Exclude parent and collections
@@ -209,7 +307,8 @@ export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
 
     const collectionTerms = extractCollectionTerms(product);
     const layoutTerms = extractLayoutTerms(product);
-    const cleanColourTerms = normalizeColourTerms(product);
+    const sizeTerms = extractSizeTerms(product);
+    const colourTerms = extractColourTerms(product);
 
     const otherAttributes = (product.attributes || []).filter(
       (a) =>
@@ -218,6 +317,8 @@ export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
         a.name?.toLowerCase() !== 'collection' &&
         a.taxonomy !== 'pa_layout' &&
         a.name?.toLowerCase() !== 'layout' &&
+        a.taxonomy !== 'pa_size' &&
+        a.name?.toLowerCase() !== 'size' &&
         a.taxonomy !== 'pa_colour' &&
         a.name?.toLowerCase() !== 'colour'
     );
@@ -253,7 +354,20 @@ export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
       });
     }
 
-    if (cleanColourTerms && cleanColourTerms.length > 0) {
+    if (sizeTerms.length > 0) {
+      const origSizeAttr = (product.attributes || []).find(
+        (a) => a.taxonomy === 'pa_size' || a.name?.toLowerCase() === 'size'
+      );
+      extraAttributes.push({
+        id: origSizeAttr?.id ?? 2,
+        name: origSizeAttr?.name ?? 'Size',
+        taxonomy: 'pa_size',
+        has_variations: origSizeAttr?.has_variations ?? false,
+        terms: sizeTerms,
+      });
+    }
+
+    if (colourTerms.length > 0) {
       const origColourAttr = (product.attributes || []).find(
         (a) => a.taxonomy === 'pa_colour' || a.name?.toLowerCase() === 'colour'
       );
@@ -262,7 +376,7 @@ export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
         name: origColourAttr?.name ?? 'Colour',
         taxonomy: 'pa_colour',
         has_variations: origColourAttr?.has_variations ?? false,
-        terms: cleanColourTerms,
+        terms: colourTerms,
       });
     }
 
@@ -294,7 +408,7 @@ export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
     }),
   );
 
-  // Extract unique Collection terms across all loaded products
+  // 1. Synchronize pa_collection terms across all loaded products
   const allCollectionTermsMap = new Map<string, StoreAttributeTerm>();
   allProducts.forEach((product) => {
     const collAttr = product.attributes.find((a) => a.taxonomy === 'pa_collection');
@@ -316,7 +430,6 @@ export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
     a.name.localeCompare(b.name)
   );
 
-  // Synchronize pa_collection attribute in filterAttributes and attributeTerms
   const collAttr = filterAttributes.find((a) => a.taxonomy === 'pa_collection');
   if (collAttr) {
     collAttr.count = sortedCollectionTerms.length;
@@ -331,7 +444,7 @@ export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
     attributeTerms[5] = sortedCollectionTerms;
   }
 
-  // Extract unique Layout terms across all loaded products
+  // 2. Synchronize pa_layout terms across all loaded products
   const allLayoutTermsMap = new Map<string, StoreAttributeTerm>();
   allProducts.forEach((product) => {
     const lAttr = product.attributes.find((a) => a.taxonomy === 'pa_layout');
@@ -353,7 +466,6 @@ export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
     a.name.localeCompare(b.name)
   );
 
-  // Synchronize pa_layout attribute in filterAttributes and attributeTerms
   const layoutAttr = filterAttributes.find((a) => a.taxonomy === 'pa_layout');
   if (layoutAttr) {
     layoutAttr.count = sortedLayoutTerms.length;
@@ -368,7 +480,85 @@ export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
     attributeTerms[6] = sortedLayoutTerms;
   }
 
-  // Extract unique Product Type terms from the injected fake attributes
+  // 3. Synchronize pa_size terms across all loaded products
+  const allSizeTermsMap = new Map<string, StoreAttributeTerm>();
+  allProducts.forEach((product) => {
+    const sAttr = product.attributes.find((a) => a.taxonomy === 'pa_size');
+    if (sAttr) {
+      sAttr.terms.forEach((term) => {
+        if (!allSizeTermsMap.has(term.slug)) {
+          allSizeTermsMap.set(term.slug, {
+            id: term.id,
+            name: term.name,
+            slug: term.slug,
+            count: 0,
+          });
+        }
+      });
+    }
+  });
+
+  const sizeOrder = ['a4', 'quarto', 'a5', 'a6', 'pocket', 'slim'];
+  const sortedSizeTerms = Array.from(allSizeTermsMap.values()).sort((a, b) => {
+    const idxA = sizeOrder.indexOf(a.slug.toLowerCase());
+    const idxB = sizeOrder.indexOf(b.slug.toLowerCase());
+    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+    if (idxA !== -1) return -1;
+    if (idxB !== -1) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  const sizeAttr = filterAttributes.find((a) => a.taxonomy === 'pa_size');
+  if (sizeAttr) {
+    sizeAttr.count = sortedSizeTerms.length;
+    attributeTerms[sizeAttr.id] = sortedSizeTerms;
+  } else if (sortedSizeTerms.length > 0) {
+    filterAttributes.push({
+      id: 2,
+      name: 'Size',
+      taxonomy: 'pa_size',
+      count: sortedSizeTerms.length,
+    });
+    attributeTerms[2] = sortedSizeTerms;
+  }
+
+  // 4. Synchronize pa_colour terms across all loaded products
+  const allColourTermsMap = new Map<string, StoreAttributeTerm>();
+  allProducts.forEach((product) => {
+    const cAttr = product.attributes.find((a) => a.taxonomy === 'pa_colour');
+    if (cAttr) {
+      cAttr.terms.forEach((term) => {
+        if (!allColourTermsMap.has(term.slug)) {
+          allColourTermsMap.set(term.slug, {
+            id: term.id,
+            name: term.name,
+            slug: term.slug,
+            count: 0,
+          });
+        }
+      });
+    }
+  });
+
+  const sortedColourTerms = Array.from(allColourTermsMap.values()).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
+
+  const colourAttr = filterAttributes.find((a) => a.taxonomy === 'pa_colour');
+  if (colourAttr) {
+    colourAttr.count = sortedColourTerms.length;
+    attributeTerms[colourAttr.id] = sortedColourTerms;
+  } else if (sortedColourTerms.length > 0) {
+    filterAttributes.push({
+      id: 1,
+      name: 'Colour',
+      taxonomy: 'pa_colour',
+      count: sortedColourTerms.length,
+    });
+    attributeTerms[1] = sortedColourTerms;
+  }
+
+  // 5. Extract unique Product Type terms from the injected fake attributes
   const allProductTypeTermsMap = new Map<string, StoreAttributeTerm>();
   allProducts.forEach((product) => {
     const ptAttr = product.attributes.find((a) => a.taxonomy === 'pa_product-type');

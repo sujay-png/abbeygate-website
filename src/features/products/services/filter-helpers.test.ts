@@ -1,5 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
-import { getFilterDataForProducts, normalizeColourTerms } from './filter-helpers';
+import {
+  getFilterDataForProducts,
+  normalizeColourTerms,
+  extractSizeTerms,
+  extractColourTerms,
+} from './filter-helpers';
 import { countProductsForTerm, productMatchesFilters } from '../utils/product-helpers';
 import { searchProducts } from '../utils/search-helpers';
 import type { StoreProduct } from '../types/store-product';
@@ -276,5 +281,92 @@ describe('filter-helpers collection extraction and counting', () => {
 
     expect(productMatchesFilters(normRed, { filter_colour: ['red'] })).toBe(true);
     expect(productMatchesFilters(normRed, { filter_colour: ['burgundy'] })).toBe(false);
+  });
+
+  it('extracts size and colour from product titles and categories when attributes are missing in WooCommerce', async () => {
+    const a4Burgundy = createMockProduct({
+      id: 301,
+      name: 'Richmond FineGrain A4 Desk Diary, Day Per Page, Burgundy',
+      categories: [{ id: 172, name: 'A4 Diaries', slug: 'a4-diaries', link: '' }],
+      attributes: [], // Missing in Store API
+    });
+
+    const quartoNavy = createMockProduct({
+      id: 302,
+      name: 'Chelsea Quarto Desk Diary, Week to View, Navy',
+      categories: [{ id: 170, name: 'Quarto Diaries', slug: 'quarto-diaries', link: '' }],
+      attributes: [], // Missing in Store API
+    });
+
+    const pocketBlack = createMockProduct({
+      id: 303,
+      name: 'Dorchester Pocket Diary, Week to View, Black',
+      categories: [{ id: 39, name: 'Pocket Diaries', slug: 'pocket-diaries', link: '' }],
+      attributes: [], // Missing in Store API
+    });
+
+    const walletNoSize = createMockProduct({
+      id: 304,
+      name: 'Dorchester Faux Leather Card Wallet, Tan',
+      categories: [{ id: 48, name: 'Wallets', slug: 'wallets', link: '' }],
+      attributes: [], // No size, but has Tan colour
+    });
+
+    // 1. Direct extraction test
+    expect(extractSizeTerms(a4Burgundy)).toEqual([{ id: 95, name: 'A4', slug: 'a4' }]);
+    expect(extractColourTerms(a4Burgundy)).toEqual([{ id: expect.any(Number), name: 'Burgundy', slug: 'burgundy' }]);
+
+    expect(extractSizeTerms(quartoNavy)).toEqual([{ id: 98, name: 'Quarto', slug: 'quarto' }]);
+    expect(extractColourTerms(quartoNavy)).toEqual([{ id: expect.any(Number), name: 'Navy', slug: 'navy' }]);
+
+    expect(extractSizeTerms(pocketBlack)).toEqual([{ id: 99, name: 'Pocket', slug: 'pocket' }]);
+    expect(extractColourTerms(pocketBlack)).toEqual([{ id: expect.any(Number), name: 'Black', slug: 'black' }]);
+
+    expect(extractSizeTerms(walletNoSize)).toEqual([]);
+    expect(extractColourTerms(walletNoSize)).toEqual([{ id: expect.any(Number), name: 'Tan', slug: 'tan' }]);
+
+    // 2. Integration with getFilterDataForProducts
+    const { allProducts, filterAttributes, attributeTerms } = await getFilterDataForProducts([
+      a4Burgundy,
+      quartoNavy,
+      pocketBlack,
+      walletNoSize,
+    ]);
+
+    expect(allProducts).toHaveLength(4);
+
+    // Verify all products were enriched with attributes
+    const enrichedA4 = allProducts.find((p) => p.id === 301)!;
+    expect(enrichedA4.attributes.find((a) => a.taxonomy === 'pa_size')?.terms[0].slug).toBe('a4');
+    expect(enrichedA4.attributes.find((a) => a.taxonomy === 'pa_colour')?.terms[0].slug).toBe('burgundy');
+
+    const enrichedWallet = allProducts.find((p) => p.id === 304)!;
+    expect(enrichedWallet.attributes.find((a) => a.taxonomy === 'pa_size')).toBeUndefined();
+    expect(enrichedWallet.attributes.find((a) => a.taxonomy === 'pa_colour')?.terms[0].slug).toBe('tan');
+
+    // Verify filterAttributes contains pa_size and pa_colour with sorted terms
+    const sizeAttr = filterAttributes.find((a) => a.taxonomy === 'pa_size');
+    expect(sizeAttr).toBeDefined();
+    const sizeTerms = attributeTerms[sizeAttr!.id];
+    // Sorted order: A4, Quarto, Pocket
+    expect(sizeTerms.map((t) => t.slug)).toEqual(['a4', 'quarto', 'pocket']);
+
+    const colourAttr = filterAttributes.find((a) => a.taxonomy === 'pa_colour');
+    expect(colourAttr).toBeDefined();
+    const colourTerms = attributeTerms[colourAttr!.id];
+    // Sorted alphabetically: Black, Burgundy, Navy, Tan
+    expect(colourTerms.map((t) => t.name)).toEqual(['Black', 'Burgundy', 'Navy', 'Tan']);
+
+    // Verify filtering matches
+    expect(productMatchesFilters(enrichedA4, { filter_size: ['a4'] })).toBe(true);
+    expect(productMatchesFilters(enrichedA4, { filter_size: ['quarto'] })).toBe(false);
+    expect(productMatchesFilters(enrichedA4, { filter_colour: ['burgundy'] })).toBe(true);
+    expect(productMatchesFilters(enrichedA4, { filter_colour: ['navy'] })).toBe(false);
+
+    // Verify counts
+    expect(countProductsForTerm(allProducts, 'pa_size', 'a4', {}, 'filter_size')).toBe(1);
+    expect(countProductsForTerm(allProducts, 'pa_size', 'quarto', {}, 'filter_size')).toBe(1);
+    expect(countProductsForTerm(allProducts, 'pa_colour', 'burgundy', {}, 'filter_colour')).toBe(1);
+    expect(countProductsForTerm(allProducts, 'pa_colour', 'tan', {}, 'filter_colour')).toBe(1);
   });
 });
