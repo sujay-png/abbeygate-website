@@ -131,12 +131,32 @@ export interface SearchOptions {
 }
 
 /**
+ * Map of broad colour keywords to related/sub-shade colours.
+ * When a customer searches for a broad colour (e.g. "red"), products featuring related colours
+ * (e.g. "burgundy", "wine", "maroon") will also match the search results.
+ * However, searching for a specific sub-shade (e.g. "burgundy") will NOT match broad/other colours (e.g. "red").
+ */
+export const RELATED_COLOUR_MAP: Record<string, string[]> = {
+  red: ['burgundy', 'wine', 'maroon', 'ruby', 'crimson', 'scarlet'],
+  blue: ['navy', 'teal', 'cobalt', 'royal', 'sky', 'cyan', 'indigo'],
+  green: ['sage', 'olive', 'emerald', 'forest', 'mint', 'khaki'],
+  black: ['charcoal', 'anthracite', 'jet'],
+  grey: ['gray', 'silver', 'slate', 'ash', 'charcoal', 'graphite'],
+  gray: ['grey', 'silver', 'slate', 'ash', 'charcoal', 'graphite'],
+  brown: ['tan', 'mustard', 'cognac', 'camel', 'chestnut', 'chocolate', 'toffee'],
+  pink: ['rose', 'blush', 'coral', 'fuchsia', 'magenta'],
+  purple: ['violet', 'plum', 'lavender', 'lilac', 'amethyst', 'aubergine'],
+  yellow: ['mustard', 'gold', 'amber', 'ochre'],
+  orange: ['terracotta', 'peach', 'coral', 'rust'],
+};
+
+/**
  * Filters a list of StoreProducts by search query, with support for:
  * - Synonym groups (e.g. Colourlux = Graphic Print, Dorchester = New Hide = Newhide)
  * - Multi-word concept expansion and extraction
  * - SKU matching (e.g. "NH-BK", "CX-44")
  * - Plural and suffix variations (diaries/diary, notebooks/notebook)
- * - Strict color filtering when a known color is searched
+ * - Strict color filtering when a known color is searched, including related colour shades (e.g. Red -> Burgundy)
  */
 export function searchProducts(
   products: StoreProduct[],
@@ -179,18 +199,33 @@ export function searchProducts(
 
   const cleanQuery = query.toLowerCase().replace(/sku:?/gi, '').replace(/[\W_]+/g, '');
 
-  // Extract known colors if not provided
+  // Extract known colors if not provided, including colour family keys
+  const extractedColors = products.flatMap((p) =>
+    p.attributes
+      ?.filter((a) => a.taxonomy === 'pa_colour' || a.name?.toLowerCase() === 'colour')
+      .flatMap((a) => a.terms?.map((t) => t.name.toLowerCase()) || []) || []
+  );
+
   const knownColors =
     options?.knownColors ||
-    new Set<string>(
-      products.flatMap((p) =>
-        p.attributes
-          ?.filter((a) => a.taxonomy === 'pa_colour' || a.name?.toLowerCase() === 'colour')
-          .flatMap((a) => a.terms?.map((t) => t.name.toLowerCase()) || []) || []
-      )
-    );
+    new Set<string>([...Object.keys(RELATED_COLOUR_MAP), ...extractedColors]);
 
   const allQueryTerms = query.toLowerCase().replace(/sku:?/gi, '').split(/[\s,;=+/]+/).filter(Boolean);
+
+  const matchesColorTerm = (colorTerm: string, text: string) => {
+    const termRegex = new RegExp(`(^|[^a-z0-9])${colorTerm}([^a-z0-9]|$)`, 'i');
+    if (termRegex.test(text)) return true;
+
+    const related = RELATED_COLOUR_MAP[colorTerm];
+    if (related && related.some((rel) => {
+      const relRegex = new RegExp(`(^|[^a-z0-9])${rel}([^a-z0-9]|$)`, 'i');
+      return relRegex.test(text);
+    })) {
+      return true;
+    }
+
+    return false;
+  };
 
   return products.filter((product) => {
     const attributeText =
@@ -214,9 +249,9 @@ export function searchProducts(
       }
     }
 
-    // STRICT COLOR CHECK: If user searched a color, it MUST be in name, attributes, or category/tags
+    // STRICT COLOR CHECK: If user searched a color, it MUST match the color or a related shade
     const hasFailingColorTerm = allQueryTerms.some(
-      (term) => knownColors.has(term) && !nameAndAttrText.includes(term)
+      (term) => knownColors.has(term) && !matchesColorTerm(term, nameAndAttrText)
     );
     if (hasFailingColorTerm) {
       return false;
@@ -231,6 +266,14 @@ export function searchProducts(
     if (searchTerms.length > 0) {
       return searchTerms.every((term) => {
         if (searchableText.includes(term)) return true;
+        // Check if term is a broad colour with related sub-shades
+        const related = RELATED_COLOUR_MAP[term];
+        if (related && related.some((rel) => {
+          const relRegex = new RegExp(`(^|[^a-z0-9])${rel}([^a-z0-9]|$)`, 'i');
+          return relRegex.test(searchableText);
+        })) {
+          return true;
+        }
         if (term.endsWith('ies') && searchableText.includes(term.replace(/ies$/, 'y'))) return true;
         if (term.endsWith('s') && searchableText.includes(term.slice(0, -1))) return true;
         if (!term.endsWith('s') && searchableText.includes(term + 's')) return true;

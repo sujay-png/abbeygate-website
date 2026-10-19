@@ -1,5 +1,6 @@
 import { getStoreAttributes, getStoreAttributeTerms } from './store-products';
-import type { StoreProduct, StoreAttribute, StoreAttributeTerm } from '../types/store-product';
+import type { StoreProduct, StoreAttribute, StoreAttributeTerm, StoreProductAttribute } from '../types/store-product';
+import { RELATED_COLOUR_MAP } from '../utils/search-helpers';
 
 const FILTER_TAXONOMIES = ['pa_collection', 'pa_colour', 'pa_layout', 'pa_size'];
 
@@ -18,12 +19,73 @@ export function preloadFilterAttributes(): void {
 }
 
 /**
+ * Normalize and disambiguate colour terms on a product.
+ * If a product is associated with both a specific colour (e.g. 'Burgundy') and a broader search
+ * family (e.g. 'Red'), the specific colour is authoritative and the parent search keyword is stripped
+ * from the colour filter attributes so products are never double-counted across colours.
+ */
+export function normalizeColourTerms(product: StoreProduct): StoreProductAttribute['terms'] | null {
+  const colourAttr = (product.attributes || []).find(
+    (a) => a.taxonomy === 'pa_colour' || a.name?.toLowerCase() === 'colour'
+  );
+  if (!colourAttr || !colourAttr.terms || colourAttr.terms.length === 0) {
+    return null;
+  }
+  if (colourAttr.terms.length === 1) {
+    return colourAttr.terms;
+  }
+
+  const nameLower = (product.name || '').toLowerCase();
+
+  // 1. If product name explicitly contains one of the colour names (with word boundaries), that specific colour is authoritative:
+  const matchingTermsInName = colourAttr.terms.filter((term) => {
+    const termNameLower = term.name.toLowerCase();
+    const termSlugLower = term.slug.toLowerCase();
+    const regexName = new RegExp(`(^|[^a-z0-9])${termNameLower}([^a-z0-9]|$)`, 'i');
+    const regexSlug = new RegExp(`(^|[^a-z0-9])${termSlugLower}([^a-z0-9]|$)`, 'i');
+    return regexName.test(nameLower) || regexSlug.test(nameLower);
+  });
+
+  if (matchingTermsInName.length === 1) {
+    return matchingTermsInName;
+  }
+
+  // 2. If one term is a sub-shade/related colour of a broader parent colour (e.g., 'burgundy' is related to 'red'):
+  // The broad parent colour was added as a search keyword / category and should not be a duplicate colour attribute.
+  const isBroadParentOfOther = (termSlug: string) => {
+    const related = RELATED_COLOUR_MAP[termSlug.toLowerCase()];
+    if (!related) return false;
+    return colourAttr.terms.some(
+      (other) =>
+        other.slug.toLowerCase() !== termSlug.toLowerCase() &&
+        related.includes(other.slug.toLowerCase())
+    );
+  };
+
+  const specificTerms = colourAttr.terms.filter((term) => !isBroadParentOfOther(term.slug));
+  if (specificTerms.length > 0) {
+    return specificTerms;
+  }
+
+  return colourAttr.terms;
+}
+
+/**
  * Strip a Store API product down to what listing pages render, filter and sort on.
  * The raw payload carries every gallery image (with srcsets), long descriptions and
  * HATEOAS links, which bloats the page payload sent to the browser several times over.
  */
 export function toListingProduct(product: StoreProduct): StoreProduct {
   const image = product.images[0];
+  const cleanColourTerms = normalizeColourTerms(product);
+  const attributes = cleanColourTerms
+    ? (product.attributes || []).map((attr) =>
+        attr.taxonomy === 'pa_colour' || attr.name?.toLowerCase() === 'colour'
+          ? { ...attr, terms: cleanColourTerms }
+          : attr
+      )
+    : product.attributes;
+
   return {
     id: product.id,
     name: product.name,
@@ -40,7 +102,7 @@ export function toListingProduct(product: StoreProduct): StoreProduct {
       : [],
     categories: product.categories,
     tags: product.tags,
-    attributes: product.attributes,
+    attributes,
     is_purchasable: product.is_purchasable,
     is_in_stock: product.is_in_stock,
     average_rating: product.average_rating,
@@ -147,6 +209,7 @@ export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
 
     const collectionTerms = extractCollectionTerms(product);
     const layoutTerms = extractLayoutTerms(product);
+    const cleanColourTerms = normalizeColourTerms(product);
 
     const otherAttributes = (product.attributes || []).filter(
       (a) =>
@@ -154,7 +217,9 @@ export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
         a.taxonomy !== 'pa_collection' &&
         a.name?.toLowerCase() !== 'collection' &&
         a.taxonomy !== 'pa_layout' &&
-        a.name?.toLowerCase() !== 'layout'
+        a.name?.toLowerCase() !== 'layout' &&
+        a.taxonomy !== 'pa_colour' &&
+        a.name?.toLowerCase() !== 'colour'
     );
 
     const extraAttributes = [];
@@ -185,6 +250,19 @@ export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
         taxonomy: 'pa_layout',
         has_variations: false,
         terms: layoutTerms,
+      });
+    }
+
+    if (cleanColourTerms && cleanColourTerms.length > 0) {
+      const origColourAttr = (product.attributes || []).find(
+        (a) => a.taxonomy === 'pa_colour' || a.name?.toLowerCase() === 'colour'
+      );
+      extraAttributes.push({
+        id: origColourAttr?.id ?? 1,
+        name: origColourAttr?.name ?? 'Colour',
+        taxonomy: 'pa_colour',
+        has_variations: origColourAttr?.has_variations ?? false,
+        terms: cleanColourTerms,
       });
     }
 
