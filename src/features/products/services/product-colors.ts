@@ -23,7 +23,7 @@ export async function getProductHexValues(
 
     const products = await woocommerceApi.request<ProductMetaItem[]>(
       `/products?include=${uniqueIds.join(',')}&_fields=id,meta_data`,
-      { revalidate: 3600, tags: ['products', 'colors'] }
+      { revalidate: 60, tags: ['products', 'colors'] }
     );
 
     const map: Record<string, string> = {};

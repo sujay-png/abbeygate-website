@@ -12,20 +12,28 @@
 export function parseHexValue(raw?: string | null): string | null {
   if (!raw || typeof raw !== 'string') return null;
 
-  // Extract all valid 3 or 6 digit hex segments
-  const matches = raw.match(/#?[0-9a-fA-F]{6}|#?[0-9a-fA-F]{3}/g);
-  if (!matches || matches.length === 0) return null;
+  // Split by common delimiters (e.g. " / ", ", ", "-", " and ", whitespace)
+  const parts = raw
+    .split(/[\/,\-\s|&]+/)
+    .map((p) => p.trim().replace(/^#/, ''))
+    .filter(Boolean);
 
-  const clean = matches.map((m) =>
-    m.startsWith('#') ? m.toLowerCase() : `#${m.toLowerCase()}`
-  );
-
-  // If two or more colors (bicolor product), combine first two with comma
-  if (clean.length >= 2) {
-    return `${clean[0]},${clean[1]}`;
+  const validHexes: string[] = [];
+  for (const part of parts) {
+    // Only accept strictly 6-digit or 3-digit hex strings
+    if (/^[0-9a-fA-F]{6}$/.test(part) || /^[0-9a-fA-F]{3}$/.test(part)) {
+      validHexes.push(`#${part.toLowerCase()}`);
+    }
   }
 
-  return clean[0];
+  if (validHexes.length === 0) return null;
+
+  // If two or more colors (bicolor product), combine first two with comma
+  if (validHexes.length >= 2) {
+    return `${validHexes[0]},${validHexes[1]}`;
+  }
+
+  return validHexes[0];
 }
 
 /**
