@@ -1,4 +1,4 @@
-import { Hero, FeaturedProducts, Categories, TrustIndicators, FeaturedCollections, ResourceCarousel, FAQ } from "@/components/home";
+import { Hero, FeaturedProducts, Categories, TrustIndicators, ResourceCarousel, FAQ } from "@/components/home";
 import { CustomisationCTA } from "@/components/shared/CustomisationCTA";
 import { LatestBlog } from "@/components/shared/LatestBlog";
 import type { Metadata } from "next";
@@ -14,7 +14,6 @@ export default function Home() {
       <Categories />
       <FeaturedProducts />
       <TrustIndicators/>
-      <FeaturedCollections />  
       <ResourceCarousel />
       <FAQ />
       <LatestBlog />
