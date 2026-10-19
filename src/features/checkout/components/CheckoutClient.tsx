@@ -234,7 +234,7 @@ function CheckoutFormContent({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (paymentMethod === 'card' && (!stripe || !elements || !clientSecret)) return;
+    if (!isFreeOrder && paymentMethod === 'card' && (!stripe || !elements || !clientSecret)) return;
     
     setIsProcessing(true);
     setPaymentError(null);
