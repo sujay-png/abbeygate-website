@@ -1,8 +1,9 @@
 import { woocommerceApi } from "@/lib/woocommerce/client";
-import { parseHexValue } from "../utils/color-helpers";
+import { parseHexValue, isBicolorProduct } from "../utils/color-helpers";
 
 type ProductMetaItem = {
   id: number;
+  name?: string;
   meta_data?: Array<{ key: string; value: unknown }>;
 };
 
@@ -22,7 +23,7 @@ export async function getProductHexValues(
     if (uniqueIds.length === 0) return {};
 
     const products = await woocommerceApi.request<ProductMetaItem[]>(
-      `/products?include=${uniqueIds.join(',')}&_fields=id,meta_data`,
+      `/products?include=${uniqueIds.join(',')}&_fields=id,name,meta_data`,
       { revalidate: 60, tags: ['products', 'colors'] }
     );
 
@@ -30,7 +31,8 @@ export async function getProductHexValues(
     for (const p of products || []) {
       const hexMeta = p.meta_data?.find((m) => m.key === 'hex_value');
       if (hexMeta && typeof hexMeta.value === 'string') {
-        const parsed = parseHexValue(hexMeta.value);
+        const isBicolor = isBicolorProduct(p.name);
+        const parsed = parseHexValue(hexMeta.value, isBicolor);
         if (parsed) {
           map[String(p.id)] = parsed;
         }

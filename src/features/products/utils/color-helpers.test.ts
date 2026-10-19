@@ -1,5 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { parseHexValue, getColorBackground } from './color-helpers';
+import { parseHexValue, getColorBackground, isBicolorProduct } from './color-helpers';
+
+describe('isBicolorProduct', () => {
+  it('identifies genuine bicolor/horizon products', () => {
+    expect(isBicolorProduct('Dorchester Horizon Quarto Desk Diary, Week to View, Black-Red')).toBe(true);
+    expect(isBicolorProduct('Dorchester Bicolour Quarto Desk Diary, Week to View, Black-Purple')).toBe(true);
+    expect(isBicolorProduct('Dorchester Bicolor Pocket Diary, Week to View, Blue- Royal Blue')).toBe(true);
+  });
+
+  it('identifies single-color products as false', () => {
+    expect(isBicolorProduct('Harrogate A5 Desk Diary, Day Per Page, Burgundy')).toBe(false);
+    expect(isBicolorProduct('Richmond A5 Desk Diary, Week to View, Burgundy')).toBe(false);
+    expect(isBicolorProduct('Dorchester Pocket Diary, Week to View, Red')).toBe(false);
+  });
+});
 
 describe('parseHexValue', () => {
   it('parses 6-digit hex without #', () => {
@@ -10,8 +24,14 @@ describe('parseHexValue', () => {
     expect(parseHexValue('#3D3935')).toBe('#3d3935');
   });
 
-  it('parses slash-separated bicolor (as currently in WordPress)', () => {
+  it('parses slash-separated bicolor when isBicolor is true or unspecified', () => {
     expect(parseHexValue('3F2021 / BA0C2F')).toBe('#3f2021,#ba0c2f');
+    expect(parseHexValue('3F2021 / BA0C2F', true)).toBe('#3f2021,#ba0c2f');
+  });
+
+  it('extracts only primary single solid hex when isBicolor is false', () => {
+    expect(parseHexValue('6A3735 / B83A4B', false)).toBe('#6a3735');
+    expect(parseHexValue('3F2021 / BA0C2F', false)).toBe('#3f2021');
   });
 
   it('parses hyphen-separated bicolor with hashes', () => {
