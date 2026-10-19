@@ -6,8 +6,10 @@ import { GuestAccountPrompt } from '@/features/checkout/components/GuestAccountP
 import { getSession } from '@/features/auth/utils/session';
 import { getStripeClient } from '@/lib/stripe/client';
 
-export default async function CheckoutSuccessPage({ searchParams }: { searchParams: Promise<{ payment_intent?: string }> }) {
-  const { payment_intent } = await searchParams;
+import { woocommerceFetch } from '@/lib/woocommerce/client';
+
+export default async function CheckoutSuccessPage({ searchParams }: { searchParams: Promise<{ payment_intent?: string; orderId?: string; key?: string }> }) {
+  const { payment_intent, orderId, key } = await searchParams;
   const session = await getSession();
   const isGuest = !session;
   let email = '';
@@ -20,14 +22,23 @@ export default async function CheckoutSuccessPage({ searchParams }: { searchPara
     } catch (e) {
       console.error('Failed to retrieve intent for success page', e);
     }
+  } else if (orderId && key) {
+    try {
+      const order = await woocommerceFetch<any>({ path: `/orders/${orderId}`, revalidate: false });
+      if (order && order.order_key === key) {
+        email = order.billing?.email || '';
+      }
+    } catch (e) {
+      console.error('Failed to retrieve order for success page', e);
+    }
   }
 
   return (
     <div className="min-h-screen bg-brand-cream flex flex-col">
-      <ClearCartOnLoad transactionId={payment_intent} />
+      <ClearCartOnLoad transactionId={payment_intent || orderId} />
       
       {isGuest && (
-        <GuestAccountPrompt email={email} stripeIntentId={payment_intent} />
+        <GuestAccountPrompt email={email} stripeIntentId={payment_intent} orderId={orderId} orderKey={key} />
       )}
       <header className="border-b border-[var(--brand-border)] bg-white">
         <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-12">

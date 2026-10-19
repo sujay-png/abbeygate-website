@@ -180,9 +180,14 @@ function CheckoutFormContent({
     }
   }, [initialDetails?.shipping?.postcode, postcodeStatus]);
 
+  const isFreeOrder = displayTotal <= 0;
+
   useEffect(() => {
     if (quoteData?.id) {
       setClientSecret(null);
+      if (displayTotal <= 0) {
+        return;
+      }
       fetch('/api/checkout/payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -194,7 +199,7 @@ function CheckoutFormContent({
       })
       .catch(err => console.error('Failed to get payment intent', err));
     }
-  }, [quoteData?.id]);
+  }, [quoteData?.id, displayTotal <= 0]);
 
   const handleExpressConfirm = async () => {
     if (!stripe || !elements || !clientSecret) return;
@@ -253,6 +258,53 @@ function CheckoutFormContent({
     const vatNumber = formData.get('vat_number') as string;
     // Format it cleanly if they provided one
     const fullVatNumber = vatNumber ? vatNumber.toUpperCase().replace(/\s+/g, '').replace(/^GB-?/, 'GB') : undefined;
+
+    if (isFreeOrder && quoteData?.id) {
+      const billingDetails = {
+        name: billingName,
+        email: formData.get('email') as string,
+        address: billingAddress
+      };
+      
+      const shippingDetails = {
+        name: `${formData.get('firstName')} ${formData.get('lastName')}`,
+        email: formData.get('email') as string,
+        address: {
+          line1: formData.get('address1') as string,
+          line2: formData.get('address2') as string,
+          city: formData.get('city') as string,
+          postal_code: formData.get('postcode') as string,
+          country: formData.get('country') as string,
+        }
+      };
+
+      try {
+        const res = await fetch('/api/checkout/free', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: quoteData.id,
+            billingDetails,
+            shippingDetails,
+            vatNumber: fullVatNumber
+          })
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          setPaymentError(errorData.error || 'Failed to place order');
+          setIsProcessing(false);
+        } else {
+          const data = await res.json();
+          window.location.href = `/checkout/success?orderId=${data.orderId}&key=${data.orderKey}`;
+        }
+      } catch (err: any) {
+        console.error('Free order submission error:', err);
+        setPaymentError('An unexpected error occurred while placing the order.');
+        setIsProcessing(false);
+      }
+      return;
+    }
 
     if (paymentMethod === 'card' && stripe && elements && clientSecret) {
       if (fullVatNumber && quoteData?.id) {
@@ -350,7 +402,7 @@ function CheckoutFormContent({
     }
   };
 
-  const isSubmitDisabled = isQuoteLoading || isProcessing || (paymentMethod === 'card' && !clientSecret);
+  const isSubmitDisabled = isQuoteLoading || isProcessing || (!isFreeOrder && paymentMethod === 'card' && !clientSecret);
 
   return (
     <div className="mx-auto grid max-w-[1440px] grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.78fr)] flex-col-reverse lg:flex-row">
@@ -491,37 +543,33 @@ function CheckoutFormContent({
 
           <section>
             <h2 className="mb-2 text-xl">Payment</h2>
-            <p className="mb-4 text-sm text-brand-grey">All transactions will be secure and encrypted.</p>
-            <div className="overflow-hidden border border-[var(--brand-border)]">
-              <label className={`flex items-center justify-between gap-4 border-b border-[var(--brand-border)] px-4 py-4 text-sm font-semibold cursor-pointer ${paymentMethod === 'card' ? 'bg-brand-tint/60' : 'bg-white'}`}>
-                <span className="flex items-center gap-3">
-                  <input checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} name="payment" type="radio" value="card" className="accent-brand-primary" /> Credit or debit card
-                </span>
-                <CreditCard className="h-5 w-5 text-brand-primary" />
-              </label>
-              {paymentMethod === 'card' && (
-                <div className="bg-white px-4 py-4">
-                  {stripe ? (
-                    <PaymentElement options={{ layout: 'tabs' }} />
-                  ) : (
-                    <p className="text-sm text-brand-grey">Loading secure payment...</p>
+            {isFreeOrder ? (
+              <div className="rounded border border-brand-primary/20 bg-brand-tint/60 p-4 text-sm text-brand-primary-dark font-medium">
+                No payment required. A 100% discount has been applied to your order.
+              </div>
+            ) : (
+              <>
+                <p className="mb-4 text-sm text-brand-grey">All transactions will be secure and encrypted.</p>
+                <div className="overflow-hidden border border-[var(--brand-border)]">
+                  <label className={`flex items-center justify-between gap-4 border-b border-[var(--brand-border)] px-4 py-4 text-sm font-semibold cursor-pointer ${paymentMethod === 'card' ? 'bg-brand-tint/60' : 'bg-white'}`}>
+                    <span className="flex items-center gap-3">
+                      <input checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} name="payment" type="radio" value="card" className="accent-brand-primary" /> Credit or debit card
+                    </span>
+                    <CreditCard className="h-5 w-5 text-brand-primary" />
+                  </label>
+                  {paymentMethod === 'card' && (
+                    <div className="bg-white px-4 py-4">
+                      {stripe ? (
+                        <PaymentElement options={{ layout: 'tabs' }} />
+                      ) : (
+                        <p className="text-sm text-brand-grey">Loading secure payment...</p>
+                      )}
+                      {paymentError && <p className="mt-4 text-sm text-red-600">{paymentError}</p>}
+                    </div>
                   )}
-                  {paymentError && <p className="mt-4 text-sm text-red-600">{paymentError}</p>}
                 </div>
-              )}
-              
-              {/* <label className={`flex items-center justify-between gap-4 px-4 py-4 text-sm font-semibold cursor-pointer ${paymentMethod === 'bacs' ? 'bg-brand-tint/60' : 'bg-white'}`}>
-                <span className="flex items-center gap-3">
-                  <input checked={paymentMethod === 'bacs'} onChange={() => setPaymentMethod('bacs')} name="payment" type="radio" value="bacs" className="accent-brand-primary" /> Direct bank transfer
-                </span>
-                <Landmark className="h-5 w-5 text-brand-primary" />
-              </label>
-              {paymentMethod === 'bacs' && (
-                <div className="bg-white px-4 py-4 text-sm text-brand-grey border-t border-[var(--brand-border)]">
-                  Make your payment directly into our bank account. Please use your Order ID as the payment reference. Your order will not be shipped until the funds have cleared in our account.
-                </div>
-              )} */}
-            </div>
+              </>
+            )}
           </section>
 
           <section>
@@ -532,7 +580,7 @@ function CheckoutFormContent({
               </span>
             </label>
             <button type="submit" disabled={isSubmitDisabled} className="mt-6 w-full bg-brand-primary px-6 py-4 text-sm font-bold tracking-wide text-white hover:bg-brand-primary-dark disabled:opacity-75 disabled:cursor-not-allowed">
-              {isProcessing ? 'Processing payment...' : (isQuoteLoading ? 'Calculating total...' : `Pay ${formatPrice(displayTotal)}`)}
+              {isProcessing ? 'Processing order...' : (isQuoteLoading ? 'Calculating total...' : (isFreeOrder ? 'Place Order' : `Pay ${formatPrice(displayTotal)}`))}
             </button>
             <p className="mt-3 text-center text-xs text-brand-grey">Order placement is encrypted and secure.</p>
           </section>
@@ -812,7 +860,7 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
 
   const elementsOptions = useMemo(() => ({ 
     mode: 'payment' as const, 
-    amount: Math.max(1, Math.round(displayTotal * 100)), 
+    amount: Math.max(50, Math.round(displayTotal * 100)), 
     currency: 'gbp',
     appearance: { theme: 'stripe' as const }
   }), [Math.round(displayTotal * 100)]);
