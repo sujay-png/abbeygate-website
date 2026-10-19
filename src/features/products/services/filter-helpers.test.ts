@@ -369,4 +369,54 @@ describe('filter-helpers collection extraction and counting', () => {
     expect(countProductsForTerm(allProducts, 'pa_colour', 'burgundy', {}, 'filter_colour')).toBe(1);
     expect(countProductsForTerm(allProducts, 'pa_colour', 'tan', {}, 'filter_colour')).toBe(1);
   });
+
+  it('splits combo/dual colours into single colours so only clean individual colours appear in filters', async () => {
+    const dualColorProd = createMockProduct({
+      id: 401,
+      name: 'Dorchester Horizon Quarto Desk Diary, Week to View, Black-Green',
+      categories: [{ id: 170, name: 'Quarto Diaries', slug: 'quarto-diaries', link: '' }],
+      attributes: [],
+    });
+
+    const doubleGreenProd = createMockProduct({
+      id: 402,
+      name: 'Dorchester Horizon A5 Desk Diary, Day Per Page, Green-Green',
+      categories: [{ id: 171, name: 'A5 Diaries', slug: 'a5-diaries', link: '' }],
+      attributes: [],
+    });
+
+    // 1. Direct extraction test
+    const dualTerms = extractColourTerms(dualColorProd);
+    expect(dualTerms.map((t) => t.name)).toEqual(['Black', 'Green']);
+    expect(dualTerms.map((t) => t.slug)).toEqual(['black', 'green']);
+
+    const doubleGreenTerms = extractColourTerms(doubleGreenProd);
+    expect(doubleGreenTerms.map((t) => t.name)).toEqual(['Green']);
+    expect(doubleGreenTerms.map((t) => t.slug)).toEqual(['green']);
+
+    // 2. Integration with getFilterDataForProducts
+    const { allProducts, filterAttributes, attributeTerms } = await getFilterDataForProducts([
+      dualColorProd,
+      doubleGreenProd,
+    ]);
+
+    const colourAttr = filterAttributes.find((a) => a.taxonomy === 'pa_colour');
+    expect(colourAttr).toBeDefined();
+    const colourTerms = attributeTerms[colourAttr!.id];
+
+    // Filter must ONLY contain single clean colours: Black, Green (NO Black-Green!)
+    expect(colourTerms.map((t) => t.name)).toEqual(['Black', 'Green']);
+
+    const enrichedDual = allProducts.find((p) => p.id === 401)!;
+    // Dual colour product matches when filtering by 'green'
+    expect(productMatchesFilters(enrichedDual, { filter_colour: ['green'] })).toBe(true);
+    // Dual colour product also matches when filtering by 'black'
+    expect(productMatchesFilters(enrichedDual, { filter_colour: ['black'] })).toBe(true);
+    // Does not match unrelated colour
+    expect(productMatchesFilters(enrichedDual, { filter_colour: ['red'] })).toBe(false);
+
+    // Filter counts: Green is present on 2 products (both 401 and 402), Black on 1 product
+    expect(countProductsForTerm(allProducts, 'pa_colour', 'green', {}, 'filter_colour')).toBe(2);
+    expect(countProductsForTerm(allProducts, 'pa_colour', 'black', {}, 'filter_colour')).toBe(1);
+  });
 });

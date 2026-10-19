@@ -37,20 +37,7 @@ export function normalizeColourTerms(product: StoreProduct): StoreProductAttribu
 
   const nameLower = (product.name || '').toLowerCase();
 
-  // 1. If product name explicitly contains one of the colour names (with word boundaries), that specific colour is authoritative:
-  const matchingTermsInName = colourAttr.terms.filter((term) => {
-    const termNameLower = term.name.toLowerCase();
-    const termSlugLower = term.slug.toLowerCase();
-    const regexName = new RegExp(`(^|[^a-z0-9])${termNameLower}([^a-z0-9]|$)`, 'i');
-    const regexSlug = new RegExp(`(^|[^a-z0-9])${termSlugLower}([^a-z0-9]|$)`, 'i');
-    return regexName.test(nameLower) || regexSlug.test(nameLower);
-  });
-
-  if (matchingTermsInName.length === 1) {
-    return matchingTermsInName;
-  }
-
-  // 2. If one term is a sub-shade/related colour of a broader parent colour (e.g., 'burgundy' is related to 'red'):
+  // 1. If one term is a sub-shade/related colour of a broader parent colour (e.g., 'burgundy' is related to 'red'):
   // The broad parent colour was added as a search keyword / category and should not be a duplicate colour attribute.
   const isBroadParentOfOther = (termSlug: string) => {
     const related = RELATED_COLOUR_MAP[termSlug.toLowerCase()];
@@ -62,12 +49,84 @@ export function normalizeColourTerms(product: StoreProduct): StoreProductAttribu
     );
   };
 
+  // 2. If product name explicitly contains colour names (with word boundaries), those specific colours are authoritative:
+  const matchingTermsInName = colourAttr.terms.filter((term) => {
+    const termNameLower = term.name.toLowerCase();
+    const termSlugLower = term.slug.toLowerCase();
+    const regexName = new RegExp(`(^|[^a-z0-9])${termNameLower}([^a-z0-9]|$)`, 'i');
+    const regexSlug = new RegExp(`(^|[^a-z0-9])${termSlugLower}([^a-z0-9]|$)`, 'i');
+    return regexName.test(nameLower) || regexSlug.test(nameLower);
+  });
+
+  if (matchingTermsInName.length >= 1) {
+    const filteredSpecific = matchingTermsInName.filter((term) => !isBroadParentOfOther(term.slug));
+    return filteredSpecific.length > 0 ? filteredSpecific : matchingTermsInName;
+  }
+
   const specificTerms = colourAttr.terms.filter((term) => !isBroadParentOfOther(term.slug));
   if (specificTerms.length > 0) {
     return specificTerms;
   }
 
   return colourAttr.terms;
+}
+
+function toTitleCase(str: string): string {
+  return str.replace(/\b[a-z]/g, (char) => char.toUpperCase());
+}
+
+function splitRawColorToSingleTerms(rawColor: string): StoreProductAttribute['terms'] {
+  // Split on hyphens, slashes, or ' and ' (e.g. 'Black-Red', 'Black / Green', 'Blue- Royal Blue')
+  const parts = rawColor
+    .split(/[\/\-]|\band\b/i)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  const seen = new Set<string>();
+  const terms: StoreProductAttribute['terms'] = [];
+
+  for (const part of parts) {
+    const titleCased = toTitleCase(part.toLowerCase());
+    const cleanSlug = titleCased
+      .toLowerCase()
+      .replace(/[\s/]+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
+
+    if (!cleanSlug || seen.has(cleanSlug)) continue;
+    seen.add(cleanSlug);
+
+    terms.push({
+      id: 1000 + (cleanSlug.charCodeAt(0) || 0) * 10 + terms.length,
+      name: titleCased,
+      slug: cleanSlug,
+    });
+  }
+
+  return terms;
+}
+
+function decomposeComboTerms(terms: StoreProductAttribute['terms']): StoreProductAttribute['terms'] {
+  const result: StoreProductAttribute['terms'] = [];
+  const seen = new Set<string>();
+
+  for (const term of terms) {
+    if (term.name.includes('/') || (term.name.includes('-') && !term.name.toLowerCase().includes('grain'))) {
+      const splitTerms = splitRawColorToSingleTerms(term.name);
+      for (const st of splitTerms) {
+        if (!seen.has(st.slug)) {
+          seen.add(st.slug);
+          result.push(st);
+        }
+      }
+    } else {
+      if (!seen.has(term.slug)) {
+        seen.add(term.slug);
+        result.push(term);
+      }
+    }
+  }
+
+  return result;
 }
 
 export function extractSizeTerms(product: StoreProduct): StoreProductAttribute['terms'] {
@@ -115,7 +174,7 @@ export function extractColourTerms(product: StoreProduct): StoreProductAttribute
   if (existingAttr && existingAttr.terms?.length > 0) {
     const cleaned = normalizeColourTerms(product);
     if (cleaned && cleaned.length > 0) {
-      return cleaned;
+      return decomposeComboTerms(cleaned);
     }
   }
 
@@ -127,12 +186,7 @@ export function extractColourTerms(product: StoreProduct): StoreProductAttribute
     // Exclude parts that describe layout or paper specifications
     const isLayoutOrSpec = /view|page|ruled|paper|grid|plain/i.test(rawColor);
     if (!isLayoutOrSpec && rawColor.length > 0 && rawColor.length < 35) {
-      const cleanSlug = rawColor
-        .toLowerCase()
-        .replace(/[\s/]+/g, '-')
-        .replace(/[^a-z0-9-]/g, '');
-
-      return [{ id: 1000 + (cleanSlug.charCodeAt(0) || 0), name: rawColor, slug: cleanSlug }];
+      return splitRawColorToSingleTerms(rawColor);
     }
   }
 
