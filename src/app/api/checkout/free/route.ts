@@ -71,11 +71,12 @@ export async function POST(req: NextRequest) {
       })),
       shipping_lines: [
         {
-          method_id: 'flat_rate',
-          method_title: session.quote.shipping.label,
-          total: String(session.quote.shipping.cost)
+          method_id: 'free_shipping',
+          method_title: session.quote.shipping.label || 'Free Shipping',
+          total: '0.00'
         }
       ],
+      total: '0.00',
       ...(session.quote.couponCode ? {
         coupon_lines: [
           {

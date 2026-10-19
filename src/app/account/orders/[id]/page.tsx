@@ -60,7 +60,9 @@ export default async function OrderDetailsPage({ params }: OrderDetailsProps) {
   const totalTax = parseFloat(order.total_tax || '0');
   const totalIncVat = parseFloat(order.total || '0');
   const totalExVat = totalIncVat - totalTax;
-  const discountAmount = parseFloat(order.discount_total || '0');
+  const discountAmount = totalIncVat === 0 && parseFloat(order.discount_total || '0') > 0
+    ? subtotalExVat + calcShippingTotal
+    : parseFloat(order.discount_total || '0');
   const couponCodes = order.coupon_lines && order.coupon_lines.length > 0 
     ? order.coupon_lines.map(c => c.code).join(', ') 
     : '';
@@ -143,15 +145,6 @@ export default async function OrderDetailsPage({ params }: OrderDetailsProps) {
                     <td className="py-3 px-4 text-gray-900 text-right font-medium border-t border-gray-200">£{subtotalExVat.toFixed(2)}</td>
                   </tr>
                   
-                  {discountAmount > 0 && (
-                    <tr className="bg-white">
-                      <td colSpan={3} className="py-3 px-4 font-semibold text-gray-900 text-right border-t border-gray-100">
-                        {couponCodes ? `Discount (${couponCodes.toUpperCase()}):` : 'Discount:'}
-                      </td>
-                      <td className="py-3 px-4 text-gray-900 text-right font-medium border-t border-gray-100 whitespace-nowrap">-£{discountAmount.toFixed(2)}</td>
-                    </tr>
-                  )}
-
                   {order.fee_lines && order.fee_lines.map(fee => (
                     <tr key={`fee-${fee.id}`} className="bg-white">
                       <td colSpan={3} className="py-3 px-4 font-semibold text-gray-900 text-right border-t border-gray-100">
@@ -165,6 +158,15 @@ export default async function OrderDetailsPage({ params }: OrderDetailsProps) {
                     <td colSpan={3} className="py-3 px-4 font-semibold text-gray-900 text-right border-t border-gray-100">Delivery (ex VAT):</td>
                     <td className="py-3 px-4 text-gray-900 text-right font-medium border-t border-gray-100">£{calcShippingTotal.toFixed(2)}</td>
                   </tr>
+
+                  {discountAmount > 0 && (
+                    <tr className="bg-white">
+                      <td colSpan={3} className="py-3 px-4 font-semibold text-gray-900 text-right border-t border-gray-100">
+                        {couponCodes ? `Discount (${couponCodes.toUpperCase()}):` : 'Discount:'}
+                      </td>
+                      <td className="py-3 px-4 text-gray-900 text-right font-medium border-t border-gray-100 whitespace-nowrap">-£{discountAmount.toFixed(2)}</td>
+                    </tr>
+                  )}
 
                   <tr className="bg-white">
                     <td colSpan={3} className="py-3 px-4 font-semibold text-gray-900 text-right border-t border-gray-100">VAT:</td>

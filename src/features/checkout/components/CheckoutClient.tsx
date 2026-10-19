@@ -689,16 +689,16 @@ function CheckoutFormContent({
               <dt>Subtotal (ex VAT)</dt>
               <dd className="font-semibold">{formatPrice(displaySubtotal)}</dd>
             </div>
+            <div className="flex justify-between gap-5">
+              <dt>Delivery (ex VAT)</dt>
+              <dd className="font-semibold">{formatPrice(displayShipping)}</dd>
+            </div>
             {displayDiscount > 0 && (
               <div className="flex justify-between gap-5 text-brand-accent">
                 <dt>Discount {quoteData?.quote.couponCode ? `(${quoteData.quote.couponCode.toUpperCase()})` : ''}</dt>
                 <dd className="font-semibold">-{formatPrice(displayDiscount)}</dd>
               </div>
             )}
-            <div className="flex justify-between gap-5">
-              <dt>Delivery (ex VAT)</dt>
-              <dd className="font-semibold">{formatPrice(displayShipping)}</dd>
-            </div>
             <div className="flex justify-between gap-5 text-brand-grey">
               <dt>VAT</dt>
               <dd>{formatPrice(displayVat)}</dd>
