@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useCart } from '@/features/cart/context/CartContext';
 
 export function ClearCartOnLoad({ transactionId }: { transactionId?: string }) {
   const { items, total, shippingCost, vatCost, clearCart, isHydrated } = useCart();
+  const hasClearedRef = useRef(false);
 
   useEffect(() => {
-    if (isHydrated) {
+    if (isHydrated && !hasClearedRef.current) {
+      hasClearedRef.current = true;
       if (items.length > 0) {
         // Track the purchase right before clearing the cart!
         import('@/lib/analytics').then(({ trackPurchase }) => {
@@ -22,7 +24,7 @@ export function ClearCartOnLoad({ transactionId }: { transactionId?: string }) {
       }
       clearCart();
     }
-  }, [clearCart, isHydrated, items, total, shippingCost, vatCost, transactionId]);
+  }, [isHydrated, clearCart, items, total, shippingCost, vatCost, transactionId]);
 
   return null;
 }
