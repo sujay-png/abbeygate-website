@@ -93,6 +93,8 @@ export const ProductCustomizer = ({
     ? `+${formatGBP(cornerEdgesPricing.pricePerPair * (showPricesIncludingVat ? (1 + VAT_RATE) : 1))} per unit`
     : 'Price set for this product';
 
+  const coverImageSrc = activeImageUrl || product.images?.[0]?.src;
+
   const [collapseOpen, setCollapseOpen] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isGeneratingProof, setIsGeneratingProof] = useState(false);
@@ -292,11 +294,13 @@ export const ProductCustomizer = ({
                 className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'Foil blocked' ? 'border-brand-primary bg-brand-tint' : 'border-[var(--brand-border)] hover:border-gray-400 bg-transparent'}`}
               >
                   <div 
-                    className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative bg-center"
+                    className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative"
                     style={{ 
-                      background: getColorBackground(activeColorHex, '#f3f4f6'),
-                      backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
-                      backgroundSize: product.images?.[0]?.src ? '300%' : undefined
+                      backgroundColor: getColorBackground(activeColorHex, '#f3f4f6'),
+                      backgroundImage: coverImageSrc ? `url(${coverImageSrc})` : undefined,
+                      backgroundSize: coverImageSrc ? '310%' : undefined,
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat'
                     }}
                  >
                     {customization.logoPreviewUrl ? (
@@ -357,11 +361,13 @@ export const ProductCustomizer = ({
                 className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'Embossed' ? 'border-brand-primary bg-brand-tint' : 'border-[var(--brand-border)] hover:border-gray-400 bg-transparent'}`}
               >
                   <div 
-                    className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative bg-center"
+                    className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative"
                     style={{ 
-                      background: getColorBackground(activeColorHex, '#f3f4f6'),
-                      backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
-                      backgroundSize: product.images?.[0]?.src ? '300%' : undefined
+                      backgroundColor: getColorBackground(activeColorHex, '#f3f4f6'),
+                      backgroundImage: coverImageSrc ? `url(${coverImageSrc})` : undefined,
+                      backgroundSize: coverImageSrc ? '310%' : undefined,
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat'
                     }}
                  >
                     {customization.logoPreviewUrl ? (
@@ -436,11 +442,13 @@ export const ProductCustomizer = ({
                 className={`cursor-pointer rounded-xl border-2 transition-all p-3 ${customization.blockingType === 'UV Print' ? 'border-brand-primary bg-brand-tint' : 'border-[var(--brand-border)] hover:border-gray-400 bg-transparent'}`}
               >
                   <div 
-                    className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative bg-center"
+                    className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative"
                     style={{ 
-                      background: getColorBackground(activeColorHex, '#f3f4f6'),
-                      backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
-                      backgroundSize: product.images?.[0]?.src ? '300%' : undefined
+                      backgroundColor: getColorBackground(activeColorHex, '#f3f4f6'),
+                      backgroundImage: coverImageSrc ? `url(${coverImageSrc})` : undefined,
+                      backgroundSize: coverImageSrc ? '310%' : undefined,
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat'
                     }}
                  >
                     {customization.logoPreviewUrl ? (
@@ -495,7 +503,7 @@ export const ProductCustomizer = ({
                 { id: 'bottom-center', label: 'Bottom centre' },
                 { id: 'bottom-right', label: 'Bottom right' },
               ].map((pos) => {
-                const isSelected = customization.logoPosition.label === pos.id;
+                const isSelected = (customization.logoPosition?.label || 'center') === pos.id;
                 
                 return (
                   <button
@@ -582,11 +590,13 @@ export const ProductCustomizer = ({
                 className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'None' ? 'border-brand-primary bg-brand-tint' : 'border-[var(--brand-border)] hover:border-gray-400 bg-transparent'}`}
               >
                  <div 
-                   className="w-10 h-10 rounded mb-3 shadow-sm border border-black/10 bg-center" 
+                   className="w-10 h-10 rounded mb-3 shadow-sm border border-black/10" 
                    style={{ 
-                     background: getColorBackground(activeColorHex, 'var(--brand-primary-dark)'),
-                     backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
-                     backgroundSize: product.images?.[0]?.src ? '300%' : undefined
+                     backgroundColor: getColorBackground(activeColorHex, '#f3f4f6'),
+                     backgroundImage: coverImageSrc ? `url(${coverImageSrc})` : undefined,
+                     backgroundSize: coverImageSrc ? '310%' : undefined,
+                     backgroundPosition: 'center',
+                     backgroundRepeat: 'no-repeat'
                    }} 
                  />
                  <div className="font-bold text-brand-body">None</div>
@@ -599,14 +609,16 @@ export const ProductCustomizer = ({
                 className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'Gold' ? 'border-brand-primary bg-brand-tint' : 'border-[var(--brand-border)] hover:border-gray-400 bg-transparent'}`}
               >
                  <div 
-                   className="w-10 h-10 rounded mb-3 relative shadow-sm border border-black/10 bg-center"
+                   className="w-10 h-10 rounded mb-3 relative shadow-sm border border-black/10"
                    style={{ 
-                     background: getColorBackground(activeColorHex, 'var(--brand-primary-dark)'),
-                     backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
-                     backgroundSize: product.images?.[0]?.src ? '300%' : undefined
+                     backgroundColor: getColorBackground(activeColorHex, '#f3f4f6'),
+                     backgroundImage: coverImageSrc ? `url(${coverImageSrc})` : undefined,
+                     backgroundSize: coverImageSrc ? '310%' : undefined,
+                     backgroundPosition: 'center',
+                     backgroundRepeat: 'no-repeat'
                    }}
                  >
-                    <div className="absolute -top-[2px] -right-[2px] w-[65%] h-[65%]">
+                    <div className="absolute -top-[1px] -right-[1px] w-[65%] h-[65%]">
                       <svg width="100%" height="100%" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ overflow: 'visible' }}>
                         <defs>
                           <linearGradient id="btnGrad-gold" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -641,14 +653,16 @@ export const ProductCustomizer = ({
                 className={`cursor-pointer rounded-xl border-2 transition-all p-4 flex flex-col items-center justify-center min-h-[120px] ${customization.cornerEdges === 'Silver' ? 'border-brand-primary bg-brand-tint' : 'border-[var(--brand-border)] hover:border-gray-400 bg-transparent'}`}
               >
                  <div 
-                   className="w-10 h-10 rounded mb-3 relative shadow-sm border border-black/10 bg-center"
+                   className="w-10 h-10 rounded mb-3 relative shadow-sm border border-black/10"
                    style={{ 
-                     background: getColorBackground(activeColorHex, 'var(--brand-primary-dark)'),
-                     backgroundImage: product.images?.[0]?.src ? `url(${product.images[0].src})` : undefined,
-                     backgroundSize: product.images?.[0]?.src ? '300%' : undefined
+                     backgroundColor: getColorBackground(activeColorHex, '#f3f4f6'),
+                     backgroundImage: coverImageSrc ? `url(${coverImageSrc})` : undefined,
+                     backgroundSize: coverImageSrc ? '310%' : undefined,
+                     backgroundPosition: 'center',
+                     backgroundRepeat: 'no-repeat'
                    }}
                  >
-                    <div className="absolute -top-[2px] -right-[2px] w-[65%] h-[65%]">
+                    <div className="absolute -top-[1px] -right-[1px] w-[65%] h-[65%]">
                       <svg width="100%" height="100%" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ overflow: 'visible' }}>
                         <defs>
                           <linearGradient id="btnGrad-silver" x1="0%" y1="0%" x2="100%" y2="100%">

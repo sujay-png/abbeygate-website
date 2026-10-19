@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronDown, CreditCard, Landmark, LockKeyhole, PackageCheck, User, ShoppingBag } from 'lucide-react';
@@ -9,7 +9,6 @@ import type { CheckoutQuote } from '@/features/checkout/types/quote';
 import type { CartItem, PricedItem } from '@/features/cart/context/CartContext';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, ExpressCheckoutElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { useRef } from 'react';
 import { ImagePreviewModal } from '@/components/ui/ImagePreviewModal';
 import { PolicyModal, type PolicyType } from './PolicyModal';
 import { VAT_RATE } from '@/features/products/utils/pricing';
@@ -183,6 +182,7 @@ function CheckoutFormContent({
 
   useEffect(() => {
     if (quoteData?.id) {
+      setClientSecret(null);
       fetch('/api/checkout/payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -267,41 +267,47 @@ function CheckoutFormContent({
         }
       }
 
-      const { error: submitError } = await elements.submit();
-      if (submitError) {
-        setPaymentError(submitError.message ?? 'Payment validation failed');
-        setIsProcessing(false);
-        return;
-      }
+      try {
+        const { error: submitError } = await elements.submit();
+        if (submitError) {
+          setPaymentError(submitError.message ?? 'Payment validation failed');
+          setIsProcessing(false);
+          return;
+        }
 
-      const { error } = await stripe.confirmPayment({
-        elements,
-        clientSecret,
-        confirmParams: {
-          return_url: `${window.location.origin}/checkout/success`,
-          receipt_email: formData.get('email') as string,
-          payment_method_data: {
-            billing_details: {
-              name: billingName,
-              email: formData.get('email') as string,
-              address: billingAddress
-            }
-          },
-          shipping: {
-            name: `${formData.get('firstName')} ${formData.get('lastName')}`,
-            address: {
-              line1: formData.get('address1') as string,
-              line2: formData.get('address2') as string,
-              city: formData.get('city') as string,
-              postal_code: formData.get('postcode') as string,
-              country: formData.get('country') as string,
+        const { error } = await stripe.confirmPayment({
+          elements,
+          clientSecret,
+          confirmParams: {
+            return_url: `${window.location.origin}/checkout/success`,
+            receipt_email: formData.get('email') as string,
+            payment_method_data: {
+              billing_details: {
+                name: billingName,
+                email: formData.get('email') as string,
+                address: billingAddress
+              }
+            },
+            shipping: {
+              name: `${formData.get('firstName')} ${formData.get('lastName')}`,
+              address: {
+                line1: formData.get('address1') as string,
+                line2: formData.get('address2') as string,
+                city: formData.get('city') as string,
+                postal_code: formData.get('postcode') as string,
+                country: formData.get('country') as string,
+              }
             }
           }
-        }
-      });
+        });
 
-      if (error) {
-        setPaymentError(error.message ?? 'Payment failed');
+        if (error) {
+          setPaymentError(error.message ?? 'Payment failed');
+          setIsProcessing(false);
+        }
+      } catch (err: any) {
+        console.error("Payment confirmation error:", err);
+        setPaymentError(err?.message ?? 'An unexpected error occurred during payment.');
         setIsProcessing(false);
       }
     } else if (paymentMethod === 'bacs' && quoteData?.id) {
@@ -496,7 +502,7 @@ function CheckoutFormContent({
               {paymentMethod === 'card' && (
                 <div className="bg-white px-4 py-4">
                   {stripe ? (
-                    <PaymentElement options={{ layout: 'accordion' }} />
+                    <PaymentElement options={{ layout: 'tabs' }} />
                   ) : (
                     <p className="text-sm text-brand-grey">Loading secure payment...</p>
                   )}
@@ -844,6 +850,13 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
     setActivePolicy
   };
 
+  const elementsOptions = useMemo(() => ({ 
+    mode: 'payment' as const, 
+    amount: Math.max(1, Math.round(displayTotal * 100)), 
+    currency: 'gbp',
+    appearance: { theme: 'stripe' as const }
+  }), [Math.round(displayTotal * 100)]);
+
   return (
     <div className="min-h-screen bg-brand-cream text-brand-body">
       <CheckoutHeader />
@@ -855,12 +868,7 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
       
       <Elements 
         stripe={stripePromise} 
-        options={{ 
-          mode: 'payment', 
-          amount: Math.max(1, Math.round(displayTotal * 100)), 
-          currency: 'gbp',
-          appearance: { theme: 'stripe' }
-        }}
+        options={elementsOptions}
       >
         <CheckoutFormContent {...formProps} />
       </Elements>
