@@ -810,6 +810,13 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
   const displayTotal = quoteData?.quote.total ?? total;
   const displayDiscount = quoteData?.quote.discount ?? 0;
 
+  const elementsOptions = useMemo(() => ({ 
+    mode: 'payment' as const, 
+    amount: Math.max(1, Math.round(displayTotal * 100)), 
+    currency: 'gbp',
+    appearance: { theme: 'stripe' as const }
+  }), [Math.round(displayTotal * 100)]);
+
   if (!pricedItems.length) {
     return (
       <div className="min-h-screen bg-brand-cream flex flex-col">
@@ -849,13 +856,6 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
     isLoggedIn,
     setActivePolicy
   };
-
-  const elementsOptions = useMemo(() => ({ 
-    mode: 'payment' as const, 
-    amount: Math.max(1, Math.round(displayTotal * 100)), 
-    currency: 'gbp',
-    appearance: { theme: 'stripe' as const }
-  }), [Math.round(displayTotal * 100)]);
 
   return (
     <div className="min-h-screen bg-brand-cream text-brand-body">
