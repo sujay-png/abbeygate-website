@@ -125,7 +125,7 @@ export const Hero = () => {
                 alt=""
                 fill
                 priority={index === 0}
-                quality={75}
+                quality={95}
                 sizes="100vw"
                 className="object-cover object-center"
               />

@@ -21,7 +21,7 @@ export function PageHero({ title, overline, subtitle, backgroundImage, maxWidthC
               alt={title}
               fill
               priority
-              quality={75}
+              quality={95}
               className="object-cover"
               sizes="(max-width: 1400px) 100vw, 1400px"
             />

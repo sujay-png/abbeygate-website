@@ -23,7 +23,7 @@ import { RelatedProductsClient } from './RelatedProductsClient';
 
 import type { CustomTab } from '@/features/products/services/store-products';
 
-const ImageWithFallback = ({ src, fallbackSrc = '/images/logo/abbeygate-logo.png', ...rest }: any) => {
+const ImageWithFallback = ({ src, fallbackSrc = '/images/logo/abbeygate-logo.png', quality = 95, ...rest }: any) => {
   const safeSrc = sanitizeImageUrl(src);
   const [imgSrc, setImgSrc] = useState(safeSrc);
 
@@ -33,6 +33,7 @@ const ImageWithFallback = ({ src, fallbackSrc = '/images/logo/abbeygate-logo.png
 
   return (
     <Image
+      quality={quality}
       {...rest}
       src={imgSrc || fallbackSrc}
       {...(!rest.fill && !rest.width ? { width: 0, height: 0, sizes: "100vw" } : {})}
@@ -1127,6 +1128,7 @@ export const ProductDetailClient = ({
                               alt={img.alt || product.name}
                               fill
                               priority={idx === 0}
+                              quality={95}
                               sizes="(max-width: 768px) 100vw, 50vw"
                               className={`transition-all duration-500 object-contain ${idx === 0 ? 'mix-blend-multiply' : ''} ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
                             />
@@ -1246,6 +1248,7 @@ export const ProductDetailClient = ({
                     src={product.images[activeImageIndex]?.src || activeSrc}
                     alt={product.images[activeImageIndex]?.alt || product.name}
                     fill
+                    quality={95}
                     sizes="80vw"
                     className={`object-contain ${activeImageIndex === 0 ? 'mix-blend-multiply' : ''}`}
                   />
