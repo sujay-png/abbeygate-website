@@ -59,33 +59,6 @@ export function TicketsList({ tickets }: TicketsListProps) {
         </Link>
       </div>
 
-      {/* Summary Stat Chips - Mobile & Desktop Responsive */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4">
-        <div className="p-3 sm:p-4 rounded-lg bg-brand-cream/50 border border-brand-border">
-          <span className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-500 font-semibold block truncate">
-            Total Tickets
-          </span>
-          <span className="text-lg sm:text-2xl font-bold text-brand-primary-dark mt-1 block">
-            {tickets.length}
-          </span>
-        </div>
-        <div className="p-3 sm:p-4 rounded-lg bg-brand-tint/60 border border-brand-soft">
-          <span className="text-[10px] sm:text-xs uppercase tracking-wider text-brand-accent font-semibold block truncate">
-            Active / In Progress
-          </span>
-          <span className="text-lg sm:text-2xl font-bold text-brand-primary mt-1 block">
-            {activeTickets.length}
-          </span>
-        </div>
-        <div className="p-3 sm:p-4 rounded-lg bg-emerald-50/60 border border-emerald-200">
-          <span className="text-[10px] sm:text-xs uppercase tracking-wider text-emerald-700 font-semibold block truncate">
-            Resolved
-          </span>
-          <span className="text-lg sm:text-2xl font-bold text-emerald-800 mt-1 block">
-            {resolvedTickets.length}
-          </span>
-        </div>
-      </div>
 
       {/* Filter Tabs */}
       <div className="flex items-center gap-4 sm:gap-6 border-b border-gray-200 text-sm font-medium overflow-x-auto no-scrollbar">
@@ -227,17 +200,17 @@ export function TicketsList({ tickets }: TicketsListProps) {
           </div>
 
           {/* 2. DESKTOP SPACIOUS TABLE (Proper padding and breathing room, no squishing) */}
-          <div className="hidden md:block overflow-x-auto rounded-lg border border-gray-200/80">
-            <table className="w-full min-w-[850px] text-left text-sm border-collapse bg-white">
+          <div className="hidden md:block overflow-x-auto rounded-lg border border-gray-200/80 bg-white">
+            <table className="w-full min-w-[960px] text-left text-sm border-collapse bg-white">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50/60 text-xs uppercase tracking-wider text-gray-500 font-semibold">
-                  <th className="py-3.5 px-4 w-36 whitespace-nowrap">Ticket Ref</th>
-                  <th className="py-3.5 px-4 min-w-[220px]">Subject</th>
-                  <th className="py-3.5 px-4 w-40 whitespace-nowrap">Related Order</th>
-                  <th className="py-3.5 px-4 w-36 whitespace-nowrap">Category</th>
-                  <th className="py-3.5 px-4 w-28 whitespace-nowrap">Status</th>
-                  <th className="py-3.5 px-4 w-32 whitespace-nowrap">Last Activity</th>
-                  <th className="py-3.5 px-4 w-28 whitespace-nowrap text-right">Action</th>
+                <tr className="border-b border-gray-200 bg-gray-50/70 text-xs uppercase tracking-wider text-gray-500 font-semibold">
+                  <th className="py-4 px-6 w-[14%] whitespace-nowrap">Ticket Ref</th>
+                  <th className="py-4 px-6 w-[24%]">Subject</th>
+                  <th className="py-4 px-6 w-[15%] whitespace-nowrap">Related Order</th>
+                  <th className="py-4 px-6 w-[15%] whitespace-nowrap">Category</th>
+                  <th className="py-4 px-6 w-[10%] whitespace-nowrap">Status</th>
+                  <th className="py-4 px-6 w-[11%] whitespace-nowrap">Last Activity</th>
+                  <th className="py-4 px-6 w-[11%] whitespace-nowrap text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -253,7 +226,7 @@ export function TicketsList({ tickets }: TicketsListProps) {
 
                   return (
                     <tr key={ticket.id} className="hover:bg-brand-cream/20 transition-colors">
-                      <td className="py-4 px-4 font-mono font-medium text-brand-primary whitespace-nowrap">
+                      <td className="py-4.5 px-6 font-mono font-medium text-brand-primary whitespace-nowrap">
                         <Link
                           href={`/account/tickets/${ticket.id}`}
                           className="hover:underline flex items-center gap-1.5"
@@ -267,22 +240,22 @@ export function TicketsList({ tickets }: TicketsListProps) {
                         </Link>
                       </td>
 
-                      <td className="py-4 px-4">
+                      <td className="py-4.5 px-6">
                         <Link
                           href={`/account/tickets/${ticket.id}`}
-                          className="font-medium text-gray-900 hover:text-brand-primary transition-colors block max-w-sm truncate"
+                          className="font-medium text-gray-900 hover:text-brand-primary transition-colors block truncate"
                           title={ticket.subject}
                         >
                           {ticket.subject}
                         </Link>
                         {ticket.order_items && (
-                          <span className="text-xs text-gray-500 block truncate max-w-sm mt-0.5">
+                          <span className="text-xs text-gray-500 block truncate mt-0.5">
                             {ticket.order_items}
                           </span>
                         )}
                       </td>
 
-                      <td className="py-4 px-4 whitespace-nowrap">
+                      <td className="py-4.5 px-6 whitespace-nowrap">
                         {ticket.order_id ? (
                           <Link
                             href={`/account/orders/${ticket.order_id}`}
@@ -295,19 +268,19 @@ export function TicketsList({ tickets }: TicketsListProps) {
                         )}
                       </td>
 
-                      <td className="py-4 px-4 text-gray-600 text-xs whitespace-nowrap">
+                      <td className="py-4.5 px-6 text-gray-600 text-xs whitespace-nowrap">
                         {categoryLabels[ticket.category] || ticket.category}
                       </td>
 
-                      <td className="py-4 px-4 whitespace-nowrap">
+                      <td className="py-4.5 px-6 whitespace-nowrap">
                         <TicketStatusBadge status={ticket.status as TicketStatus} />
                       </td>
 
-                      <td className="py-4 px-4 text-gray-500 text-xs whitespace-nowrap">
+                      <td className="py-4.5 px-6 text-gray-500 text-xs whitespace-nowrap">
                         {formattedDate}
                       </td>
 
-                      <td className="py-4 px-4 text-right whitespace-nowrap">
+                      <td className="py-4.5 px-6 text-right whitespace-nowrap">
                         <Link
                           href={`/account/tickets/${ticket.id}`}
                           className="inline-flex items-center gap-1 text-xs font-semibold text-brand-primary hover:text-brand-primary-dark hover:underline"
