@@ -59,27 +59,39 @@ export function TicketsList({ tickets }: TicketsListProps) {
         </Link>
       </div>
 
-      {/* Summary Stat Chips */}
-      <div className="grid grid-cols-3 gap-3 md:gap-4">
-        <div className="p-4 rounded-lg bg-brand-cream/50 border border-brand-border">
-          <span className="text-xs uppercase tracking-wider text-gray-500 font-semibold block">Total Tickets</span>
-          <span className="text-2xl font-bold text-brand-primary-dark mt-1 block">{tickets.length}</span>
+      {/* Summary Stat Chips - Mobile & Desktop Responsive */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4">
+        <div className="p-3 sm:p-4 rounded-lg bg-brand-cream/50 border border-brand-border">
+          <span className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-500 font-semibold block truncate">
+            Total Tickets
+          </span>
+          <span className="text-lg sm:text-2xl font-bold text-brand-primary-dark mt-1 block">
+            {tickets.length}
+          </span>
         </div>
-        <div className="p-4 rounded-lg bg-brand-tint/60 border border-brand-soft">
-          <span className="text-xs uppercase tracking-wider text-brand-accent font-semibold block">Active / In Progress</span>
-          <span className="text-2xl font-bold text-brand-primary mt-1 block">{activeTickets.length}</span>
+        <div className="p-3 sm:p-4 rounded-lg bg-brand-tint/60 border border-brand-soft">
+          <span className="text-[10px] sm:text-xs uppercase tracking-wider text-brand-accent font-semibold block truncate">
+            Active / In Progress
+          </span>
+          <span className="text-lg sm:text-2xl font-bold text-brand-primary mt-1 block">
+            {activeTickets.length}
+          </span>
         </div>
-        <div className="p-4 rounded-lg bg-emerald-50/60 border border-emerald-200">
-          <span className="text-xs uppercase tracking-wider text-emerald-700 font-semibold block">Resolved</span>
-          <span className="text-2xl font-bold text-emerald-800 mt-1 block">{resolvedTickets.length}</span>
+        <div className="p-3 sm:p-4 rounded-lg bg-emerald-50/60 border border-emerald-200">
+          <span className="text-[10px] sm:text-xs uppercase tracking-wider text-emerald-700 font-semibold block truncate">
+            Resolved
+          </span>
+          <span className="text-lg sm:text-2xl font-bold text-emerald-800 mt-1 block">
+            {resolvedTickets.length}
+          </span>
         </div>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-gray-200 text-sm font-medium">
+      <div className="flex items-center gap-4 sm:gap-6 border-b border-gray-200 text-sm font-medium overflow-x-auto no-scrollbar">
         <button
           onClick={() => setFilter('all')}
-          className={`pb-3 px-1 border-b-2 transition-colors ${
+          className={`pb-3 px-1 border-b-2 transition-colors whitespace-nowrap ${
             filter === 'all'
               ? 'border-brand-primary text-brand-primary font-semibold'
               : 'border-transparent text-gray-500 hover:text-gray-900'
@@ -89,7 +101,7 @@ export function TicketsList({ tickets }: TicketsListProps) {
         </button>
         <button
           onClick={() => setFilter('active')}
-          className={`pb-3 px-1 border-b-2 transition-colors ${
+          className={`pb-3 px-1 border-b-2 transition-colors whitespace-nowrap ${
             filter === 'active'
               ? 'border-brand-primary text-brand-primary font-semibold'
               : 'border-transparent text-gray-500 hover:text-gray-900'
@@ -99,7 +111,7 @@ export function TicketsList({ tickets }: TicketsListProps) {
         </button>
         <button
           onClick={() => setFilter('resolved')}
-          className={`pb-3 px-1 border-b-2 transition-colors ${
+          className={`pb-3 px-1 border-b-2 transition-colors whitespace-nowrap ${
             filter === 'resolved'
               ? 'border-brand-primary text-brand-primary font-semibold'
               : 'border-transparent text-gray-500 hover:text-gray-900'
@@ -109,7 +121,7 @@ export function TicketsList({ tickets }: TicketsListProps) {
         </button>
       </div>
 
-      {/* Tickets Table / List */}
+      {/* Tickets List View */}
       {displayedTickets.length === 0 ? (
         <div className="text-center py-12 px-4 rounded-lg border border-dashed border-gray-300 bg-white">
           <div className="w-12 h-12 rounded-full bg-brand-tint text-brand-primary flex items-center justify-center mx-auto mb-3">
@@ -135,100 +147,181 @@ export function TicketsList({ tickets }: TicketsListProps) {
           </Link>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="pb-3 font-semibold text-gray-900">Ticket Ref</th>
-                <th className="pb-3 font-semibold text-gray-900">Subject</th>
-                <th className="pb-3 font-semibold text-gray-900">Related Order</th>
-                <th className="pb-3 font-semibold text-gray-900">Category</th>
-                <th className="pb-3 font-semibold text-gray-900">Status</th>
-                <th className="pb-3 font-semibold text-gray-900">Last Activity</th>
-                <th className="pb-3 font-semibold text-gray-900 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {displayedTickets.map((ticket) => {
-                const formattedDate = new Date(ticket.updated_at || ticket.created_at).toLocaleDateString(
-                  'en-GB',
-                  {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                  }
-                );
+        <>
+          {/* 1. MOBILE CARDS VIEW (Clean & Spacious on mobile screens) */}
+          <div className="block md:hidden space-y-3">
+            {displayedTickets.map((ticket) => {
+              const formattedDate = new Date(ticket.updated_at || ticket.created_at).toLocaleDateString(
+                'en-GB',
+                {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                }
+              );
 
-                return (
-                  <tr key={ticket.id} className="hover:bg-brand-cream/30 transition-colors">
-                    <td className="py-4 font-mono font-medium text-brand-primary">
-                      <Link
-                        href={`/account/tickets/${ticket.id}`}
-                        className="hover:underline flex items-center gap-1.5"
-                      >
-                        #{ticket.ticket_number}
-                        {ticket.replies_count > 0 && (
-                          <span className="text-[11px] font-sans px-1.5 py-0.5 rounded-full bg-brand-soft/50 text-brand-accent">
-                            {ticket.replies_count}
-                          </span>
-                        )}
-                      </Link>
-                    </td>
-
-                    <td className="py-4">
-                      <Link
-                        href={`/account/tickets/${ticket.id}`}
-                        className="font-medium text-gray-900 hover:text-brand-primary transition-colors block max-w-xs md:max-w-sm truncate"
-                        title={ticket.subject}
-                      >
-                        {ticket.subject}
-                      </Link>
-                      {ticket.order_items && (
-                        <span className="text-xs text-gray-500 block truncate max-w-xs">
-                          {ticket.order_items}
+              return (
+                <div
+                  key={ticket.id}
+                  className="p-4 rounded-lg border border-gray-200 bg-white hover:border-brand-soft transition-all space-y-2.5"
+                >
+                  {/* Top Bar: Ticket Number & Status */}
+                  <div className="flex items-center justify-between gap-2">
+                    <Link
+                      href={`/account/tickets/${ticket.id}`}
+                      className="font-mono text-sm font-bold text-brand-primary hover:underline flex items-center gap-1.5"
+                    >
+                      #{ticket.ticket_number}
+                      {ticket.replies_count > 0 && (
+                        <span className="text-[10px] font-sans px-1.5 py-0.5 rounded-full bg-brand-soft/60 text-brand-accent">
+                          {ticket.replies_count} {ticket.replies_count === 1 ? 'reply' : 'replies'}
                         </span>
                       )}
-                    </td>
+                    </Link>
+                    <TicketStatusBadge status={ticket.status as TicketStatus} />
+                  </div>
 
-                    <td className="py-4">
-                      {ticket.order_id ? (
-                        <Link
-                          href={`/account/orders/${ticket.order_id}`}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-brand-primary hover:underline bg-brand-cream px-2 py-1 rounded border border-brand-border"
-                        >
-                          Order #{ticket.order_id} ↗
-                        </Link>
-                      ) : (
-                        <span className="text-xs text-gray-400">General Enquiry</span>
-                      )}
-                    </td>
+                  {/* Subject */}
+                  <div>
+                    <Link
+                      href={`/account/tickets/${ticket.id}`}
+                      className="font-semibold text-gray-900 hover:text-brand-primary text-sm line-clamp-2 transition-colors"
+                    >
+                      {ticket.subject}
+                    </Link>
+                    {ticket.order_items && (
+                      <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                        {ticket.order_items}
+                      </p>
+                    )}
+                  </div>
 
-                    <td className="py-4 text-gray-600 text-xs">
-                      {categoryLabels[ticket.category] || ticket.category}
-                    </td>
-
-                    <td className="py-4">
-                      <TicketStatusBadge status={ticket.status as TicketStatus} />
-                    </td>
-
-                    <td className="py-4 text-gray-500 text-xs whitespace-nowrap">
-                      {formattedDate}
-                    </td>
-
-                    <td className="py-4 text-right">
+                  {/* Order & Category Info */}
+                  <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-gray-600">
+                    {ticket.order_id && (
                       <Link
-                        href={`/account/tickets/${ticket.id}`}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-brand-primary hover:text-brand-primary-dark hover:underline"
+                        href={`/account/orders/${ticket.order_id}`}
+                        className="inline-flex items-center gap-1 font-medium text-brand-primary bg-brand-cream/70 px-2 py-0.5 rounded border border-brand-border/70 hover:underline"
                       >
-                        View &amp; Reply &rarr;
+                        Order #{ticket.order_id} ↗
                       </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                    )}
+                    <span className="text-gray-500">
+                      {categoryLabels[ticket.category] || ticket.category}
+                    </span>
+                  </div>
+
+                  {/* Bottom Footer: Date & Action */}
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
+                    <span className="text-gray-400">{formattedDate}</span>
+                    <Link
+                      href={`/account/tickets/${ticket.id}`}
+                      className="font-semibold text-brand-primary hover:underline"
+                    >
+                      View &amp; Reply &rarr;
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* 2. DESKTOP SPACIOUS TABLE (Proper padding and breathing room, no squishing) */}
+          <div className="hidden md:block overflow-x-auto rounded-lg border border-gray-200/80">
+            <table className="w-full min-w-[850px] text-left text-sm border-collapse bg-white">
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-50/60 text-xs uppercase tracking-wider text-gray-500 font-semibold">
+                  <th className="py-3.5 px-4 w-36 whitespace-nowrap">Ticket Ref</th>
+                  <th className="py-3.5 px-4 min-w-[220px]">Subject</th>
+                  <th className="py-3.5 px-4 w-40 whitespace-nowrap">Related Order</th>
+                  <th className="py-3.5 px-4 w-36 whitespace-nowrap">Category</th>
+                  <th className="py-3.5 px-4 w-28 whitespace-nowrap">Status</th>
+                  <th className="py-3.5 px-4 w-32 whitespace-nowrap">Last Activity</th>
+                  <th className="py-3.5 px-4 w-28 whitespace-nowrap text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {displayedTickets.map((ticket) => {
+                  const formattedDate = new Date(ticket.updated_at || ticket.created_at).toLocaleDateString(
+                    'en-GB',
+                    {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    }
+                  );
+
+                  return (
+                    <tr key={ticket.id} className="hover:bg-brand-cream/20 transition-colors">
+                      <td className="py-4 px-4 font-mono font-medium text-brand-primary whitespace-nowrap">
+                        <Link
+                          href={`/account/tickets/${ticket.id}`}
+                          className="hover:underline flex items-center gap-1.5"
+                        >
+                          #{ticket.ticket_number}
+                          {ticket.replies_count > 0 && (
+                            <span className="text-[11px] font-sans px-1.5 py-0.5 rounded-full bg-brand-soft/60 text-brand-accent">
+                              {ticket.replies_count}
+                            </span>
+                          )}
+                        </Link>
+                      </td>
+
+                      <td className="py-4 px-4">
+                        <Link
+                          href={`/account/tickets/${ticket.id}`}
+                          className="font-medium text-gray-900 hover:text-brand-primary transition-colors block max-w-sm truncate"
+                          title={ticket.subject}
+                        >
+                          {ticket.subject}
+                        </Link>
+                        {ticket.order_items && (
+                          <span className="text-xs text-gray-500 block truncate max-w-sm mt-0.5">
+                            {ticket.order_items}
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        {ticket.order_id ? (
+                          <Link
+                            href={`/account/orders/${ticket.order_id}`}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-brand-primary hover:underline bg-brand-cream/70 px-2.5 py-1 rounded border border-brand-border/70"
+                          >
+                            Order #{ticket.order_id} ↗
+                          </Link>
+                        ) : (
+                          <span className="text-xs text-gray-400">General Enquiry</span>
+                        )}
+                      </td>
+
+                      <td className="py-4 px-4 text-gray-600 text-xs whitespace-nowrap">
+                        {categoryLabels[ticket.category] || ticket.category}
+                      </td>
+
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <TicketStatusBadge status={ticket.status as TicketStatus} />
+                      </td>
+
+                      <td className="py-4 px-4 text-gray-500 text-xs whitespace-nowrap">
+                        {formattedDate}
+                      </td>
+
+                      <td className="py-4 px-4 text-right whitespace-nowrap">
+                        <Link
+                          href={`/account/tickets/${ticket.id}`}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-brand-primary hover:text-brand-primary-dark hover:underline"
+                        >
+                          View &amp; Reply &rarr;
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

@@ -263,14 +263,14 @@ export function TicketDetailClient({ ticket: initialTicket }: TicketDetailClient
             required
           />
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3">
             <span className="text-xs text-gray-500">
               Our team will review your reply and you will receive an email update.
             </span>
             <button
               type="submit"
               disabled={isPending || !replyText.trim()}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-primary hover:bg-brand-primary-dark text-white text-sm font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-primary hover:bg-brand-primary-dark text-white text-sm font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isPending ? (
                 <>
