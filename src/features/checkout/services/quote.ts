@@ -123,6 +123,7 @@ export async function createCheckoutQuote(payload: unknown): Promise<CheckoutQuo
       unitPrice: Number(price.unitPrice.toFixed(2)),
       lineTotal: Number((price.unitPrice * item.quantity + setupFee).toFixed(2)),
       customization,
+      image: item.customization?.fullPreviewUrl || product.images?.[0]?.src || product.images?.[0]?.thumbnail,
       product,
     };
   }));

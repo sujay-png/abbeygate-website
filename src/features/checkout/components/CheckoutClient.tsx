@@ -218,7 +218,7 @@ function CheckoutFormContent({
         elements,
         clientSecret,
         confirmParams: {
-          return_url: `${window.location.origin}/checkout/success`,
+          return_url: `${window.location.origin}/checkout/success${quoteData?.id ? `?sessionId=${quoteData.id}` : ''}`,
         }
       });
 
@@ -331,7 +331,7 @@ function CheckoutFormContent({
           elements,
           clientSecret,
           confirmParams: {
-            return_url: `${window.location.origin}/checkout/success`,
+            return_url: `${window.location.origin}/checkout/success${quoteData?.id ? `?sessionId=${quoteData.id}` : ''}`,
             receipt_email: formData.get('email') as string,
             payment_method_data: {
               billing_details: {

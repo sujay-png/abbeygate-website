@@ -124,6 +124,7 @@ export async function POST(req: NextRequest) {
         meta_data: [
           { key: '_wc_order_attribution_source_type', value: 'typein' },
           { key: '_wc_order_attribution_utm_source', value: '(direct)' },
+          { key: '_stripe_intent_id', value: paymentIntent.id },
           ...(session.vatNumber ? [{ key: 'VAT Number', value: session.vatNumber }] : []),
         ]
       };

@@ -30,6 +30,7 @@ export type CheckoutQuoteLine = {
   unitPrice: number;
   lineTotal: number;
   customization?: CheckoutCustomizationInput;
+  image?: string;
 };
 
 export type CheckoutQuote = {

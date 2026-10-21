@@ -6,7 +6,7 @@ import { ClearCartOnLoad } from './ClearCartOnLoad';
 
 const formatPrice = (value: number) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
 
-import { GuestAccountPrompt } from '@/features/checkout/components/GuestAccountPrompt';
+import { GuestAccountSection } from '@/features/checkout/components/GuestAccountSection';
 import { getSession } from '@/features/auth/utils/session';
 
 export default async function BacsSuccessPage({ searchParams }: { searchParams: Promise<{ orderId?: string, key?: string }> }) {
@@ -51,10 +51,6 @@ export default async function BacsSuccessPage({ searchParams }: { searchParams: 
     <div className="min-h-screen bg-brand-cream text-brand-body flex flex-col">
       {/* We need a Client Component to clear the cart in IDB, since we're rendering a Server Component */}
       <ClearCartOnLoad transactionId={orderId} />
-      
-      {isGuest && (
-        <GuestAccountPrompt email={email} orderId={orderId} orderKey={key} />
-      )}
       
       <header className="border-b border-[var(--brand-border)] bg-white">
         <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-center px-5 sm:px-8 lg:px-12">
@@ -190,7 +186,11 @@ export default async function BacsSuccessPage({ searchParams }: { searchParams: 
             </section>
           </div>
           
-          <div>
+          <div className="space-y-8">
+            {isGuest && (
+              <GuestAccountSection email={email} orderId={orderId} orderKey={key} />
+            )}
+
             <section className="bg-brand-cream border border-[var(--brand-border)] p-8">
               <h2 className="text-2xl text-brand-primary-dark mb-4">Billing address</h2>
               <address className="not-italic text-sm text-brand-grey space-y-1">
@@ -218,7 +218,7 @@ export default async function BacsSuccessPage({ searchParams }: { searchParams: 
       </main>
 
       <footer className="border-t border-[var(--brand-border)] bg-white">
-        <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-4 px-5 py-7 text-center text-[13px] text-brand-grey sm:flex-row sm:px-8 sm:text-left lg:px-12">
+        <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-center gap-4 px-5 py-7 text-center text-[13px] text-brand-grey">
           <p>Abbeygate England © 2026</p>
           <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-brand-primary-dark">
             <Link href="/returns" className="hover:underline">Refund &amp; Returns</Link>
