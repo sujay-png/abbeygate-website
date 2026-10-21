@@ -218,27 +218,22 @@ export function TicketsList({ tickets: initialTickets }: TicketsListProps) {
                   <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
                     <span className="text-gray-400">{formattedDate}</span>
                     <div className="flex items-center gap-3">
+                      <Link
+                        href={`/account/tickets/${ticket.id}`}
+                        className="inline-flex items-center justify-center px-3.5 py-1 border border-brand-primary text-brand-primary text-xs font-medium rounded hover:bg-brand-primary hover:text-white transition-colors"
+                      >
+                        View
+                      </Link>
                       <button
                         type="button"
                         onClick={() => {
                           setDeleteError(null);
                           setTicketToDelete(ticket);
                         }}
-                        className="text-gray-400 hover:text-[#8a333d] p-1 transition-colors flex items-center gap-1 font-medium"
-                        title="Delete Ticket"
-                        aria-label={`Delete ticket #${ticket.ticket_number}`}
+                        className="text-red-500 hover:text-red-700 transition-colors text-xs font-medium"
                       >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
                         Delete
                       </button>
-                      <Link
-                        href={`/account/tickets/${ticket.id}`}
-                        className="font-semibold text-brand-primary hover:underline"
-                      >
-                        View &amp; Reply &rarr;
-                      </Link>
                     </div>
                   </div>
                 </div>
@@ -328,12 +323,12 @@ export function TicketsList({ tickets: initialTickets }: TicketsListProps) {
                       </td>
 
                       <td className="py-3.5 px-3.5 text-left whitespace-nowrap">
-                        <div className="inline-flex items-center justify-start gap-2.5">
+                        <div className="flex items-center gap-3">
                           <Link
                             href={`/account/tickets/${ticket.id}`}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-brand-primary hover:text-brand-primary-dark hover:underline"
+                            className="inline-flex items-center justify-center px-4 py-1.5 border border-brand-primary text-brand-primary text-sm font-medium rounded hover:bg-brand-primary hover:text-white transition-colors"
                           >
-                            View &amp; Reply &rarr;
+                            View
                           </Link>
                           <button
                             type="button"
@@ -341,13 +336,9 @@ export function TicketsList({ tickets: initialTickets }: TicketsListProps) {
                               setDeleteError(null);
                               setTicketToDelete(ticket);
                             }}
-                            className="text-gray-400 hover:text-[#8a333d] p-1.5 rounded-md hover:bg-[#fbf5f5] transition-colors"
-                            title="Delete ticket"
-                            aria-label={`Delete ticket #${ticket.ticket_number}`}
+                            className="text-red-500 hover:text-red-700 transition-colors text-sm font-medium"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
+                            Delete
                           </button>
                         </div>
                       </td>

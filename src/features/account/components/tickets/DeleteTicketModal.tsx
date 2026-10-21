@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 
 interface DeleteTicketModalProps {
   isOpen: boolean;
@@ -47,49 +47,27 @@ export function DeleteTicketModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="delete-ticket-title"
-      onClick={() => {
-        if (!isDeleting) onClose();
-      }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+      onClick={() => !isDeleting && onClose()}
     >
       <div
-        className="bg-white rounded-2xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-gray-100 transform transition-all animate-in zoom-in-95 duration-150"
+        className="bg-white rounded-lg shadow-xl border border-gray-200 w-full max-w-md overflow-hidden transform transition-all"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Warning Icon Badge - Soft muted wine red */}
-        <div className="w-14 h-14 rounded-full bg-[#fbf5f5] text-[#8a333d] flex items-center justify-center mx-auto mb-4 border border-[#edd8db]">
-          <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.75}
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-            />
-          </svg>
-        </div>
-
-        {/* Modal Heading & Text */}
-        <div className="text-center">
-          <h3 id="delete-ticket-title" className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight font-sans">
-            Delete Support Ticket?
-          </h3>
-          <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+        <div className="px-6 py-5 border-b border-gray-100">
+          <h3 className="text-xl font-semibold text-brand-primary-dark">Delete Support Ticket</h3>
+          <p className="text-gray-600 text-sm mt-2">
             Are you sure you want to delete ticket{' '}
             <span className="font-semibold text-brand-primary font-mono">{ticketNumber}</span>?
-            This ticket and its conversation history will be permanently removed from your account.
+            This action cannot be undone.
           </p>
         </div>
-
-        {/* Action Buttons - Symmetrically centered & balanced */}
-        <div className="grid grid-cols-2 gap-3 mt-6 pt-5 border-t border-gray-100">
+        <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3 border-t border-gray-100">
           <button
             type="button"
             onClick={onClose}
             disabled={isDeleting}
-            className="w-full inline-flex items-center justify-center px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-brand-cream/60 active:bg-brand-cream rounded-lg transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
@@ -97,19 +75,12 @@ export function DeleteTicketModal({
             type="button"
             onClick={onConfirm}
             disabled={isDeleting}
-            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-[#8a333d] hover:bg-[#732831] active:bg-[#5f2028] rounded-lg shadow-sm transition-colors disabled:opacity-50"
+            className="px-5 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded transition-colors disabled:opacity-50 shadow-sm flex items-center gap-2"
           >
-            {isDeleting ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Deleting...
-              </>
-            ) : (
-              'Yes, Delete'
+            {isDeleting && (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             )}
+            Delete
           </button>
         </div>
       </div>

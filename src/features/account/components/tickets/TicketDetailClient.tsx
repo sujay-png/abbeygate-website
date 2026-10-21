@@ -134,21 +134,16 @@ export function TicketDetailClient({ ticket: initialTicket }: TicketDetailClient
           Back to All Tickets
         </Link>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-3">
           {!isResolvedOrClosed && (
             <button
               type="button"
               onClick={handleCloseTicket}
               disabled={isClosing}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-md transition-colors disabled:opacity-50 ${
-                confirmResolve
-                  ? 'border border-brand-primary bg-brand-primary text-white hover:bg-brand-primary-dark shadow-sm'
-                  : 'border border-brand-primary text-brand-primary bg-white hover:bg-brand-primary hover:text-white'
+              className={`inline-flex items-center justify-center px-4 py-1.5 border border-brand-primary text-brand-primary text-sm font-medium rounded hover:bg-brand-primary hover:text-white transition-colors disabled:opacity-50 ${
+                confirmResolve ? 'bg-brand-primary text-white' : ''
               }`}
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
               {isClosing
                 ? 'Updating...'
                 : confirmResolve
@@ -160,12 +155,8 @@ export function TicketDetailClient({ ticket: initialTicket }: TicketDetailClient
           <button
             type="button"
             onClick={() => setIsDeleteModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-md border border-gray-300 text-gray-700 bg-white hover:border-[#8a333d] hover:text-[#8a333d] hover:bg-[#fbf5f5] transition-colors"
-            title="Delete Ticket"
+            className="text-red-500 hover:text-red-700 transition-colors text-sm font-medium px-2 py-1.5"
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
             Delete Ticket
           </button>
         </div>
