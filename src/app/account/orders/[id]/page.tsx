@@ -84,9 +84,20 @@ export default async function OrderDetailsPage({ params }: OrderDetailsProps) {
           {/* Main Content Area */}
           <div className="flex-1 w-full bg-white border border-gray-200/80 rounded-lg p-6 md:p-8">
             
-            <p className="text-gray-700 leading-relaxed mb-8">
-              Order <strong className="font-semibold">#{order.number}</strong> was placed on <strong className="font-semibold">{formattedDate}</strong> and is currently <strong className="font-semibold capitalize">{order.status}</strong>.
-            </p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+              <p className="text-gray-700 leading-relaxed">
+                Order <strong className="font-semibold">#{order.number}</strong> was placed on <strong className="font-semibold">{formattedDate}</strong> and is currently <strong className="font-semibold capitalize">{order.status}</strong>.
+              </p>
+              <Link
+                href={`/account/tickets/new?orderId=${order.id}`}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-brand-cream hover:bg-brand-soft/60 text-brand-primary-dark border border-brand-border transition-colors self-start sm:self-auto whitespace-nowrap"
+              >
+                <svg className="w-3.5 h-3.5 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                Need Help? Raise Ticket
+              </Link>
+            </div>
 
             <h2 className="text-2xl font-semibold text-brand-primary-dark mb-6">Order details</h2>
 
