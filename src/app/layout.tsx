@@ -24,7 +24,6 @@ const workSans = Work_Sans({
 const josefinSans = Josefin_Sans({
   variable: "--font-josefin-sans",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
 });
 
 import { getSEOMetadata, SITE_URL } from '@/lib/seo';
