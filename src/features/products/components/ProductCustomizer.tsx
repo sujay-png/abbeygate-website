@@ -93,7 +93,9 @@ export const ProductCustomizer = ({
     ? `+${formatGBP(cornerEdgesPricing.pricePerPair * (showPricesIncludingVat ? (1 + VAT_RATE) : 1))} per unit`
     : 'Price set for this product';
 
-  const coverImageSrc = activeImageUrl || product.images?.[0]?.src;
+  // The branding preview and corner edges must ONLY be applied to the lead image (front cover) of the product
+  const leadCoverImage = product.images?.[0];
+  const coverImageSrc = leadCoverImage?.src || leadCoverImage?.thumbnail || activeImageUrl || '';
 
   const [collapseOpen, setCollapseOpen] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);

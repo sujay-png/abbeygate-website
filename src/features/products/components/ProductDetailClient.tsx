@@ -384,6 +384,9 @@ export const ProductDetailClient = ({
   }, []);
 
   const handleCustomizationChange = useCallback((state: CustomizationState) => {
+    if (state.enabled) {
+      setActiveImageIndex(0);
+    }
     setCustomization((prev) => {
       const visualPropsChanged =
         state.blockingType !== prev.blockingType ||
@@ -588,6 +591,7 @@ export const ProductDetailClient = ({
     if (customizationActive && !customization.logoFile) {
       if (!isCustomizingStarted) {
         setIsCustomizingStarted(true);
+        setActiveImageIndex(0);
         setTimeout(() => {
           const customizer = document.getElementById('upload-logo') || document.getElementById('customizer-section');
           if (customizer) {
@@ -608,6 +612,7 @@ export const ProductDetailClient = ({
     // If they aren't customising but want to start
     if (customizationActive && !isCustomizingStarted) {
       setIsCustomizingStarted(true);
+      setActiveImageIndex(0);
       setTimeout(() => {
         const customizer = document.getElementById('upload-logo') || document.getElementById('customizer-section');
         if (customizer) {
@@ -984,7 +989,7 @@ export const ProductDetailClient = ({
 
                   return (
                     <div key={s.num} className="flex items-center flex-1 last:flex-none">
-                      <div className="flex items-center gap-2 lg:gap-3 cursor-pointer" onClick={() => { if (isCompleted || isCurrent) setCustomizerStep(s.num as 1 | 2 | 3 | 4); }}>
+                      <div className="flex items-center gap-2 lg:gap-3 cursor-pointer" onClick={() => { if (isCompleted || isCurrent) { setCustomizerStep(s.num as 1 | 2 | 3 | 4); setActiveImageIndex(0); } }}>
                         {isCompleted ? (
                           <div className="w-6 h-6 rounded-full bg-brand-primary flex items-center justify-center text-white shrink-0">
                             <Check size={14} strokeWidth={3} />
@@ -1170,13 +1175,16 @@ export const ProductDetailClient = ({
                 onPriceChange={handlePriceChange}
                 activeColorHex={activeColorHex}
                 activeColorName={activeColorName}
-                activeImageUrl={activeSrc}
+                activeImageUrl={product.images[0]?.src || product.images[0]?.thumbnail || ''}
                 onGenerateProof={generateProof}
                 onAddToCart={handleAddToCart}
                 isAdding={isAdding}
                 amendKey={amendKey}
                 step={customizerStep}
-                onStepChange={setCustomizerStep}
+                onStepChange={(newStep) => {
+                  setCustomizerStep(newStep);
+                  setActiveImageIndex(0);
+                }}
               />
             </div>
           )}
