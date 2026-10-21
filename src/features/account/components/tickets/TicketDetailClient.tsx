@@ -2,19 +2,29 @@
 
 import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { TicketDetail, TicketStatus } from '../../types/ticket';
 import { TicketStatusBadge } from './TicketStatusBadge';
-import { replyCustomerTicket, closeCustomerTicket } from '../../services/tickets';
+import { DeleteTicketModal } from './DeleteTicketModal';
+import {
+  replyCustomerTicket,
+  closeCustomerTicket,
+  deleteCustomerTicket,
+} from '../../services/tickets';
 
 interface TicketDetailClientProps {
   ticket: TicketDetail;
 }
 
 export function TicketDetailClient({ ticket: initialTicket }: TicketDetailClientProps) {
+  const router = useRouter();
   const [ticket, setTicket] = useState<TicketDetail>(initialTicket);
   const [replyText, setReplyText] = useState('');
   const [isPending, startTransition] = useTransition();
   const [isClosing, startClosingTransition] = useTransition();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmResolve, setConfirmResolve] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isResolvedOrClosed = ticket.status === 'resolved' || ticket.status === 'closed';
@@ -62,7 +72,10 @@ export function TicketDetailClient({ ticket: initialTicket }: TicketDetailClient
   };
 
   const handleCloseTicket = () => {
-    if (!confirm('Are you sure you want to mark this ticket as resolved?')) return;
+    if (!confirmResolve) {
+      setConfirmResolve(true);
+      return;
+    }
     setError(null);
 
     startClosingTransition(async () => {
@@ -72,10 +85,31 @@ export function TicketDetailClient({ ticket: initialTicket }: TicketDetailClient
           ...prev,
           status: 'resolved',
         }));
+        setConfirmResolve(false);
       } else {
         setError(result.error || 'Failed to close ticket.');
       }
     });
+  };
+
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true);
+    setError(null);
+
+    try {
+      const result = await deleteCustomerTicket(ticket.id);
+      if (result.success) {
+        setIsDeleteModalOpen(false);
+        router.push('/account/tickets');
+        router.refresh();
+      } else {
+        setError(result.error || 'Failed to delete ticket.');
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Failed to delete ticket.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const formattedDate = new Date(ticket.created_at).toLocaleDateString('en-GB', {
@@ -100,16 +134,38 @@ export function TicketDetailClient({ ticket: initialTicket }: TicketDetailClient
           Back to All Tickets
         </Link>
 
-        {!isResolvedOrClosed && (
+        <div className="flex items-center gap-2">
+          {!isResolvedOrClosed && (
+            <button
+              type="button"
+              onClick={handleCloseTicket}
+              disabled={isClosing}
+              className={`text-xs font-semibold px-3 py-1.5 rounded transition-colors disabled:opacity-50 ${
+                confirmResolve
+                  ? 'border border-amber-400 text-amber-900 bg-amber-100 hover:bg-amber-200'
+                  : 'border border-emerald-300 text-emerald-800 bg-emerald-50 hover:bg-emerald-100'
+              }`}
+            >
+              {isClosing
+                ? 'Updating...'
+                : confirmResolve
+                ? 'Click Again to Confirm'
+                : '✓ Mark as Resolved'}
+            </button>
+          )}
+
           <button
             type="button"
-            onClick={handleCloseTicket}
-            disabled={isClosing}
-            className="text-xs font-semibold px-3 py-1.5 rounded border border-emerald-300 text-emerald-800 bg-emerald-50 hover:bg-emerald-100 transition-colors disabled:opacity-50"
+            onClick={() => setIsDeleteModalOpen(true)}
+            className="text-xs font-semibold px-3 py-1.5 rounded border border-[#edd8db] text-[#8a333d] bg-[#fbf5f5] hover:bg-[#f6e9eb] transition-colors inline-flex items-center gap-1.5"
+            title="Delete Ticket"
           >
-            {isClosing ? 'Updating...' : '✓ Mark as Resolved'}
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete Ticket
           </button>
-        )}
+        </div>
       </div>
 
       {/* Ticket Header Summary */}
@@ -287,6 +343,17 @@ export function TicketDetailClient({ ticket: initialTicket }: TicketDetailClient
           </div>
         </form>
       </div>
+
+      {/* Delete Confirmation Modal Popup (No browser alert) */}
+      <DeleteTicketModal
+        isOpen={isDeleteModalOpen}
+        ticketNumber={`#${ticket.ticket_number}`}
+        isDeleting={isDeleting}
+        onClose={() => {
+          if (!isDeleting) setIsDeleteModalOpen(false);
+        }}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

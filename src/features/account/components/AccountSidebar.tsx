@@ -8,7 +8,7 @@ const navItems = [
   { label: 'Dashboard', href: '/account/dashboard' },
   { label: 'Orders', href: '/account/orders' },
   { label: 'Saved Baskets', href: '/account/saved-baskets' },
-  { label: 'Support Tickets', href: '/account/tickets' },
+  { label: 'Raise a Ticket', href: '/account/tickets' },
   { label: 'Addresses', href: '/account/addresses' },
   { label: 'Account Details', href: '/account/details' },
 ];

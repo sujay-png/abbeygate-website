@@ -225,3 +225,42 @@ export async function closeCustomerTicket(
     return { success: false, error: error?.message || 'Failed to close ticket.' };
   }
 }
+
+/**
+ * Delete a support ticket (moves to trash in WordPress).
+ */
+export async function deleteCustomerTicket(
+  ticketId: number | string
+): Promise<{ success: boolean; error?: string }> {
+  const session = await getSession();
+  if (!session || !session.userId) {
+    return { success: false, error: 'You must be logged in to delete a ticket.' };
+  }
+
+  try {
+    const storeUrl = getStoreUrl();
+    const res = await fetch(`${storeUrl}/wp-json/headless/v1/tickets/${ticketId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-headless-secret': getHeadlessSecret(),
+      },
+      body: JSON.stringify({
+        customer_id: session.userId,
+      }),
+      cache: 'no-store',
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      return { success: false, error: data?.message || 'Failed to delete ticket.' };
+    }
+
+    revalidatePath('/account/tickets');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error deleting ticket:', error);
+    return { success: false, error: error?.message || 'Failed to delete ticket.' };
+  }
+}
+

@@ -1,16 +1,46 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import type { TicketListItem, TicketStatus } from '../../types/ticket';
 import { TicketStatusBadge } from './TicketStatusBadge';
+import { DeleteTicketModal } from './DeleteTicketModal';
+import { deleteCustomerTicket } from '../../services/tickets';
 
 interface TicketsListProps {
   tickets: TicketListItem[];
 }
 
-export function TicketsList({ tickets }: TicketsListProps) {
+export function TicketsList({ tickets: initialTickets }: TicketsListProps) {
+  const [tickets, setTickets] = useState<TicketListItem[]>(initialTickets);
   const [filter, setFilter] = useState<'all' | 'active' | 'resolved'>('all');
+  const [ticketToDelete, setTicketToDelete] = useState<TicketListItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setTickets(initialTickets);
+  }, [initialTickets]);
+
+  const handleConfirmDelete = async () => {
+    if (!ticketToDelete) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    try {
+      const res = await deleteCustomerTicket(ticketToDelete.id);
+      if (res.success) {
+        setTickets((prev) => prev.filter((t) => t.id !== ticketToDelete.id));
+        setTicketToDelete(null);
+      } else {
+        setDeleteError(res.error || 'Failed to delete ticket.');
+      }
+    } catch (err: any) {
+      setDeleteError(err?.message || 'Failed to delete ticket.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const activeTickets = tickets.filter(
     (t) => t.status === 'open' || t.status === 'in_progress' || t.status === 'waiting_customer'
@@ -187,30 +217,47 @@ export function TicketsList({ tickets }: TicketsListProps) {
                   {/* Bottom Footer: Date & Action */}
                   <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
                     <span className="text-gray-400">{formattedDate}</span>
-                    <Link
-                      href={`/account/tickets/${ticket.id}`}
-                      className="font-semibold text-brand-primary hover:underline"
-                    >
-                      View &amp; Reply &rarr;
-                    </Link>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeleteError(null);
+                          setTicketToDelete(ticket);
+                        }}
+                        className="text-gray-400 hover:text-[#8a333d] p-1 transition-colors flex items-center gap-1 font-medium"
+                        title="Delete Ticket"
+                        aria-label={`Delete ticket #${ticket.ticket_number}`}
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Delete
+                      </button>
+                      <Link
+                        href={`/account/tickets/${ticket.id}`}
+                        className="font-semibold text-brand-primary hover:underline"
+                      >
+                        View &amp; Reply &rarr;
+                      </Link>
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* 2. DESKTOP SPACIOUS TABLE (Proper padding and breathing room, no squishing) */}
-          <div className="hidden md:block overflow-x-auto rounded-lg border border-gray-200/80 bg-white">
-            <table className="w-full min-w-[960px] text-left text-sm border-collapse bg-white">
+          {/* 2. DESKTOP SPACIOUS TABLE (Fits 100% width, absolutely no horizontal scrolling needed) */}
+          <div className="hidden md:block rounded-lg border border-gray-200/80 bg-white">
+            <table className="w-full text-left text-sm border-collapse bg-white">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50/70 text-xs uppercase tracking-wider text-gray-500 font-semibold">
-                  <th className="py-4 px-6 w-[14%] whitespace-nowrap">Ticket Ref</th>
-                  <th className="py-4 px-6 w-[24%]">Subject</th>
-                  <th className="py-4 px-6 w-[15%] whitespace-nowrap">Related Order</th>
-                  <th className="py-4 px-6 w-[15%] whitespace-nowrap">Category</th>
-                  <th className="py-4 px-6 w-[10%] whitespace-nowrap">Status</th>
-                  <th className="py-4 px-6 w-[11%] whitespace-nowrap">Last Activity</th>
-                  <th className="py-4 px-6 w-[11%] whitespace-nowrap text-right">Action</th>
+                  <th className="py-3.5 px-3.5 whitespace-nowrap">Ticket Ref</th>
+                  <th className="py-3.5 px-3.5">Subject</th>
+                  <th className="py-3.5 px-3.5 whitespace-nowrap">Related Order</th>
+                  <th className="py-3.5 px-3.5 whitespace-nowrap">Category</th>
+                  <th className="py-3.5 px-3.5 whitespace-nowrap">Status</th>
+                  <th className="py-3.5 px-3.5 whitespace-nowrap">Last Activity</th>
+                  <th className="py-3.5 px-3.5 whitespace-nowrap text-left">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -226,7 +273,7 @@ export function TicketsList({ tickets }: TicketsListProps) {
 
                   return (
                     <tr key={ticket.id} className="hover:bg-brand-cream/20 transition-colors">
-                      <td className="py-4.5 px-6 font-mono font-medium text-brand-primary whitespace-nowrap">
+                      <td className="py-3.5 px-3.5 font-mono font-medium text-brand-primary whitespace-nowrap">
                         <Link
                           href={`/account/tickets/${ticket.id}`}
                           className="hover:underline flex items-center gap-1.5"
@@ -240,26 +287,26 @@ export function TicketsList({ tickets }: TicketsListProps) {
                         </Link>
                       </td>
 
-                      <td className="py-4.5 px-6">
+                      <td className="py-3.5 px-3.5">
                         <Link
                           href={`/account/tickets/${ticket.id}`}
-                          className="font-medium text-gray-900 hover:text-brand-primary transition-colors block truncate"
+                          className="font-medium text-gray-900 hover:text-brand-primary transition-colors block truncate max-w-[180px] lg:max-w-xs"
                           title={ticket.subject}
                         >
                           {ticket.subject}
                         </Link>
                         {ticket.order_items && (
-                          <span className="text-xs text-gray-500 block truncate mt-0.5">
+                          <span className="text-xs text-gray-500 block truncate max-w-[180px] lg:max-w-xs mt-0.5">
                             {ticket.order_items}
                           </span>
                         )}
                       </td>
 
-                      <td className="py-4.5 px-6 whitespace-nowrap">
+                      <td className="py-3.5 px-3.5 whitespace-nowrap">
                         {ticket.order_id ? (
                           <Link
                             href={`/account/orders/${ticket.order_id}`}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-brand-primary hover:underline bg-brand-cream/70 px-2.5 py-1 rounded border border-brand-border/70"
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-brand-primary hover:underline bg-brand-cream/70 px-2.5 py-0.5 rounded border border-brand-border/70"
                           >
                             Order #{ticket.order_id} ↗
                           </Link>
@@ -268,25 +315,41 @@ export function TicketsList({ tickets }: TicketsListProps) {
                         )}
                       </td>
 
-                      <td className="py-4.5 px-6 text-gray-600 text-xs whitespace-nowrap">
+                      <td className="py-3.5 px-3.5 text-gray-600 text-xs whitespace-nowrap">
                         {categoryLabels[ticket.category] || ticket.category}
                       </td>
 
-                      <td className="py-4.5 px-6 whitespace-nowrap">
+                      <td className="py-3.5 px-3.5 whitespace-nowrap">
                         <TicketStatusBadge status={ticket.status as TicketStatus} />
                       </td>
 
-                      <td className="py-4.5 px-6 text-gray-500 text-xs whitespace-nowrap">
+                      <td className="py-3.5 px-3.5 text-gray-500 text-xs whitespace-nowrap">
                         {formattedDate}
                       </td>
 
-                      <td className="py-4.5 px-6 text-right whitespace-nowrap">
-                        <Link
-                          href={`/account/tickets/${ticket.id}`}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-brand-primary hover:text-brand-primary-dark hover:underline"
-                        >
-                          View &amp; Reply &rarr;
-                        </Link>
+                      <td className="py-3.5 px-3.5 text-left whitespace-nowrap">
+                        <div className="inline-flex items-center justify-start gap-2.5">
+                          <Link
+                            href={`/account/tickets/${ticket.id}`}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-brand-primary hover:text-brand-primary-dark hover:underline"
+                          >
+                            View &amp; Reply &rarr;
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDeleteError(null);
+                              setTicketToDelete(ticket);
+                            }}
+                            className="text-gray-400 hover:text-[#8a333d] p-1.5 rounded-md hover:bg-[#fbf5f5] transition-colors"
+                            title="Delete ticket"
+                            aria-label={`Delete ticket #${ticket.ticket_number}`}
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -296,6 +359,20 @@ export function TicketsList({ tickets }: TicketsListProps) {
           </div>
         </>
       )}
+
+      {/* Delete Confirmation Modal Popup (No browser alert) */}
+      <DeleteTicketModal
+        isOpen={!!ticketToDelete}
+        ticketNumber={ticketToDelete ? `#${ticketToDelete.ticket_number}` : ''}
+        isDeleting={isDeleting}
+        onClose={() => {
+          if (!isDeleting) {
+            setTicketToDelete(null);
+            setDeleteError(null);
+          }
+        }}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }
