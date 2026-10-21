@@ -134,30 +134,33 @@ export function TicketDetailClient({ ticket: initialTicket }: TicketDetailClient
           Back to All Tickets
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           {!isResolvedOrClosed && (
             <button
               type="button"
               onClick={handleCloseTicket}
               disabled={isClosing}
-              className={`text-xs font-semibold px-3 py-1.5 rounded transition-colors disabled:opacity-50 ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-md transition-colors disabled:opacity-50 ${
                 confirmResolve
-                  ? 'border border-amber-400 text-amber-900 bg-amber-100 hover:bg-amber-200'
-                  : 'border border-emerald-300 text-emerald-800 bg-emerald-50 hover:bg-emerald-100'
+                  ? 'border border-brand-primary bg-brand-primary text-white hover:bg-brand-primary-dark shadow-sm'
+                  : 'border border-brand-primary text-brand-primary bg-white hover:bg-brand-primary hover:text-white'
               }`}
             >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
               {isClosing
                 ? 'Updating...'
                 : confirmResolve
                 ? 'Click Again to Confirm'
-                : '✓ Mark as Resolved'}
+                : 'Mark as Resolved'}
             </button>
           )}
 
           <button
             type="button"
             onClick={() => setIsDeleteModalOpen(true)}
-            className="text-xs font-semibold px-3 py-1.5 rounded border border-[#edd8db] text-[#8a333d] bg-[#fbf5f5] hover:bg-[#f6e9eb] transition-colors inline-flex items-center gap-1.5"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-md border border-gray-300 text-gray-700 bg-white hover:border-[#8a333d] hover:text-[#8a333d] hover:bg-[#fbf5f5] transition-colors"
             title="Delete Ticket"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

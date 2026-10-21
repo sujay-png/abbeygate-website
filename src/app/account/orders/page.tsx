@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { Breadcrumb } from '@/components/content';
 import { Container } from '@/components/ui/Container';
 import { AccountSidebar } from '@/features/account/components/AccountSidebar';
-import { LinkOrdersBanner } from '@/features/account/components/LinkOrdersBanner';
 import { getCustomerOrders } from '@/features/account/services/orders';
 
 export default async function OrdersPage() {
@@ -28,10 +27,6 @@ export default async function OrdersPage() {
 
           {/* Main Content Area */}
           <div className="flex-1 w-full bg-white border border-gray-200/80 rounded-lg p-6 md:p-8">
-            
-            {/* Link Past Orders Banner */}
-            <LinkOrdersBanner />
-
             {/* Orders Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm border-collapse">
