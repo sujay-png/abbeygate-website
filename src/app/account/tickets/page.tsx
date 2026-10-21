@@ -7,6 +7,8 @@ import { getCustomerTickets } from '@/features/account/services/tickets';
 import { TicketsList } from '@/features/account/components/tickets/TicketsList';
 import { getSEOMetadata } from '@/lib/seo';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = getSEOMetadata('/account/tickets', {
   title: 'Support Tickets | Abbeygate England',
   noindex: true,

@@ -7,6 +7,8 @@ import { getTicketDetail } from '@/features/account/services/tickets';
 import { TicketDetailClient } from '@/features/account/components/tickets/TicketDetailClient';
 import { getSEOMetadata } from '@/lib/seo';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = getSEOMetadata('/account/tickets/[id]', {
   title: 'Ticket Details | Abbeygate England',
   noindex: true,
