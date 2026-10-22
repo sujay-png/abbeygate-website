@@ -12,7 +12,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
   return (
     <>
       {!isCheckout && <Navbar />}
-      <main className="flex-1 bg-brand-cream">{children}</main>
+      <main className="flex-1 bg-brand-cream min-h-[80vh]">{children}</main>
       {!isCheckout && <Footer />}
       <CartDrawer />
     </>

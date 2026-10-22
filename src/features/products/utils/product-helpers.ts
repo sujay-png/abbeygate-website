@@ -262,9 +262,13 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
           }
         }
       } else {
-        // For solid JPEGs: use gradient detection to find the book edge
+        // For solid JPEGs: find the physical product edges by identifying the dominant
+        // gradient transitions in each half of the image (left/right, top/bottom).
+        // This is resilient to soft drop shadows and differing cover contrast.
         const marginX = Math.floor(canvas.width * 0.05);
         const marginY = Math.floor(canvas.height * 0.05);
+        const midX = Math.floor(canvas.width / 2);
+        const midY = Math.floor(canvas.height / 2);
 
         const sumX = new Float64Array(canvas.width);
         const sumY = new Float64Array(canvas.height);
@@ -289,36 +293,55 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
           }
         }
 
-        let maxSpikeX = 0;
-        for (let x = marginX; x < canvas.width - marginX; x++) {
-          if (sumX[x] > maxSpikeX) maxSpikeX = sumX[x];
+        // Find the strongest edge in each half
+        let peakLeftX = marginX, maxLeft = 0;
+        for (let x = marginX; x < midX; x++) {
+          if (sumX[x] > maxLeft) { maxLeft = sumX[x]; peakLeftX = x; }
         }
-        let maxSpikeY = 0;
-        for (let y = marginY; y < canvas.height - marginY; y++) {
-          if (sumY[y] > maxSpikeY) maxSpikeY = sumY[y];
+        let peakRightX = midX, maxRight = 0;
+        for (let x = midX; x < canvas.width - marginX; x++) {
+          if (sumX[x] > maxRight) { maxRight = sumX[x]; peakRightX = x; }
+        }
+        let peakTopY = marginY, maxTop = 0;
+        for (let y = marginY; y < midY; y++) {
+          if (sumY[y] > maxTop) { maxTop = sumY[y]; peakTopY = y; }
+        }
+        let peakBottomY = midY, maxBottom = 0;
+        for (let y = midY; y < canvas.height - marginY; y++) {
+          if (sumY[y] > maxBottom) { maxBottom = sumY[y]; peakBottomY = y; }
         }
 
-        const threshX = maxSpikeX * 0.35;
-        const threshY = maxSpikeY * 0.35;
+        // Validate that detected bounds represent a plausible product dimensions
+        const detectedWidth = (peakRightX - peakLeftX) / canvas.width;
+        const detectedHeight = (peakBottomY - peakTopY) / canvas.height;
 
-        minX = marginX; maxX = canvas.width - marginX;
-        minY = marginY; maxY = canvas.height - marginY;
+        if (detectedWidth >= 0.15 && detectedHeight >= 0.25) {
+          minX = peakLeftX;
+          maxX = peakRightX;
+          minY = peakTopY;
+          maxY = peakBottomY;
+        } else {
+          // Fallback: color distance from corner background
+          const cornerR = (data[0] + data[(canvas.width - 1) * 4] + data[(canvas.height - 1) * canvas.width * 4]) / 3;
+          const cornerG = (data[1] + data[(canvas.width - 1) * 4 + 1] + data[(canvas.height - 1) * canvas.width * 4 + 1]) / 3;
+          const cornerB = (data[2] + data[(canvas.width - 1) * 4 + 2] + data[(canvas.height - 1) * canvas.width * 4 + 2]) / 3;
 
-        for (let x = marginX; x < canvas.width - marginX; x++) {
-          if (sumX[x] > threshX) { minX = x; break; }
-        }
-        for (let x = canvas.width - marginX - 1; x >= marginX; x--) {
-          if (sumX[x] > threshX) { maxX = x; break; }
-        }
-        for (let y = marginY; y < canvas.height - marginY; y++) {
-          if (sumY[y] > threshY) { minY = y; break; }
-        }
-        for (let y = canvas.height - marginY - 1; y >= marginY; y--) {
-          if (sumY[y] > threshY) { maxY = y; break; }
+          for (let y = marginY; y < canvas.height - marginY; y++) {
+            for (let x = marginX; x < canvas.width - marginX; x++) {
+              const idx = (y * canvas.width + x) * 4;
+              const dist = Math.abs(data[idx] - cornerR) + Math.abs(data[idx + 1] - cornerG) + Math.abs(data[idx + 2] - cornerB);
+              if (dist > 35) {
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+              }
+            }
+          }
         }
       }
       
-      if (minX >= maxX || minY >= maxY) {
+      if (minX >= maxX || minY >= maxY || (maxX - minX) / canvas.width < 0.15 || (maxY - minY) / canvas.height < 0.25) {
         boundingBoxCache.set(imageUrl, null);
         return resolve(null);
       }
