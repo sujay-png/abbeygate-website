@@ -45,12 +45,16 @@ export async function loadCategoryPageData(path: string) {
   const pathParts = path.split('/').filter(Boolean);
   const breadcrumbItems = pathParts.map((part, index) => {
     const href = '/' + pathParts.slice(0, index + 1).join('/');
-    const label = part
-      .split('-')
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ');
+    const matchingRoute = getCategoryRoute(href);
+    const label = matchingRoute
+      ? matchingRoute.title.replace(/^All\s+/i, '')
+      : part
+          .split('-')
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ');
+
     return index === pathParts.length - 1
-      ? { label: route.title || wooCategory?.name || label }
+      ? { label: matchingRoute?.title ? matchingRoute.title.replace(/^All\s+/i, '') : (wooCategory?.name || label) }
       : { label, href };
   });
 

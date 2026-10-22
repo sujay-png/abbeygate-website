@@ -9,7 +9,7 @@ import { CustomisationCTA } from '@/components/shared/CustomisationCTA';
 import { getStoreProductBySlug, getStoreProducts, getProductCustomTabs, getStoreProductById } from '@/features/products/services/store-products';
 import { getProductPricingFromProduct } from '@/features/products/services/pricing';
 import { getProductHexValues } from '@/features/products/services/product-colors';
-import { CATEGORY_ROUTES } from '@/data/category-routes';
+import { getProductBreadcrumbs } from '@/features/products/utils/breadcrumb';
 import type { Metadata } from 'next';
 import { getSEOMetadata, jsonLd, SITE_URL } from '@/lib/seo';
 
@@ -162,45 +162,8 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
     customTabsPromise,
   ]);
 
-  // Build dynamic breadcrumbs based on product categories
-  const breadcrumbPaths: { label: string; href?: string }[] = [
-    { label: 'Home', href: '/' },
-  ];
-
-  if (product.categories && product.categories.length > 0) {
-    // 1. Find all predefined routes that match the product's categories
-    const matchedRoutes = product.categories
-      .map(cat => CATEGORY_ROUTES.find(r => r.categoryId === cat.id))
-      .filter((r): r is NonNullable<typeof r> => r !== undefined);
-
-    if (matchedRoutes.length > 0) {
-      // 2. Separate standard hierarchical routes from flat collections
-      const standardRoutes = matchedRoutes.filter(r => !r.path.startsWith('/collection') && !r.path.startsWith('/category'));
-      
-      // 3. Find the deepest route to use as our primary path
-      const candidateRoutes = standardRoutes.length > 0 ? standardRoutes : matchedRoutes;
-      const deepestRoute = candidateRoutes.reduce((prev, curr) => 
-        (curr.path.split('/').length > prev.path.split('/').length) ? curr : prev
-      );
-
-      // 4. Filter matched routes to only include those that are ancestors of the deepest route
-      const breadcrumbRoutes = matchedRoutes
-        .filter(r => deepestRoute.path.startsWith(r.path))
-        .sort((a, b) => a.path.length - b.path.length); // Sort by depth
-
-      breadcrumbRoutes.forEach((route) => {
-        const label = route.title.startsWith('All ') ? route.title.replace('All ', '') : route.title;
-        breadcrumbPaths.push({ label, href: route.path });
-      });
-    } else {
-      breadcrumbPaths.push({ label: 'Products', href: '/notebooks' });
-    }
-  } else {
-    // Fallback if no category matches
-    breadcrumbPaths.push({ label: 'Products', href: '/notebooks' });
-  }
-
-  breadcrumbPaths.push({ label: product.name });
+  // Build canonical hierarchical breadcrumbs based on product categories
+  const breadcrumbPaths = getProductBreadcrumbs(product);
 
   const collectionNames = ['richmond', 'dorchester', 'harrogate', 'lewes', 'chelsea', 'windsor', 'conscious'];
   const collectionCategory = product.categories?.find((c: { name: string; slug: string }) => 
