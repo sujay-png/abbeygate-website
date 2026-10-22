@@ -52,7 +52,7 @@ export function Breadcrumb({ paths, className = '' }: BreadcrumbProps) {
   };
 
   return (
-    <div className={`py-3 md:py-4 bg-brand-cream border-b border-brand-border/10 md:border-b-0 ${className}`}>
+    <div className={`py-3 md:py-4 bg-brand-cream ${className}`}>
       <Container maxWidthClass="max-w-[1500px]">
         {/* Desktop View: Full canonical breadcrumb trail */}
         <nav aria-label="Breadcrumb" className="hidden md:block">
