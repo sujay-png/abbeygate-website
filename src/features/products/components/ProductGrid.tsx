@@ -1,9 +1,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { StoreProduct } from '../types/store-product';
-import { getProductBaseAmount, stripHtml, sanitizeImageUrl } from '../utils/product-helpers';
+import { getProductBaseAmount, sanitizeImageUrl } from '../utils/product-helpers';
 import { PriceDisplay } from '@/components/shared/PriceDisplay';
-import { ExpandableProductDescription } from './ExpandableProductDescription';
 
 type ProductGridProps = {
   products: StoreProduct[];
@@ -52,10 +51,6 @@ export const ProductGrid = ({ products, hasProductsInCategory = true }: ProductG
             <h3 className="text-[15px] font-semibold text-brand-body leading-snug mb-2 group-hover:text-brand-primary transition-colors line-clamp-2">
               {product.name}
             </h3>
-
-            {product.short_description && (
-              <ExpandableProductDescription description={product.short_description} />
-            )}
 
             {getProductBaseAmount(product) > 0 && (
               <span className="text-[15px] font-bold text-brand-body mt-auto flex gap-1">

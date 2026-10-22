@@ -98,7 +98,7 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
         'light-pink': '#FFB6C1',
         'violet': '#7F00FF',
         'lime': '#32CD32',
-        'aqua': '#00FFFF',
+        'aqua': '#0297b7',
         'full-colour': '#fff',
       };
 
