@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { StoreProduct } from '../types/store-product';
-import { getProductBaseAmount, sanitizeImageUrl } from '../utils/product-helpers';
+import { getProductBaseAmount, sanitizeImageUrl, getProductImageTransform } from '../utils/product-helpers';
 import { PriceDisplay } from '@/components/shared/PriceDisplay';
 
 type ProductGridProps = {
@@ -25,6 +25,27 @@ export const ProductGrid = ({ products, hasProductsInCategory = true }: ProductG
       {products.map((product) => {
         const image = product.images[0];
         const imageSrc = sanitizeImageUrl(image?.thumbnail || image?.src);
+        const { rotate, scaleX, imagePadding } = getProductImageTransform(product);
+
+        // Build the CSS transform for the image element only (rotate + optional horizontal flip).
+        // Rotation is applied inside a square aspect-ratio container; we also add a scale-down
+        // when rotating so that a landscape photo fits neatly inside the square container.
+        const parts: string[] = [];
+        if (scaleX !== 1) parts.push(`scaleX(${scaleX})`);
+        if (rotate !== 0) {
+          parts.push(`rotate(${rotate}deg)`);
+          // scale(0.75) ≈ short-side / long-side for a ~4:3 landscape canvas (990×754)
+          // ensures the rotated-to-vertical image stays fully inside the square card
+          parts.push('scale(0.75)');
+        }
+        const transformStyle: React.CSSProperties = parts.length
+          ? { transform: parts.join(' ') }
+          : {};
+
+        // imagePadding adjusts the visible area of the container so that products
+        // photographed with different amounts of whitespace appear at a normalised
+        // relative size on the grid (e.g. Dorchester luggage tags vs Chelsea ones).
+        const containerPadding = `${imagePadding}%`;
 
         return (
           <Link
@@ -32,7 +53,10 @@ export const ProductGrid = ({ products, hasProductsInCategory = true }: ProductG
             href={`/product/${product.slug}`}
             className="group flex flex-col"
           >
-            <div className="relative aspect-square w-full bg-transparent overflow-hidden mb-4">
+            <div
+              className="relative aspect-square w-full bg-transparent overflow-hidden mb-4"
+              style={{ padding: containerPadding }}
+            >
               {imageSrc ? (
                 <Image
                   src={imageSrc}
@@ -40,6 +64,7 @@ export const ProductGrid = ({ products, hasProductsInCategory = true }: ProductG
                   fill
                   sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   className="object-contain p-4 transition-transform duration-500 group-hover:scale-105 mix-blend-multiply"
+                  style={transformStyle}
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-gray-300 text-sm">

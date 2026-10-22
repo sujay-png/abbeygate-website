@@ -152,6 +152,77 @@ export function stripHtml(html: string): string {
     .trim();
 }
 
+/**
+ * Returns CSS transform values needed to normalise a product image on the PLP.
+ *
+ * Rules (derived from pixel-level image analysis of all product images):
+ *  - Chelsea / Windsor Luggage Tags   → photographed horizontally → rotate 90°
+ *  - Chelsea Slim Card Holders        → photographed horizontally → rotate 90°
+ *  - Dorchester Collection Key Fobs   → oval key fob, split-ring on RIGHT → flip horizontally (scaleX -1)
+ *
+ * imagePadding: extra CSS padding (%) to apply to the image container to visually
+ * normalise the product size relative to other items on the PLP. A larger padding
+ * makes the product appear smaller (i.e. consistent with products that naturally
+ * have more whitespace in their photos).
+ *
+ * Note: This ONLY affects CSS rendering on the PLP; the original image URLs fed
+ * into the customiser (PDP) are untouched, so bounding-box calculations remain accurate.
+ */
+export type ProductImageTransform = {
+  rotate: 0 | 90 | -90 | 180;
+  scaleX: 1 | -1;
+  /** Extra padding (%) added to the image container to normalise visual product scale on PLP */
+  imagePadding: number;
+};
+
+export function getProductImageTransform(product: StoreProduct): ProductImageTransform {
+  const nameLower = product.name.toLowerCase();
+  const categorySlugs = product.categories.map(c => c.slug.toLowerCase());
+
+  const hasCategory = (...slugs: string[]) => slugs.some(s => categorySlugs.includes(s));
+  const nameIncludes = (...terms: string[]) => terms.every(t => nameLower.includes(t));
+
+  // Horizontal luggage tags: Chelsea & Windsor collections were shot landscape
+  if (hasCategory('luggage-tags', 'luggage-tag') || nameIncludes('luggage')) {
+    if (nameIncludes('chelsea') || nameIncludes('windsor')) {
+      // After 90° rotation the product fills ~42% height of the square canvas.
+      // Add padding to match Dorchester vertical tags (~85% fill → ~7% padding)
+      return { rotate: 90, scaleX: 1, imagePadding: 4 };
+    }
+    // Dorchester tags are already well-padded (285×850 on 990×990)
+    return { rotate: 0, scaleX: 1, imagePadding: 4 };
+  }
+
+  // Chelsea Slim Card Holders are landscape photos of a portrait product
+  if (nameIncludes('slim card holder')) {
+    return { rotate: 90, scaleX: 1, imagePadding: 4 };
+  }
+
+  // Windsor/Hide multi-purpose card holders: 990×754 canvas, product ~62%W × 81%H
+  // Dorchester multi-purpose card holders: 990×990 canvas, product ~70%W × 93%H
+  // Chelsea multi-purpose card holders: 990×990 canvas, product ~72%W × 94%H
+  // Goal: all card holders appear at the same visual scale on PLP
+  if (nameIncludes('card holder') || nameIncludes('card-holder')) {
+    if (nameIncludes('windsor') || nameIncludes('hide leather')) {
+      // Landscape canvas – needs less extra padding
+      return { rotate: 0, scaleX: 1, imagePadding: 0 };
+    }
+    return { rotate: 0, scaleX: 1, imagePadding: 0 };
+  }
+
+  // Dorchester oval key fobs: ring is on the RIGHT – flip horizontally so ring is on LEFT
+  // Rectangle key fobs already have the ring on the left → no transform needed
+  if (hasCategory('key-rings', 'keychains')) {
+    const isOval = nameIncludes('collection key fob') || (nameIncludes('key fob') && !nameIncludes('rectangle') && !nameIncludes('rect'));
+    if (isOval) {
+      return { rotate: 0, scaleX: -1, imagePadding: 0 };
+    }
+  }
+
+  return { rotate: 0, scaleX: 1, imagePadding: 0 };
+}
+
+
 export function getProductBaseAmount(product: StoreProduct): number {
   const minorUnit = product.prices.currency_minor_unit ?? 2;
   const price = parseInt(product.prices.price, 10) / Math.pow(10, minorUnit);
