@@ -23,6 +23,7 @@ const nextConfig: NextConfig = {
   },
   poweredByHeader: false,
   experimental: {
+    agentUpgrade: 'security',
     serverActions: {
       bodySizeLimit: '10mb',
       allowedOrigins: ['local.abbeygate-england.com'],
