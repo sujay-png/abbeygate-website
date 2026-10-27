@@ -46,6 +46,10 @@ export const seoConfig: Record<string, { title: string; description: string; noi
     title: "Frequently Asked Questions | Abbeygate England",
     description: "Find answers to common questions about our products, customisation, and shipping.",
   },
+  "/blog": {
+    title: "Our Blog | Abbeygate England",
+    description: "Insights, guides, and inspiration for corporate gifting, bespoke stationery, and British leather craftsmanship.",
+  },
   "/resource-guide": {
     title: "Resource Guide | Abbeygate England",
     description: "Helpful resources and guides for corporate gifting and bespoke products.",

@@ -54,6 +54,25 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/blogs/collection",
+        destination: "/blog",
+        permanent: true,
+      },
+      {
+        source: "/blogs/collection/:slug",
+        destination: "/blog/:slug",
+        permanent: true,
+      },
+      {
+        source: "/blogs",
+        destination: "/blog",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default withSentryConfig(nextConfig, {

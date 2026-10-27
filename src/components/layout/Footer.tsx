@@ -20,6 +20,7 @@ const FOOTER_LINKS = {
     { label: "FAQs", href: "/faqs" },
   ],
   information: [
+    { label: "Our Blog", href: "/blog" },
     { label: "Resource Guide", href: "/resource-guide" },
     { label: "Artwork Specification", href: "/artwork-specification" },
     { label: "Internal Page Layouts", href: "/internal-page-layouts" },
