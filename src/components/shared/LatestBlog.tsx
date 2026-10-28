@@ -35,8 +35,6 @@ export const LatestBlog = async () => {
           ))}
         </div>
 
-        {/* Divider */}
-        <div className="mt-16 border-b border-neutral-300" />
       </Container>
     </section>
   );
