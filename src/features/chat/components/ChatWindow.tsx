@@ -653,7 +653,6 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
       {/* 1. CHAT HEADER - Minimalist & Elegant */}
       <div className="bg-[#4b2255] px-4 py-3.5 text-white flex items-center justify-between shrink-0 border-b border-[#d4af37]/30 shadow-xs">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <h3 className="text-[14px] font-bold font-sans tracking-wide text-white">
             Abbeygate Customer Care
           </h3>
