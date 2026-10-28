@@ -21,7 +21,14 @@ export function ChatOrderPicker({
   const [manualOrderId, setManualOrderId] = useState('');
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
-  const [showManual, setShowManual] = useState(!isLoggedIn || orders.length === 0);
+  const [showManual, setShowManual] = useState(orders.length === 0);
+
+  // Automatically show order list if orders are loaded asynchronously
+  React.useEffect(() => {
+    if (orders.length > 0 && !manualOrderId) {
+      setShowManual(false);
+    }
+  }, [orders.length, manualOrderId]);
 
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +67,7 @@ export function ChatOrderPicker({
     <div className="mt-2 space-y-2.5">
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-bold tracking-wider uppercase text-gray-500 font-sans">
-          {orders.length > 0 && !showManual ? 'Select your order:' : 'Order details:'}
+          {orders.length > 0 && !showManual ? 'Select your order (latest first):' : 'Order details:'}
         </span>
         <button
           type="button"
@@ -72,7 +79,10 @@ export function ChatOrderPicker({
       </div>
 
       {orders.length > 0 && !showManual && (
-        <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+        <div
+          data-lenis-prevent="true"
+          className="space-y-2 max-h-56 overflow-y-auto pr-1 overscroll-contain"
+        >
           {orders.map((order) => {
             const dateStr = order.date_created
               ? new Date(order.date_created).toLocaleDateString('en-GB', {
@@ -108,7 +118,9 @@ export function ChatOrderPicker({
 
                 <div className="flex items-center justify-between text-[11px] text-gray-500">
                   <span>Placed {dateStr}</span>
-                  <span className="capitalize">{order.status || 'Processing'}</span>
+                  <span className="capitalize text-emerald-700 font-medium">
+                    {order.status || 'Processing'}
+                  </span>
                 </div>
 
                 {itemsSummary && (
@@ -170,7 +182,7 @@ export function ChatOrderPicker({
                 onClick={() => setShowManual(false)}
                 className="text-[11px] text-[#4b2255] font-semibold underline hover:text-[#25102d] cursor-pointer"
               >
-                &larr; Choose from my order list
+                &larr; Choose from order list
               </button>
             ) : (
               <span className="text-[11px] text-gray-500">
@@ -193,7 +205,7 @@ export function ChatOrderPicker({
             onClick={() => setShowManual(true)}
             className="text-[11px] font-medium text-[#4b2255] hover:underline cursor-pointer"
           >
-            Different order number?
+            Don't see your order? Enter number manually
           </button>
           <button
             type="button"

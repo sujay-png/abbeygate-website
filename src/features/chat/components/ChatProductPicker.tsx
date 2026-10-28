@@ -7,6 +7,7 @@ interface ChatProductPickerProps {
   orderNumber: string;
   onSelectProducts: (selectedItemsSummary: string) => void;
   onBack: () => void;
+  onChangeTopic?: () => void;
 }
 
 export function ChatProductPicker({
@@ -14,6 +15,7 @@ export function ChatProductPicker({
   orderNumber,
   onSelectProducts,
   onBack,
+  onChangeTopic,
 }: ChatProductPickerProps) {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [customItem, setCustomItem] = useState('');
@@ -63,7 +65,7 @@ export function ChatProductPicker({
           <button
             type="button"
             onClick={handleSelectAll}
-            className="text-[11px] text-[#4b2255] font-semibold hover:underline"
+            className="text-[11px] text-[#4b2255] font-semibold hover:underline cursor-pointer"
           >
             {selectedItems.length === lineItems.length ? 'Deselect All' : 'Select All Items'}
           </button>
@@ -71,7 +73,10 @@ export function ChatProductPicker({
       </div>
 
       {lineItems.length > 0 && (
-        <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+        <div
+          data-lenis-prevent="true"
+          className="space-y-1.5 max-h-52 overflow-y-auto pr-1 overscroll-contain"
+        >
           {lineItems.map((item, idx) => {
             const itemString = `${item.name}${item.quantity ? ` (Qty: ${item.quantity})` : ''}`;
             const isChecked = selectedItems.includes(itemString);
@@ -129,7 +134,7 @@ export function ChatProductPicker({
         <button
           type="button"
           onClick={handleConfirm}
-          className="w-full py-2 bg-[#4b2255] hover:bg-[#34143d] text-white text-[12px] font-bold rounded-lg shadow-sm transition-colors flex items-center justify-center gap-1.5"
+          className="w-full py-2 bg-[#4b2255] hover:bg-[#34143d] text-white text-[12px] font-bold rounded-lg shadow-sm transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
         >
           <span>Continue with Selected ({selectedItems.length})</span>
           <span>&rarr;</span>
@@ -149,7 +154,7 @@ export function ChatProductPicker({
           <button
             type="submit"
             disabled={!customItem.trim()}
-            className="px-3 py-1.5 bg-[#4b2255] text-white text-[12px] font-bold rounded-md hover:bg-[#34143d] transition-colors disabled:opacity-50"
+            className="px-3 py-1.5 bg-[#4b2255] text-white text-[12px] font-bold rounded-md hover:bg-[#34143d] transition-colors disabled:opacity-50 cursor-pointer"
           >
             Select
           </button>
@@ -159,17 +164,28 @@ export function ChatProductPicker({
           <button
             type="button"
             onClick={onBack}
-            className="text-[11px] text-[#4b2255] hover:underline flex items-center gap-1 font-medium"
+            className="text-[11px] text-[#4b2255] hover:underline flex items-center gap-1 font-medium cursor-pointer"
           >
             &larr; Choose different order
           </button>
-          <button
-            type="button"
-            onClick={() => setShowCustom(true)}
-            className="text-[11px] text-gray-500 hover:text-gray-800 underline"
-          >
-            Item not listed?
-          </button>
+          <div className="flex items-center gap-2">
+            {onChangeTopic && (
+              <button
+                type="button"
+                onClick={onChangeTopic}
+                className="text-[11px] text-[#4b2255] hover:underline flex items-center gap-1 font-medium cursor-pointer"
+              >
+                &larr; Change topic
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowCustom(true)}
+              className="text-[11px] text-gray-500 hover:text-gray-800 underline cursor-pointer"
+            >
+              Item not listed?
+            </button>
+          </div>
         </div>
       )}
     </div>

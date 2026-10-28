@@ -6,6 +6,7 @@ import type { OrderIssueType } from '../types/chat';
 interface ChatIssuePickerProps {
   onSelectIssue: (issue: OrderIssueType, label: string) => void;
   onBack?: () => void;
+  onChangeTopic?: () => void;
 }
 
 const ISSUE_OPTIONS: Array<{
@@ -52,22 +53,33 @@ const ISSUE_OPTIONS: Array<{
   },
 ];
 
-export function ChatIssuePicker({ onSelectIssue, onBack }: ChatIssuePickerProps) {
+export function ChatIssuePicker({ onSelectIssue, onBack, onChangeTopic }: ChatIssuePickerProps) {
   return (
     <div className="mt-2 space-y-2">
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-bold tracking-wider uppercase text-gray-500 font-sans">
           How can we assist with this item?
         </span>
-        {onBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            className="text-[11px] text-[#4b2255] font-semibold hover:underline flex items-center gap-1"
-          >
-            &larr; Change items
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="text-[11px] text-[#4b2255] font-semibold hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              &larr; Change items
+            </button>
+          )}
+          {onChangeTopic && (
+            <button
+              type="button"
+              onClick={onChangeTopic}
+              className="text-[11px] text-[#4b2255] font-semibold hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              &larr; Change topic
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-1.5">

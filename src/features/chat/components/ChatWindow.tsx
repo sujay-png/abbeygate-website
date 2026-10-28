@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
+import { useLenis } from 'lenis/react';
 import type { WooCommerceOrder } from '@/features/account/services/orders';
 import type { ChatTopic, OrderIssueType, ChatMessage } from '../types/chat';
 import { ChatOrderPicker } from './ChatOrderPicker';
@@ -48,6 +49,7 @@ const TOPIC_SUGGESTIONS: Array<{
 
 export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProps) {
   const pathname = usePathname();
+  const lenis = useLenis();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -56,6 +58,22 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [orders, setOrders] = useState<WooCommerceOrder[]>([]);
+
+  // Prevent background scrolling while chat window is active
+  useEffect(() => {
+    if (!isOpen) return;
+
+    lenis?.stop();
+    const originalOverflow = document.body.style.overflow;
+    if (window.innerWidth < 768) {
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      lenis?.start();
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen, lenis]);
 
   // Guided flow state
   const [selectedTopic, setSelectedTopic] = useState<ChatTopic | null>(null);
@@ -100,8 +118,9 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
           setIsLoggedIn(true);
           setUserName(data.user?.name || '');
           setUserEmail(data.user?.email || '');
-          setOrders(data.orders || []);
         }
+        // Always populate orders (sorted latest first) so customer/tester can pick easily
+        setOrders(data.orders || []);
       } catch (err) {
         console.warn('Failed to load chat session:', err);
       }
@@ -251,7 +270,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
     const botMsg: ChatMessage = {
       id: `msg-back-topics-${Date.now()}`,
       sender: 'bot',
-      text: 'Please choose an option below:',
+      text: 'Please choose an option below, or feel free to type your enquiry directly:',
       topics: TOPIC_SUGGESTIONS,
       createdAt: new Date().toISOString(),
     };
@@ -269,7 +288,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
       id: `msg-back-orders-${Date.now()}`,
       sender: 'bot',
       text: orders.length > 0
-        ? 'Please select the order you need help with:'
+        ? 'Please select the order you need help with (latest first):'
         : 'Please enter your order number:',
       showOrderPicker: true,
       createdAt: new Date().toISOString(),
@@ -289,7 +308,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
         id: `msg-back-prods-${Date.now()}`,
         sender: 'bot',
         text: hasItems
-          ? `Which item from Order #${selectedOrder.number || selectedOrder.id} is this regarding?`
+          ? `Which item from Order #${selectedOrder.number || selectedOrder.id} is this regarding? (Select one, multiple, or all):`
           : `What item or part of Order #${selectedOrder.number || selectedOrder.id} would you like help with?`,
         showProductPicker: true,
         createdAt: new Date().toISOString(),
@@ -316,7 +335,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
         id: `msg-bot-order-${Date.now()}`,
         sender: 'bot',
         text: orders.length > 0
-          ? 'Great, let’s get this sorted for you. Please select the order you need help with:'
+          ? 'Great, let’s get this sorted for you. Please select your order from the list below (latest first):'
           : 'Please enter your order number so we can look up your details:',
         showOrderPicker: true,
         createdAt: new Date().toISOString(),
@@ -357,7 +376,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
       id: `msg-bot-product-${Date.now()}`,
       sender: 'bot',
       text: hasItems
-        ? `Which item from Order #${order.number || order.id} is this regarding? (Select one or all):`
+        ? `Which item from Order #${order.number || order.id} is this regarding? (Select one, multiple, or all):`
         : `What item or part of Order #${order.number || order.id} would you like help with?`,
       showProductPicker: true,
       createdAt: new Date().toISOString(),
@@ -559,6 +578,10 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
       aria-modal="true"
       aria-label="Customer Care Live Chat"
       data-lenis-prevent="true"
+      onMouseEnter={() => lenis?.stop()}
+      onMouseLeave={() => {
+        if (isOpen && window.innerWidth >= 768) lenis?.start();
+      }}
       onWheel={(e) => e.stopPropagation()}
       onTouchMove={(e) => e.stopPropagation()}
       className="fixed inset-0 sm:inset-auto sm:bottom-20 sm:right-6 z-50 flex flex-col w-full sm:w-[400px] h-full sm:h-[600px] max-h-[100dvh] sm:max-h-[85vh] bg-[#faf6ee] sm:rounded-2xl shadow-[0_20px_60px_rgba(37,16,45,0.45)] border border-[#d4af37]/35 overflow-hidden overscroll-contain animate-in fade-in zoom-in-95 duration-200"
@@ -566,7 +589,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
       {/* 1. CHAT HEADER - Minimalist & Elegant */}
       <div className="bg-[#4b2255] px-4 py-3.5 text-white flex items-center justify-between shrink-0 border-b border-[#d4af37]/30 shadow-xs">
         <div className="flex items-center gap-2">
-          
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <h3 className="text-[14px] font-bold font-sans tracking-wide text-white">
             Abbeygate Customer Care
           </h3>
@@ -729,6 +752,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
                     orderNumber={String(selectedOrder.number || selectedOrder.id)}
                     onSelectProducts={handleSelectProduct}
                     onBack={handleBackToOrderSelect}
+                    onChangeTopic={handleBackToTopics}
                   />
                 </div>
               )}
@@ -739,6 +763,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
                   <ChatIssuePicker
                     onSelectIssue={handleSelectIssue}
                     onBack={handleBackToProductSelect}
+                    onChangeTopic={handleBackToTopics}
                   />
                 </div>
               )}
