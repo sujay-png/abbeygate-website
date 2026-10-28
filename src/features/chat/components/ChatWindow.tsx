@@ -11,6 +11,7 @@ import { ChatIssuePicker } from './ChatIssuePicker';
 interface ChatWindowProps {
   isOpen: boolean;
   onClose: () => void;
+  onTicketResolved?: () => void;
 }
 
 const TOPIC_SUGGESTIONS: Array<{
@@ -45,7 +46,7 @@ const TOPIC_SUGGESTIONS: Array<{
   },
 ];
 
-export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
+export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProps) {
   const pathname = usePathname();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -210,7 +211,10 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
     try {
       localStorage.removeItem('abbeygate_chat_ticket_id');
       localStorage.removeItem('abbeygate_chat_ticket_num');
+      localStorage.removeItem('abbeygate_chat_seen_staff_count');
     } catch {}
+
+    onTicketResolved?.();
 
     setActiveTicketId(null);
     setActiveTicketNumber(null);
