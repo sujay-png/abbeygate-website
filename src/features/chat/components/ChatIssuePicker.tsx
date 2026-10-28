@@ -5,6 +5,7 @@ import type { OrderIssueType } from '../types/chat';
 
 interface ChatIssuePickerProps {
   onSelectIssue: (issue: OrderIssueType, label: string) => void;
+  onBack?: () => void;
 }
 
 const ISSUE_OPTIONS: Array<{
@@ -51,11 +52,22 @@ const ISSUE_OPTIONS: Array<{
   },
 ];
 
-export function ChatIssuePicker({ onSelectIssue }: ChatIssuePickerProps) {
+export function ChatIssuePicker({ onSelectIssue, onBack }: ChatIssuePickerProps) {
   return (
     <div className="mt-2 space-y-2">
-      <div className="text-[11px] font-semibold tracking-wider uppercase text-gray-500 font-sans">
-        How can we assist with this item?
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-bold tracking-wider uppercase text-gray-500 font-sans">
+          How can we assist with this item?
+        </span>
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-[11px] text-[#4b2255] font-semibold hover:underline flex items-center gap-1"
+          >
+            &larr; Change items
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-1.5">
@@ -64,7 +76,7 @@ export function ChatIssuePicker({ onSelectIssue }: ChatIssuePickerProps) {
             key={opt.id}
             type="button"
             onClick={() => onSelectIssue(opt.id, opt.label)}
-            className="text-left p-2.5 rounded-lg border border-[#e5decb] bg-white hover:border-[#4b2255] hover:bg-[#faf6ee] transition-all duration-150 flex items-start gap-2.5 group shadow-2xs"
+            className="text-left p-2.5 rounded-lg border border-[#e5decb] bg-white hover:border-[#4b2255] hover:bg-[#faf6ee] transition-all duration-150 flex items-start gap-2.5 group shadow-2xs cursor-pointer"
           >
             <span className="text-base shrink-0 mt-0.5">{opt.icon}</span>
             <div className="flex-1 min-w-0">

@@ -123,7 +123,6 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
       if (savedTicketId && savedTicketNum) {
         setActiveTicketId(Number(savedTicketId));
         setActiveTicketNumber(savedTicketNum);
-        // Load existing ticket thread
         fetchTicketThread(Number(savedTicketId), savedTicketNum);
         return;
       }
@@ -131,7 +130,6 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
       // LocalStorage not accessible
     }
 
-    // Default initial greeting if no active ticket
     const initialGreeting = userName ? `Hello ${userName}! 👋` : 'Hello! 👋';
 
     setMessages([
@@ -173,7 +171,6 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
 
         const threadMessages: ChatMessage[] = [];
 
-        // Initial ticket message from customer
         threadMessages.push({
           id: `ticket-initial-${ticket.id}`,
           sender: 'user',
@@ -186,7 +183,6 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
           },
         });
 
-        // Thread replies (customer & staff)
         if (ticket.messages && Array.isArray(ticket.messages)) {
           ticket.messages.forEach((msg: any) => {
             threadMessages.push({
@@ -206,7 +202,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
     }
   };
 
-  // Reset conversation to start a new chat
+  // Reset conversation completely
   const handleResetConversation = () => {
     try {
       localStorage.removeItem('abbeygate_chat_ticket_id');
@@ -244,11 +240,70 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
     ]);
   };
 
+  // Go back to topic selection from anywhere
+  const handleBackToTopics = () => {
+    setSelectedTopic(null);
+    setSelectedOrder(null);
+    setSelectedItemName(null);
+    setSelectedIssueType(null);
+    setSelectedIssueLabel(null);
+
+    const botMsg: ChatMessage = {
+      id: `msg-back-topics-${Date.now()}`,
+      sender: 'bot',
+      text: 'Please choose an option below:',
+      topics: TOPIC_SUGGESTIONS,
+      createdAt: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, botMsg]);
+  };
+
+  // Go back to order selection
+  const handleBackToOrderSelect = () => {
+    setSelectedOrder(null);
+    setSelectedItemName(null);
+    setSelectedIssueType(null);
+    setSelectedIssueLabel(null);
+
+    const botMsg: ChatMessage = {
+      id: `msg-back-orders-${Date.now()}`,
+      sender: 'bot',
+      text: orders.length > 0
+        ? 'Please select the order you need help with:'
+        : 'Please enter your order number:',
+      showOrderPicker: true,
+      createdAt: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, botMsg]);
+  };
+
+  // Go back to product item selection
+  const handleBackToProductSelect = () => {
+    setSelectedItemName(null);
+    setSelectedIssueType(null);
+    setSelectedIssueLabel(null);
+
+    if (selectedOrder) {
+      const hasItems = selectedOrder.line_items && selectedOrder.line_items.length > 0;
+      const botMsg: ChatMessage = {
+        id: `msg-back-prods-${Date.now()}`,
+        sender: 'bot',
+        text: hasItems
+          ? `Which item from Order #${selectedOrder.number || selectedOrder.id} is this regarding?`
+          : `What item or part of Order #${selectedOrder.number || selectedOrder.id} would you like help with?`,
+        showProductPicker: true,
+        createdAt: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, botMsg]);
+    } else {
+      handleBackToOrderSelect();
+    }
+  };
+
   // Topic selection handler
   const handleTopicSelect = (topic: ChatTopic, label: string) => {
     setSelectedTopic(topic);
 
-    // Add user selection bubble
     const userMsg: ChatMessage = {
       id: `msg-topic-${Date.now()}`,
       sender: 'user',
@@ -302,7 +357,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
       id: `msg-bot-product-${Date.now()}`,
       sender: 'bot',
       text: hasItems
-        ? `Which item from Order #${order.number || order.id} is this regarding?`
+        ? `Which item from Order #${order.number || order.id} is this regarding? (Select one or all):`
         : `What item or part of Order #${order.number || order.id} would you like help with?`,
       showProductPicker: true,
       createdAt: new Date().toISOString(),
@@ -331,20 +386,20 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
   };
 
   // Product selection handler
-  const handleSelectProduct = (productName: string) => {
-    setSelectedItemName(productName);
+  const handleSelectProduct = (productSummary: string) => {
+    setSelectedItemName(productSummary);
 
     const userMsg: ChatMessage = {
       id: `msg-prod-${Date.now()}`,
       sender: 'user',
-      text: productName,
+      text: `Item(s): ${productSummary}`,
       createdAt: new Date().toISOString(),
     };
 
     const botMsg: ChatMessage = {
       id: `msg-bot-issue-${Date.now()}`,
       sender: 'bot',
-      text: 'What seems to be the issue with this item?',
+      text: 'What seems to be the issue with the selected item(s)?',
       showIssuePicker: true,
       createdAt: new Date().toISOString(),
     };
@@ -382,7 +437,6 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
     if (e) e.preventDefault();
     if (!inputText.trim() || isSubmitting) return;
 
-    // If guest and no contact info provided, open contact form
     if (!isLoggedIn && !guestEmail && !activeTicketId) {
       setShowGuestForm(true);
       return;
@@ -392,7 +446,6 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
     setInputText('');
     setIsSubmitting(true);
 
-    // If there is already an active ticket, send follow-up reply
     if (activeTicketId) {
       const userMsg: ChatMessage = {
         id: `msg-user-reply-${Date.now()}`,
@@ -423,7 +476,6 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
       return;
     }
 
-    // Otherwise, create a new support ticket
     const tempUserMsg: ChatMessage = {
       id: `msg-user-${Date.now()}`,
       sender: 'user',
@@ -506,30 +558,18 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
       role="dialog"
       aria-modal="true"
       aria-label="Customer Care Live Chat"
-      className="fixed inset-0 sm:inset-auto sm:bottom-24 sm:right-6 z-50 flex flex-col w-full sm:w-[400px] h-full sm:h-[620px] max-h-[100dvh] sm:max-h-[85vh] bg-[#faf6ee] sm:rounded-2xl shadow-[0_20px_60px_rgba(37,16,45,0.45)] border border-[#d4af37]/30 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+      data-lenis-prevent="true"
+      onWheel={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
+      className="fixed inset-0 sm:inset-auto sm:bottom-20 sm:right-6 z-50 flex flex-col w-full sm:w-[400px] h-full sm:h-[600px] max-h-[100dvh] sm:max-h-[85vh] bg-[#faf6ee] sm:rounded-2xl shadow-[0_20px_60px_rgba(37,16,45,0.45)] border border-[#d4af37]/35 overflow-hidden overscroll-contain animate-in fade-in zoom-in-95 duration-200"
     >
-      {/* 1. CHAT HEADER */}
-      <div className="bg-gradient-to-r from-[#4b2255] via-[#3d1847] to-[#280c32] p-4 text-white flex items-center justify-between shrink-0 border-b border-[#d4af37]/40 shadow-md">
-        <div className="flex items-center gap-3">
-          {/* Avatar / Monogram */}
-          <div className="relative w-10 h-10 rounded-full bg-white/10 border border-[#d4af37]/60 flex items-center justify-center shadow-inner">
-            <span className="font-serif font-bold text-base text-[#f7f1e2] tracking-tighter">
-              AG
-            </span>
-            <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[#4b2255]" />
-          </div>
-
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-[14px] font-bold font-sans tracking-wide text-white">
-                Abbeygate Customer Care
-              </h3>
-            </div>
-            <p className="text-[11px] text-[#e8dbbd] font-medium flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Human Support • Walsall, England
-            </p>
-          </div>
+      {/* 1. CHAT HEADER - Minimalist & Elegant */}
+      <div className="bg-[#4b2255] px-4 py-3.5 text-white flex items-center justify-between shrink-0 border-b border-[#d4af37]/30 shadow-xs">
+        <div className="flex items-center gap-2">
+          
+          <h3 className="text-[14px] font-bold font-sans tracking-wide text-white">
+            Abbeygate Customer Care
+          </h3>
         </div>
 
         <div className="flex items-center gap-1">
@@ -538,12 +578,9 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
               type="button"
               onClick={handleResetConversation}
               title="Start a new conversation"
-              className="p-1.5 rounded-lg text-[#e8dbbd] hover:text-white hover:bg-white/10 transition-colors text-[11px] flex items-center gap-1 mr-1"
+              className="px-2 py-1 rounded-md text-[#e8dbbd] hover:text-white hover:bg-white/10 transition-colors text-[11px] font-medium flex items-center gap-1 mr-1 cursor-pointer"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              <span className="hidden sm:inline">New</span>
+              <span>New</span>
             </button>
           )}
 
@@ -551,14 +588,37 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
             type="button"
             onClick={onClose}
             aria-label="Close chat window"
-            className="p-1.5 rounded-lg text-[#e8dbbd] hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-[#e8dbbd] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M6 18L18 6M6 6l12 12" />
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
       </div>
+
+      {/* TOPIC NAVIGATION BAR (When an option is chosen, allows easily coming back to change option) */}
+      {selectedTopic && !activeTicketId && (
+        <div className="bg-[#f0e8d8] px-3.5 py-1.5 border-b border-[#dfd4c0] text-[11px] text-[#4b2255] flex items-center justify-between shrink-0 font-sans">
+          <div className="flex items-center gap-1.5 truncate">
+            <span className="text-gray-500 font-medium">Topic:</span>
+            <span className="font-bold capitalize">{selectedTopic.replace('_', ' ')}</span>
+            {selectedOrder && (
+              <>
+                <span className="text-gray-400">/</span>
+                <span className="font-bold">Order #{selectedOrder.number || selectedOrder.id}</span>
+              </>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleBackToTopics}
+            className="text-[11px] font-bold text-[#4b2255] hover:text-[#250d2c] underline ml-2 shrink-0 cursor-pointer"
+          >
+            &larr; Change topic
+          </button>
+        </div>
+      )}
 
       {/* TICKET STATUS BANNER (If Active) */}
       {activeTicketNumber && (
@@ -573,8 +633,11 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
         </div>
       )}
 
-      {/* 2. CHAT MESSAGES BODY */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3.5 scrollbar-thin scrollbar-thumb-gray-300">
+      {/* 2. CHAT MESSAGES BODY - Scroll Isolated */}
+      <div
+        data-lenis-prevent="true"
+        className="flex-1 overflow-y-auto p-4 space-y-3.5 scrollbar-thin scrollbar-thumb-gray-300 overscroll-contain"
+      >
         {messages.map((msg) => {
           const isUser = msg.sender === 'user';
           const isStaff = msg.sender === 'staff';
@@ -584,7 +647,6 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
               key={msg.id}
               className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} space-y-1 animate-in fade-in duration-200`}
             >
-              {/* Author header for staff */}
               {isStaff && (
                 <span className="text-[10px] font-bold text-[#4b2255] uppercase tracking-wider ml-1">
                   {msg.authorName || 'Abbeygate Care Team'}
@@ -603,7 +665,6 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
               >
                 {msg.text}
 
-                {/* Ticket Meta Pill in confirmation bubble */}
                 {msg.ticketMeta && (
                   <div className="mt-2.5 pt-2 border-t border-gray-200/80 flex items-center justify-between text-[11px]">
                     <span className="font-bold text-[#4b2255]">
@@ -629,7 +690,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
                       key={t.id}
                       type="button"
                       onClick={() => handleTopicSelect(t.id, t.label)}
-                      className="w-full text-left p-3 rounded-xl border border-[#e5decb] bg-white hover:border-[#4b2255] hover:bg-[#fbf8f0] transition-all duration-150 flex items-start gap-3 group shadow-2xs"
+                      className="w-full text-left p-3 rounded-xl border border-[#e5decb] bg-white hover:border-[#4b2255] hover:bg-[#fbf8f0] transition-all duration-150 flex items-start gap-3 group shadow-2xs cursor-pointer"
                     >
                       <span className="text-lg shrink-0 mt-0.5">{t.icon}</span>
                       <div className="flex-1 min-w-0">
@@ -655,25 +716,30 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
                     isLoggedIn={isLoggedIn}
                     onSelectOrder={handleSelectOrder}
                     onSkipOrder={handleSkipOrder}
+                    onBack={handleBackToTopics}
                   />
                 </div>
               )}
 
-              {/* Product Picker Subcomponent */}
+              {/* Product Picker Subcomponent with Multi-Selection */}
               {msg.showProductPicker && selectedOrder && !selectedItemName && !activeTicketId && (
                 <div className="w-full">
                   <ChatProductPicker
                     lineItems={selectedOrder.line_items || []}
                     orderNumber={String(selectedOrder.number || selectedOrder.id)}
-                    onSelectProduct={handleSelectProduct}
+                    onSelectProducts={handleSelectProduct}
+                    onBack={handleBackToOrderSelect}
                   />
                 </div>
               )}
 
-              {/* Issue Picker Subcomponent */}
+              {/* Issue Picker Subcomponent with Back Navigation */}
               {msg.showIssuePicker && selectedItemName && !selectedIssueType && !activeTicketId && (
                 <div className="w-full">
-                  <ChatIssuePicker onSelectIssue={handleSelectIssue} />
+                  <ChatIssuePicker
+                    onSelectIssue={handleSelectIssue}
+                    onBack={handleBackToProductSelect}
+                  />
                 </div>
               )}
             </div>
@@ -690,7 +756,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
         <div ref={messagesEndRef} />
       </div>
 
-      {/* 3. GUEST CONTACT DETAILS MODAL/INLINE FORM (If not logged in) */}
+      {/* 3. GUEST CONTACT DETAILS MODAL/INLINE FORM */}
       {showGuestForm && !isLoggedIn && !activeTicketId && (
         <div className="p-3.5 bg-[#f5ede0] border-t border-[#e2d5bd] space-y-2 animate-in fade-in duration-200">
           <div className="flex items-center justify-between">
@@ -700,7 +766,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
             <button
               type="button"
               onClick={() => setShowGuestForm(false)}
-              className="text-[11px] text-gray-500 hover:text-gray-800"
+              className="text-[11px] text-gray-500 hover:text-gray-800 cursor-pointer"
             >
               ✕
             </button>
@@ -729,7 +795,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
               setShowGuestForm(false);
               handleSendMessage();
             }}
-            className="w-full py-1.5 bg-[#4b2255] text-white text-[12px] font-bold rounded-md hover:bg-[#34143d] transition-colors disabled:opacity-50"
+            className="w-full py-1.5 bg-[#4b2255] text-white text-[12px] font-bold rounded-md hover:bg-[#34143d] transition-colors disabled:opacity-50 cursor-pointer"
           >
             Confirm &amp; Send Message
           </button>
@@ -766,7 +832,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
           type="submit"
           disabled={!inputText.trim() || isSubmitting}
           aria-label="Send message"
-          className="w-10 h-10 rounded-xl bg-[#4b2255] text-white flex items-center justify-center hover:bg-[#34143d] transition-all disabled:opacity-40 disabled:hover:bg-[#4b2255] shrink-0 shadow-sm"
+          className="w-10 h-10 rounded-xl bg-[#4b2255] text-white flex items-center justify-center hover:bg-[#34143d] transition-all disabled:opacity-40 disabled:hover:bg-[#4b2255] shrink-0 shadow-sm cursor-pointer"
         >
           <svg className="w-4 h-4 transform rotate-90" fill="currentColor" viewBox="0 0 20 20">
             <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
