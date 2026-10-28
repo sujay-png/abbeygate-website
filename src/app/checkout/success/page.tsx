@@ -6,6 +6,7 @@ import { GuestAccountSection } from '@/features/checkout/components/GuestAccount
 import { OrderSummaryDropdown } from '@/features/checkout/components/OrderSummaryDropdown';
 import { getOrderConfirmationData } from '@/features/checkout/services/order-confirmation';
 import { getSession } from '@/features/auth/utils/session';
+import { invalidateCustomerOrdersCache } from '@/features/account/services/orders';
 
 export default async function CheckoutSuccessPage({ searchParams }: { searchParams: Promise<{ payment_intent?: string; orderId?: string; key?: string; sessionId?: string }> }) {
   const { payment_intent, orderId, key, sessionId } = await searchParams;
@@ -18,6 +19,10 @@ export default async function CheckoutSuccessPage({ searchParams }: { searchPara
     payment_intent,
     sessionId,
   });
+
+  if (session?.userId) {
+    await invalidateCustomerOrdersCache(session.userId);
+  }
 
   return (
     <div className="min-h-screen bg-brand-cream flex flex-col">

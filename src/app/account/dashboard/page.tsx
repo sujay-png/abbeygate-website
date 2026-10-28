@@ -1,6 +1,7 @@
 import { getSession } from '@/features/auth/utils/session';
 import { logoutCustomer } from '@/features/auth/services/login';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { Breadcrumb } from '@/components/content';
 import { Container } from '@/components/ui/Container';
 import { AccountSidebar } from '@/features/account/components/AccountSidebar';
@@ -43,7 +44,7 @@ export default async function DashboardPage() {
             </div>
             
             <p className="text-gray-700 leading-relaxed">
-              From your account dashboard you can view your <a href="#" className="text-brand-primary hover:underline transition-colors">recent orders</a>, manage your <a href="#" className="text-brand-primary hover:underline transition-colors">shipping and billing addresses</a>, and <a href="#" className="text-brand-primary hover:underline transition-colors">edit your password and account details</a>.
+              From your account dashboard you can view your <Link href="/account/orders" className="text-brand-primary hover:underline transition-colors">recent orders</Link>, manage your <Link href="/account/addresses" className="text-brand-primary hover:underline transition-colors">shipping and billing addresses</Link>, and <Link href="/account/details" className="text-brand-primary hover:underline transition-colors">edit your password and account details</Link>.
             </p>
           </div>
           

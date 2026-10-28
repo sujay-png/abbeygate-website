@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getStripeClient } from '@/lib/stripe/client';
 import { getCheckoutSession } from '@/features/checkout/services/session';
 import { woocommerceApi } from '@/lib/woocommerce/client';
-import { invalidateCustomerOrdersCache } from '@/features/account/services/orders';
+import { invalidateCustomerOrdersCache, findCustomerIdByEmail } from '@/features/account/services/orders';
 import Stripe from 'stripe';
 
 export const dynamic = 'force-dynamic';
@@ -67,12 +67,18 @@ export async function POST(req: NextRequest) {
       const billingFirstName = billingNameParts[0] || firstName;
       const billingLastName = billingNameParts.slice(1).join(' ') || lastName;
 
+      const customerEmail = billingDetails?.email || paymentIntent.receipt_email || '';
+      let resolvedCustomerId = session.customerId || 0;
+      if (!resolvedCustomerId && customerEmail) {
+        resolvedCustomerId = await findCustomerIdByEmail(customerEmail);
+      }
+
       const wcOrderPayload = {
         payment_method: 'stripe',
         payment_method_title: 'Credit/Debit Card (Stripe)',
         set_paid: true,
         status: 'processing', // Payment is already succeeded!
-        customer_id: session.customerId || 0,
+        customer_id: resolvedCustomerId || 0,
         billing: {
           first_name: billingFirstName,
           last_name: billingLastName,
@@ -136,16 +142,16 @@ export async function POST(req: NextRequest) {
         });
         console.log('WooCommerce order created successfully:', (orderRes as any).id);
 
-        if (session.customerId) {
+        if (resolvedCustomerId) {
           try {
-            await woocommerceApi.request(`customers/${session.customerId}`, {
+            await woocommerceApi.request(`customers/${resolvedCustomerId}`, {
               method: 'PUT',
               body: {
                 billing: wcOrderPayload.billing,
                 shipping: wcOrderPayload.shipping,
               }
             });
-            await invalidateCustomerOrdersCache(session.customerId);
+            await invalidateCustomerOrdersCache(resolvedCustomerId);
           } catch (err) {
             console.error('Failed to update customer addresses from Stripe webhook:', err);
           }

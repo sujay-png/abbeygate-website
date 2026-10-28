@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCheckoutSession } from '@/features/checkout/services/session';
 import { woocommerceApi } from '@/lib/woocommerce/client';
-import { invalidateCustomerOrdersCache } from '@/features/account/services/orders';
+import { invalidateCustomerOrdersCache, findCustomerIdByEmail } from '@/features/account/services/orders';
+import { getSession } from '@/features/auth/utils/session';
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,12 +26,23 @@ export async function POST(req: NextRequest) {
     const shippingFirstName = shippingNameParts[0] || firstName;
     const shippingLastName = shippingNameParts.slice(1).join(' ') || lastName;
 
+    // Resolve customer ID: session cookie, checkout session customerId, or lookup by billing email
+    let resolvedCustomerId = session.customerId || 0;
+    if (!resolvedCustomerId) {
+      const authSession = await getSession();
+      if (authSession?.userId) {
+        resolvedCustomerId = authSession.userId;
+      } else if (billingDetails.email) {
+        resolvedCustomerId = await findCustomerIdByEmail(billingDetails.email);
+      }
+    }
+
     const wcOrderPayload = {
       payment_method: 'bacs',
       payment_method_title: 'Direct bank transfer',
       set_paid: false,
       status: 'on-hold', // BACS orders start on-hold awaiting manual bank transfer
-      customer_id: session.customerId || 0,
+      customer_id: resolvedCustomerId || 0,
       billing: {
         first_name: firstName,
         last_name: lastName,
@@ -91,16 +103,16 @@ export async function POST(req: NextRequest) {
       body: wcOrderPayload
     });
 
-    if (session.customerId) {
+    if (resolvedCustomerId) {
       try {
-        await woocommerceApi.request(`customers/${session.customerId}`, {
+        await woocommerceApi.request(`customers/${resolvedCustomerId}`, {
           method: 'PUT',
           body: {
             billing: wcOrderPayload.billing,
             shipping: wcOrderPayload.shipping,
           }
         });
-        await invalidateCustomerOrdersCache(session.customerId);
+        await invalidateCustomerOrdersCache(resolvedCustomerId);
       } catch (err) {
         console.error('Failed to update customer addresses:', err);
       }

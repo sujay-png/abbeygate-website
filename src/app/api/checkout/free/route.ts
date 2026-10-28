@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCheckoutSession } from '@/features/checkout/services/session';
 import { woocommerceApi } from '@/lib/woocommerce/client';
-import { invalidateCustomerOrdersCache } from '@/features/account/services/orders';
+import { invalidateCustomerOrdersCache, findCustomerIdByEmail } from '@/features/account/services/orders';
+import { getSession } from '@/features/auth/utils/session';
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,6 +23,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Order requires payment. Total is greater than zero.' }, { status: 400 });
     }
 
+    // Resolve customer ID: session cookie, checkout session customerId, or lookup by billing email
+    let resolvedCustomerId = session.customerId || 0;
+    if (!resolvedCustomerId) {
+      const authSession = await getSession();
+      if (authSession?.userId) {
+        resolvedCustomerId = authSession.userId;
+      } else if (billingDetails.email) {
+        resolvedCustomerId = await findCustomerIdByEmail(billingDetails.email);
+      }
+    }
+
     const nameParts = billingDetails.name?.split(' ') || [];
     const firstName = nameParts[0] || 'Customer';
     const lastName = nameParts.slice(1).join(' ') || '';
@@ -35,7 +47,7 @@ export async function POST(req: NextRequest) {
       payment_method_title: '100% Discount Coupon',
       set_paid: true,
       status: 'processing',
-      customer_id: session.customerId || 0,
+      customer_id: resolvedCustomerId || 0,
       billing: {
         first_name: firstName,
         last_name: lastName,
@@ -97,16 +109,16 @@ export async function POST(req: NextRequest) {
       body: wcOrderPayload
     });
 
-    if (session.customerId) {
+    if (resolvedCustomerId) {
       try {
-        await woocommerceApi.request(`customers/${session.customerId}`, {
+        await woocommerceApi.request(`customers/${resolvedCustomerId}`, {
           method: 'PUT',
           body: {
             billing: wcOrderPayload.billing,
             shipping: wcOrderPayload.shipping,
           }
         });
-        await invalidateCustomerOrdersCache(session.customerId);
+        await invalidateCustomerOrdersCache(resolvedCustomerId);
       } catch (err) {
         console.error('Failed to update customer addresses:', err);
       }

@@ -6,6 +6,8 @@ import { Container } from '@/components/ui/Container';
 import { AccountSidebar } from '@/features/account/components/AccountSidebar';
 import { getCustomerOrders } from '@/features/account/services/orders';
 
+export const dynamic = 'force-dynamic';
+
 export default async function OrdersPage() {
   const session = await getSession();
 
@@ -13,8 +15,8 @@ export default async function OrdersPage() {
     redirect('/account');
   }
 
-  // Fetch orders for this customer (Redis-cached, ~5ms)
-  const orders = await getCustomerOrders(session.userId);
+  // Fetch orders for this customer by ID and email so all placed orders reflect immediately
+  const orders = await getCustomerOrders(session.userId, session.email);
 
   return (
     <main className="flex flex-col min-h-screen bg-brand-cream">
