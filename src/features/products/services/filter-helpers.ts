@@ -1,6 +1,7 @@
 import { getStoreAttributes, getStoreAttributeTerms } from './store-products';
 import type { StoreProduct, StoreAttribute, StoreAttributeTerm, StoreProductAttribute } from '../types/store-product';
 import { RELATED_COLOUR_MAP } from '../utils/search-helpers';
+import { getParentColour } from '../utils/color-helpers';
 
 const FILTER_TAXONOMIES = ['pa_collection', 'pa_colour', 'pa_layout', 'pa_size'];
 
@@ -19,10 +20,9 @@ export function preloadFilterAttributes(): void {
 }
 
 /**
- * Normalize and disambiguate colour terms on a product.
- * If a product is associated with both a specific colour (e.g. 'Burgundy') and a broader search
- * family (e.g. 'Red'), the specific colour is authoritative and the parent search keyword is stripped
- * from the colour filter attributes so products are never double-counted across colours.
+ * Normalize and map colour terms on a product to canonical parent colours.
+ * Products in Abbeygate's catalog are grouped by parent colour (e.g. 'Blue', 'Green', 'Red')
+ * rather than displaying separate filter terms for sub-shades like 'Aqua', 'Lime', or 'Burgundy'.
  */
 export function normalizeColourTerms(product: StoreProduct): StoreProductAttribute['terms'] | null {
   const colourAttr = (product.attributes || []).find(
@@ -31,44 +31,28 @@ export function normalizeColourTerms(product: StoreProduct): StoreProductAttribu
   if (!colourAttr || !colourAttr.terms || colourAttr.terms.length === 0) {
     return null;
   }
-  if (colourAttr.terms.length === 1) {
-    return colourAttr.terms;
+
+  const decomposed = decomposeComboTerms(colourAttr.terms);
+  const parentTermsMap = new Map<string, StoreProductAttribute['terms'][0]>();
+
+  for (const term of decomposed) {
+    const parent = getParentColour(term.slug) || getParentColour(term.name);
+    if (parent) {
+      if (!parentTermsMap.has(parent.slug)) {
+        parentTermsMap.set(parent.slug, {
+          id: parent.id,
+          name: parent.name,
+          slug: parent.slug,
+        });
+      }
+    } else {
+      if (!parentTermsMap.has(term.slug)) {
+        parentTermsMap.set(term.slug, term);
+      }
+    }
   }
 
-  const nameLower = (product.name || '').toLowerCase();
-
-  // 1. If one term is a sub-shade/related colour of a broader parent colour (e.g., 'burgundy' is related to 'red'):
-  // The broad parent colour was added as a search keyword / category and should not be a duplicate colour attribute.
-  const isBroadParentOfOther = (termSlug: string) => {
-    const related = RELATED_COLOUR_MAP[termSlug.toLowerCase()];
-    if (!related) return false;
-    return colourAttr.terms.some(
-      (other) =>
-        other.slug.toLowerCase() !== termSlug.toLowerCase() &&
-        related.includes(other.slug.toLowerCase())
-    );
-  };
-
-  // 2. If product name explicitly contains colour names (with word boundaries), those specific colours are authoritative:
-  const matchingTermsInName = colourAttr.terms.filter((term) => {
-    const termNameLower = term.name.toLowerCase();
-    const termSlugLower = term.slug.toLowerCase();
-    const regexName = new RegExp(`(^|[^a-z0-9])${termNameLower}([^a-z0-9]|$)`, 'i');
-    const regexSlug = new RegExp(`(^|[^a-z0-9])${termSlugLower}([^a-z0-9]|$)`, 'i');
-    return regexName.test(nameLower) || regexSlug.test(nameLower);
-  });
-
-  if (matchingTermsInName.length >= 1) {
-    const filteredSpecific = matchingTermsInName.filter((term) => !isBroadParentOfOther(term.slug));
-    return filteredSpecific.length > 0 ? filteredSpecific : matchingTermsInName;
-  }
-
-  const specificTerms = colourAttr.terms.filter((term) => !isBroadParentOfOther(term.slug));
-  if (specificTerms.length > 0) {
-    return specificTerms;
-  }
-
-  return colourAttr.terms;
+  return Array.from(parentTermsMap.values());
 }
 
 function toTitleCase(str: string): string {
@@ -174,7 +158,7 @@ export function extractColourTerms(product: StoreProduct): StoreProductAttribute
   if (existingAttr && existingAttr.terms?.length > 0) {
     const cleaned = normalizeColourTerms(product);
     if (cleaned && cleaned.length > 0) {
-      return decomposeComboTerms(cleaned);
+      return cleaned;
     }
   }
 
@@ -186,7 +170,25 @@ export function extractColourTerms(product: StoreProduct): StoreProductAttribute
     // Exclude parts that describe layout or paper specifications
     const isLayoutOrSpec = /view|page|ruled|paper|grid|plain/i.test(rawColor);
     if (!isLayoutOrSpec && rawColor.length > 0 && rawColor.length < 35) {
-      return splitRawColorToSingleTerms(rawColor);
+      const splitTerms = splitRawColorToSingleTerms(rawColor);
+      const parentTermsMap = new Map<string, StoreProductAttribute['terms'][0]>();
+      for (const term of splitTerms) {
+        const parent = getParentColour(term.slug) || getParentColour(term.name);
+        if (parent) {
+          if (!parentTermsMap.has(parent.slug)) {
+            parentTermsMap.set(parent.slug, {
+              id: parent.id,
+              name: parent.name,
+              slug: parent.slug,
+            });
+          }
+        } else {
+          if (!parentTermsMap.has(term.slug)) {
+            parentTermsMap.set(term.slug, term);
+          }
+        }
+      }
+      return Array.from(parentTermsMap.values());
     }
   }
 

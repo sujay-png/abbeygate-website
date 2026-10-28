@@ -228,7 +228,7 @@ describe('filter-helpers collection extraction and counting', () => {
     expect(searchResultsForBurgundy).toHaveLength(1);
     expect(searchResultsForBurgundy[0].id).toBe(939);
 
-    // 2. Filter data: normalizeColourTerms isolates Burgundy and Red
+    // 2. Filter data: normalizeColourTerms groups Burgundy under canonical parent colour Red
     const { allProducts } = await getFilterDataForProducts(searchResultsForRed);
     expect(allProducts).toHaveLength(2);
 
@@ -238,18 +238,14 @@ describe('filter-helpers collection extraction and counting', () => {
     const burgundyColours = normBurgundy.attributes.find((a) => a.taxonomy === 'pa_colour')!.terms;
     const redColours = normRed.attributes.find((a) => a.taxonomy === 'pa_colour')!.terms;
 
-    // Burgundy product MUST ONLY be categorised under Burgundy, not Red
-    expect(burgundyColours.map((t) => t.slug)).toEqual(['burgundy']);
+    // Both Burgundy and Red products are grouped under canonical parent colour Red
+    expect(burgundyColours.map((t) => t.slug)).toEqual(['red']);
     expect(redColours.map((t) => t.slug)).toEqual(['red']);
 
-    // 3. Filter Counts: accurate reflection of available products without double-counting
-    // (Red: 1, Burgundy: 1 across the 2 search results)
+    // 3. Filter Counts: both products roll up into the Red parent colour filter (Red: 2)
     const redCount = countProductsForTerm(allProducts, 'pa_colour', 'red', {}, 'filter_colour');
-    const burgundyCount = countProductsForTerm(allProducts, 'pa_colour', 'burgundy', {}, 'filter_colour');
 
-    expect(redCount).toBe(1);
-    expect(burgundyCount).toBe(1);
-    expect(redCount + burgundyCount).toBe(allProducts.length);
+    expect(redCount).toBe(2);
 
     // 4. Filtering with Size = A5 applied
     const sizeFilteredProducts = allProducts.filter((p) =>
@@ -264,23 +260,16 @@ describe('filter-helpers collection extraction and counting', () => {
       { filter_size: ['a5'] },
       'filter_colour'
     );
-    const burgundyCountWithA5 = countProductsForTerm(
-      sizeFilteredProducts,
-      'pa_colour',
-      'burgundy',
-      { filter_size: ['a5'] },
-      'filter_colour'
-    );
 
-    expect(redCountWithA5).toBe(1);
-    expect(burgundyCountWithA5).toBe(1);
+    expect(redCountWithA5).toBe(2);
 
     // Product matching filter selection
-    expect(productMatchesFilters(normBurgundy, { filter_colour: ['burgundy'] })).toBe(true);
-    expect(productMatchesFilters(normBurgundy, { filter_colour: ['red'] })).toBe(false);
+    expect(productMatchesFilters(normBurgundy, { filter_colour: ['red'] })).toBe(true);
+    expect(productMatchesFilters(normBurgundy, { filter_colour: ['burgundy'] })).toBe(true); // sub-shade normalized to red
+    expect(productMatchesFilters(normBurgundy, { filter_colour: ['blue'] })).toBe(false);
 
     expect(productMatchesFilters(normRed, { filter_colour: ['red'] })).toBe(true);
-    expect(productMatchesFilters(normRed, { filter_colour: ['burgundy'] })).toBe(false);
+    expect(productMatchesFilters(normRed, { filter_colour: ['blue'] })).toBe(false);
   });
 
   it('extracts size and colour from product titles and categories when attributes are missing in WooCommerce', async () => {
@@ -312,18 +301,18 @@ describe('filter-helpers collection extraction and counting', () => {
       attributes: [], // No size, but has Tan colour
     });
 
-    // 1. Direct extraction test
+    // 1. Direct extraction test: colours mapped to canonical parent colours
     expect(extractSizeTerms(a4Burgundy)).toEqual([{ id: 95, name: 'A4', slug: 'a4' }]);
-    expect(extractColourTerms(a4Burgundy)).toEqual([{ id: expect.any(Number), name: 'Burgundy', slug: 'burgundy' }]);
+    expect(extractColourTerms(a4Burgundy)).toEqual([{ id: 94, name: 'Red', slug: 'red' }]);
 
     expect(extractSizeTerms(quartoNavy)).toEqual([{ id: 98, name: 'Quarto', slug: 'quarto' }]);
-    expect(extractColourTerms(quartoNavy)).toEqual([{ id: expect.any(Number), name: 'Navy', slug: 'navy' }]);
+    expect(extractColourTerms(quartoNavy)).toEqual([{ id: 90, name: 'Blue', slug: 'blue' }]);
 
     expect(extractSizeTerms(pocketBlack)).toEqual([{ id: 99, name: 'Pocket', slug: 'pocket' }]);
-    expect(extractColourTerms(pocketBlack)).toEqual([{ id: expect.any(Number), name: 'Black', slug: 'black' }]);
+    expect(extractColourTerms(pocketBlack)).toEqual([{ id: 89, name: 'Black', slug: 'black' }]);
 
     expect(extractSizeTerms(walletNoSize)).toEqual([]);
-    expect(extractColourTerms(walletNoSize)).toEqual([{ id: expect.any(Number), name: 'Tan', slug: 'tan' }]);
+    expect(extractColourTerms(walletNoSize)).toEqual([{ id: 122, name: 'Tan', slug: 'tan' }]);
 
     // 2. Integration with getFilterDataForProducts
     const { allProducts, filterAttributes, attributeTerms } = await getFilterDataForProducts([
@@ -338,7 +327,7 @@ describe('filter-helpers collection extraction and counting', () => {
     // Verify all products were enriched with attributes
     const enrichedA4 = allProducts.find((p) => p.id === 301)!;
     expect(enrichedA4.attributes.find((a) => a.taxonomy === 'pa_size')?.terms[0].slug).toBe('a4');
-    expect(enrichedA4.attributes.find((a) => a.taxonomy === 'pa_colour')?.terms[0].slug).toBe('burgundy');
+    expect(enrichedA4.attributes.find((a) => a.taxonomy === 'pa_colour')?.terms[0].slug).toBe('red');
 
     const enrichedWallet = allProducts.find((p) => p.id === 304)!;
     expect(enrichedWallet.attributes.find((a) => a.taxonomy === 'pa_size')).toBeUndefined();
@@ -354,19 +343,20 @@ describe('filter-helpers collection extraction and counting', () => {
     const colourAttr = filterAttributes.find((a) => a.taxonomy === 'pa_colour');
     expect(colourAttr).toBeDefined();
     const colourTerms = attributeTerms[colourAttr!.id];
-    // Sorted alphabetically: Black, Burgundy, Navy, Tan
-    expect(colourTerms.map((t) => t.name)).toEqual(['Black', 'Burgundy', 'Navy', 'Tan']);
+    // Sorted alphabetically by parent colours: Black, Blue, Red, Tan
+    expect(colourTerms.map((t) => t.name)).toEqual(['Black', 'Blue', 'Red', 'Tan']);
 
     // Verify filtering matches
     expect(productMatchesFilters(enrichedA4, { filter_size: ['a4'] })).toBe(true);
     expect(productMatchesFilters(enrichedA4, { filter_size: ['quarto'] })).toBe(false);
+    expect(productMatchesFilters(enrichedA4, { filter_colour: ['red'] })).toBe(true);
     expect(productMatchesFilters(enrichedA4, { filter_colour: ['burgundy'] })).toBe(true);
-    expect(productMatchesFilters(enrichedA4, { filter_colour: ['navy'] })).toBe(false);
+    expect(productMatchesFilters(enrichedA4, { filter_colour: ['blue'] })).toBe(false);
 
     // Verify counts
     expect(countProductsForTerm(allProducts, 'pa_size', 'a4', {}, 'filter_size')).toBe(1);
     expect(countProductsForTerm(allProducts, 'pa_size', 'quarto', {}, 'filter_size')).toBe(1);
-    expect(countProductsForTerm(allProducts, 'pa_colour', 'burgundy', {}, 'filter_colour')).toBe(1);
+    expect(countProductsForTerm(allProducts, 'pa_colour', 'red', {}, 'filter_colour')).toBe(1);
     expect(countProductsForTerm(allProducts, 'pa_colour', 'tan', {}, 'filter_colour')).toBe(1);
   });
 

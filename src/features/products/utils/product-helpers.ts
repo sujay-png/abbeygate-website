@@ -1,5 +1,6 @@
 import type { StoreProduct, ProductFilters, FilterParamKey } from "../types/store-product";
 import { FILTER_TAXONOMY_MAP } from "../types/store-product";
+import { getParentColourSlug } from "./color-helpers";
 
 export function getProductPhysicalDimensionsMm(product: StoreProduct): { width: number; height: number } {
   const sizeAttribute = product.attributes.find((attr) => attr.taxonomy === 'pa_size');
@@ -43,9 +44,15 @@ export function productMatchesFilters(
       .flatMap((attr) => attr.terms.map((t) => t.slug));
 
     const hasMatch = selected.some((s) => {
-      const normSelected = taxonomy === 'pa_collection' ? s.toLowerCase().replace(/-collection$/, '') : s.toLowerCase();
+      let normSelected = taxonomy === 'pa_collection' ? s.toLowerCase().replace(/-collection$/, '') : s.toLowerCase();
+      if (taxonomy === 'pa_colour') {
+        normSelected = getParentColourSlug(normSelected);
+      }
       return productSlugs.some((ps) => {
-        const normProductSlug = taxonomy === 'pa_collection' ? ps.toLowerCase().replace(/-collection$/, '') : ps.toLowerCase();
+        let normProductSlug = taxonomy === 'pa_collection' ? ps.toLowerCase().replace(/-collection$/, '') : ps.toLowerCase();
+        if (taxonomy === 'pa_colour') {
+          normProductSlug = getParentColourSlug(normProductSlug);
+        }
         return normProductSlug === normSelected;
       });
     });
@@ -62,7 +69,10 @@ export function countProductsForTerm(
   filters: ProductFilters,
   currentFilterKey: FilterParamKey,
 ): number {
-  const normTermSlug = taxonomy === 'pa_collection' ? termSlug.toLowerCase().replace(/-collection$/, '') : termSlug.toLowerCase();
+  let normTermSlug = taxonomy === 'pa_collection' ? termSlug.toLowerCase().replace(/-collection$/, '') : termSlug.toLowerCase();
+  if (taxonomy === 'pa_colour') {
+    normTermSlug = getParentColourSlug(normTermSlug);
+  }
 
   return products.filter((product) => {
     const productSlugs = product.attributes
@@ -70,7 +80,10 @@ export function countProductsForTerm(
       .flatMap((attr) => attr.terms.map((t) => t.slug));
 
     const matchesTerm = productSlugs.some((ps) => {
-      const normPs = taxonomy === 'pa_collection' ? ps.toLowerCase().replace(/-collection$/, '') : ps.toLowerCase();
+      let normPs = taxonomy === 'pa_collection' ? ps.toLowerCase().replace(/-collection$/, '') : ps.toLowerCase();
+      if (taxonomy === 'pa_colour') {
+        normPs = getParentColourSlug(normPs);
+      }
       return normPs === normTermSlug;
     });
 
@@ -89,9 +102,15 @@ export function countProductsForTerm(
         .flatMap((attr) => attr.terms.map((t) => t.slug));
 
       const hasMatch = selected.some((s) => {
-        const normSelected = tax === 'pa_collection' ? s.toLowerCase().replace(/-collection$/, '') : s.toLowerCase();
+        let normSelected = tax === 'pa_collection' ? s.toLowerCase().replace(/-collection$/, '') : s.toLowerCase();
+        if (tax === 'pa_colour') {
+          normSelected = getParentColourSlug(normSelected);
+        }
         return slugs.some((slug) => {
-          const normSlug = tax === 'pa_collection' ? slug.toLowerCase().replace(/-collection$/, '') : slug.toLowerCase();
+          let normSlug = tax === 'pa_collection' ? slug.toLowerCase().replace(/-collection$/, '') : slug.toLowerCase();
+          if (tax === 'pa_colour') {
+            normSlug = getParentColourSlug(normSlug);
+          }
           return normSlug === normSelected;
         });
       });
