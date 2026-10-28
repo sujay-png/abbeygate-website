@@ -56,38 +56,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate informative subject with [Website Chat] prefix
-    let subjectTitle = 'Website Enquiry';
+    // Generate professional, clean subject with NO brackets
+    let subject = 'Customer Care Enquiry';
     if (order_id) {
-      const issueSuffix = issue_type_label ? ` - ${issue_type_label}` : '';
-      const itemSuffix = order_items ? ` (${order_items})` : '';
-      subjectTitle = `Order #${order_id}${issueSuffix}${itemSuffix}`;
+      const issueSuffix = issue_type_label ? ` — ${issue_type_label}` : '';
+      subject = `Order Enquiry #${order_id}${issueSuffix}`;
     } else if (category === 'artwork_proof') {
-      subjectTitle = 'Artwork & Proofing Enquiry';
+      subject = 'Bespoke Branding & Proofing Enquiry';
     } else if (category === 'billing') {
-      subjectTitle = 'Invoice & Payment Enquiry';
+      subject = 'Invoice & Payment Enquiry';
     } else if (body.subject) {
-      subjectTitle = body.subject.trim();
+      subject = body.subject.trim();
     }
-
-    const subject = `[Website Chat] ${subjectTitle}`.slice(0, 180);
-
-    // Build structured, easy-to-read ticket content for WordPress staff
-    const contextHeader = [
-      '📍 SOURCE: Website Live Chat Widget',
-      `Channel: Interactive Customer Assistant`,
-      page_url ? `Page: ${page_url}` : null,
-      order_id ? `Order Reference: #${order_id}` : null,
-      order_items ? `Selected Item(s): ${order_items}` : null,
-      issue_type_label ? `Issue Type: ${issue_type_label}` : null,
-      effectiveName ? `Customer Name: ${effectiveName}` : null,
-      effectiveEmail ? `Contact Email: ${effectiveEmail}` : null,
-      '--------------------------------------------------',
-      'CUSTOMER MESSAGE:',
-      message.trim(),
-    ]
-      .filter(Boolean)
-      .join('\n');
 
     const storeUrl = getStoreUrl();
     const res = await fetch(`${storeUrl}/wp-json/headless/v1/tickets`, {
@@ -101,7 +81,7 @@ export async function POST(req: NextRequest) {
         guest_name: effectiveName,
         guest_email: effectiveEmail,
         subject,
-        message: contextHeader,
+        message: message.trim(),
         category: category || 'general',
         order_id: order_id ? Number(order_id) : null,
         order_items: order_items || null,
@@ -125,7 +105,7 @@ export async function POST(req: NextRequest) {
       success: true,
       ticket_id: data.ticket_id,
       ticket_number: data.ticket_number,
-      message: 'Support ticket created successfully.',
+      message: 'Message sent successfully.',
     });
   } catch (error: any) {
     console.error('Chat ticket creation error:', error);
@@ -134,6 +114,35 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+function cleanCustomerMessage(text: string): string {
+  if (!text) return '';
+  if (text.includes('CUSTOMER MESSAGE:')) {
+    const parts = text.split('CUSTOMER MESSAGE:');
+    return parts[parts.length - 1].trim();
+  }
+  if (text.startsWith('📍 SOURCE:') || text.includes('📍 SOURCE:')) {
+    const lines = text.split('\n');
+    const msgIndex = lines.findIndex((l) => l.includes('CUSTOMER MESSAGE'));
+    if (msgIndex !== -1) {
+      return lines.slice(msgIndex + 1).join('\n').trim();
+    }
+    const cleanLines = lines.filter(
+      (l) =>
+        !l.startsWith('📍 SOURCE:') &&
+        !l.startsWith('Channel:') &&
+        !l.startsWith('Page:') &&
+        !l.startsWith('Customer Name:') &&
+        !l.startsWith('Contact Email:') &&
+        !l.startsWith('Order Reference:') &&
+        !l.startsWith('Selected Item') &&
+        !l.startsWith('Issue Type:') &&
+        !l.startsWith('---')
+    );
+    return cleanLines.join('\n').trim();
+  }
+  return text;
 }
 
 /**
@@ -166,9 +175,29 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await res.json();
+    const rawTicket = data.ticket || null;
+
+    if (rawTicket) {
+      // Strip any [Website Chat] or bracket prefixes from subject
+      if (rawTicket.subject) {
+        rawTicket.subject = rawTicket.subject.replace(/\[[^\]]+\]\s*/g, '').trim();
+      }
+      if (rawTicket.message) {
+        rawTicket.message = cleanCustomerMessage(rawTicket.message);
+      }
+      if (Array.isArray(rawTicket.messages)) {
+        rawTicket.messages = rawTicket.messages.map((m: any) => ({
+          ...m,
+          message: m.sender === 'customer' || m.sender === 'user'
+            ? cleanCustomerMessage(m.message)
+            : m.message,
+        }));
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      ticket: data.ticket || null,
+      ticket: rawTicket,
     });
   } catch (error: any) {
     console.error('Chat ticket fetch error:', error);

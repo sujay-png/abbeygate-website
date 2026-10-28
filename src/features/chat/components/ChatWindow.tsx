@@ -179,6 +179,35 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
     return () => clearInterval(interval);
   }, [activeTicketId, activeTicketNumber, isOpen]);
 
+  // Helper to strip technical metadata headers from customer messages
+  const cleanCustomerMessage = (text: string) => {
+    if (!text) return '';
+    if (text.includes('CUSTOMER MESSAGE:')) {
+      return text.split('CUSTOMER MESSAGE:').pop()?.trim() || text;
+    }
+    if (text.startsWith('📍 SOURCE:') || text.includes('📍 SOURCE:')) {
+      const lines = text.split('\n');
+      const idx = lines.findIndex((l) => l.includes('CUSTOMER MESSAGE'));
+      if (idx !== -1) {
+        return lines.slice(idx + 1).join('\n').trim();
+      }
+      const cleanLines = lines.filter(
+        (l) =>
+          !l.startsWith('📍 SOURCE:') &&
+          !l.startsWith('Channel:') &&
+          !l.startsWith('Page:') &&
+          !l.startsWith('Customer Name:') &&
+          !l.startsWith('Contact Email:') &&
+          !l.startsWith('Order Reference:') &&
+          !l.startsWith('Selected Item') &&
+          !l.startsWith('Issue Type:') &&
+          !l.startsWith('---')
+      );
+      return cleanLines.join('\n').trim();
+    }
+    return text;
+  };
+
   // Helper to fetch full ticket thread from API
   const fetchTicketThread = async (ticketId: number, ticketNum: string) => {
     try {
@@ -190,27 +219,22 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
 
         const threadMessages: ChatMessage[] = [];
 
-        threadMessages.push({
-          id: `ticket-initial-${ticket.id}`,
-          sender: 'user',
-          text: ticket.subject || 'Customer Enquiry',
-          createdAt: ticket.created_at,
-          ticketMeta: {
-            ticketId: ticket.id,
-            ticketNumber: ticketNum,
-            status: ticket.status,
-          },
-        });
-
-        if (ticket.messages && Array.isArray(ticket.messages)) {
+        if (ticket.messages && Array.isArray(ticket.messages) && ticket.messages.length > 0) {
           ticket.messages.forEach((msg: any) => {
             threadMessages.push({
               id: `ticket-msg-${msg.id}`,
               sender: msg.sender === 'staff' ? 'staff' : 'user',
-              authorName: msg.author_name || (msg.sender === 'staff' ? 'Abbeygate Team' : 'You'),
-              text: msg.message,
+              authorName: msg.author_name || (msg.sender === 'staff' ? 'Abbeygate Customer Care' : 'You'),
+              text: cleanCustomerMessage(msg.message),
               createdAt: msg.created_at,
             });
+          });
+        } else if (ticket.message) {
+          threadMessages.push({
+            id: `ticket-initial-${ticket.id}`,
+            sender: 'user',
+            text: cleanCustomerMessage(ticket.message),
+            createdAt: ticket.created_at,
           });
         }
 
@@ -219,6 +243,51 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
     } catch (err) {
       console.warn('Error fetching ticket thread:', err);
     }
+  };
+
+  // Resolve chat and bring back option selector
+  const handleResolveAndShowOptions = async () => {
+    if (activeTicketId) {
+      fetch('/api/chat/resolve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticketId: activeTicketId }),
+      }).catch(() => {});
+    }
+
+    try {
+      localStorage.removeItem('abbeygate_chat_ticket_id');
+      localStorage.removeItem('abbeygate_chat_ticket_num');
+      localStorage.removeItem('abbeygate_chat_seen_staff_count');
+    } catch {}
+
+    onTicketResolved?.();
+
+    setActiveTicketId(null);
+    setActiveTicketNumber(null);
+    setTicketStatus(null);
+    setSelectedTopic(null);
+    setSelectedOrder(null);
+    setSelectedItemName(null);
+    setSelectedIssueType(null);
+    setSelectedIssueLabel(null);
+
+    const userSortedMsg: ChatMessage = {
+      id: `msg-sorted-${Date.now()}`,
+      sender: 'user',
+      text: 'Thanks, all sorted!',
+      createdAt: new Date().toISOString(),
+    };
+
+    const closingMsg: ChatMessage = {
+      id: `msg-closing-${Date.now()}`,
+      sender: 'bot',
+      text: "You're very welcome! We're glad we could help. If you ever need anything else, our team is always here for you.\n\nPlease choose an option below if you have any other questions:",
+      topics: TOPIC_SUGGESTIONS,
+      createdAt: new Date().toISOString(),
+    };
+
+    setMessages((prev) => [...prev, userSortedMsg, closingMsg]);
   };
 
   // Reset conversation completely
@@ -252,7 +321,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
       {
         id: 'msg-welcome-new-2',
         sender: 'bot',
-        text: 'Please select a topic below or type your message:',
+        text: 'Please select an option below or type your enquiry:',
         topics: TOPIC_SUGGESTIONS,
         createdAt: new Date().toISOString(),
       },
@@ -538,12 +607,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
         const confirmationMsg: ChatMessage = {
           id: `msg-confirm-${Date.now()}`,
           sender: 'bot',
-          text: `Thank you! Your ticket reference is **#${data.ticket_number}**.\n\nOur customer care team has been notified and will review your message shortly. Updates will also be sent to your email. Feel free to send more messages here anytime!`,
-          ticketMeta: {
-            ticketId: data.ticket_id,
-            ticketNumber: data.ticket_number,
-            status: 'open',
-          },
+          text: 'Thank you! Your message has reached our Abbeygate care team. A representative will review your enquiry and reply to you directly here.\n\nYou will also receive updates via email. Feel free to type further details anytime!',
           createdAt: new Date().toISOString(),
         };
         setMessages((prev) => [...prev, confirmationMsg]);
@@ -551,7 +615,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
         const errorMsg: ChatMessage = {
           id: `msg-err-${Date.now()}`,
           sender: 'bot',
-          text: `We couldn't log your ticket: ${data.error || 'Please try again or email enquiries@abbeygate-england.com'}.`,
+          text: `We couldn't send your message: ${data.error || 'Please try again or email enquiries@abbeygate-england.com'}.`,
           createdAt: new Date().toISOString(),
         };
         setMessages((prev) => [...prev, errorMsg]);
@@ -603,7 +667,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
               title="Start a new conversation"
               className="px-2 py-1 rounded-md text-[#e8dbbd] hover:text-white hover:bg-white/10 transition-colors text-[11px] font-medium flex items-center gap-1 mr-1 cursor-pointer"
             >
-              <span>New</span>
+              <span>New Chat</span>
             </button>
           )}
 
@@ -643,27 +707,15 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
         </div>
       )}
 
-      {/* TICKET STATUS BANNER (If Active) */}
-      {activeTicketNumber && (
-        <div className="bg-[#f0e8d8] px-4 py-2 border-b border-[#dfd4c0] text-[11px] text-[#4b2255] flex items-center justify-between shrink-0 font-sans">
-          <div className="flex items-center gap-2">
-            <span className="font-bold">Ticket #{activeTicketNumber}</span>
-            <span className="px-2 py-0.5 rounded-full bg-[#4b2255] text-white text-[10px] uppercase font-bold tracking-wider">
-              {ticketStatus || 'Active'}
-            </span>
-          </div>
-          <span className="text-[10px] text-gray-500">Live thread</span>
-        </div>
-      )}
-
       {/* 2. CHAT MESSAGES BODY - Scroll Isolated */}
       <div
         data-lenis-prevent="true"
         className="flex-1 overflow-y-auto p-4 space-y-3.5 scrollbar-thin scrollbar-thumb-gray-300 overscroll-contain"
       >
-        {messages.map((msg) => {
+        {messages.map((msg, index) => {
           const isUser = msg.sender === 'user';
           const isStaff = msg.sender === 'staff';
+          const isLatestStaff = isStaff && index === messages.length - 1;
 
           return (
             <div
@@ -672,7 +724,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
             >
               {isStaff && (
                 <span className="text-[10px] font-bold text-[#4b2255] uppercase tracking-wider ml-1">
-                  {msg.authorName || 'Abbeygate Care Team'}
+                  {msg.authorName || 'Abbeygate Customer Care'}
                 </span>
               )}
 
@@ -687,23 +739,34 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
                 }`}
               >
                 {msg.text}
-
-                {msg.ticketMeta && (
-                  <div className="mt-2.5 pt-2 border-t border-gray-200/80 flex items-center justify-between text-[11px]">
-                    <span className="font-bold text-[#4b2255]">
-                      Ref: #{msg.ticketMeta.ticketNumber}
-                    </span>
-                    <span className="text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full">
-                      ✓ Notification Sent
-                    </span>
-                  </div>
-                )}
               </div>
 
               {/* Timestamp */}
               <span className="text-[10px] text-gray-400 px-1">
                 {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
+
+              {/* Quick Actions after Staff Reply */}
+              {isLatestStaff && activeTicketId && (
+                <div className="mt-2 flex flex-wrap gap-2 pt-1 animate-in fade-in duration-200">
+                  <button
+                    type="button"
+                    onClick={handleResolveAndShowOptions}
+                    className="px-3.5 py-1.5 rounded-full bg-[#f0e8d8] hover:bg-[#e4d7bf] text-[#4b2255] border border-[#d8cbb0] text-[11px] font-bold shadow-2xs transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <span className="text-emerald-700 font-bold">✓</span>
+                    <span>Thanks, all sorted!</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => inputRef.current?.focus()}
+                    className="px-3.5 py-1.5 rounded-full bg-white hover:bg-[#faf6ee] text-[#4b2255] border border-[#4b2255]/40 text-[11px] font-semibold shadow-2xs transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <span>💬</span>
+                    <span>I have another question</span>
+                  </button>
+                </div>
+              )}
 
               {/* Interactive Topics Suggestions */}
               {msg.topics && !selectedTopic && !activeTicketId && (
