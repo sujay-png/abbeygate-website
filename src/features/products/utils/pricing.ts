@@ -71,6 +71,11 @@ export function getCornerEdgesPricing(product: {
     .join(' ')
     .toLowerCase();
 
+  // A6 notebooks do not support corner edges
+  if (/\ba6\b/i.test(description)) {
+    return { size: null, pricePerPair: 0 };
+  }
+
   if (description.includes('pocket')) {
     return { size: '18mm × 18mm', pricePerPair: 0.42 };
   }

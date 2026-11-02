@@ -352,14 +352,69 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
           }
         }
       } else {
-        // For solid JPEGs: find the physical product edges by identifying the dominant
-        // gradient transitions in each half of the image (left/right, top/bottom).
-        // This is resilient to soft drop shadows and differing cover contrast.
-        const marginX = Math.floor(canvas.width * 0.05);
-        const marginY = Math.floor(canvas.height * 0.05);
-        const midX = Math.floor(canvas.width / 2);
-        const midY = Math.floor(canvas.height / 2);
+        // For solid images (JPEG, WebP, opaque PNG):
+        // Sample background color from the 4 corners using a 5% inset to avoid edge compression artifacts.
+        const insetX = Math.floor(canvas.width * 0.05);
+        const insetY = Math.floor(canvas.height * 0.05);
+        const getCornerSample = (x: number, y: number) => {
+          const idx = (y * canvas.width + x) * 4;
+          return [data[idx], data[idx + 1], data[idx + 2]];
+        };
 
+        const cornerSamples = [
+          getCornerSample(insetX, insetY),
+          getCornerSample(canvas.width - insetX, insetY),
+          getCornerSample(insetX, canvas.height - insetY),
+          getCornerSample(canvas.width - insetX, canvas.height - insetY),
+        ];
+
+        const bgR = cornerSamples.map((c) => c[0]).sort((a, b) => a - b)[1];
+        const bgG = cornerSamples.map((c) => c[1]).sort((a, b) => a - b)[2];
+        const bgB = cornerSamples.map((c) => c[2]).sort((a, b) => a - b)[1];
+
+        // Compute row and column occupancy of pixels that differ from the background.
+        // This finds the outer envelope of the product regardless of internal patterns,
+        // two-tone leather splits, stitching, or year stamping.
+        const DIST_THRESH = 28;
+        const rowOcc = new Int32Array(canvas.height);
+        const colOcc = new Int32Array(canvas.width);
+
+        for (let y = 1; y < canvas.height - 1; y++) {
+          for (let x = 1; x < canvas.width - 1; x++) {
+            const idx = (y * canvas.width + x) * 4;
+            const dist = Math.abs(data[idx] - bgR) + Math.abs(data[idx + 1] - bgG) + Math.abs(data[idx + 2] - bgB);
+            if (dist > DIST_THRESH) {
+              rowOcc[y]++;
+              colOcc[x]++;
+            }
+          }
+        }
+
+        const minRowPx = Math.max(10, Math.floor(canvas.width * 0.05));
+        const minColPx = Math.max(10, Math.floor(canvas.height * 0.05));
+
+        // Require 2 consecutive rows/cols to eliminate single-pixel noise/vignette
+        let occTop = 1;
+        while (occTop < canvas.height - 2 && !(rowOcc[occTop] >= minRowPx && rowOcc[occTop + 1] >= minRowPx)) {
+          occTop++;
+        }
+
+        let occBottom = canvas.height - 2;
+        while (occBottom > 1 && !(rowOcc[occBottom] >= minRowPx && rowOcc[occBottom - 1] >= minRowPx)) {
+          occBottom--;
+        }
+
+        let occLeft = 1;
+        while (occLeft < canvas.width - 2 && !(colOcc[occLeft] >= minColPx && colOcc[occLeft + 1] >= minColPx)) {
+          occLeft++;
+        }
+
+        let occRight = canvas.width - 2;
+        while (occRight > 1 && !(colOcc[occRight] >= minColPx && colOcc[occRight - 1] >= minColPx)) {
+          occRight--;
+        }
+
+        // Gradients across the canvas
         const sumX = new Float64Array(canvas.width);
         const sumY = new Float64Array(canvas.height);
 
@@ -370,51 +425,52 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
           return (data[i] + data[i + 1] + data[i + 2]) / 3;
         };
 
-        for (let y = marginY; y < canvas.height - marginY; y++) {
-          for (let x = marginX + 1; x < canvas.width - marginX; x++) {
-            const diff = Math.abs(getBrightness(x, y) - getBrightness(x - 1, y));
-            sumX[x] += diff;
-          }
-        }
-        for (let x = marginX; x < canvas.width - marginX; x++) {
-          for (let y = marginY + 1; y < canvas.height - marginY; y++) {
-            const diff = Math.abs(getBrightness(x, y) - getBrightness(x, y - 1));
-            sumY[y] += diff;
+        for (let y = 1; y < canvas.height; y++) {
+          for (let x = 1; x < canvas.width; x++) {
+            sumX[x] += Math.abs(getBrightness(x, y) - getBrightness(x - 1, y));
+            sumY[y] += Math.abs(getBrightness(x, y) - getBrightness(x, y - 1));
           }
         }
 
-        // Find the strongest edge in each half
-        let peakLeftX = marginX, maxLeft = 0;
-        for (let x = marginX; x < midX; x++) {
-          if (sumX[x] > maxLeft) { maxLeft = sumX[x]; peakLeftX = x; }
-        }
-        let peakRightX = midX, maxRight = 0;
-        for (let x = midX; x < canvas.width - marginX; x++) {
-          if (sumX[x] > maxRight) { maxRight = sumX[x]; peakRightX = x; }
-        }
-        let peakTopY = marginY, maxTop = 0;
-        for (let y = marginY; y < midY; y++) {
-          if (sumY[y] > maxTop) { maxTop = sumY[y]; peakTopY = y; }
-        }
-        let peakBottomY = midY, maxBottom = 0;
-        for (let y = midY; y < canvas.height - marginY; y++) {
-          if (sumY[y] > maxBottom) { maxBottom = sumY[y]; peakBottomY = y; }
-        }
+        // Snap the occupancy boundaries to the nearest sharp physical edge gradient
+        const snap = (arr: Float64Array, center: number, maxOffset: number) => {
+          const s = Math.max(0, center - maxOffset);
+          const e = Math.min(arr.length - 1, center + maxOffset);
+          let peak = center;
+          let maxVal = -1;
+          for (let i = s; i <= e; i++) {
+            if (arr[i] > maxVal) {
+              maxVal = arr[i];
+              peak = i;
+            }
+          }
+          return peak;
+        };
 
-        // Validate that detected bounds represent a plausible product dimensions
-        const detectedWidth = (peakRightX - peakLeftX) / canvas.width;
-        const detectedHeight = (peakBottomY - peakTopY) / canvas.height;
+        const snapWindowY = Math.max(5, Math.floor(canvas.height * 0.03));
+        const snapWindowX = Math.max(5, Math.floor(canvas.width * 0.03));
+
+        const snappedTop = snap(sumY, occTop, snapWindowY);
+        const snappedBottom = snap(sumY, occBottom, snapWindowY);
+        const snappedLeft = snap(sumX, occLeft, snapWindowX);
+        const snappedRight = snap(sumX, occRight, snapWindowX);
+
+        const detectedWidth = (snappedRight - snappedLeft) / canvas.width;
+        const detectedHeight = (snappedBottom - snappedTop) / canvas.height;
 
         if (detectedWidth >= 0.15 && detectedHeight >= 0.25) {
-          minX = peakLeftX;
-          maxX = peakRightX;
-          minY = peakTopY;
-          maxY = peakBottomY;
+          minX = snappedLeft;
+          maxX = snappedRight;
+          minY = snappedTop;
+          maxY = snappedBottom;
         } else {
           // Fallback: color distance from corner background
           const cornerR = (data[0] + data[(canvas.width - 1) * 4] + data[(canvas.height - 1) * canvas.width * 4]) / 3;
           const cornerG = (data[1] + data[(canvas.width - 1) * 4 + 1] + data[(canvas.height - 1) * canvas.width * 4 + 1]) / 3;
           const cornerB = (data[2] + data[(canvas.width - 1) * 4 + 2] + data[(canvas.height - 1) * canvas.width * 4 + 2]) / 3;
+
+          const marginX = Math.floor(canvas.width * 0.05);
+          const marginY = Math.floor(canvas.height * 0.05);
 
           for (let y = marginY; y < canvas.height - marginY; y++) {
             for (let x = marginX; x < canvas.width - marginX; x++) {
@@ -430,8 +486,7 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
           }
         }
       }
-      
-      if (minX >= maxX || minY >= maxY || (maxX - minX) / canvas.width < 0.15 || (maxY - minY) / canvas.height < 0.25) {
+            if (minX >= maxX || minY >= maxY || (maxX - minX) / canvas.width < 0.15 || (maxY - minY) / canvas.height < 0.25) {
         boundingBoxCache.set(imageUrl, null);
         return resolve(null);
       }

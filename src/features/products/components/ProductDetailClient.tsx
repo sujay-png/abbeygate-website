@@ -184,6 +184,13 @@ export const ProductDetailClient = ({
   const [activeTab, setActiveTab] = useState('Description');
   const [isCustomizingStarted, setIsCustomizingStarted] = useState(false);
   const [customizerStep, setCustomizerStep] = useState<1 | 2 | 3 | 4>(1);
+
+  // If extras are disabled for this product, bypass step 3 (Extras)
+  useEffect(() => {
+    if (!cornerEdgesPricing.size && customizerStep === 3) {
+      setCustomizerStep(4);
+    }
+  }, [cornerEdgesPricing.size, customizerStep]);
   const prevCustomizingStarted = useRef(false);
   const prevCustomizerStep = useRef(customizerStep);
 
@@ -780,7 +787,7 @@ export const ProductDetailClient = ({
     if (!isCustomizingStarted || !customizationActive || isGifts) return 'Add to Basket \u2192';
 
     if (customizerStep === 1) return 'Proceed to Position \u2192';
-    if (customizerStep === 2) return 'Proceed to Extras \u2192';
+    if (customizerStep === 2) return cornerEdgesPricing.size ? 'Proceed to Extras \u2192' : 'Proceed to Review \u2192';
     if (customizerStep === 3) return 'Proceed to Review \u2192';
     if (customizerStep === 4) return amendKey ? 'Update Basket \u2192' : 'Add to Basket \u2192';
 
@@ -977,19 +984,34 @@ export const ProductDetailClient = ({
               </button>
               {/* Stepper Navigation */}
               <div className="flex items-center justify-between w-full max-w-2xl mx-auto mb-10">
-                {[
-                  { num: 1, label: 'Branding' },
-                  { num: 2, label: 'Position' },
-                  { num: 3, label: 'Extras' },
-                  { num: 4, label: 'Review' },
-                ].map((s, index) => {
-                  const isCompleted = customizerStep > s.num;
-                  const isCurrent = customizerStep === s.num;
-                  const isFuture = customizerStep < s.num;
+                {(cornerEdgesPricing.size
+                  ? [
+                      { num: 1, stepKey: 1 as const, label: 'Branding' },
+                      { num: 2, stepKey: 2 as const, label: 'Position' },
+                      { num: 3, stepKey: 3 as const, label: 'Extras' },
+                      { num: 4, stepKey: 4 as const, label: 'Review' },
+                    ]
+                  : [
+                      { num: 1, stepKey: 1 as const, label: 'Branding' },
+                      { num: 2, stepKey: 2 as const, label: 'Position' },
+                      { num: 3, stepKey: 4 as const, label: 'Review' },
+                    ]
+                ).map((s, index, allSteps) => {
+                  const isCompleted = customizerStep > s.stepKey || (customizerStep === 4 && s.stepKey < 4);
+                  const isCurrent = customizerStep === s.stepKey;
+                  const isFuture = !isCompleted && !isCurrent;
 
                   return (
                     <div key={s.num} className="flex items-center flex-1 last:flex-none">
-                      <div className="flex items-center gap-2 lg:gap-3 cursor-pointer" onClick={() => { if (isCompleted || isCurrent) { setCustomizerStep(s.num as 1 | 2 | 3 | 4); setActiveImageIndex(0); } }}>
+                      <div
+                        className="flex items-center gap-2 lg:gap-3 cursor-pointer"
+                        onClick={() => {
+                          if (isCompleted || isCurrent) {
+                            setCustomizerStep(s.stepKey);
+                            setActiveImageIndex(0);
+                          }
+                        }}
+                      >
                         {isCompleted ? (
                           <div className="w-6 h-6 rounded-full bg-brand-primary flex items-center justify-center text-white shrink-0">
                             <Check size={14} strokeWidth={3} />
@@ -1009,7 +1031,7 @@ export const ProductDetailClient = ({
                       </div>
 
                       {/* Connecting Line */}
-                      {index < 3 && (
+                      {index < allSteps.length - 1 && (
                         <div className="flex-1 mx-2 lg:mx-4">
                           <div className={`border-t ${isCompleted ? 'border-brand-primary border-solid' : 'border-gray-300 border-dashed'} w-full`}></div>
                         </div>
