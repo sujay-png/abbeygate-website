@@ -143,6 +143,7 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
         return {
           productId: String(sibling.id),
           productName: sibling.name,
+          sku: sibling.sku,
           name: colorName,
           slug: sibling.slug,
           hex: finalHex,

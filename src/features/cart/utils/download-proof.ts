@@ -16,10 +16,25 @@ export async function downloadCartItemProof(item: PricedItem): Promise<void> {
   const c = item.customization;
   if (!c?.fullPreviewUrl) return; // proof not ready (pending/failed) — nothing to render
 
+  let itemSku = item.sku;
+  if (!itemSku && (item.slug || item.productId)) {
+    try {
+      const { getStoreProductBySlug, getStoreProductById } = await import('@/features/products/services/store-products');
+      const fetched = item.slug
+        ? await getStoreProductBySlug(item.slug)
+        : await getStoreProductById(Number(item.productId));
+      if (fetched?.sku) {
+        itemSku = fetched.sku;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   const product = {
     name: item.name,
     slug: item.slug ?? 'item',
-    sku: '', // cart lines carry no SKU; generator falls back to 'N/A'
+    sku: itemSku || item.sku || '',
     categories: (item.categorySlugs ?? []).map((slug) => ({ id: 0, name: slug, slug, link: '' })),
   } as StoreProduct;
 

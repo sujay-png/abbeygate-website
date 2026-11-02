@@ -13,6 +13,7 @@ import { mergeCarts } from '@/features/cart/utils/merge-cart';
 export type CartColourOption = {
   productId: string;
   productName: string;
+  sku?: string;
   name: string;
   slug: string;
   hex: string;

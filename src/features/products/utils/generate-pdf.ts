@@ -143,7 +143,22 @@ export const generateDigitalProof = async (
   if (colourName && colourName.trim()) {
     addSpecRow('Colour', colourName.trim());
   }
-  addSpecRow('SKU', product.sku || 'N/A');
+
+  let sku = product.sku;
+  if (!sku && (product.slug || product.id)) {
+    try {
+      const { getStoreProductBySlug, getStoreProductById } = await import('../services/store-products');
+      const fetched = product.slug
+        ? await getStoreProductBySlug(product.slug)
+        : await getStoreProductById(typeof product.id === 'number' ? product.id : Number(product.id));
+      if (fetched?.sku) {
+        sku = fetched.sku;
+      }
+    } catch {
+      // ignore
+    }
+  }
+  addSpecRow('SKU', sku || 'N/A');
   addSpecRow('Branding', customization.blockingType === 'Embossed' ? 'Blind debossed' : customization.blockingType);
   if (customization.blockingType === 'Foil blocked' && customization.foilColor) {
     addSpecRow('Foil Colour', customization.foilColor);

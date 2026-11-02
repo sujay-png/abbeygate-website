@@ -716,6 +716,7 @@ export const ProductDetailClient = ({
         await updateItem(amendKey, {
           quantity,
           price: priceDetails.unitPrice,
+          sku: product.sku,
           customization: cartItemCustomization,
           attributes,
           proofStatus: 'ready' as const

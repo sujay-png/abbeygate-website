@@ -17,6 +17,7 @@ export async function addColourVariant(
     ...source,
     key: undefined,
     productId: option.productId,
+    sku: option.sku || source.sku,
     slug: option.slug,
     name: option.productName,
     image: option.imageSrc || '',
