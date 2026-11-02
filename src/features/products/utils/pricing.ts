@@ -27,11 +27,11 @@ export function formatGBP(amount: number): string {
 }
 
 export function isGiftsProduct(product: StoreProduct): boolean {
-  return product.categories.some((cat) => cat.slug === "gifts" || cat.slug === "custom-gifts" || cat.slug.includes("gift"));
+  return Boolean(product?.categories?.some((cat) => cat.slug === "gifts" || cat.slug === "custom-gifts" || cat.slug.includes("gift")));
 }
 
 export function isFoilBlockedProduct(product: StoreProduct): boolean {
-  return product.categories.some((cat) => cat.slug === "foil-blocked");
+  return Boolean(product?.categories?.some((cat) => cat.slug === "foil-blocked"));
 }
 
 export type CornerEdgesPricing = {

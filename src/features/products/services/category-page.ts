@@ -31,7 +31,9 @@ export async function loadCategoryPageData(path: string) {
     
   } catch (error) {
     console.error(`Failed to load products for category ${route.categoryId}:`, error);
-    throw error;
+    allProducts = [];
+    filterAttributes = [];
+    attributeTerms = {};
   }
 
   const wooCategory = await categoryPromise;

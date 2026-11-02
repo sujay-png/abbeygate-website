@@ -10,6 +10,7 @@ import { getStoreProductBySlug, getStoreProducts, getProductCustomTabs, getStore
 import { getProductPricingFromProduct } from '@/features/products/services/pricing';
 import { getProductHexValues } from '@/features/products/services/product-colors';
 import { getProductBreadcrumbs } from '@/features/products/utils/breadcrumb';
+import { getProductBaseAmount } from '@/features/products/utils/product-helpers';
 import type { Metadata } from 'next';
 import { getSEOMetadata, jsonLd, SITE_URL } from '@/lib/seo';
 
@@ -40,7 +41,7 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const amendKey = typeof resolvedSearchParams?.amend === 'string' ? resolvedSearchParams.amend : undefined;
 
-  let product;
+  let product = null;
   try {
     product = await getStoreProductBySlug(slug);
     if (!product && /^\d+$/.test(slug)) {
@@ -48,7 +49,6 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
     }
   } catch (error) {
     console.error(`Failed to load product "${slug}":`, error);
-    notFound();
   }
 
   if (!product) notFound();
@@ -157,11 +157,28 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
     }
   })();
 
-  const [pricing, colorVariants, customTabs] = await Promise.all([
+  const [pricingResult, colorVariantsResult, customTabsResult] = await Promise.allSettled([
     pricingPromise,
     colorVariantsPromise,
     customTabsPromise,
   ]);
+
+  const defaultBasePrice = getProductBaseAmount(product);
+  const safeDefaultBase = defaultBasePrice > 0 ? defaultBasePrice : 1.0;
+
+  const pricing = pricingResult.status === 'fulfilled' && pricingResult.value ? pricingResult.value : {
+    productId: product.id,
+    basePrice: safeDefaultBase,
+    tiers: [
+      { min: 1, max: 24, price: safeDefaultBase },
+      { min: 25, max: 49, price: Number((safeDefaultBase * 0.8).toFixed(2)) },
+      { min: 50, max: 99, price: Number((safeDefaultBase * 0.75).toFixed(2)) },
+      { min: 100, max: null, price: Number((safeDefaultBase * 0.65).toFixed(2)) },
+    ],
+  };
+
+  const colorVariants = colorVariantsResult.status === 'fulfilled' && Array.isArray(colorVariantsResult.value) ? colorVariantsResult.value : [];
+  const customTabs = customTabsResult.status === 'fulfilled' && Array.isArray(customTabsResult.value) ? customTabsResult.value : [];
 
   // Build canonical hierarchical breadcrumbs based on product categories
   const breadcrumbPaths = getProductBreadcrumbs(product);
@@ -171,7 +188,7 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
     collectionNames.some(name => c.name.toLowerCase().includes(name) || c.slug.toLowerCase().includes(name))
   );
   
-  const relatedCategoryId = collectionCategory ? collectionCategory.id : product.categories[0]?.id;
+  const relatedCategoryId = collectionCategory ? collectionCategory.id : (product.categories?.[0]?.id ?? 0);
 
   let currentColor = '';
   let currentBaseName = '';

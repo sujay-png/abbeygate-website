@@ -243,8 +243,11 @@ export function getProductImageTransform(product: StoreProduct): ProductImageTra
 
 
 export function getProductBaseAmount(product: StoreProduct): number {
+  if (!product?.prices?.price) return 0;
   const minorUnit = product.prices.currency_minor_unit ?? 2;
-  const price = parseInt(product.prices.price, 10) / Math.pow(10, minorUnit);
+  const parsed = parseInt(product.prices.price, 10);
+  if (Number.isNaN(parsed)) return 0;
+  const price = parsed / Math.pow(10, minorUnit);
   // product.prices.price is inc-VAT by default, return ex-VAT for internal logic
   return price / 1.2;
 }

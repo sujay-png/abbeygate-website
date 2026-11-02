@@ -18,7 +18,7 @@ export type WooCommerceRequestOptions = {
   revalidate?: number | false;
   /** Optional Next.js cache tags for on-demand revalidation. */
   tags?: string[];
-  /** Request timeout in ms. */
+  /** Request timeout in ms. Defaults to 12000ms. */
   timeoutMs?: number;
 };
 
@@ -72,39 +72,30 @@ function buildUrl(
   return url.toString();
 }
 
-export async function woocommerceFetch<T>(
-  options: WooCommerceRequestOptions,
-): Promise<T> {
-  const { storeUrl, consumerKey, consumerSecret } = getConfig();
-  const { path, method = "GET", params, body, revalidate = 60, timeoutMs, tags } = options;
+const restFallbackCache = new Map<string, { data: unknown; timestamp: number }>();
+const MAX_REST_CACHE = 200;
 
-  const fetchOptions: RequestInit = {
-    method,
-    headers: {
-      Authorization: getAuthHeader(consumerKey, consumerSecret),
-      "Content-Type": "application/json",
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-    next: {
-      revalidate: revalidate === false ? 0 : revalidate,
-      ...(tags && tags.length > 0 ? { tags } : {}),
-    },
-  };
-
-  if (timeoutMs) {
-    fetchOptions.signal = AbortSignal.timeout(timeoutMs);
+function saveRestFallback<T>(key: string, data: T) {
+  if (restFallbackCache.size >= MAX_REST_CACHE) {
+    const oldestKey = restFallbackCache.keys().next().value;
+    if (oldestKey) restFallbackCache.delete(oldestKey);
   }
+  restFallbackCache.set(key, { data, timestamp: Date.now() });
+}
 
-  const response = await fetch(buildUrl(storeUrl, path, params), fetchOptions);
+function getRestFallback<T>(key: string): T | undefined {
+  return restFallbackCache.get(key)?.data as T | undefined;
+}
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `WooCommerce API error (${response.status} ${response.statusText}): ${errorText}`,
-    );
-  }
+function isRetryableStatus(status: number): boolean {
+  return status === 408 || status === 429 || (status >= 500 && status <= 599);
+}
 
-  const text = await response.text();
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function parseJsonSafe<T>(text: string): T {
   try {
     return JSON.parse(text) as T;
   } catch (err) {
@@ -137,6 +128,87 @@ export async function woocommerceFetch<T>(
       `WooCommerce API returned invalid JSON. Response preview: ${text.substring(0, 200)}`
     );
   }
+}
+
+export async function woocommerceFetch<T>(
+  options: WooCommerceRequestOptions,
+): Promise<T> {
+  const { storeUrl, consumerKey, consumerSecret } = getConfig();
+  const { path, method = "GET", params, body, revalidate = 60, timeoutMs = 12000, tags } = options;
+
+  const url = buildUrl(storeUrl, path, params);
+  const cacheKey = `${method}:${url}`;
+
+  const fetchOptions: RequestInit = {
+    method,
+    headers: {
+      Authorization: getAuthHeader(consumerKey, consumerSecret),
+      "Content-Type": "application/json",
+    },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+    next: {
+      revalidate: revalidate === false ? 0 : revalidate,
+      ...(tags && tags.length > 0 ? { tags } : {}),
+    },
+  };
+
+  // Only retry idempotent GET requests
+  const maxRetries = method === "GET" ? 2 : 0;
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(url, {
+        ...fetchOptions,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timer);
+
+      if (!response.ok) {
+        if (attempt < maxRetries && isRetryableStatus(response.status)) {
+          lastError = new Error(`HTTP ${response.status} ${response.statusText}`);
+          console.warn(`[WooCommerce REST] ${url} returned ${response.status}. Retrying (${attempt + 1}/${maxRetries})...`);
+          await wait(350 * Math.pow(2, attempt) + Math.random() * 200);
+          continue;
+        }
+
+        const errorText = await response.text();
+        throw new Error(
+          `WooCommerce API error (${response.status} ${response.statusText}): ${errorText}`,
+        );
+      }
+
+      const text = await response.text();
+      const data = parseJsonSafe<T>(text);
+      if (method === "GET") {
+        saveRestFallback(cacheKey, data);
+      }
+      return data;
+    } catch (err: any) {
+      clearTimeout(timer);
+      lastError = err;
+      const isTimeout = err?.name === 'AbortError' || err?.name === 'TimeoutError';
+      if (attempt < maxRetries) {
+        console.warn(`[WooCommerce REST] ${url} failed (${isTimeout ? `Timeout after ${timeoutMs}ms` : err?.message || 'Network error'}). Retrying (${attempt + 1}/${maxRetries})...`);
+        await wait(350 * Math.pow(2, attempt) + Math.random() * 200);
+        continue;
+      }
+    }
+  }
+
+  if (method === "GET") {
+    const fallback = getRestFallback<T>(cacheKey);
+    if (fallback) {
+      console.warn(`[WooCommerce REST] Serving stale fallback for ${url} after error:`, lastError);
+      return fallback;
+    }
+  }
+
+  throw lastError;
 }
 
 /** Convenience API matching the usual WooCommerce client shape. */

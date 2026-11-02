@@ -50,28 +50,46 @@ export async function getAllStoreProductsByCategory(
 ): Promise<StoreProduct[]> {
   const { maxPages = 5, perPage = 100 } = options;
 
-  // Page 1 tells us how many pages exist; fetch the rest in parallel rather than one by one.
-  const first = await getStoreProducts({ categoryId, page: 1, perPage });
-  const lastPage = Math.min(first.totalPages, maxPages);
-  const rest = await Promise.all(
-    Array.from({ length: Math.max(lastPage - 1, 0) }, (_, i) =>
-      getStoreProducts({ categoryId, page: i + 2, perPage }),
-    ),
-  );
+  try {
+    // Page 1 tells us how many pages exist; fetch the rest in parallel rather than one by one.
+    const first = await getStoreProducts({ categoryId, page: 1, perPage });
+    const lastPage = Math.min(first.totalPages || 1, maxPages);
 
-  return [first, ...rest].flatMap((result) => result.products);
+    if (lastPage <= 1) {
+      return first.products || [];
+    }
+
+    const restPromises = Array.from({ length: lastPage - 1 }, (_, i) =>
+      getStoreProducts({ categoryId, page: i + 2, perPage }),
+    );
+
+    const settledRest = await Promise.allSettled(restPromises);
+    const restProducts = settledRest
+      .filter((res): res is PromiseFulfilledResult<Awaited<ReturnType<typeof getStoreProducts>>> => res.status === 'fulfilled')
+      .flatMap((res) => res.value.products || []);
+
+    return [...(first.products || []), ...restProducts];
+  } catch (error) {
+    console.error(`Failed to fetch category products for ${categoryId}:`, error);
+    return [];
+  }
 }
 
 export const getStoreProductBySlug = cache(async (
   slug: string,
 ): Promise<StoreProduct | null> => {
-  const products = await storeFetch<StoreProduct[]>("/products", {
-    params: { slug },
-    revalidate: 86400,
-    tags: ["products", `product-${slug}`],
-  });
-  if (!products || products.length === 0) return null;
-  return products[0] ?? null;
+  try {
+    const products = await storeFetch<StoreProduct[]>("/products", {
+      params: { slug },
+      revalidate: 86400,
+      tags: ["products", `product-${slug}`],
+    });
+    if (!products || products.length === 0) return null;
+    return products[0] ?? null;
+  } catch (error) {
+    console.error(`Error in getStoreProductBySlug("${slug}"):`, error);
+    return null;
+  }
 });
 
 export const getStoreProductById = cache(async (
@@ -166,11 +184,16 @@ export type CustomTab = {
  */
 export const getRestProductMeta = cache(async (
   productId: number,
-): Promise<{ id: number; meta_data?: { key: string; value: unknown }[] }> => {
-  return woocommerceApi.request(`/products/${productId}`, {
-    revalidate: 86400,
-    tags: ["products", `product-${productId}`],
-  });
+): Promise<{ id: number; meta_data?: { key: string; value: unknown }[] } | null> => {
+  try {
+    return await woocommerceApi.request(`/products/${productId}`, {
+      revalidate: 86400,
+      tags: ["products", `product-${productId}`],
+    });
+  } catch (error) {
+    console.warn(`Failed to fetch REST product meta for ${productId}:`, error);
+    return null;
+  }
 });
 
 export const getProductCustomTabs = cache(async (

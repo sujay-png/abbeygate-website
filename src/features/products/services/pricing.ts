@@ -20,13 +20,11 @@ function hasRestCredentials(): boolean {
 export async function getProductPricingFromProduct(
   storeProduct: StoreProduct,
 ): Promise<ProductPricingData> {
-  // WooCommerce store product prices are inclusive of VAT (e.g. 7.99)
-  // We need the basePrice to be ex-VAT to align with our tiers and calculation logic
-  const rawBasePrice = parseStorePrice(
-    storeProduct.prices.price,
-    storeProduct.prices.currency_minor_unit,
-  );
-  const basePrice = rawBasePrice / 1.2;
+  const priceString = storeProduct?.prices?.price ?? "0";
+  const minorUnit = storeProduct?.prices?.currency_minor_unit ?? 2;
+  const rawBasePrice = parseStorePrice(priceString, minorUnit);
+  const calculatedBase = rawBasePrice / 1.2;
+  const basePrice = calculatedBase > 0 ? calculatedBase : 1.0;
 
   // Skip slow REST round-trip when keys aren't configured
   if (!hasRestCredentials()) {
@@ -39,8 +37,7 @@ export async function getProductPricingFromProduct(
 
   try {
     const restProduct = await getRestProductMeta(storeProduct.id);
-
-    const tiers = parsePriceTiersFromMeta(restProduct.meta_data, basePrice);
+    const tiers = parsePriceTiersFromMeta(restProduct?.meta_data, basePrice);
 
     return {
       productId: storeProduct.id,
@@ -57,7 +54,7 @@ export async function getProductPricingFromProduct(
 }
 
 /** Fallback tier structure when B2B King meta is unavailable. */
-function buildDefaultTiers(basePrice: number): PriceTier[] {
+export function buildDefaultTiers(basePrice: number): PriceTier[] {
   return [
     { min: 1, max: 24, price: basePrice },
     { min: 25, max: 49, price: Number((basePrice * 0.8).toFixed(2)) },

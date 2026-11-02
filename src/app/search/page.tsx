@@ -26,9 +26,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   // Fetch all products (up to 3 pages) for manual filtering
   const pagePromises = [1, 2, 3].map(page => getStoreProducts({ perPage: 100, page }));
-  const results = await Promise.all(pagePromises);
+  const results = await Promise.allSettled(pagePromises);
   
-  const allProducts = results.flatMap(res => res.products);
+  const allProducts = results
+    .filter((res): res is PromiseFulfilledResult<Awaited<ReturnType<typeof getStoreProducts>>> => res.status === 'fulfilled')
+    .flatMap(res => res.value.products || []);
   
   // Deduplicate just in case
   const productMap = new Map();
