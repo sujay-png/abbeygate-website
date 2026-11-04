@@ -7,9 +7,6 @@ function makeMockProduct(name: string, categories: string[] = []): StoreProduct 
     id: 1,
     name,
     slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-    parent: 0,
-    type: 'simple',
-    variation: '',
     permalink: '',
     sku: 'TEST-SKU',
     short_description: '',
@@ -19,37 +16,19 @@ function makeMockProduct(name: string, categories: string[] = []): StoreProduct 
       price: '1000',
       regular_price: '1000',
       sale_price: '1000',
-      price_range: null,
       currency_code: 'GBP',
       currency_symbol: '£',
       currency_minor_unit: 2,
-      currency_decimal_separator: '.',
-      currency_thousand_separator: ',',
-      currency_prefix: '£',
-      currency_suffix: '',
     },
     price_html: '£10.00',
-    average_rating: '0',
-    review_count: 0,
     images: [],
     categories: categories.map((slug, id) => ({ id, name: slug, slug, link: '' })),
     tags: [],
     attributes: [],
-    variations: [],
-    has_options: false,
     is_purchasable: true,
     is_in_stock: true,
-    is_on_backorder: false,
-    low_stock_remaining: null,
-    sold_individually: false,
-    add_to_cart: {
-      text: 'Add to cart',
-      description: 'Add to cart',
-      url: '',
-      minimum: 1,
-      maximum: 99,
-      multiple_of: 1,
-    },
+    average_rating: '0',
+    review_count: 0,
   };
 }
 
@@ -82,4 +61,3 @@ describe('getProductImageTransform', () => {
     expect(getProductImageTransform(ovalFob)).toEqual({ rotate: 0, scaleX: -1, imagePadding: 0 });
   });
 });
-

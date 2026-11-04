@@ -201,7 +201,7 @@ export const getProductCustomTabs = cache(async (
 ): Promise<CustomTab[]> => {
   try {
     const product = await getRestProductMeta(productId);
-    const tabsMeta = product.meta_data?.find(meta => meta.key === 'yikes_woo_products_tabs');
+    const tabsMeta = product?.meta_data?.find(meta => meta.key === 'yikes_woo_products_tabs');
     
     if (tabsMeta && Array.isArray(tabsMeta.value)) {
       return tabsMeta.value;
