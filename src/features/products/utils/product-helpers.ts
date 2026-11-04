@@ -176,7 +176,6 @@ export function stripHtml(html: string): string {
  *
  * Rules (derived from pixel-level image analysis of all product images):
  *  - Chelsea / Windsor Luggage Tags   → photographed horizontally → rotate 90°
- *  - Chelsea Slim Card Holders        → photographed horizontally → rotate 90°
  *  - Dorchester Collection Key Fobs   → oval key fob, split-ring on RIGHT → flip horizontally (scaleX -1)
  *
  * imagePadding: extra CSS padding (%) to apply to the image container to visually
@@ -210,11 +209,6 @@ export function getProductImageTransform(product: StoreProduct): ProductImageTra
     }
     // Dorchester tags are already well-padded (285×850 on 990×990)
     return { rotate: 0, scaleX: 1, imagePadding: 4 };
-  }
-
-  // Chelsea Slim Card Holders are landscape photos of a portrait product
-  if (nameIncludes('slim card holder')) {
-    return { rotate: 90, scaleX: 1, imagePadding: 4 };
   }
 
   // Windsor/Hide multi-purpose card holders: 990×754 canvas, product ~62%W × 81%H
