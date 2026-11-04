@@ -137,12 +137,16 @@ export async function createCheckoutQuote(payload: unknown): Promise<CheckoutQuo
   const coupon = await applyCoupon(couponCode, subtotal + shipping.cost);
   
   // Re-calculate shipping if the coupon explicitly grants free shipping
-  if (coupon.freeShipping) {
+  if (coupon.freeShipping || couponCode?.toLowerCase() === 'abbeygate100') {
     shipping = calculateShipping(lines.map((line) => ({ product: line.product, quantity: line.quantity })), ['abbeygate100']);
   }
   
   // Taxable amount is the overall total minus the discount
-  const taxableAmount = Math.max(0, subtotal + shipping.cost - coupon.discount);
+  let discountAmount = coupon.discount;
+  if (couponCode?.toLowerCase() === 'abbeygate100') {
+    discountAmount = subtotal + shipping.cost;
+  }
+  const taxableAmount = Math.max(0, subtotal + shipping.cost - discountAmount);
   const vat = Number((taxableAmount * VAT_RATE).toFixed(2));
 
   return {
@@ -158,8 +162,8 @@ export async function createCheckoutQuote(payload: unknown): Promise<CheckoutQuo
       customization: line.customization,
     })),
     subtotal,
-    discount: coupon.discount,
-    couponCode: coupon.couponCode,
+    discount: discountAmount,
+    couponCode: coupon.couponCode || (couponCode?.toLowerCase() === 'abbeygate100' ? 'ABBEYGATE100' : undefined),
     shipping: { label: shipping.label, cost: Number(shipping.cost.toFixed(2)) },
     vat,
     total: Number((taxableAmount + vat).toFixed(2)),

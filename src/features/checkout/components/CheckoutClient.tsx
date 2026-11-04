@@ -202,9 +202,34 @@ function CheckoutFormContent({
   }, [quoteData?.id, displayTotal <= 0]);
 
   const handleExpressConfirm = async () => {
-    if (!stripe || !elements || !clientSecret) return;
+    if (isFreeOrder) return;
+    if (!stripe || !elements) return;
     setIsProcessing(true);
     setPaymentError(null);
+
+    let activeClientSecret = clientSecret;
+    if (!activeClientSecret && quoteData?.id) {
+      try {
+        const res = await fetch('/api/checkout/payment-intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: quoteData.id })
+        });
+        const data = await res.json();
+        if (data.clientSecret) {
+          activeClientSecret = data.clientSecret;
+          setClientSecret(data.clientSecret);
+        }
+      } catch (err) {
+        console.error('Failed to retrieve client secret for express checkout', err);
+      }
+    }
+
+    if (!activeClientSecret) {
+      setPaymentError('Unable to initiate express checkout. Please try again or use card checkout below.');
+      setIsProcessing(false);
+      return;
+    }
 
     const { error: submitError } = await elements.submit();
     if (submitError) {
@@ -216,7 +241,7 @@ function CheckoutFormContent({
     try {
       const { error } = await stripe.confirmPayment({
         elements,
-        clientSecret,
+        clientSecret: activeClientSecret,
         confirmParams: {
           return_url: `${window.location.origin}/checkout/success${quoteData?.id ? `?sessionId=${quoteData.id}` : ''}`,
         }
@@ -259,7 +284,13 @@ function CheckoutFormContent({
     // Format it cleanly if they provided one
     const fullVatNumber = vatNumber ? vatNumber.toUpperCase().replace(/\s+/g, '').replace(/^GB-?/, 'GB') : undefined;
 
-    if (isFreeOrder && quoteData?.id) {
+    if (isFreeOrder) {
+      if (!quoteData?.id) {
+        setPaymentError('Please wait a moment while your order calculation completes.');
+        setIsProcessing(false);
+        return;
+      }
+
       const billingDetails = {
         name: billingName,
         email: formData.get('email') as string,
@@ -306,7 +337,7 @@ function CheckoutFormContent({
       return;
     }
 
-    if (paymentMethod === 'card' && stripe && elements && clientSecret) {
+    if (!isFreeOrder && paymentMethod === 'card' && stripe && elements && clientSecret) {
       if (fullVatNumber && quoteData?.id) {
         try {
           await fetch('/api/checkout/vat', {
@@ -402,39 +433,54 @@ function CheckoutFormContent({
     }
   };
 
-  const isSubmitDisabled = isQuoteLoading || isProcessing || (!isFreeOrder && paymentMethod === 'card' && !clientSecret);
+  const isSubmitDisabled = isQuoteLoading || isProcessing || !quoteData?.id || (!isFreeOrder && paymentMethod === 'card' && !clientSecret);
 
   return (
     <div className="mx-auto grid max-w-[1440px] grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.78fr)] flex-col-reverse lg:flex-row">
       <form className="order-2 lg:order-1 bg-white px-5 py-10 sm:px-8 lg:px-12 lg:py-14" onSubmit={handleSubmit}>
         <div className="mx-auto max-w-[640px] space-y-10">
-          <section className="mb-6">
-            {isExpressAvailable && <h2 className="mb-4 text-center text-sm font-semibold text-brand-grey">Express checkout</h2>}
-            <div className={`overflow-hidden rounded ${isExpressAvailable ? 'min-h-[44px]' : 'h-0 opacity-0'}`}>
-              <ExpressCheckoutElement 
-                onConfirm={handleExpressConfirm} 
-                onReady={({ availablePaymentMethods }) => {
-                  setIsExpressAvailable(!!availablePaymentMethods && Object.values(availablePaymentMethods).some(Boolean));
-                }}
-                options={{
-                  paymentMethods: {
-                    link: 'never',
-                    amazonPay: 'never'
-                  }
-                }}
-              />
-            </div>
-            {isExpressAvailable && (
-              <div className="relative mt-8 mb-4">
-                <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                  <div className="w-full border-t border-[var(--brand-border)]"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="bg-white px-4 text-brand-grey">or</span>
-                </div>
+          {!isFreeOrder && (
+            <section className="mb-6">
+              {isExpressAvailable && <h2 className="mb-4 text-center text-sm font-semibold text-brand-grey">Express checkout</h2>}
+              <div className={`overflow-hidden rounded ${isExpressAvailable ? 'min-h-[44px]' : 'h-0 opacity-0 pointer-events-none'}`}>
+                <ExpressCheckoutElement 
+                  onConfirm={handleExpressConfirm} 
+                  onReady={({ availablePaymentMethods }) => {
+                    const hasMethods = !!availablePaymentMethods && (
+                      Boolean(availablePaymentMethods.applePay) || Boolean(availablePaymentMethods.googlePay)
+                    );
+                    setIsExpressAvailable(hasMethods);
+                  }}
+                  onAvailablePaymentMethodsChange={(event) => {
+                    if (event.paymentMethods) {
+                      const hasMethods = Boolean(event.paymentMethods.applePay?.available) || Boolean(event.paymentMethods.googlePay?.available);
+                      setIsExpressAvailable(hasMethods);
+                    }
+                  }}
+                  onLoadError={(err) => {
+                    console.error('Express Checkout Load Error:', err);
+                    setIsExpressAvailable(false);
+                  }}
+                  options={{
+                    paymentMethods: {
+                      link: 'never',
+                      amazonPay: 'never'
+                    }
+                  }}
+                />
               </div>
-            )}
-          </section>
+              {isExpressAvailable && (
+                <div className="relative mt-8 mb-4">
+                  <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div className="w-full border-t border-[var(--brand-border)]"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="bg-white px-4 text-brand-grey">or</span>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
 
           <section>
             <div className="mb-5 flex items-baseline justify-between gap-4">
@@ -666,7 +712,22 @@ function CheckoutFormContent({
           <div className="mt-6">
             {isDiscountVisible || couponInput || displayDiscount > 0 ? (
               <div className="flex gap-2">
-                <input placeholder="Discount code" aria-label="Discount code" className="min-w-0 flex-1 border border-[var(--brand-border)] bg-white px-3 py-2 text-sm outline-none focus:border-brand-primary transition-colors" value={couponInput} onChange={(e) => setCouponInput(e.target.value)} autoFocus />
+                <input 
+                  placeholder="Discount code" 
+                  aria-label="Discount code" 
+                  className="min-w-0 flex-1 border border-[var(--brand-border)] bg-white px-3 py-2 text-sm outline-none focus:border-brand-primary transition-colors" 
+                  value={couponInput} 
+                  onChange={(e) => setCouponInput(e.target.value)} 
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (couponInput.trim() && !isQuoteLoading && !isProcessing) {
+                        setAppliedCoupon(couponInput.trim());
+                      }
+                    }
+                  }}
+                  autoFocus 
+                />
                 <button type="button" className="border border-brand-primary px-4 py-2 text-sm font-semibold text-brand-primary hover:bg-brand-primary hover:text-white transition-colors disabled:opacity-50" onClick={() => setAppliedCoupon(couponInput)} disabled={!couponInput.trim() || isQuoteLoading || isProcessing}>
                   Apply
                 </button>

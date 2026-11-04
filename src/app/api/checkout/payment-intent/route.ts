@@ -16,6 +16,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Checkout session expired or was not found.' }, { status: 404 });
     }
 
+    if (session.quote.total <= 0) {
+      return NextResponse.json({ error: 'Order total is zero. Payment is not required.' }, { status: 400 });
+    }
+
     const stripe = getStripeClient();
     
     // We update or create a PaymentIntent for the session's total
