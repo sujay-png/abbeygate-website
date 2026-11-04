@@ -442,23 +442,25 @@ function CheckoutFormContent({
           {!isFreeOrder && (
             <section className="mb-6">
               {isExpressAvailable && <h2 className="mb-4 text-center text-sm font-semibold text-brand-grey">Express checkout</h2>}
-              <div className={`overflow-hidden rounded ${isExpressAvailable ? 'min-h-[44px]' : 'h-0 opacity-0 pointer-events-none'}`}>
+              <div className="overflow-hidden rounded">
                 <ExpressCheckoutElement 
                   onConfirm={handleExpressConfirm} 
-                  onReady={({ availablePaymentMethods }) => {
-                    const hasMethods = !!availablePaymentMethods && (
-                      Boolean(availablePaymentMethods.applePay) || Boolean(availablePaymentMethods.googlePay)
-                    );
-                    setIsExpressAvailable(hasMethods);
+                  onReady={(event) => {
+                    const methods = (event as any)?.availablePaymentMethods;
+                    if (methods) {
+                      const hasMethods = Boolean(methods.applePay) || Boolean(methods.googlePay);
+                      if (hasMethods) setIsExpressAvailable(true);
+                    }
                   }}
                   onAvailablePaymentMethodsChange={(event) => {
                     if (event.paymentMethods) {
+                      console.log('[Stripe Express Checkout] Available methods:', event.paymentMethods);
                       const hasMethods = Boolean(event.paymentMethods.applePay?.available) || Boolean(event.paymentMethods.googlePay?.available);
                       setIsExpressAvailable(hasMethods);
                     }
                   }}
                   onLoadError={(err) => {
-                    console.error('Express Checkout Load Error:', err);
+                    console.error('[Stripe Express Checkout] Load Error:', err);
                     setIsExpressAvailable(false);
                   }}
                   options={{

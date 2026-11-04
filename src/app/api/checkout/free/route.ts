@@ -110,18 +110,21 @@ export async function POST(req: NextRequest) {
     });
 
     if (resolvedCustomerId) {
-      try {
-        await woocommerceApi.request(`customers/${resolvedCustomerId}`, {
-          method: 'PUT',
-          body: {
-            billing: wcOrderPayload.billing,
-            shipping: wcOrderPayload.shipping,
-          }
-        });
-        await invalidateCustomerOrdersCache(resolvedCustomerId);
-      } catch (err) {
-        console.error('Failed to update customer addresses:', err);
-      }
+      // Run customer address sync and cache invalidation in the background so the order confirmation responds immediately
+      (async () => {
+        try {
+          await woocommerceApi.request(`customers/${resolvedCustomerId}`, {
+            method: 'PUT',
+            body: {
+              billing: wcOrderPayload.billing,
+              shipping: wcOrderPayload.shipping,
+            }
+          });
+          await invalidateCustomerOrdersCache(resolvedCustomerId);
+        } catch (err) {
+          console.error('Failed to update customer addresses:', err);
+        }
+      })().catch(err => console.error('Background customer address update error:', err));
     }
 
     return NextResponse.json({ success: true, orderId: (orderRes as any).id, orderKey: (orderRes as any).order_key });
