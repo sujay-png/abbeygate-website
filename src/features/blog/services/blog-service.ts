@@ -1,17 +1,18 @@
 import { getWooStoreUrl } from '@/lib/woocommerce/config';
 import type { BlogPost, WordPressPost } from '../types';
-import { decodeHtmlEntities, stripHtml, formatDate } from '../utils/format';
+import { decodeHtmlEntities, stripHtml, formatDate, cleanBlogPostContent } from '../utils/format';
 
 /**
  * Transforms a raw WordPress REST API post into a clean, typed BlogPost.
  */
 export function transformWordPressPost(raw: WordPressPost): BlogPost {
   const title = decodeHtmlEntities(raw.title?.rendered || '');
+  const content = cleanBlogPostContent(raw.content?.rendered || '');
   
   // Clean excerpt
   let excerpt = stripHtml(raw.excerpt?.rendered || '');
-  if (!excerpt && raw.content?.rendered) {
-    const rawContent = stripHtml(raw.content.rendered);
+  if (!excerpt && content) {
+    const rawContent = stripHtml(content);
     excerpt = rawContent.slice(0, 160) + (rawContent.length > 160 ? '...' : '');
   }
 
@@ -26,9 +27,9 @@ export function transformWordPressPost(raw: WordPressPost): BlogPost {
       width: media.media_details?.width,
       height: media.media_details?.height,
     };
-  } else if (raw.content?.rendered) {
+  } else if (content) {
     // Fallback: extract first img src from HTML content if available
-    const imgMatch = raw.content.rendered.match(/<img[^>]+src=["']([^"']+)["']/i);
+    const imgMatch = content.match(/<img[^>]+src=["']([^"']+)["']/i);
     if (imgMatch?.[1]) {
       featuredImage = {
         url: imgMatch[1],
@@ -42,7 +43,7 @@ export function transformWordPressPost(raw: WordPressPost): BlogPost {
     slug: raw.slug,
     title,
     excerpt,
-    content: raw.content?.rendered || '',
+    content,
     date: raw.date,
     formattedDate: formatDate(raw.date),
     author: raw._embedded?.author?.[0]?.name,
@@ -66,6 +67,7 @@ export async function getBlogPosts(options?: {
   try {
     const res = await fetch(url, {
       next: { revalidate: 60, tags: ['blog-posts'] },
+      signal: AbortSignal.timeout(8000),
     });
 
     if (!res.ok) {
@@ -95,6 +97,7 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
   try {
     const res = await fetch(url, {
       next: { revalidate: 60, tags: [`blog-post-${slug}`] },
+      signal: AbortSignal.timeout(8000),
     });
 
     if (!res.ok) {
