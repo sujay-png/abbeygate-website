@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useLenis } from 'lenis/react';
 import type { StoreProduct, PriceTier } from '../types/store-product';
 import {
@@ -98,6 +99,7 @@ export const ProductCustomizer = ({
   const coverImageSrc = leadCoverImage?.src || leadCoverImage?.thumbnail || activeImageUrl || '';
 
   const [collapseOpen, setCollapseOpen] = useState(true);
+  const [showLogoInfo, setShowLogoInfo] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isGeneratingProof, setIsGeneratingProof] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -220,8 +222,61 @@ export const ProductCustomizer = ({
           <div>
             <div id="upload-logo" className="text-xl font-bold text-brand-body mb-2">Upload Logo</div>
             <p className="text-[13px] text-gray-500 mb-3">
-              For best results, upload a high-contrast image (black on white) or a transparent PNG.
+              For best results, please upload a high-contrast image (black on white) or a PNG with a transparent background.{' '}
+              <button
+                type="button"
+                onClick={() => setShowLogoInfo((prev) => !prev)}
+                className="font-medium text-brand-primary underline hover:text-brand-primary-dark transition-colors inline-flex items-center gap-0.5 cursor-pointer"
+                aria-expanded={showLogoInfo}
+              >
+                <span>{showLogoInfo ? 'Less Info' : 'More Info'}</span>
+                <svg
+                  className={`w-3.5 h-3.5 transition-transform duration-200 ${showLogoInfo ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
             </p>
+
+            {showLogoInfo && (
+              <div className="my-4 text-[13px] text-brand-body space-y-4 animate-in fade-in duration-200">
+                <div>
+                  <div className="font-bold text-brand-body text-[14px] mb-1">About Your Preview</div>
+                  <p className="text-gray-600 leading-relaxed">
+                    Your online preview is a guide to help you visualise the size and positioning of your logo. It may not be an exact representation of your finished product, but don&apos;t worry &ndash; our artwork team will ensure your logo is accurately reproduced.
+                  </p>
+                </div>
+
+                <div>
+                  <div className="font-bold text-brand-body text-[14px] mb-1">Artwork Approval</div>
+                  <p className="text-gray-600 leading-relaxed mb-2">
+                    Once you&apos;ve placed your order, our artwork team will prepare a digital proof of your logo, showing its size and positioning, for you to review and approve before production begins.
+                  </p>
+                  <p className="text-gray-600 leading-relaxed">
+                    If you&apos;ve selected foil blocking or debossing, we&apos;ll then create a bespoke blocking die to accurately reproduce your approved logo on your chosen product.
+                  </p>
+                </div>
+
+                <div>
+                  <div className="font-bold text-brand-body text-[14px] mb-1">Ordered With Us Before?</div>
+                  <p className="text-gray-600 leading-relaxed">
+                    If you&apos;ve previously ordered with us and would like to reuse the same logo at the same size, please{' '}
+                    <Link
+                      href="/contact"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-primary underline hover:text-brand-primary-dark font-medium"
+                    >
+                      contact our team
+                    </Link>{' '}
+                    before placing your order. We&apos;ll be happy to provide a discount code to remove the blocking die setup fee, provided your existing die can be reused.
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="relative group">
               <input
                 ref={fileInputRef}

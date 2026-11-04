@@ -196,7 +196,7 @@ export const ProductCustomizationOverlay = ({
             } else if (cornerPricing.size === '22mm × 22mm') {
               cornerSizeClass = 'w-[8%] h-[8%]';
             } else if (cornerPricing.size === '27mm × 27mm') {
-              cornerSizeClass = 'w-[10%] h-[10%]';
+              cornerSizeClass = 'w-[8%] h-[8%]';
             }
 
             return ([] as Array<{top?: number, bottom?: number, left?: number, right?: number, rotate: string}>).concat([
