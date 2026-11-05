@@ -79,7 +79,14 @@ export async function GET(request: Request) {
     const base64 = Buffer.from(buffer).toString('base64');
     const dataUrl = `data:${contentType};base64,${base64}`;
 
-    return NextResponse.json({ dataUrl });
+    return NextResponse.json(
+      { dataUrl },
+      {
+        headers: {
+          'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800',
+        },
+      }
+    );
   } catch (error: any) {
     console.error('Proxy image error:', error);
     return NextResponse.json({ error: 'Failed to load image' }, { status: 500 });

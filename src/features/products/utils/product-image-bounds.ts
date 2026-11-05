@@ -23,6 +23,22 @@ const BACKGROUND_IMAGE_BOUNDS: BoundsEntry[] = [
     imageUrlFragment: 'UC95_Website',
     bounds: { left: 16.8, right: 84.4, top: 9.8, bottom: 90.8 },
   },
+  {
+    imageUrlFragment: 'SaharaHide-Pocket-Desk-Diary',
+    bounds: { left: 29.5, right: 69.8, top: 10.0, bottom: 88.8 },
+  },
+  {
+    imageUrlFragment: 'NewHide_Pocket_Desk_Diary',
+    bounds: { left: 29.5, right: 69.8, top: 10.0, bottom: 88.8 },
+  },
+  {
+    imageUrlFragment: 'SmoothGrain-Pocket-Desk-Diary',
+    bounds: { left: 29.5, right: 69.8, top: 10.0, bottom: 88.8 },
+  },
+  {
+    imageUrlFragment: 'NewHide_Bicolour_Pocket_Diary',
+    bounds: { left: 29.5, right: 69.8, top: 10.0, bottom: 88.8 },
+  },
 ];
 
 export function getConfiguredImageBounds(imageUrl: string): ProductImageBounds | null {

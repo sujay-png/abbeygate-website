@@ -190,13 +190,13 @@ export const ProductCustomizationOverlay = ({
             const offset = 0.2;
             
             const cornerPricing = getCornerEdgesPricing(product);
-            let cornerSizeClass = 'w-[8%] h-[8%]';
+            let cornerSizeClass = 'w-[8%] aspect-square h-auto';
             if (cornerPricing.size === '18mm × 18mm') {
-              cornerSizeClass = 'w-[6.5%] h-[6.5%]';
+              cornerSizeClass = 'w-[6.5%] aspect-square h-auto';
             } else if (cornerPricing.size === '22mm × 22mm') {
-              cornerSizeClass = 'w-[8%] h-[8%]';
+              cornerSizeClass = 'w-[8%] aspect-square h-auto';
             } else if (cornerPricing.size === '27mm × 27mm') {
-              cornerSizeClass = 'w-[8%] h-[8%]';
+              cornerSizeClass = 'w-[8%] aspect-square h-auto';
             }
 
             return ([] as Array<{top?: number, bottom?: number, left?: number, right?: number, rotate: string}>).concat([

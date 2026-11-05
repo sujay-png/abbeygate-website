@@ -3,23 +3,44 @@ import { FILTER_TAXONOMY_MAP } from "../types/store-product";
 import { getParentColourSlug } from "./color-helpers";
 
 export function getProductPhysicalDimensionsMm(product: StoreProduct): { width: number; height: number } {
-  const sizeAttribute = product.attributes.find((attr) => attr.taxonomy === 'pa_size');
-  const sizeTerms = sizeAttribute?.terms.map(t => t.slug.toLowerCase()) || [];
-  const nameLower = product.name.toLowerCase();
-  
-  if (sizeTerms.includes('a4') || nameLower.includes('a4')) {
+  const sizeAttribute = product.attributes?.find((attr: any) =>
+    attr.taxonomy === 'pa_size' || attr.slug === 'pa_size' || attr.name?.toLowerCase() === 'size'
+  );
+  const terms: string[] = [];
+  if (sizeAttribute) {
+    if (Array.isArray((sizeAttribute as any).terms)) {
+      (sizeAttribute as any).terms.forEach((t: any) => {
+        if (t?.slug) terms.push(String(t.slug).toLowerCase());
+        if (t?.name) terms.push(String(t.name).toLowerCase());
+      });
+    }
+    if (Array.isArray((sizeAttribute as any).options)) {
+      (sizeAttribute as any).options.forEach((o: any) => {
+        if (o) terms.push(String(o).toLowerCase());
+      });
+    }
+    if (typeof (sizeAttribute as any).value === 'string') {
+      terms.push((sizeAttribute as any).value.toLowerCase());
+    }
+  }
+
+  const nameLower = (product.name || '').toLowerCase();
+  const slugLower = (product.slug || '').toLowerCase();
+  const allText = [nameLower, slugLower, ...terms].join(' ');
+
+  if (allText.includes('a4')) {
     return { width: 210, height: 297 };
   }
-  if (sizeTerms.includes('quarto') || nameLower.includes('quarto')) {
+  if (allText.includes('quarto')) {
     return { width: 210, height: 260 };
   }
-  if (sizeTerms.includes('pocket') || nameLower.includes('pocket')) {
+  if (allText.includes('pocket')) {
     return { width: 90, height: 140 };
   }
-  if (sizeTerms.includes('slim') || nameLower.includes('slim')) {
+  if (allText.includes('slim')) {
     return { width: 80, height: 170 };
   }
-  
+
   // Default fallback (e.g. A5)
   return { width: 148, height: 210 };
 }
@@ -249,9 +270,9 @@ export function getProductBaseAmount(product: StoreProduct): number {
 export function getLogoAnchorsFromMm(widthMm: number, heightMm: number) {
   const aspectRatio = widthMm / Math.max(heightMm, 1);
   
-  // Most product photos seem to have the book fill ~85% of the height
-  const visualHeight = 85;
-  const visualWidth = visualHeight * aspectRatio;
+  // Studio product photography standard frames books to occupy ~79% of the square canvas (y: 10.0% to 89.0%)
+  const visualHeight = 79;
+  const visualWidth = Math.min(visualHeight * aspectRatio, 80);
   
   const whiteSpaceX = (100 - visualWidth) / 2;
   const whiteSpaceY = (100 - visualHeight) / 2;
@@ -288,7 +309,12 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
   let srcToLoad = imageUrl;
   if (imageUrl.startsWith('http')) {
     try {
-      const res = await fetch(`/api/proxy-image?url=${encodeURIComponent(imageUrl)}`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch(`/api/proxy-image?url=${encodeURIComponent(imageUrl)}`, {
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
       if (res.ok) {
         const json = await res.json();
         if (json.dataUrl) srcToLoad = json.dataUrl;
@@ -429,28 +455,67 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
           }
         }
 
-        // Snap the occupancy boundaries to the nearest sharp physical edge gradient
-        const snap = (arr: Float64Array, center: number, maxOffset: number) => {
-          const s = Math.max(0, center - maxOffset);
-          const e = Math.min(arr.length - 1, center + maxOffset);
-          let peak = center;
-          let maxVal = -1;
-          for (let i = s; i <= e; i++) {
-            if (arr[i] > maxVal) {
-              maxVal = arr[i];
-              peak = i;
+        // Compute average gradients across dimensions
+        let avgGradY = 0;
+        for (let y = 0; y < canvas.height; y++) avgGradY += sumY[y];
+        avgGradY /= canvas.height;
+
+        let avgGradX = 0;
+        for (let x = 0; x < canvas.width; x++) avgGradX += sumX[x];
+        avgGradX /= canvas.width;
+
+        // Scan inward from an outer occupancy edge toward the product center,
+        // locking onto the first prominent physical edge gradient.
+        // This stops at the true leather edge and never overshoots into soft drop shadows or interior stitches.
+        const snapInward = (
+          arr: Float64Array,
+          start: number,
+          inwardDelta: number,
+          step: 1 | -1,
+          threshold: number
+        ) => {
+          const end = start + step * inwardDelta;
+          let bestPeak = start;
+          let bestPeakVal = 0;
+          let inPeak = false;
+          let peakMax = 0;
+          let peakIdx = start;
+
+          for (let i = start; step > 0 ? i <= end : i >= end; i += step) {
+            const val = arr[i];
+
+            if (val > threshold) {
+              if (!inPeak) {
+                inPeak = true;
+                peakMax = val;
+                peakIdx = i;
+              } else if (val > peakMax) {
+                peakMax = val;
+                peakIdx = i;
+              }
+            } else if (inPeak) {
+              // Exited the first prominent peak coming from outside inward
+              return peakIdx;
+            }
+
+            if (val > bestPeakVal) {
+              bestPeakVal = val;
+              bestPeak = i;
             }
           }
-          return peak;
+
+          return inPeak ? peakIdx : bestPeak;
         };
 
-        const snapWindowY = Math.max(5, Math.floor(canvas.height * 0.03));
-        const snapWindowX = Math.max(5, Math.floor(canvas.width * 0.03));
+        const snapWindowY = Math.max(10, Math.floor(canvas.height * 0.05));
+        const snapWindowX = Math.max(10, Math.floor(canvas.width * 0.05));
+        const threshY = Math.max(avgGradY * 1.3, 1500);
+        const threshX = Math.max(avgGradX * 1.3, 1500);
 
-        const snappedTop = snap(sumY, occTop, snapWindowY);
-        const snappedBottom = snap(sumY, occBottom, snapWindowY);
-        const snappedLeft = snap(sumX, occLeft, snapWindowX);
-        const snappedRight = snap(sumX, occRight, snapWindowX);
+        const snappedTop = snapInward(sumY, occTop, snapWindowY, 1, threshY);
+        const snappedBottom = snapInward(sumY, occBottom, snapWindowY, -1, threshY);
+        const snappedLeft = snapInward(sumX, occLeft, snapWindowX, 1, threshX);
+        const snappedRight = snapInward(sumX, occRight, snapWindowX, -1, threshX);
 
         const detectedWidth = (snappedRight - snappedLeft) / canvas.width;
         const detectedHeight = (snappedBottom - snappedTop) / canvas.height;
