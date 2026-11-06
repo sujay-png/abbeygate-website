@@ -73,11 +73,16 @@ export async function POST(req: NextRequest) {
         resolvedCustomerId = await findCustomerIdByEmail(customerEmail);
       }
 
+      const chargeId = typeof paymentIntent.latest_charge === 'string'
+        ? paymentIntent.latest_charge
+        : (paymentIntent.latest_charge as any)?.id || paymentIntent.id;
+
       const wcOrderPayload = {
         payment_method: 'stripe',
         payment_method_title: 'Credit/Debit Card (Stripe)',
         set_paid: true,
         status: 'processing', // Payment is already succeeded!
+        transaction_id: chargeId,
         customer_id: resolvedCustomerId || 0,
         billing: {
           first_name: billingFirstName,
@@ -131,6 +136,10 @@ export async function POST(req: NextRequest) {
           { key: '_wc_order_attribution_source_type', value: 'typein' },
           { key: '_wc_order_attribution_utm_source', value: '(direct)' },
           { key: '_stripe_intent_id', value: paymentIntent.id },
+          { key: '_stripe_charge_captured', value: 'yes' },
+          { key: '_stripe_currency', value: (paymentIntent.currency || 'GBP').toUpperCase() },
+          ...(chargeId ? [{ key: '_transaction_id', value: chargeId }] : []),
+          ...(chargeId && chargeId.startsWith('ch_') ? [{ key: '_charge_id', value: chargeId }] : []),
           ...(session.vatNumber ? [{ key: 'VAT Number', value: session.vatNumber }] : []),
         ]
       };

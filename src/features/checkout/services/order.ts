@@ -124,7 +124,10 @@ export async function createWooCommerceOrder(
       }
     ],
     meta_data: [
-      { key: '_stripe_intent_id', value: paymentIntentId || '' }
+      { key: '_stripe_intent_id', value: paymentIntentId || '' },
+      { key: '_stripe_charge_captured', value: paymentMethod === 'stripe' ? 'yes' : 'no' },
+      { key: '_stripe_currency', value: 'GBP' },
+      ...(paymentIntentId ? [{ key: '_transaction_id', value: paymentIntentId }] : [])
     ]
   };
 
