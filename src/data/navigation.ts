@@ -108,33 +108,38 @@ const NAV_ITEMS: NavItem[] = [
   {
     id: 'bespoke',
     label: 'BESPOKE',
-    href: '/quote',
+    href: '/bespoke/personalisation',
     megaMenu: {
       columns: [
         {
           id: 'personalisation',
           title: 'Personalisation',
+          href: '/bespoke/personalisation',
           links: [
-            { id: 'blocking-foiling', label: 'Blocking & Foiling', href: '/bespoke/blocking-foiling' },
-            { id: 'uv-printing', label: 'UV Printing', href: '/bespoke/uv-printing' },
-            { id: 'graphic-print', label: 'Graphic Print', href: '/bespoke/graphic-print' },
-            { id: 'special-matter-pages', label: 'Special Matter Pages', href: '/bespoke/special-matter-pages' },
+            { id: 'blocking-foiling', label: 'Blocking & Foiling', href: '/bespoke/personalisation#blocking-foiling' },
+            { id: 'uv-printing', label: 'UV Printing', href: '/bespoke/personalisation#uv-printing' },
+            { id: 'graphic-print', label: 'Graphic Print', href: '/bespoke/personalisation#graphic-print' },
+            { id: 'special-matter-pages', label: 'Special Matter Pages', href: '/bespoke/personalisation#special-matter-pages' },
           ],
         },
         {
           id: 'additional-finishing',
           title: 'Additional Finishing',
+          href: '/bespoke/additional-finishing',
           links: [
-            { id: 'ribbon', label: 'Ribbon', href: '/bespoke/ribbon' },
-            { id: 'pen-loops', label: 'Pen Loops', href: '/bespoke/pen-loops' },
-            { id: 'decorative-corner-protectors', label: 'Decorative Corner Protectors', href: '/bespoke/decorative-corner-protectors' },
-            { id: 'gilded-page-edges', label: 'Gilded Page Edges', href: '/bespoke/gilded-page-edges' },
+            { id: 'ribbon', label: 'Ribbon Markers', href: '/bespoke/additional-finishing#ribbon' },
+            { id: 'pen-loops', label: 'Pen Loops & Elastic Closures', href: '/bespoke/additional-finishing#pen-loops' },
+            { id: 'decorative-corner-protectors', label: 'Decorative Corner Protectors', href: '/bespoke/additional-finishing#decorative-corner-protectors' },
+            { id: 'gilded-page-edges', label: 'Gilded Page Edges', href: '/bespoke/additional-finishing#gilded-page-edges' },
           ],
         },
         {
           id: 'portfolio',
           title: 'Portfolio',
-          links: [], 
+          href: '/bespoke/portfolio',
+          links: [
+            { id: 'view-portfolio', label: 'Our Latest Work', href: '/bespoke/portfolio' },
+          ], 
         },
       ],
     },

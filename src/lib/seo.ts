@@ -87,9 +87,20 @@ export const seoConfig: Record<string, { title: string; description: string; noi
     description: "Information on returns and refunds for Abbeygate England orders.",
   },
   "/bespoke": {
-    title: "Bespoke Service | Abbeygate England",
-    description: "Our bespoke corporate gifting service is coming soon.",
-    noindex: true,
+    title: "Bespoke Corporate Gifts | Abbeygate England",
+    description: "Explore our bespoke corporate gifting service: personalisation, additional finishing and client portfolio.",
+  },
+  "/bespoke/personalisation": {
+    title: "Personalisation | Abbeygate England",
+    description: "Blocking and foiling, UV printing, graphic print and special matter pages for corporate diaries, notebooks and leather goods.",
+  },
+  "/bespoke/additional-finishing": {
+    title: "Additional Finishing | Abbeygate England",
+    description: "Ribbon markers, pen loops, decorative corner protectors and gilded page edges for corporate diaries and notebooks.",
+  },
+  "/bespoke/portfolio": {
+    title: "Bespoke Portfolio | Abbeygate England",
+    description: "Explore our portfolio of bespoke projects, from personalised corporate diaries to fully branded leather goods.",
   },
   "/internal-page-layouts": {
     title: "Internal Page Layouts | Abbeygate England",

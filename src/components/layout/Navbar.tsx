@@ -190,6 +190,20 @@ export const Navbar = () => {
     setMobileExpandedId((prev) => (prev === id ? null : id));
   };
 
+  const handleNavLinkClick = (e: React.MouseEvent, href: string) => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    if (openTimer.current) clearTimeout(openTimer.current);
+    setActiveMenuId(null);
+    setIsMobileMenuOpen(false);
+    if (href && href.includes('#')) {
+      const [targetPath, targetHash] = href.split('#');
+      if (pathname === targetPath && targetHash) {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('bespoke-jump', { detail: targetHash }));
+      }
+    }
+  };
+
   const activeItem = NAV_ITEMS.find((item) => item.id === activeMenuId);
   const isMenuOpen = Boolean(activeItem?.megaMenu?.columns?.length);
 
@@ -377,7 +391,18 @@ export const Navbar = () => {
                     <div key={column.id} className="min-w-[180px] px-8 first:pl-0">
                       {column.title && (
                         <h4 className="text-[11px] font-bold tracking-widest text-gray-400 uppercase mb-4">
-                          {column.title}
+                          {column.href ? (
+                            <Link
+                              href={column.href}
+                              scroll={false}
+                              onClick={(e) => handleNavLinkClick(e, column.href || '')}
+                              className="hover:text-brand-primary-dark transition-colors"
+                            >
+                              {column.title}
+                            </Link>
+                          ) : (
+                            column.title
+                          )}
                         </h4>
                       )}
                       <ul className="flex flex-col gap-3">
@@ -385,6 +410,8 @@ export const Navbar = () => {
                           <li key={link.id}>
                             <Link
                               href={link.href}
+                              scroll={false}
+                              onClick={(e) => handleNavLinkClick(e, link.href)}
                               className="text-[14px] text-brand-body hover:text-gray-500 transition-colors duration-300 block"
                             >
                               {link.label}
@@ -517,7 +544,18 @@ export const Navbar = () => {
                                 <div key={column.id}>
                                   {column.title && (
                                     <h4 className="text-xs font-bold tracking-wider text-gray-400 uppercase mb-3">
-                                      {column.title}
+                                      {column.href ? (
+                                        <Link
+                                          href={column.href}
+                                          scroll={false}
+                                          onClick={(e) => handleNavLinkClick(e, column.href || '')}
+                                          className="hover:text-brand-primary-dark transition-colors"
+                                        >
+                                          {column.title}
+                                        </Link>
+                                      ) : (
+                                        column.title
+                                      )}
                                     </h4>
                                   )}
                                   <ul className="flex flex-col gap-3">
@@ -525,7 +563,8 @@ export const Navbar = () => {
                                       <li key={link.id}>
                                         <Link
                                           href={link.href}
-                                          onClick={() => setIsMobileMenuOpen(false)}
+                                          scroll={false}
+                                          onClick={(e) => handleNavLinkClick(e, link.href)}
                                           className="text-[15px] text-brand-body"
                                         >
                                           {link.label}

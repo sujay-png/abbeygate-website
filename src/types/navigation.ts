@@ -6,7 +6,8 @@ export interface MegaMenuLink {
 
 export interface MegaMenuColumn {
   id: string;
-  title?: string; 
+  title?: string;
+  href?: string;
   links: MegaMenuLink[];
 }
 
