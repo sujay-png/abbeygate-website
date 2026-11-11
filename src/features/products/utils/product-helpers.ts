@@ -342,6 +342,10 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
       clearTimeout(timeoutId);
       if (res.ok) {
         const json = await res.json();
+        if (json.bounds) {
+          boundingBoxCache.set(imageUrl, json.bounds);
+          return json.bounds;
+        }
         if (json.dataUrl) srcToLoad = json.dataUrl;
       }
     } catch {

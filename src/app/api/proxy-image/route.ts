@@ -281,11 +281,24 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Image too large' }, { status: 413 });
     }
     const buffer = await response.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString('base64');
+    const nodeBuf = Buffer.from(buffer);
+    const base64 = nodeBuf.toString('base64');
     const dataUrl = `data:${contentType};base64,${base64}`;
 
+    // Dynamic server-side product bounds and aspect ratio detection using Sharp
+    const boundsInfo = await detectProductBoundsFromBuffer(nodeBuf);
+    const bounds = boundsInfo
+      ? {
+          left: boundsInfo.left,
+          right: boundsInfo.right,
+          top: boundsInfo.top,
+          bottom: boundsInfo.bottom,
+        }
+      : null;
+    const aspectRatio = boundsInfo ? boundsInfo.aspectRatio : null;
+
     return NextResponse.json(
-      { dataUrl },
+      { dataUrl, bounds, aspectRatio },
       {
         headers: {
           'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800',

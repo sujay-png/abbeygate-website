@@ -1064,7 +1064,7 @@ export const ProductDetailClient = ({
             </div>
           )}
 
-          <div className="flex flex-col md:flex-row gap-4 lg:gap-6 w-full">
+          <div className="flex flex-col md:flex-row items-start gap-4 lg:gap-6 w-full">
             {product.images.length > 1 && (
               <div className="flex md:flex-col gap-4 overflow-x-auto md:overflow-y-auto md:max-h-[600px] pb-2 md:pb-0 scrollbar-hide shrink-0 order-2 md:order-1">
                 {product.images.map((img, index) => {
@@ -1135,10 +1135,10 @@ export const ProductDetailClient = ({
                   onMouseMove={handleMouseMove}
                 >
                   <div
-                    className="absolute inset-0 p-4 transition-transform duration-300 ease-out"
+                    className="absolute inset-0 transition-transform duration-300 ease-out"
                     style={{
                       transformOrigin: zoomOrigin,
-                      transform: isZooming ? 'scale(2.2)' : 'scale(1.05)'
+                      transform: isZooming ? 'scale(2.2)' : 'scale(1)'
                     }}
                   >
                     <AnimatePresence mode="wait">

@@ -87,10 +87,6 @@ const BACKGROUND_IMAGE_BOUNDS: BoundsEntry[] = [
     imageUrlFragment: 'applepeel-a5-notebook',
     bounds: { left: 22.3, right: 77.9, top: 7.9, bottom: 91.9 },
   },
-  {
-    imageUrlFragment: 'Chelsea-A5-WTV-Deluxe-2026-Notebook',
-    bounds: { left: 22.8, right: 77.2, top: 9.8, bottom: 90.2 },
-  },
 ];
 
 export function getConfiguredImageBounds(imageUrl: string): ProductImageBounds | null {
