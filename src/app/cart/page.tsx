@@ -380,9 +380,9 @@ export default function CartPage() {
                   // by the time the cart sync finishes, the page is already in the browser cache.
                   const link = document.createElement('link');
                   link.rel = 'prefetch';
-                  link.href = 'https://dashboard.abbeygate-england.com/checkout/';
+                  link.href = 'https://dashboard.abbeygate-business.com/checkout/';
                   link.as = 'document';
-                  if (!document.head.querySelector('link[href*="abbeygate-england.com/checkout"]')) {
+                  if (!document.head.querySelector('link[href*="abbeygate-business.com/checkout"]')) {
                     document.head.appendChild(link);
                   }
                 }}

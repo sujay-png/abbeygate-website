@@ -13,6 +13,14 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "dashboard.abbeygate-business.com",
+      },
+      {
+        protocol: "https",
+        hostname: "abbeygate-business.com",
+      },
+      {
+        protocol: "https",
         hostname: "dashboard.abbeygate-england.com",
       },
       {
@@ -26,7 +34,7 @@ const nextConfig: NextConfig = {
     agentUpgrade: 'security',
     serverActions: {
       bodySizeLimit: '10mb',
-      allowedOrigins: ['local.abbeygate-england.com'],
+      allowedOrigins: ['abbeygate-business.com', 'local.abbeygate-business.com', 'local.abbeygate-england.com'],
     },
   },
   async headers() {

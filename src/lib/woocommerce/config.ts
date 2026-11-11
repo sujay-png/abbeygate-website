@@ -1,13 +1,13 @@
 /**
  * Shared WooCommerce base URL helpers.
  * WOOCOMMERCE_STORE_URL must be the site origin only, e.g.
- * https://dashboard.abbeygate-england.com
+ * https://dashboard.abbeygate-business.com
  *
  * If someone pastes a full REST path we strip it so Store API + REST API
  * both resolve correctly.
  */
 
-const DEFAULT_STORE_URL = "https://dashboard.abbeygate-england.com";
+const DEFAULT_STORE_URL = "https://dashboard.abbeygate-business.com";
 
 export function normalizeWooStoreUrl(raw?: string | null): string {
   let url = (raw ?? DEFAULT_STORE_URL).trim();

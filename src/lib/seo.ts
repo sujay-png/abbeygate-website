@@ -3,10 +3,10 @@ import { getStoreCategories } from '@/features/products/services/store-products'
 
 /**
  * Public origin of the storefront. Canonicals, sitemap, robots, OG images and JSON-LD all derive
- * from this, so they can never disagree. dashboard.abbeygate-england.com is the WordPress backend
+ * from this, so they can never disagree. dashboard.abbeygate-business.com is the WordPress backend
  * and must never be used here — canonicals pointing at it tell Google to index the wrong host.
  */
-export const SITE_URL = (process.env.NEXT_PUBLIC_BASE_URL || 'https://corporate.abbeygate-england.com').replace(/\/+$/, '');
+export const SITE_URL = (process.env.NEXT_PUBLIC_BASE_URL || 'https://abbeygate-business.com').replace(/\/+$/, '');
 
 /** Serialise JSON-LD safely: escaping `<` stops CMS-supplied text from closing the <script> tag. */
 export function jsonLd(data: unknown): string {

@@ -107,7 +107,7 @@ export async function findCustomerIdByEmail(email: string): Promise<number> {
 
   // 2. Try WordPress users API (supports admins, B2B users, etc.)
   try {
-    const storeUrl = process.env.WOOCOMMERCE_STORE_URL || 'https://dashboard.abbeygate-england.com';
+    const storeUrl = process.env.WOOCOMMERCE_STORE_URL || 'https://dashboard.abbeygate-business.com';
     const wpUser = process.env.WP_APPLICATION_USERNAME;
     const wpPass = process.env.WP_APPLICATION_PASSWORD;
     if (wpUser && wpPass) {

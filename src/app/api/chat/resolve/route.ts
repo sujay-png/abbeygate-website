@@ -6,7 +6,7 @@ function getStoreUrl(): string {
   return (
     process.env.WOOCOMMERCE_STORE_URL ||
     process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL ||
-    'https://dashboard.abbeygate-england.com'
+    'https://dashboard.abbeygate-business.com'
   ).replace(/\/$/, '');
 }
 

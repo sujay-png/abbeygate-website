@@ -17,7 +17,11 @@ async function shareWordPressAuthCookies(response: Response) {
   const cookieStore = await cookies();
   const requestHeaders = await headers();
   const origin = requestHeaders.get('origin') || requestHeaders.get('host') || '';
-  const shareAcrossSubdomains = origin.includes('abbeygate-england.com');
+  const sharedDomain = origin.includes('abbeygate-business.com')
+    ? '.abbeygate-business.com'
+    : origin.includes('abbeygate-england.com')
+    ? '.abbeygate-england.com'
+    : undefined;
 
   for (const rawCookie of setCookies) {
     const parts = rawCookie.split(';').map((part) => part.trim());
@@ -57,7 +61,7 @@ async function shareWordPressAuthCookies(response: Response) {
       }
     }
 
-    if (shareAcrossSubdomains) options.domain = '.abbeygate-england.com';
+    if (sharedDomain) options.domain = sharedDomain;
     cookieStore.set(name, value, options);
   }
 }
@@ -75,7 +79,7 @@ export async function loginCustomer(
     }
 
     // Call the custom WP REST API login endpoint
-    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://dashboard.abbeygate-england.com';
+    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://dashboard.abbeygate-business.com';
     
     const response = await fetch(`${storeUrl}/wp-json/headless/v1/login`, {
       method: 'POST',
@@ -147,7 +151,11 @@ export async function logoutCustomer() {
   const allCookies = cookieStore.getAll();
   const requestHeaders = await headers();
   const origin = requestHeaders.get('origin') || requestHeaders.get('host') || '';
-  const shareAcrossSubdomains = origin.includes('abbeygate-england.com');
+  const sharedDomain = origin.includes('abbeygate-business.com')
+    ? '.abbeygate-business.com'
+    : origin.includes('abbeygate-england.com')
+    ? '.abbeygate-england.com'
+    : undefined;
   
   for (const cookie of allCookies) {
     const name = cookie.name;
@@ -156,8 +164,8 @@ export async function logoutCustomer() {
       name.startsWith('wp-') ||
       name.startsWith('woocommerce_')
     ) {
-      if (shareAcrossSubdomains) {
-        cookieStore.delete({ name, domain: '.abbeygate-england.com' });
+      if (sharedDomain) {
+        cookieStore.delete({ name, domain: sharedDomain });
       } else {
         cookieStore.delete(name);
       }

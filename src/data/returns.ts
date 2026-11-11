@@ -17,7 +17,7 @@ export const returnsData = {
           Abbeygate England<br>
           <a href="mailto:support@abbeygate-england.com" class="text-rose-400 hover:text-rose-500 underline">support@abbeygate-england.com</a>
         </p>
-        <p>Website: <a href="https://dashboard.abbeygate-england.com" class="text-rose-400 hover:text-rose-500 underline" target="_blank" rel="noopener noreferrer">dashboard.abbeygate-england.com</a></p>
+        <p>Website: <a href="https://abbeygate-business.com" class="text-rose-400 hover:text-rose-500 underline" target="_blank" rel="noopener noreferrer">abbeygate-business.com</a></p>
       `
     },
     {

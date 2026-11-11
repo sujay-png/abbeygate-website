@@ -4,8 +4,8 @@ import { isBicolourProduct, isHorizonProduct } from './product-helpers';
 
 describe('product-image-bounds', () => {
   it('matches Bicolour Pocket Diary images with underscores and hyphens', () => {
-    const underscoreUrl = 'https://dashboard.abbeygate-england.com/wp-content/uploads/2025/12/NewHide_Bicolour_Pocket_Diary_BK-AQ.jpg';
-    const hyphenUrl = 'https://dashboard.abbeygate-england.com/wp-content/uploads/2025/12/NewHide-Bicolour-Pocket-Diary-BK-OR.jpg';
+    const underscoreUrl = 'https://dashboard.abbeygate-business.com/wp-content/uploads/2025/12/NewHide_Bicolour_Pocket_Diary_BK-AQ.jpg';
+    const hyphenUrl = 'https://dashboard.abbeygate-business.com/wp-content/uploads/2025/12/NewHide-Bicolour-Pocket-Diary-BK-OR.jpg';
 
     const boundsUnderscore = getConfiguredImageBounds(underscoreUrl);
     const boundsHyphen = getConfiguredImageBounds(hyphenUrl);

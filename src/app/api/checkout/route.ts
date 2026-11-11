@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkoutRateLimit } from '@/lib/rate-limit';
 
-const WOOCOMMERCE_STORE_URL = process.env.WOOCOMMERCE_STORE_URL || 'https://dashboard.abbeygate-england.com';
+const WOOCOMMERCE_STORE_URL = process.env.WOOCOMMERCE_STORE_URL || 'https://dashboard.abbeygate-business.com';
 
 async function getWooCommerceError(response: Response): Promise<string | null> {
   const body = await response.text();
@@ -198,7 +198,11 @@ export async function POST(request: NextRequest) {
 
       // ENFORCE cross-subdomain sharing ONLY if running on the actual production domain.
       const origin = request.headers.get('origin') || request.headers.get('host') || '';
-      if (origin.includes('abbeygate-england.com')) {
+      if (origin.includes('abbeygate-business.com')) {
+        options.domain = '.abbeygate-business.com';
+        options.secure = true;
+        options.sameSite = 'lax';
+      } else if (origin.includes('abbeygate-england.com')) {
         options.domain = '.abbeygate-england.com';
         options.secure = true;
         options.sameSite = 'lax';

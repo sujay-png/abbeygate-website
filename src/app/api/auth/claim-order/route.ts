@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Username/Email and password are required' }, { status: 400 });
     }
 
-    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://dashboard.abbeygate-england.com';
+    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://dashboard.abbeygate-business.com';
 
     // 1. Authenticate with headless login endpoint
     const response = await fetch(`${storeUrl}/wp-json/headless/v1/login`, {

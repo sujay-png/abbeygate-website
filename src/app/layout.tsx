@@ -73,8 +73,8 @@ export default function RootLayout({
       </head>
       {/* Preconnect to WordPress checkout domain so the TLS handshake is already
           done when the user clicks "Proceed to Checkout" from the cart page. */}
-      <link rel="preconnect" href="https://dashboard.abbeygate-england.com" />
-      <link rel="dns-prefetch" href="https://dashboard.abbeygate-england.com" />
+      <link rel="preconnect" href="https://dashboard.abbeygate-business.com" />
+      <link rel="dns-prefetch" href="https://dashboard.abbeygate-business.com" />
 
       <body
         className="min-h-screen flex flex-col bg-brand-cream text-brand-body"

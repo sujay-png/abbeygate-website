@@ -41,7 +41,7 @@ export function validateEnv(customEnv?: Record<string, string | undefined>): {
   }
 
   const env: AppEnv = {
-    WOOCOMMERCE_STORE_URL: storeUrl || 'https://dashboard.abbeygate-england.com',
+    WOOCOMMERCE_STORE_URL: storeUrl || 'https://dashboard.abbeygate-business.com',
     WOOCOMMERCE_CONSUMER_KEY: consumerKey || '',
     WOOCOMMERCE_CONSUMER_SECRET: consumerSecret || '',
     STRIPE_SECRET_KEY: source.STRIPE_SECRET_KEY?.trim(),

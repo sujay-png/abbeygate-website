@@ -6,6 +6,8 @@ const ALLOWED_DOMAINS = [
   // callers make the server request its own internal endpoints (SSRF).
   ...(process.env.NODE_ENV === 'production' ? [] : ['localhost', '127.0.0.1']),
   'abbeygate-website.vercel.app',
+  'dashboard.abbeygate-business.com',
+  'abbeygate-business.com',
   'dashboard.abbeygate-england.com',
   'abbeygate-england.com'
 ];
