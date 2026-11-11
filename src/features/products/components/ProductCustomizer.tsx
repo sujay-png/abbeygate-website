@@ -116,6 +116,19 @@ export const ProductCustomizer = ({
   // The branding preview and corner edges must ONLY be applied to the lead image (front cover) of the product
   const leadCoverImage = product.images?.[0];
   const coverImageSrc = leadCoverImage?.src || leadCoverImage?.thumbnail || activeImageUrl || '';
+  // NB-BK bicolour covers have a black spine on the left. The branding cards
+  // should preview the material that will actually be branded: the coloured
+  // right-hand cover panel, without the stitch line.
+  const isNbBkBicolour = isBicolour && product.sku?.toUpperCase().startsWith('NB-BK');
+  const brandingPreviewStyle = {
+    backgroundColor: getColorBackground(activeColorHex, '#f3f4f6'),
+    backgroundImage: coverImageSrc ? `url(${coverImageSrc})` : undefined,
+    // The coloured panel is narrower than the normal tile crop, so zoom it
+    // independently to prevent either the spine or studio backdrop leaking in.
+    backgroundSize: coverImageSrc ? (isNbBkBicolour ? '400%' : '310%') : undefined,
+    backgroundPosition: isNbBkBicolour ? '59% center' : 'center',
+    backgroundRepeat: 'no-repeat',
+  };
 
   const [collapseOpen, setCollapseOpen] = useState(true);
   const [showLogoInfo, setShowLogoInfo] = useState(false);
@@ -371,13 +384,7 @@ export const ProductCustomizer = ({
               >
                   <div 
                     className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative"
-                    style={{ 
-                      backgroundColor: getColorBackground(activeColorHex, '#f3f4f6'),
-                      backgroundImage: coverImageSrc ? `url(${coverImageSrc})` : undefined,
-                      backgroundSize: coverImageSrc ? '310%' : undefined,
-                      backgroundPosition: 'center',
-                      backgroundRepeat: 'no-repeat'
-                    }}
+                    style={brandingPreviewStyle}
                  >
                     {customization.logoPreviewUrl ? (
                       <div 
@@ -438,13 +445,7 @@ export const ProductCustomizer = ({
               >
                   <div 
                     className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative"
-                    style={{ 
-                      backgroundColor: getColorBackground(activeColorHex, '#f3f4f6'),
-                      backgroundImage: coverImageSrc ? `url(${coverImageSrc})` : undefined,
-                      backgroundSize: coverImageSrc ? '310%' : undefined,
-                      backgroundPosition: 'center',
-                      backgroundRepeat: 'no-repeat'
-                    }}
+                    style={brandingPreviewStyle}
                  >
                     {customization.logoPreviewUrl ? (
                       <>
@@ -519,13 +520,7 @@ export const ProductCustomizer = ({
               >
                   <div 
                     className="aspect-[3/2] rounded-lg mb-3 flex items-center justify-center overflow-hidden relative"
-                    style={{ 
-                      backgroundColor: getColorBackground(activeColorHex, '#f3f4f6'),
-                      backgroundImage: coverImageSrc ? `url(${coverImageSrc})` : undefined,
-                      backgroundSize: coverImageSrc ? '310%' : undefined,
-                      backgroundPosition: 'center',
-                      backgroundRepeat: 'no-repeat'
-                    }}
+                    style={brandingPreviewStyle}
                  >
                     {customization.logoPreviewUrl ? (
                        <div 
