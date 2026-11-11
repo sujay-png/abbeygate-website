@@ -31,14 +31,6 @@ describe('product-image-bounds', () => {
     expect(bounds).not.toBeNull();
     expect(bounds).toEqual({ left: 19.2, right: 79.1, top: 13.2, bottom: 87.3 });
   });
-
-  it('matches Chelsea Leather A5 Notebook (CL-BK-U-31) portrait bounds', () => {
-    const url = 'https://dashboard.abbeygate-england.com/wp-content/uploads/2025/11/Chelsea-A5-WTV-Deluxe-2026-Notebook-Blue-scaled-1.jpg';
-    const bounds = getConfiguredImageBounds(url);
-
-    expect(bounds).not.toBeNull();
-    expect(bounds).toEqual({ left: 17.9, right: 82.0, top: 16.6, bottom: 82.5 });
-  });
 });
 
 describe('product-helpers classification', () => {

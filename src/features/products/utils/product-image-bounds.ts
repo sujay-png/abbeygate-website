@@ -81,7 +81,7 @@ const BACKGROUND_IMAGE_BOUNDS: BoundsEntry[] = [
   },
   {
     imageUrlFragment: 'NewHide-Horizon-A5-Desk-Diary',
-    bounds: { left: 24.1, right: 76.4, top: 13.6, bottom: 86.1 },
+    bounds: { left: 22.8, right: 77.2, top: 12.2, bottom: 88.0 },
   },
   {
     imageUrlFragment: 'applepeel-a5-notebook',
@@ -89,11 +89,7 @@ const BACKGROUND_IMAGE_BOUNDS: BoundsEntry[] = [
   },
   {
     imageUrlFragment: 'Chelsea-A5-WTV-Deluxe-2026-Notebook',
-    bounds: { left: 17.9, right: 82.0, top: 16.6, bottom: 82.5 },
-  },
-  {
-    imageUrlFragment: 'CL_DX_DIARY_BLUE',
-    bounds: { left: 14.7, right: 84.3, top: 7.4, bottom: 88.9 },
+    bounds: { left: 22.8, right: 77.2, top: 9.8, bottom: 90.2 },
   },
 ];
 
