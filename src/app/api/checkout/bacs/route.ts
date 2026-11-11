@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
           ...(line.customization.foilColor ? [{ key: 'Foil Colour', value: line.customization.foilColor }] : []),
           ...(line.customization.cornerEdges ? [{ key: 'Corner Edges', value: line.customization.cornerEdges }] : []),
           ...(line.customization.fileName ? [{ key: 'Uploaded File', value: line.customization.fileName }] : []),
-          ...(line.customization.logoUrl ? [{ key: 'Download Logo', value: line.customization.logoUrl }] : []),
+          ...(line.customization.logoUrl ? [{ key: 'View Logo', value: line.customization.logoUrl }] : []),
           ...(line.customization.previewUrl ? [{ key: 'View Proof', value: line.customization.previewUrl }] : []),
         ] : []
       })),

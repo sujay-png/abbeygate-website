@@ -464,9 +464,10 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
         for (let x = 0; x < canvas.width; x++) avgGradX += sumX[x];
         avgGradX /= canvas.width;
 
-        // Scan inward from an outer occupancy edge toward the product center,
-        // locking onto the first prominent physical edge gradient.
-        // This stops at the true leather edge and never overshoots into soft drop shadows or interior stitches.
+        // Scan inward from an outer occupancy edge toward the product center.
+        // Soft drop-shadows may create an initial weak gradient boundary.
+        // The true physical leather boundary has a substantially higher gradient.
+        // We evaluate candidate peaks in the outer margin window and lock onto the dominant physical edge.
         const snapInward = (
           arr: Float64Array,
           start: number,
@@ -475,11 +476,10 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
           threshold: number
         ) => {
           const end = start + step * inwardDelta;
-          let bestPeak = start;
-          let bestPeakVal = 0;
+          const peaks: Array<{ idx: number; val: number }> = [];
           let inPeak = false;
-          let peakMax = 0;
-          let peakIdx = start;
+          let curPeakIdx = start;
+          let curPeakVal = 0;
 
           for (let i = start; step > 0 ? i <= end : i >= end; i += step) {
             const val = arr[i];
@@ -487,28 +487,46 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
             if (val > threshold) {
               if (!inPeak) {
                 inPeak = true;
-                peakMax = val;
-                peakIdx = i;
-              } else if (val > peakMax) {
-                peakMax = val;
-                peakIdx = i;
+                curPeakIdx = i;
+                curPeakVal = val;
+              } else if (val > curPeakVal) {
+                curPeakVal = val;
+                curPeakIdx = i;
               }
             } else if (inPeak) {
-              // Exited the first prominent peak coming from outside inward
-              return peakIdx;
-            }
-
-            if (val > bestPeakVal) {
-              bestPeakVal = val;
-              bestPeak = i;
+              peaks.push({ idx: curPeakIdx, val: curPeakVal });
+              inPeak = false;
             }
           }
 
-          return inPeak ? peakIdx : bestPeak;
+          if (inPeak) {
+            peaks.push({ idx: curPeakIdx, val: curPeakVal });
+          }
+
+          if (peaks.length === 0) {
+            let bestIdx = start;
+            let bestVal = 0;
+            for (let i = start; step > 0 ? i <= end : i >= end; i += step) {
+              if (arr[i] > bestVal) {
+                bestVal = arr[i];
+                bestIdx = i;
+              }
+            }
+            return bestIdx;
+          }
+
+          // Select the dominant physical peak across the outer margin
+          let dominant = peaks[0];
+          for (const p of peaks) {
+            if (p.val > dominant.val) {
+              dominant = p;
+            }
+          }
+          return dominant.idx;
         };
 
-        const snapWindowY = Math.max(10, Math.floor(canvas.height * 0.05));
-        const snapWindowX = Math.max(10, Math.floor(canvas.width * 0.05));
+        const snapWindowY = Math.max(15, Math.floor(canvas.height * 0.08));
+        const snapWindowX = Math.max(15, Math.floor(canvas.width * 0.08));
         const threshY = Math.max(avgGradY * 1.3, 1500);
         const threshX = Math.max(avgGradX * 1.3, 1500);
 

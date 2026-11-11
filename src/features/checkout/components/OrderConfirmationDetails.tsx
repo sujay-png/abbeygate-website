@@ -130,23 +130,46 @@ export function OrderConfirmationDetails({ order, isGuest, bankDetails }: Props)
                         <span className="text-brand-grey">× {item.quantity}</span>
                         {item.meta && item.meta.length > 0 && (
                           <div className="mt-2 pl-2 space-y-1 text-xs border-l-2 border-brand-primary/20">
-                            {item.meta.map((meta: any, mIdx: number) => (
-                              <p key={mIdx}>
-                                <span className="font-medium text-brand-body">{meta.key}:</span>{' '}
-                                {meta.value?.toString().includes('http') ? (
-                                  <a
-                                    href={meta.value}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-brand-primary hover:underline break-all"
-                                  >
-                                    {meta.value}
-                                  </a>
-                                ) : (
-                                  meta.value
-                                )}
-                              </p>
-                            ))}
+                            {item.meta.map((meta: any, mIdx: number) => {
+                              const keyLower = (meta.key || '').toLowerCase();
+                              const valStr = meta.value?.toString() || '';
+                              const isUrl = valStr.includes('http');
+                              const isLogo = isUrl && (keyLower.includes('logo') || valStr.toLowerCase().includes('logo'));
+                              const isProof = isUrl && (keyLower.includes('proof') || valStr.toLowerCase().includes('proof'));
+
+                              if (isLogo || isProof) {
+                                return (
+                                  <p key={mIdx}>
+                                    <a
+                                      href={valStr}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-brand-primary underline hover:text-brand-primary/80 font-semibold"
+                                    >
+                                      {isLogo ? 'View Logo' : 'View Proof'}
+                                    </a>
+                                  </p>
+                                );
+                              }
+
+                              return (
+                                <p key={mIdx}>
+                                  <span className="font-medium text-brand-body">{meta.key}:</span>{' '}
+                                  {isUrl ? (
+                                    <a
+                                      href={valStr}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-brand-primary underline hover:text-brand-primary/80 break-all"
+                                    >
+                                      {valStr}
+                                    </a>
+                                  ) : (
+                                    meta.value
+                                  )}
+                                </p>
+                              );
+                            })}
                           </div>
                         )}
                       </td>

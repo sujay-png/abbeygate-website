@@ -39,6 +39,10 @@ const BACKGROUND_IMAGE_BOUNDS: BoundsEntry[] = [
     imageUrlFragment: 'NewHide_Bicolour_Pocket_Diary',
     bounds: { left: 29.5, right: 69.8, top: 10.0, bottom: 88.8 },
   },
+  {
+    imageUrlFragment: 'applepeel-a5-notebook',
+    bounds: { left: 22.5, right: 77.9, top: 7.8, bottom: 92.0 },
+  },
 ];
 
 export function getConfiguredImageBounds(imageUrl: string): ProductImageBounds | null {
