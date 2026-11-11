@@ -49,6 +49,31 @@ export function sanitizeImageUrl(url?: string | null): string {
   if (!url) return '';
   return url.replace(/ /g, '%20');
 }
+
+/** Check if product is a bi-colour diary / notebook (e.g. Dorchester Bicolour, SKU NB-BK / NB-BL) */
+export function isBicolourProduct(product?: { sku?: string; name?: string; slug?: string } | null): boolean {
+  if (!product) return false;
+  const sku = (product.sku || '').toUpperCase();
+  const name = (product.name || '').toLowerCase();
+  const slug = (product.slug || '').toLowerCase();
+  
+  if (sku.startsWith('NB-BK') || sku.startsWith('NB-BL') || sku.startsWith('NB-')) {
+    if (name.includes('bicolour') || name.includes('bi-color') || name.includes('bicolor') || slug.includes('bicolour') || slug.includes('bi-color') || slug.includes('bicolor')) {
+      return true;
+    }
+  }
+  return name.includes('bicolour') || name.includes('bi-color') || name.includes('bicolor') || slug.includes('bicolour') || slug.includes('bi-color') || slug.includes('bicolor');
+}
+
+/** Check if product is a Horizon diary (e.g. Dorchester Horizon, SKU HZ-BK) */
+export function isHorizonProduct(product?: { sku?: string; name?: string; slug?: string } | null): boolean {
+  if (!product) return false;
+  const sku = (product.sku || '').toUpperCase();
+  const name = (product.name || '').toLowerCase();
+  const slug = (product.slug || '').toLowerCase();
+
+  return sku.startsWith('HZ-') || name.includes('horizon') || slug.includes('horizon');
+}
 export function productMatchesFilters(
   product: StoreProduct,
   filters: ProductFilters,

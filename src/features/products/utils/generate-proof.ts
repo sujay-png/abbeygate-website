@@ -15,6 +15,8 @@ export type ProofGeometry = {
   heightMm: number; 
   isDiary: boolean;
   isCurved?: boolean;
+  isBicolour?: boolean;
+  isHorizon?: boolean;
 };
 
 export type ProofResult = {
@@ -141,6 +143,7 @@ export async function composeProof(args: {
         const bookTop = finalBounds ? finalBounds.top : anchors.bookTop;
         const bookBottom = finalBounds ? finalBounds.bottom : anchors.bookBottom;
 
+        const isBicolour = geometry.isBicolour ?? false;
         const bookWidth = bookRight - bookLeft;
         const bookHeight = bookBottom - bookTop;
         const marginX = bookWidth * 0.08;
@@ -148,26 +151,36 @@ export async function composeProof(args: {
 
         const diaryTopOffset = geometry.isDiary ? (bookHeight * 0.15) : 0;
 
-        const safeLeft = bookLeft + marginX;
-        const safeRight = bookRight - marginX;
+        // For bi-colour diaries (NB-BK), exclude the black spine and stitch line from the printable area
+        let printableLeft = bookLeft + marginX;
+        if (isBicolour) {
+          const spineRatio = bookWidth < 45 ? 0.325 : 0.185;
+          const stitchX = bookLeft + (bookWidth * spineRatio);
+          printableLeft = stitchX + (bookWidth * 0.04);
+        }
+
+        const printableRight = bookRight - marginX;
         const safeTop = bookTop + marginY + diaryTopOffset;
         const safeBottom = bookBottom - marginY;
+
+        const printableCenterX = (printableLeft + printableRight) / 2;
+        const printableCenterY = (safeTop + safeBottom) / 2;
 
         if (branding.logoPreviewUrl) {
           const logoImg = await loadLogoImageElement(branding.logoPreviewUrl);
 
           const posLabel = branding.positionLabel || 'center';
-          let boxLeft = 50 - 12.5;
-          let boxTop = 50 - 12.5;
+          let boxLeft = printableCenterX - 12.5;
+          let boxTop = printableCenterY - 12.5;
 
-          if (posLabel === 'top-left') { boxLeft = safeLeft; boxTop = safeTop; }
-          else if (posLabel === 'top-center') { boxLeft = 50 - 12.5; boxTop = safeTop; }
-          else if (posLabel === 'top-right') { boxLeft = safeRight - 25; boxTop = safeTop; }
-          else if (posLabel === 'center-left') { boxLeft = safeLeft; boxTop = 50 - 12.5; }
-          else if (posLabel === 'center-right') { boxLeft = safeRight - 25; boxTop = 50 - 12.5; }
-          else if (posLabel === 'bottom-left') { boxLeft = safeLeft; boxTop = safeBottom - 25; }
-          else if (posLabel === 'bottom-center') { boxLeft = 50 - 12.5; boxTop = safeBottom - 25; }
-          else if (posLabel === 'bottom-right') { boxLeft = safeRight - 25; boxTop = safeBottom - 25; }
+          if (posLabel === 'top-left') { boxLeft = printableLeft; boxTop = safeTop; }
+          else if (posLabel === 'top-center') { boxLeft = printableCenterX - 12.5; boxTop = safeTop; }
+          else if (posLabel === 'top-right') { boxLeft = printableRight - 25; boxTop = safeTop; }
+          else if (posLabel === 'center-left') { boxLeft = printableLeft; boxTop = printableCenterY - 12.5; }
+          else if (posLabel === 'center-right') { boxLeft = printableRight - 25; boxTop = printableCenterY - 12.5; }
+          else if (posLabel === 'bottom-left') { boxLeft = printableLeft; boxTop = safeBottom - 25; }
+          else if (posLabel === 'bottom-center') { boxLeft = printableCenterX - 12.5; boxTop = safeBottom - 25; }
+          else if (posLabel === 'bottom-right') { boxLeft = printableRight - 25; boxTop = safeBottom - 25; }
 
           const scaledBoxWidth = 25 * (branding.logoScale || 1);
           const scaledBoxHeight = 25 * (branding.logoScale || 1);
@@ -283,7 +296,7 @@ export async function composeProof(args: {
         if (branding.cornerEdges && branding.cornerEdges !== 'None') {
           try {
             if (finalBounds) {
-              const offset = CANVAS_SIZE * 0.002;
+              const offset = 0;
               const clipW = CANVAS_SIZE * 0.08; // Increased from 0.06 to match 8% visual size
               const clipH = clipW;
               

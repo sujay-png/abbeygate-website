@@ -111,4 +111,23 @@ describe('composeProof geometry calculations', () => {
       expect(Math.round(result!.topPercent * 10) / 10).toMatchSnapshot(`top-${pos}`);
     });
   });
+
+  it('centers logo on the colored leather panel for bi-colour diaries, avoiding stitch line', async () => {
+    const normalResult = await composeProof({
+      ...baseArgs,
+      branding: { ...baseArgs.branding, positionLabel: 'center' },
+      geometry: { ...baseArgs.geometry, isBicolour: false }
+    });
+
+    const bicolourResult = await composeProof({
+      ...baseArgs,
+      branding: { ...baseArgs.branding, positionLabel: 'center' },
+      geometry: { ...baseArgs.geometry, isBicolour: true }
+    });
+
+    expect(normalResult).not.toBeNull();
+    expect(bicolourResult).not.toBeNull();
+    // Bicolour center should shift rightwards onto the colored panel away from spine stitch
+    expect(bicolourResult!.leftPercent).toBeGreaterThan(normalResult!.leftPercent);
+  });
 });

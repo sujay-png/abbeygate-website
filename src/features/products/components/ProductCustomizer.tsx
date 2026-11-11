@@ -18,6 +18,7 @@ import {
 } from '../utils/pricing';
 import { processLogo } from '../utils/image-processing';
 import { getColorBackground } from '../utils/color-helpers';
+import { isBicolourProduct, isHorizonProduct } from '../utils/product-helpers';
 import { useVat } from '@/context/VatContext';
 
 export type CustomizationState = {
@@ -88,11 +89,29 @@ export const ProductCustomizer = ({
 }: ProductCustomizerProps) => {
   const isGifts = isGiftsProduct(product);
   const isFoil = isFoilBlockedProduct(product);
+  const isBicolour = isBicolourProduct(product);
+  const isHorizon = isHorizonProduct(product);
   const cornerEdgesPricing = getCornerEdgesPricing(product);
   const { showPricesIncludingVat } = useVat();
   const cornerPriceLabel = cornerEdgesPricing.pricePerPair > 0
     ? `+${formatGBP(cornerEdgesPricing.pricePerPair * (showPricesIncludingVat ? (1 + VAT_RATE) : 1))} per unit`
     : 'Price set for this product';
+
+  // Automatically reset disallowed positions for bi-colour and horizon diaries
+  useEffect(() => {
+    const curPos = customization.logoPosition?.label || 'center';
+    if (isBicolour && (curPos === 'top-left' || curPos === 'bottom-left')) {
+      onCustomizationChange({
+        ...customization,
+        logoPosition: { x: 0, y: 0, label: 'center' },
+      });
+    } else if (isHorizon && (curPos === 'top-left' || curPos === 'top-center' || curPos === 'top-right')) {
+      onCustomizationChange({
+        ...customization,
+        logoPosition: { x: 0, y: 0, label: 'center' },
+      });
+    }
+  }, [isBicolour, isHorizon, customization.logoPosition?.label]);
 
   // The branding preview and corner edges must ONLY be applied to the lead image (front cover) of the product
   const leadCoverImage = product.images?.[0];
@@ -559,7 +578,13 @@ export const ProductCustomizer = ({
                 { id: 'bottom-left', label: 'Bottom left' },
                 { id: 'bottom-center', label: 'Bottom centre' },
                 { id: 'bottom-right', label: 'Bottom right' },
-              ].map((pos) => {
+              ].filter((pos) => {
+                // Bi-colour diaries (NB-BK): exclude top-left and bottom-left due to spine stitch
+                if (isBicolour && (pos.id === 'top-left' || pos.id === 'bottom-left')) return false;
+                // Horizon diaries (HZ-BK): exclude all top positions due to top header banner
+                if (isHorizon && (pos.id === 'top-left' || pos.id === 'top-center' || pos.id === 'top-right')) return false;
+                return true;
+              }).map((pos) => {
                 const isSelected = (customization.logoPosition?.label || 'center') === pos.id;
                 
                 return (
@@ -575,14 +600,17 @@ export const ProductCustomizer = ({
                     }}
                     className={`px-4 py-3 rounded-lg border-2 text-[13px] font-bold transition-all flex flex-col items-center justify-center gap-1 min-w-[100px] flex-1 ${isSelected ? 'border-brand-primary bg-brand-tint text-brand-primary' : 'border-[var(--brand-border)] bg-[#f8f7f5] text-brand-body hover:border-gray-400'}`}
                   >
-                    <div className={`relative w-[22px] h-[30px] border-[1.5px] rounded-[3px] mb-1.5 transition-colors ${isSelected ? 'border-brand-primary bg-white' : 'border-gray-400 bg-white'}`}>
+                    <div className={`relative w-[22px] h-[30px] border-[1.5px] rounded-[3px] mb-1.5 transition-colors overflow-hidden ${isSelected ? 'border-brand-primary bg-white' : 'border-gray-400 bg-white'}`}>
+                      {isBicolour && (
+                        <div className="absolute top-0 bottom-0 left-0 w-[30%] bg-gray-200 border-r border-gray-300" />
+                      )}
                       <div className={`absolute w-[4px] h-[4px] rounded-full transition-colors ${isSelected ? 'bg-brand-primary' : 'bg-gray-400'} ${
                         pos.id === 'top-left' ? 'top-[3px] left-[3px]' :
-                        pos.id === 'top-center' ? 'top-[3px] left-1/2 -translate-x-1/2' :
+                        pos.id === 'top-center' ? (isBicolour ? 'top-[3px] left-[65%] -translate-x-1/2' : 'top-[3px] left-1/2 -translate-x-1/2') :
                         pos.id === 'top-right' ? 'top-[3px] right-[3px]' :
-                        pos.id === 'center' ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2' :
+                        pos.id === 'center' ? (isBicolour ? 'top-1/2 left-[65%] -translate-x-1/2 -translate-y-1/2' : 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2') :
                         pos.id === 'bottom-left' ? 'bottom-[3px] left-[3px]' :
-                        pos.id === 'bottom-center' ? 'bottom-[3px] left-1/2 -translate-x-1/2' :
+                        pos.id === 'bottom-center' ? (isBicolour ? 'bottom-[3px] left-[65%] -translate-x-1/2' : 'bottom-[3px] left-1/2 -translate-x-1/2') :
                         'bottom-[3px] right-[3px]'
                       }`} />
                     </div>

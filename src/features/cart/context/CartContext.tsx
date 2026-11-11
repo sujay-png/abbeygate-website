@@ -45,7 +45,7 @@ export interface CartItem {
   priceTiers?: PriceTier[];
   isGifts?: boolean;
   
-  proofGeometry?: { widthMm: number; heightMm: number; isDiary: boolean };
+  proofGeometry?: { widthMm: number; heightMm: number; isDiary: boolean; isBicolour?: boolean; isHorizon?: boolean };
 }
 
 export type PricedItem = CartItem & {

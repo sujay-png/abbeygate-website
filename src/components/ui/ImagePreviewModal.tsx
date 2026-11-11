@@ -311,7 +311,7 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, imageUrl, title = 'Cu
             {!useComposedPreview && imageBounds && hasCornerEdges && (
               <div style={{ position: 'absolute', top: '0', left: '0', width: '100%', height: '100%', zIndex: 15, pointerEvents: 'none' }}>
                 {(() => {
-                  const offset = 0.2;
+                  const offset = 0;
                   return ([] as Array<{top?: number, bottom?: number, left?: number, right?: number, rotate: string}>).concat([
                     { top: imageBounds.top - offset, right: 100 - imageBounds.right - offset, rotate: 'rotate-0' },
                     { bottom: 100 - imageBounds.bottom - offset, right: 100 - imageBounds.right - offset, rotate: 'rotate-90' },

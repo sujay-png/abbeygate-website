@@ -10,7 +10,7 @@ import { ProductCustomizationOverlay } from './ProductCustomizationOverlay';
 import { useCart } from '@/features/cart/context/CartContext';
 import { useVat } from '@/context/VatContext';
 import { BRANDING_SETUP_FEE, CORNER_PAIRS_PER_PRODUCT, CUSTOMIZATION_MIN_QTY, formatGBP, getCornerEdgesPricing, isGiftsProduct, LOGO_BLOCKING_PRICES, LOGO_CUSTOMIZATION_FEE, VAT_RATE, calculateProductPrice } from '../utils/pricing';
-import { getLogoAnchors, getImageBoundingBox, getProductPhysicalDimensionsMm, sanitizeImageUrl, stripHtml } from '../utils/product-helpers';
+import { getLogoAnchors, getImageBoundingBox, getProductPhysicalDimensionsMm, sanitizeImageUrl, stripHtml, isBicolourProduct, isHorizonProduct } from '../utils/product-helpers';
 import { getConfiguredImageBounds } from '../utils/product-image-bounds';
 import { composeProof } from '../utils/generate-proof';
 import { getColorBackground } from '../utils/color-helpers';
@@ -577,6 +577,8 @@ export const ProductDetailClient = ({
     ) ?? false;
     const isCurved = product.name?.toLowerCase().includes('lewes smoothgrain')
       || product.slug?.toLowerCase().includes('lewes-smoothgrain');
+    const isBicolour = isBicolourProduct(product);
+    const isHorizon = isHorizonProduct(product);
 
     const result = await composeProof({
       productImageUrl: mainImageSrc,
@@ -588,7 +590,7 @@ export const ProductDetailClient = ({
         logoScale: customization.logoScale ?? 1,
         logoPreviewUrl: customization.logoPreviewUrl,
       },
-      geometry: { widthMm: width, heightMm: height, isDiary, isCurved },
+      geometry: { widthMm: width, heightMm: height, isDiary, isCurved, isBicolour, isHorizon },
     });
     return result; // { fullPreviewUrl, imageBounds, leftPercent, topPercent, widthPercent }
   };
@@ -753,6 +755,8 @@ export const ProductDetailClient = ({
               isDiary: product.categories?.some(c =>
                 c.name.toLowerCase().includes('diar') || c.slug.toLowerCase().includes('diar')
               ) ?? false,
+              isBicolour: isBicolourProduct(product),
+              isHorizon: isHorizonProduct(product),
             };
           })(),
           proofStatus: 'ready',

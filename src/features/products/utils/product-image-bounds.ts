@@ -25,31 +25,82 @@ const BACKGROUND_IMAGE_BOUNDS: BoundsEntry[] = [
   },
   {
     imageUrlFragment: 'SaharaHide-Pocket-Desk-Diary',
-    bounds: { left: 29.5, right: 69.8, top: 10.0, bottom: 88.8 },
+    bounds: { left: 29.4, right: 70.3, top: 10.6, bottom: 89.0 },
   },
   {
     imageUrlFragment: 'NewHide_Pocket_Desk_Diary',
-    bounds: { left: 29.5, right: 69.8, top: 10.0, bottom: 88.8 },
+    bounds: { left: 29.4, right: 70.3, top: 10.6, bottom: 89.0 },
   },
   {
     imageUrlFragment: 'SmoothGrain-Pocket-Desk-Diary',
-    bounds: { left: 29.5, right: 69.8, top: 10.0, bottom: 88.8 },
+    bounds: { left: 29.4, right: 70.3, top: 10.6, bottom: 89.0 },
   },
   {
     imageUrlFragment: 'NewHide_Bicolour_Pocket_Diary',
-    bounds: { left: 29.5, right: 69.8, top: 10.0, bottom: 88.8 },
+    bounds: { left: 29.4, right: 70.3, top: 10.6, bottom: 89.0 },
+  },
+  {
+    imageUrlFragment: 'NewHide-Bicolour-Pocket-Diary',
+    bounds: { left: 29.4, right: 70.3, top: 10.6, bottom: 89.0 },
+  },
+  {
+    imageUrlFragment: 'Bicolour-Pocket-Diary',
+    bounds: { left: 29.4, right: 70.3, top: 10.6, bottom: 89.0 },
+  },
+  {
+    imageUrlFragment: 'Bicolour_Pocket_Diary',
+    bounds: { left: 29.4, right: 70.3, top: 10.6, bottom: 89.0 },
+  },
+  {
+    imageUrlFragment: 'NewHide-Horizon-Pocket-Desk-Diary',
+    bounds: { left: 29.4, right: 70.3, top: 10.6, bottom: 89.0 },
+  },
+  {
+    imageUrlFragment: 'NewHide_Horizon_Pocket_Desk_Diary',
+    bounds: { left: 29.4, right: 70.3, top: 10.6, bottom: 89.0 },
+  },
+  {
+    imageUrlFragment: 'NewHide-Bicolour-Quarto-Diary',
+    bounds: { left: 19.2, right: 80.3, top: 13.1, bottom: 88.4 },
+  },
+  {
+    imageUrlFragment: 'NewHide_Bicolour_Quarto_Diary',
+    bounds: { left: 19.2, right: 80.3, top: 13.1, bottom: 88.4 },
+  },
+  {
+    imageUrlFragment: 'Bicolour-Quarto-Diary',
+    bounds: { left: 19.2, right: 80.3, top: 13.1, bottom: 88.4 },
+  },
+  {
+    imageUrlFragment: 'NewHide-Horizon-Quarto-Desk-Diary',
+    bounds: { left: 19.2, right: 79.1, top: 13.2, bottom: 87.3 },
+  },
+  {
+    imageUrlFragment: 'NewHide_Horizon_Quarto_Desk_Diary',
+    bounds: { left: 19.2, right: 79.1, top: 13.2, bottom: 87.3 },
+  },
+  {
+    imageUrlFragment: 'NewHide-Horizon-A5-Desk-Diary',
+    bounds: { left: 22.8, right: 77.2, top: 12.2, bottom: 88.0 },
   },
   {
     imageUrlFragment: 'applepeel-a5-notebook',
-    bounds: { left: 22.5, right: 77.9, top: 7.8, bottom: 92.0 },
+    bounds: { left: 22.3, right: 77.9, top: 7.9, bottom: 91.9 },
+  },
+  {
+    imageUrlFragment: 'Chelsea-A5-WTV-Deluxe-2026-Notebook',
+    bounds: { left: 22.8, right: 77.2, top: 9.8, bottom: 90.2 },
   },
 ];
 
 export function getConfiguredImageBounds(imageUrl: string): ProductImageBounds | null {
-  const decodedUrl = decodeURIComponent(imageUrl);
-  const entry = BACKGROUND_IMAGE_BOUNDS.find(({ imageUrlFragment }) =>
-    decodedUrl.includes(imageUrlFragment),
-  );
+  const decodedUrl = decodeURIComponent(imageUrl).toLowerCase();
+  const entry = BACKGROUND_IMAGE_BOUNDS.find(({ imageUrlFragment }) => {
+    const fragLower = imageUrlFragment.toLowerCase();
+    const fragHyphen = fragLower.replace(/_/g, '-');
+    const fragUnderscore = fragLower.replace(/-/g, '_');
+    return decodedUrl.includes(fragLower) || decodedUrl.includes(fragHyphen) || decodedUrl.includes(fragUnderscore);
+  });
 
   return entry?.bounds ?? null;
 }

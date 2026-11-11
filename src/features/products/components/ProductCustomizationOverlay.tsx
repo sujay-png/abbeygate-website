@@ -1,7 +1,7 @@
 'use client';
 
 import type { StoreProduct } from '../types/store-product';
-import { getLogoAnchors } from '../utils/product-helpers';
+import { getLogoAnchors, isBicolourProduct } from '../utils/product-helpers';
 import type { CustomizationState } from './ProductCustomizer';
 import { getCornerEdgesPricing } from '../utils/pricing';
 
@@ -29,6 +29,8 @@ export const ProductCustomizationOverlay = ({
 
 
 
+  const isBicolour = isBicolourProduct(product);
+
   const bookWidth = bookRight - bookLeft;
   const bookHeight = bookBottom - bookTop;
   const marginX = bookWidth * 0.08;
@@ -37,26 +39,36 @@ export const ProductCustomizationOverlay = ({
   // Determine if product is a diary to avoid overlapping the pre-printed year (e.g. "2027")
   const isDiary = product.categories?.some(c => 
     c.name.toLowerCase().includes('diar') || c.slug.toLowerCase().includes('diar')
-  );
+  ) || (product.name || '').toLowerCase().includes('diar');
   
   // Add an extra vertical offset for diaries (e.g. 15% of book height) so the logo sits below the year
   const diaryTopOffset = isDiary ? (bookHeight * 0.15) : 0;
 
-  const safeLeft = bookLeft + marginX;
-  const safeRight = bookRight - marginX;
+  // For bi-colour diaries (NB-BK), exclude the black spine and stitch line from the printable area
+  let printableLeft = bookLeft + marginX;
+  if (isBicolour) {
+    const spineRatio = bookWidth < 45 ? 0.325 : 0.185;
+    const stitchX = bookLeft + (bookWidth * spineRatio);
+    printableLeft = stitchX + (bookWidth * 0.04);
+  }
+
+  const printableRight = bookRight - marginX;
   const safeTop = bookTop + marginY + diaryTopOffset;
   const safeBottom = bookBottom - marginY;
 
+  const printableCenterX = (printableLeft + printableRight) / 2;
+  const printableCenterY = (safeTop + safeBottom) / 2;
+
   const getAlignX = (align: 'left' | 'center' | 'right') => {
-    if (align === 'left') return safeLeft;
-    if (align === 'right') return safeRight - 25; // 25 is widthPercent
-    return 50 - 12.5;                                                      
+    if (align === 'left') return printableLeft;
+    if (align === 'right') return printableRight - 25; // 25 is widthPercent
+    return printableCenterX - 12.5;                                                      
   };
 
   const getAlignY = (align: 'top' | 'center' | 'bottom') => {
     if (align === 'top') return safeTop;
     if (align === 'bottom') return safeBottom - 25; // 25 is heightPercent
-    return 50 - 12.5;
+    return printableCenterY - 12.5;
   };
 
   const posLabel = customization.logoPosition?.label || 'center';
@@ -187,7 +199,7 @@ export const ProductCustomizationOverlay = ({
       {customization.cornerEdges !== 'None' && customization.cornerEdges && (
         <div style={{ position: 'absolute', top: '0', left: '0', width: '100%', height: '100%', zIndex: 15, pointerEvents: 'none' }}>
           {(() => {
-            const offset = 0.2;
+            const offset = 0;
             
             const cornerPricing = getCornerEdgesPricing(product);
             let cornerSizeClass = 'w-[8%] aspect-square h-auto';
