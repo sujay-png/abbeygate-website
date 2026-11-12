@@ -37,7 +37,10 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   ...siteDefaults,
   verification: {
-    google: '31kkVfB6guiKvc8ysrsj2jJm63OU2lmDc7cAGkeWyLU',
+    google: [
+      '31kkVfB6guiKvc8ysrsj2jJm63OU2lmDc7cAGkeWyLU',
+      'google782821a38f6fc6f0',
+    ],
   },
   icons: {
     icon: [
