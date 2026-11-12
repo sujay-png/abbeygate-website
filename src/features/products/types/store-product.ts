@@ -61,6 +61,7 @@ export type StoreProduct = {
   is_in_stock: boolean;
   average_rating: string;
   review_count: number;
+  lowest_price?: number;
 };
 
 export type StoreCategory = {

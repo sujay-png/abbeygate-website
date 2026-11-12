@@ -78,9 +78,13 @@ export const ProductGrid = ({ products, hasProductsInCategory = true }: ProductG
             </h3>
 
             {getProductBaseAmount(product) > 0 && (
-              <span className="text-[15px] font-bold text-brand-body mt-auto flex gap-1">
-                <PriceDisplay amount={getProductBaseAmount(product)} />
-              </span>
+              <div className="mt-auto">
+                <PriceDisplay
+                  amount={getProductBaseAmount(product)}
+                  minAmount={product.lowest_price}
+                  showBelowVatLabel={true}
+                />
+              </div>
             )}
           </Link>
         );

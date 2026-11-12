@@ -1,6 +1,7 @@
 'use server';
 
 import { getStoreProducts } from "@/features/products/services/store-products";
+import { getProductLowestPriceMap } from "@/features/products/services/pricing";
 import type { StoreProduct } from "@/features/products/types/store-product";
 
 export async function getRelatedProductsAction({ 
@@ -119,7 +120,11 @@ export async function getRelatedProductsAction({
       }
     }
 
-    return selected;
+    const priceMap = await getProductLowestPriceMap();
+    return selected.map((p) => ({
+      ...p,
+      lowest_price: priceMap[p.id] || p.lowest_price,
+    }));
   } catch (error) {
     console.error("Failed to fetch related products:", error);
     return [];

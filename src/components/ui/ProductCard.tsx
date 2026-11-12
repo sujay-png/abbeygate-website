@@ -6,21 +6,25 @@ interface ProductCardProps {
   title: string;
   description: string;
   baseAmount?: number;
+  minAmount?: number;
 
   imageUrl?: string;
   fallbackColor?: string;
   href?: string;
   compact?: boolean;
+  showBelowVatLabel?: boolean;
 }
 
 export const ProductCard = ({
   title,
   description,
   baseAmount,
+  minAmount,
   imageUrl,
   fallbackColor = "bg-gray-300",
   href = "#",
   compact = false,
+  showBelowVatLabel = true,
 }: ProductCardProps) => {
   return (
     <Link href={href} className="group flex flex-col bg-[var(--brand-cream)] rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
@@ -59,9 +63,11 @@ export const ProductCard = ({
         </p>
         <div className="mt-auto">
           {baseAmount !== undefined && baseAmount > 0 && (
-            <span className="text-gray-500 font-medium flex gap-1">
-              <PriceDisplay amount={baseAmount} />
-            </span>
+            <PriceDisplay
+              amount={baseAmount}
+              minAmount={minAmount}
+              showBelowVatLabel={showBelowVatLabel}
+            />
           )}
         </div>
       </div>

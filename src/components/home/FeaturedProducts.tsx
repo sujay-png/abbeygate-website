@@ -3,13 +3,20 @@ import { ProductCard } from "../ui/ProductCard";
 import { Button } from "../ui/Button";
 import { ArrowIcon } from "../ui/ArrowIcon";
 import { getFeaturedStoreProducts } from "@/features/products/services/store-products";
+import { getProductLowestPriceMap } from "@/features/products/services/pricing";
 import { getProductBaseAmount, stripHtml } from "@/features/products/utils/product-helpers";
 
 export const FeaturedProducts = async ({ title = "Best Sellers" }: { title?: string }) => {
   let products: Awaited<ReturnType<typeof getFeaturedStoreProducts>> = [];
+  let priceMap: Record<number, number> = {};
 
   try {
-    products = await getFeaturedStoreProducts(4);
+    const [fetchedProducts, fetchedPriceMap] = await Promise.all([
+      getFeaturedStoreProducts(4),
+      getProductLowestPriceMap(),
+    ]);
+    products = fetchedProducts;
+    priceMap = fetchedPriceMap;
   } catch {
     // Fallback to empty if API unavailable
   }
@@ -38,6 +45,7 @@ export const FeaturedProducts = async ({ title = "Best Sellers" }: { title?: str
                   title={product.name}
                   description={stripHtml(product.short_description)}
                   baseAmount={getProductBaseAmount(product)}
+                  minAmount={priceMap[product.id] || product.lowest_price}
                   imageUrl={product.images[0]?.thumbnail || product.images[0]?.src}
                   href={`/product/${product.slug}`}
                 />

@@ -71,6 +71,7 @@ export const RelatedProductsClient = ({
                   title={product.name}
                   description={stripHtml(product.short_description)}
                   baseAmount={getProductBaseAmount(product)}
+                  minAmount={product.lowest_price}
                   imageUrl={product.images[0]?.thumbnail || product.images[0]?.src}
                   href={`/product/${product.slug}`}
                   compact={true}

@@ -1,4 +1,5 @@
 import { getStoreAttributes, getStoreAttributeTerms } from './store-products';
+import { getProductLowestPriceMap } from './pricing';
 import type { StoreProduct, StoreAttribute, StoreAttributeTerm, StoreProductAttribute } from '../types/store-product';
 import { RELATED_COLOUR_MAP } from '../utils/search-helpers';
 import { getParentColour } from '../utils/color-helpers';
@@ -260,6 +261,7 @@ export function toListingProduct(product: StoreProduct): StoreProduct {
     is_in_stock: product.is_in_stock,
     average_rating: product.average_rating,
     review_count: product.review_count,
+    lowest_price: product.lowest_price,
   };
 }
 
@@ -353,6 +355,8 @@ function extractLayoutTerms(product: StoreProduct): StoreAttributeTerm[] {
 }
 
 export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
+  const priceMap = await getProductLowestPriceMap();
+
   // Inject synthetic 'pa_product-type', enriched 'pa_collection', enriched 'pa_layout',
   // enriched 'pa_size', and enriched 'pa_colour' so the frontend filter system can accurately
   // filter all categories, collections, layouts, sizes, and colours.
@@ -438,6 +442,7 @@ export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
 
     return {
       ...product,
+      lowest_price: priceMap[product.id] ?? product.lowest_price,
       attributes: [...otherAttributes, ...extraAttributes],
     };
   });
