@@ -38,12 +38,12 @@ export async function generateMetadata({
 
   if (!post) {
     return {
-      title: 'Article Not Found | Abbeygate England',
+      title: 'Article Not Found | Abbeygate Business',
     };
   }
 
-  const title = `${post.title} | Abbeygate England`;
-  const description = post.excerpt || `Read ${post.title} on Abbeygate England.`;
+  const title = `${post.title} | Abbeygate Business`;
+  const description = post.excerpt || `Read ${post.title} on Abbeygate Business.`;
   const canonicalUrl = `${SITE_URL}/blog/${post.slug}`;
   const imageUrl = post.featuredImage?.url || `${SITE_URL}/images/banners/hero-banner.png`;
 
@@ -57,7 +57,7 @@ export async function generateMetadata({
       title,
       description,
       url: canonicalUrl,
-      siteName: 'Abbeygate England',
+      siteName: 'Abbeygate Business',
       images: [
         {
           url: imageUrl,

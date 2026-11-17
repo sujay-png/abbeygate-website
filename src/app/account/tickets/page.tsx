@@ -10,7 +10,7 @@ import { getSEOMetadata } from '@/lib/seo';
 export const dynamic = 'force-dynamic';
 
 export const metadata = getSEOMetadata('/account/tickets', {
-  title: 'Support Tickets | Abbeygate England',
+  title: 'Support Tickets | Abbeygate Business',
   noindex: true,
 });
 

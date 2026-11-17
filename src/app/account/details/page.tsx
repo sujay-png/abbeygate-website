@@ -7,7 +7,7 @@ import { AccountDetailsForm } from '@/features/account/components/AccountDetails
 import { getAccountDetails } from '@/features/account/services/customer';
 
 import { getSEOMetadata } from '@/lib/seo';
-export const metadata = getSEOMetadata("/account/details", { title: 'Account Details | Abbeygate England', noindex: true });
+export const metadata = getSEOMetadata("/account/details", { title: 'Account Details | Abbeygate Business', noindex: true });
 
 export default async function AccountDetailsPage() {
   const session = await getSession();

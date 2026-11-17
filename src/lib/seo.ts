@@ -16,94 +16,94 @@ export function jsonLd(data: unknown): string {
 // 1. Centralized SEO Configuration
 export const seoConfig: Record<string, { title: string; description: string; noindex?: boolean }> = {
   "/": {
-    title: "Abbeygate England | Personalised Corporate Gifting & Diaries",
+    title: "Abbeygate Business | Personalised Corporate Gifting & Diaries",
     description: "Elevate your corporate gifting and bespoke merchandise with our expertly customised leather goods.",
   },
   "/about": {
-    title: "About Us | Abbeygate England",
+    title: "About Us | Abbeygate Business",
     description: "Learn more about Abbeygate England, our heritage, and our commitment to craftsmanship.",
   },
   "/search": {
-    title: "Search Results | Abbeygate England",
+    title: "Search Results | Abbeygate Business",
     description: "Search our collection of bespoke diaries, notebooks, and corporate gifts.",
     noindex: true,
   },
   "/cart": {
-    title: "Your Bag | Abbeygate England",
+    title: "Your Bag | Abbeygate Business",
     description: "Review your selected Abbeygate England items before checkout.",
     noindex: true,
   },
   "/checkout": {
-    title: "Checkout | Abbeygate England",
+    title: "Checkout | Abbeygate Business",
     description: "Complete your Abbeygate England purchase.",
     noindex: true,
   },
   "/contact": {
-    title: "Contact Us | Abbeygate England",
+    title: "Contact Us | Abbeygate Business",
     description: "Get in touch with the Abbeygate England team for corporate gifting inquiries and support.",
   },
   "/faqs": {
-    title: "Frequently Asked Questions | Abbeygate England",
+    title: "Frequently Asked Questions | Abbeygate Business",
     description: "Find answers to common questions about our products, customisation, and shipping.",
   },
   "/blog": {
-    title: "Our Blog | Abbeygate England",
+    title: "Our Blog | Abbeygate Business",
     description: "Insights, guides, and inspiration for corporate gifting, bespoke stationery, and British leather craftsmanship.",
   },
   "/resource-guide": {
-    title: "Resource Guide | Abbeygate England",
+    title: "Resource Guide | Abbeygate Business",
     description: "Helpful resources and guides for corporate gifting and bespoke products.",
   },
   "/quote": {
-    title: "Request a Quote | Abbeygate England",
+    title: "Request a Quote | Abbeygate Business",
     description: "Request a bespoke quote for corporate gifting and custom leather goods.",
   },
   "/heritage": {
-    title: "Our Heritage | Abbeygate England",
+    title: "Our Heritage | Abbeygate Business",
     description: "Discover the rich history and craftsmanship behind Abbeygate England.",
   },
   "/artwork-specification": {
-    title: "Artwork Specification | Abbeygate England",
+    title: "Artwork Specification | Abbeygate Business",
     description: "How to supply logo artwork for debossing, foil blocking and printing on your Abbeygate England products.",
   },
   "/modern-slavery": {
-    title: "Modern Slavery Statement | Abbeygate England",
+    title: "Modern Slavery Statement | Abbeygate Business",
     description: "Abbeygate England's statement on preventing modern slavery and human trafficking in our business and supply chains.",
   },
   "/privacy": {
-    title: "Privacy Policy | Abbeygate England",
+    title: "Privacy Policy | Abbeygate Business",
     description: "How Abbeygate England collects, uses and protects your personal information.",
   },
   "/terms": {
-    title: "Terms & Conditions | Abbeygate England",
+    title: "Terms & Conditions | Abbeygate Business",
     description: "The terms and conditions that apply to orders placed with Abbeygate England.",
   },
   "/cookies": {
-    title: "Cookie Policy | Abbeygate England",
+    title: "Cookie Policy | Abbeygate Business",
     description: "How Abbeygate England uses cookies on this website.",
   },
   "/returns": {
-    title: "Returns Policy | Abbeygate England",
+    title: "Returns Policy | Abbeygate Business",
     description: "Information on returns and refunds for Abbeygate England orders.",
   },
   "/bespoke": {
-    title: "Bespoke Corporate Gifts | Abbeygate England",
+    title: "Bespoke Corporate Gifts | Abbeygate Business",
     description: "Explore our bespoke corporate gifting service: personalisation, additional finishing and client portfolio.",
   },
   "/bespoke/personalisation": {
-    title: "Personalisation | Abbeygate England",
+    title: "Personalisation | Abbeygate Business",
     description: "Blocking and foiling, UV printing, graphic print and special matter pages for corporate diaries, notebooks and leather goods.",
   },
   "/bespoke/additional-finishing": {
-    title: "Additional Finishing | Abbeygate England",
+    title: "Additional Finishing | Abbeygate Business",
     description: "Ribbon markers, pen loops, decorative corner protectors and gilded page edges for corporate diaries and notebooks.",
   },
   "/bespoke/portfolio": {
-    title: "Bespoke Portfolio | Abbeygate England",
+    title: "Bespoke Portfolio | Abbeygate Business",
     description: "Explore our portfolio of bespoke projects, from personalised corporate diaries to fully branded leather goods.",
   },
   "/internal-page-layouts": {
-    title: "Internal Page Layouts | Abbeygate England",
+    title: "Internal Page Layouts | Abbeygate Business",
     description: "Internal page layout options for Abbeygate England diaries and notebooks.",
   },
 };
@@ -114,7 +114,7 @@ export function getSEOMetadata(
   dynamicOverrides?: { title?: string; description?: string; noindex?: boolean; image?: string }
 ): Metadata {
   const baseData = seoConfig[path] || {
-    title: "Abbeygate England | Your Brand, Our Craftsmanship",
+    title: "Abbeygate Business | Your Brand, Our Craftsmanship",
     description: "Elevate your corporate gifting and bespoke merchandise with our expertly customised leather goods."
   };
 
@@ -138,7 +138,7 @@ export function getSEOMetadata(
       title: finalTitle,
       description: finalDescription,
       url: canonicalUrl,
-      siteName: "Abbeygate England",
+      siteName: "Abbeygate Business",
       images: [shareImage],
       locale: "en_GB",
       type: "website",
@@ -158,7 +158,7 @@ export function getSEOMetadata(
 
 export async function generateCategoryMetadata(basePath: string, slug?: string[]): Promise<Metadata> {
   const formattedBaseName = basePath.charAt(1).toUpperCase() + basePath.slice(2).replace('-', ' ');
-  let title = `${formattedBaseName} | Abbeygate England`;
+  let title = `${formattedBaseName} | Abbeygate Business`;
   let description = `Browse our exclusive collection of luxury ${formattedBaseName.toLowerCase()}.`;
   
   const path = slug?.length ? `${basePath}/${slug.join('/')}` : basePath;
@@ -170,7 +170,7 @@ export async function generateCategoryMetadata(basePath: string, slug?: string[]
       const route = getCategoryRoute(path);
 
       if (route) {
-        title = `${route.title} | Abbeygate England`;
+        title = `${route.title} | Abbeygate Business`;
         if (route.description) {
            description = route.description;
         }
@@ -178,7 +178,7 @@ export async function generateCategoryMetadata(basePath: string, slug?: string[]
         const categories = await getStoreCategories();
         const category = categories.find(c => c.slug === pathSlug);
         if (category) {
-          title = `${category.name} | Abbeygate England`;
+          title = `${category.name} | Abbeygate Business`;
           description = category.description || description;
         }
       }

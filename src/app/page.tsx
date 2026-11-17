@@ -9,7 +9,7 @@ export const metadata: Metadata = getSEOMetadata("/");
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
-      <h1 className="sr-only">Abbeygate England | Personalised Corporate Gifting & Diaries</h1>
+      <h1 className="sr-only">Abbeygate Business | Personalised Corporate Gifting & Diaries</h1>
       <Hero />
       <Categories />
       <FeaturedProducts />

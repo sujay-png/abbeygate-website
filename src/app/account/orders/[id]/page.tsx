@@ -12,7 +12,7 @@ type OrderDetailsProps = {
 };
 
 import { getSEOMetadata } from '@/lib/seo';
-export const metadata = getSEOMetadata("/account/orders/[id]", { title: 'Order Details | Abbeygate England', noindex: true });
+export const metadata = getSEOMetadata("/account/orders/[id]", { title: 'Order Details | Abbeygate Business', noindex: true });
 
 export default async function OrderDetailsPage({ params }: OrderDetailsProps) {
   const session = await getSession();

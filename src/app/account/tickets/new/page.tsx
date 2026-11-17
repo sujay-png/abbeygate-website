@@ -8,7 +8,7 @@ import { RaiseTicketForm } from '@/features/account/components/tickets/RaiseTick
 import { getSEOMetadata } from '@/lib/seo';
 
 export const metadata = getSEOMetadata('/account/tickets/new', {
-  title: 'Raise a Support Ticket | Abbeygate England',
+  title: 'Raise a Support Ticket | Abbeygate Business',
   noindex: true,
 });
 

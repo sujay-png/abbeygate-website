@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
 import { getSEOMetadata } from '@/lib/seo';
-export const metadata = getSEOMetadata("/account/saved-baskets/[id]", { title: 'Saved Basket | Abbeygate England', noindex: true });
+export const metadata = getSEOMetadata("/account/saved-baskets/[id]", { title: 'Saved Basket | Abbeygate Business', noindex: true });
 
 type PageProps = {
   params: Promise<{ id: string }>;

@@ -27,12 +27,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     if (!product && /^\d+$/.test(slug)) {
       product = await getStoreProductById(Number(slug));
     }
-    const title = product ? `${product.name} | Abbeygate England` : 'Product | Abbeygate England';
+    const title = product ? `${product.name} | Abbeygate Business` : 'Product | Abbeygate Business';
     const description = product?.short_description?.replace(/<[^>]*>/g, '').slice(0, 160) || 'Bespoke corporate gifting by Abbeygate England.';
     
     return getSEOMetadata(`/product/${product?.slug ?? slug}`, { title, description, image: product?.images?.[0]?.src });
   } catch {
-    return getSEOMetadata(`/product/${slug}`, { title: 'Product | Abbeygate England' });
+    return getSEOMetadata(`/product/${slug}`, { title: 'Product | Abbeygate Business' });
   }
 }
 
