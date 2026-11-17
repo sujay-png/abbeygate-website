@@ -155,7 +155,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
       {
         id: 'msg-welcome-1',
         sender: 'bot',
-        text: `${initialGreeting} Welcome to Abbeygate England. How can our customer care team assist you today?`,
+        text: `${initialGreeting} Welcome to Abbeygate Business. How can our customer care team assist you today?`,
         createdAt: new Date().toISOString(),
       },
       {

@@ -23,8 +23,8 @@ function CheckoutHeader() {
       <div className="mx-auto grid h-20 max-w-[1440px] grid-cols-3 items-center px-5 sm:px-8 lg:px-12">
         <div></div>
         <div className="flex justify-center">
-          <Link href="/" aria-label="Abbeygate England home">
-            <Image src="/images/logo/abbeygate-logo.png" alt="Abbeygate England" width={200} height={48} priority className="h-11 w-auto object-contain" />
+          <Link href="/" aria-label="Abbeygate Business home">
+            <Image src="/images/logo/abbeygate-business-logo.png" alt="Abbeygate Business" width={200} height={48} priority className="h-11 w-auto object-contain" />
           </Link>
         </div>
         <div className="flex items-center justify-end gap-6 text-brand-primary-dark">
@@ -47,7 +47,7 @@ function CheckoutFooter({ onPolicyClick }: { onPolicyClick: (policy: PolicyType)
   return (
     <footer className="border-t border-[var(--brand-border)] bg-white">
       <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-4 px-5 py-7 text-center text-[13px] text-brand-grey sm:flex-row sm:px-8 sm:text-left lg:px-12">
-        <p>Abbeygate England © 2026</p>
+        <p>Abbeygate Business © 2026</p>
         <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-brand-primary-dark">
           <button type="button" onClick={() => onPolicyClick('returns')} className="hover:underline">Refund &amp; Returns</button>
           <button type="button" onClick={() => onPolicyClick('privacy')} className="hover:underline">Privacy</button>
@@ -659,7 +659,7 @@ function CheckoutFormContent({
             {pricedItems.map((item: PricedItem) => (
               <div key={item.key} className="flex gap-4">
                 <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded">
-                  <Image src={item.customization?.fullPreviewUrl || item.image || '/images/logo/abbeygate-logo.png'} alt="" fill sizes="64px" className="object-cover mix-blend-multiply" />
+                  <Image src={item.customization?.fullPreviewUrl || item.image || '/images/logo/abbeygate-business-logo.png'} alt="" fill sizes="64px" className="object-cover mix-blend-multiply" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold leading-5 text-brand-primary-dark">{item.name}</p>

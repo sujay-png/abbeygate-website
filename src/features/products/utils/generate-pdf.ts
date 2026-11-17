@@ -64,9 +64,9 @@ export const generateDigitalProof = async (
 
   // 1. Header
   try {
-    const logoBase64 = await fetchImageAsBase64('/images/logo/abbeygate-logo.png');
+    const logoBase64 = await fetchImageAsBase64('/images/logo/abbeygate-business-logo.png');
     // abbeygate logo is relatively wide. Let's place it top-left
-    doc.addImage(logoBase64, 'PNG', 20, 15, 40, 12);
+    doc.addImage(logoBase64, 'PNG', 20, 15, 40, 15);
   } catch (error) {
     console.error('Failed to load Abbeygate logo for PDF', error);
   }

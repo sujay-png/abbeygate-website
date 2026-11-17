@@ -97,16 +97,16 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     dateModified: post.date,
     author: {
       '@type': 'Organization',
-      name: 'Abbeygate England',
+      name: 'Abbeygate Business',
       url: SITE_URL,
     },
     publisher: {
       '@type': 'Organization',
-      name: 'Abbeygate England',
+      name: 'Abbeygate Business',
       url: SITE_URL,
       logo: {
         '@type': 'ImageObject',
-        url: `${SITE_URL}/images/logos/logo.png`,
+        url: `${SITE_URL}/images/logo/abbeygate-business-logo.png`,
       },
     },
     mainEntityOfPage: {

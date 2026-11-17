@@ -254,8 +254,8 @@ export const Navbar = () => {
           <div className="flex items-center justify-center mx-auto lg:mx-0 lg:flex-shrink-0">
             <Link href="/" className="block">
               <Image
-                src="/images/logo/abbeygate-logo.png"
-                alt="Abbeygate England"
+                src="/images/logo/abbeygate-business-logo.png"
+                alt="Abbeygate Business"
                 width={200}
                 height={48}
                 className="h-12 w-auto object-contain" style={{ width: "auto" }}
@@ -455,8 +455,8 @@ export const Navbar = () => {
               <div className="flex-1 flex items-center justify-center">
                 <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
                   <Image
-                    src="/images/logo/abbeygate-logo.png"
-                    alt="Abbeygate England"
+                    src="/images/logo/abbeygate-business-logo.png"
+                    alt="Abbeygate Business"
                     width={160}
                     height={40}
                     className="h-10 w-auto object-contain" style={{ width: "auto" }}

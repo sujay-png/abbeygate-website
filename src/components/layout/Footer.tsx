@@ -115,8 +115,8 @@ export const Footer = () => {
             <div className="sm:col-span-2 lg:col-span-2 flex flex-col gap-5">
               <Link href="/" className="inline-block max-w-[200px]">
                 <Image
-                  src="/images/logo/abbeygate-logo.png"
-                  alt="Abbeygate England"
+                  src="/images/logo/abbeygate-business-logo.png"
+                  alt="Abbeygate Business"
                   width={220}
                   height={78}
                   className="w-[180px] h-auto object-contain"
@@ -192,7 +192,7 @@ export const Footer = () => {
           {/* Bottom Section */}
           <div className="flex flex-col lg:flex-row items-center justify-between gap-6 pt-8">
             <p className="text-[14px] text-brand-primary-dark">
-              Abbeygate England © 2026
+              Abbeygate Business © 2026
             </p>
 
             <div className="flex flex-col items-center gap-2">

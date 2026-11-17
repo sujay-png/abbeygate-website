@@ -74,7 +74,7 @@ export function OrderSummaryDropdown({
               <div key={item.id ? `${item.id}-${idx}` : idx} className="flex gap-3.5 pb-4 border-b border-[var(--brand-border)] last:border-b-0 last:pb-0">
                 <div className="relative h-16 w-14 shrink-0 overflow-hidden rounded bg-white border border-[var(--brand-border)] flex items-center justify-center">
                   <Image
-                    src={item.image || '/images/logo/abbeygate-logo.png'}
+                    src={item.image || '/images/logo/abbeygate-business-logo.png'}
                     alt={item.name}
                     fill
                     sizes="56px"

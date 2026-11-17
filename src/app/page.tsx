@@ -25,9 +25,9 @@ export default function Home() {
           __html: jsonLd({
             "@context": "https://schema.org",
             "@type": "Organization",
-            "name": "Abbeygate England",
+            "name": "Abbeygate Business",
             "url": SITE_URL,
-            "logo": `${SITE_URL}/images/logo/abbeygate-logo.png`,
+            "logo": `${SITE_URL}/images/logo/abbeygate-business-logo.png`,
           }),
         }}
       />

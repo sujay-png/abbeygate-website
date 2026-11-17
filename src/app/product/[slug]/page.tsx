@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       product = await getStoreProductById(Number(slug));
     }
     const title = product ? `${product.name} | Abbeygate Business` : 'Product | Abbeygate Business';
-    const description = product?.short_description?.replace(/<[^>]*>/g, '').slice(0, 160) || 'Bespoke corporate gifting by Abbeygate England.';
+    const description = product?.short_description?.replace(/<[^>]*>/g, '').slice(0, 160) || 'Bespoke corporate gifting by Abbeygate Business.';
     
     return getSEOMetadata(`/product/${product?.slug ?? slug}`, { title, description, image: product?.images?.[0]?.src });
   } catch {
@@ -237,7 +237,7 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
             "sku": product.sku || undefined,
             "brand": {
               "@type": "Brand",
-              "name": "Abbeygate England"
+              "name": "Abbeygate Business"
             },
             "offers": {
               "@type": "Offer",

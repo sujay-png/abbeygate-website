@@ -23,7 +23,7 @@ import { RelatedProductsClient } from './RelatedProductsClient';
 
 import type { CustomTab } from '@/features/products/services/store-products';
 
-const ImageWithFallback = ({ src, fallbackSrc = '/images/logo/abbeygate-logo.png', quality = 95, ...rest }: any) => {
+const ImageWithFallback = ({ src, fallbackSrc = '/images/logo/abbeygate-business-logo.png', quality = 95, ...rest }: any) => {
   const safeSrc = sanitizeImageUrl(src);
   const [imgSrc, setImgSrc] = useState(safeSrc);
 

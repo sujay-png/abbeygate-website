@@ -54,8 +54,8 @@ export default async function BacsSuccessPage({ searchParams }: { searchParams: 
       
       <header className="border-b border-[var(--brand-border)] bg-white">
         <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-center px-5 sm:px-8 lg:px-12">
-          <Link href="/" className="flex items-center" aria-label="Abbeygate England home">
-            <Image src="/images/logo/abbeygate-logo.png" alt="Abbeygate England" width={200} height={48} priority className="h-11 w-auto object-contain" />
+          <Link href="/" className="flex items-center" aria-label="Abbeygate Business home">
+            <Image src="/images/logo/abbeygate-business-logo.png" alt="Abbeygate Business" width={200} height={48} priority className="h-11 w-auto object-contain" />
           </Link>
         </div>
       </header>
@@ -219,7 +219,7 @@ export default async function BacsSuccessPage({ searchParams }: { searchParams: 
 
       <footer className="border-t border-[var(--brand-border)] bg-white">
         <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-center gap-4 px-5 py-7 text-center text-[13px] text-brand-grey">
-          <p>Abbeygate England © 2026</p>
+          <p>Abbeygate Business © 2026</p>
           <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-brand-primary-dark">
             <Link href="/returns" className="hover:underline">Refund &amp; Returns</Link>
             <Link href="/privacy" className="hover:underline">Privacy</Link>
