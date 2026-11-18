@@ -45,6 +45,7 @@ export function transformWordPressPost(raw: WordPressPost): BlogPost {
     excerpt,
     content,
     date: raw.date,
+    modified: raw.modified,
     formattedDate: formatDate(raw.date),
     author: raw._embedded?.author?.[0]?.name,
     featuredImage,

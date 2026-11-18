@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { getSitemapProducts } from '@/features/products/services/store-products';
+import { getBlogPosts } from '@/features/blog/services/blog-service';
 import { CATEGORY_ROUTES } from '@/data/category-routes';
 import { seoConfig, SITE_URL as BASE_URL } from '@/lib/seo';
 
@@ -33,6 +34,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   } catch (error) {
     console.error('Error generating product sitemap entries:', error);
+  }
+
+  // 4. Dynamic blog posts with real last modified dates from WordPress
+  try {
+    const blogPosts = await getBlogPosts({ perPage: 100 });
+
+    blogPosts.forEach((post) => {
+      sitemap.push({
+        url: `${BASE_URL}/blog/${post.slug}`,
+        lastModified: post.modified ? new Date(post.modified) : (post.date ? new Date(post.date) : undefined),
+      });
+    });
+  } catch (error) {
+    console.error('Error generating blog sitemap entries:', error);
   }
 
   return sitemap;

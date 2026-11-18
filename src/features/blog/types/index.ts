@@ -51,6 +51,7 @@ export interface BlogPost {
   excerpt: string;
   content: string;
   date: string;
+  modified?: string;
   formattedDate: string;
   author?: string;
   featuredImage?: {
