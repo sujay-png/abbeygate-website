@@ -237,7 +237,7 @@ export const Navbar = () => {
 
       <div className="w-full px-6 lg:px-10 xl:px-16">
         {/* Row 1: Logo & Actions */}
-        <div className="flex h-20 lg:h-16 items-center lg:justify-between">
+        <div className="flex h-20 lg:h-20 items-center lg:justify-between">
           
           {/* Mobile Hamburger & Empty Left spacer for Desktop (to keep logo perfectly centered) */}
           <div className="flex items-center justify-start lg:flex-1">
@@ -256,9 +256,9 @@ export const Navbar = () => {
               <Image
                 src="/images/logo/abbeygate-business-logo.png"
                 alt="Abbeygate Business"
-                width={200}
-                height={48}
-                className="h-12 w-auto object-contain" style={{ width: "auto" }}
+                width={220}
+                height={68}
+                className="h-[48px] sm:h-[54px] lg:h-[60px] w-auto object-contain" style={{ width: "auto" }}
                 priority
               />
             </Link>
@@ -457,9 +457,9 @@ export const Navbar = () => {
                   <Image
                     src="/images/logo/abbeygate-business-logo.png"
                     alt="Abbeygate Business"
-                    width={160}
-                    height={40}
-                    className="h-10 w-auto object-contain" style={{ width: "auto" }}
+                    width={200}
+                    height={62}
+                    className="h-12 w-auto object-contain" style={{ width: "auto" }}
                     priority
                   />
                 </Link>

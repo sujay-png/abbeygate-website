@@ -24,7 +24,7 @@ function CheckoutHeader() {
         <div></div>
         <div className="flex justify-center">
           <Link href="/" aria-label="Abbeygate Business home">
-            <Image src="/images/logo/abbeygate-business-logo.png" alt="Abbeygate Business" width={200} height={48} priority className="h-11 w-auto object-contain" />
+            <Image src="/images/logo/abbeygate-business-logo.png" alt="Abbeygate Business" width={200} height={62} priority className="h-11 sm:h-12 w-auto object-contain" />
           </Link>
         </div>
         <div className="flex items-center justify-end gap-6 text-brand-primary-dark">

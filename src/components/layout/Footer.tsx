@@ -113,13 +113,13 @@ export const Footer = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-y-12 gap-x-8 lg:gap-x-10 mb-14">
 
             <div className="sm:col-span-2 lg:col-span-2 flex flex-col gap-5">
-              <Link href="/" className="inline-block max-w-[200px]">
+              <Link href="/" className="inline-block max-w-[220px]">
                 <Image
                   src="/images/logo/abbeygate-business-logo.png"
                   alt="Abbeygate Business"
                   width={220}
-                  height={78}
-                  className="w-[180px] h-auto object-contain"
+                  height={68}
+                  className="w-[190px] sm:w-[200px] h-auto object-contain"
                   style={{ height: "auto" }}
                 />
               </Link>

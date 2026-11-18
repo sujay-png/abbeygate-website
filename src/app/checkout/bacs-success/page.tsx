@@ -55,7 +55,7 @@ export default async function BacsSuccessPage({ searchParams }: { searchParams: 
       <header className="border-b border-[var(--brand-border)] bg-white">
         <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-center px-5 sm:px-8 lg:px-12">
           <Link href="/" className="flex items-center" aria-label="Abbeygate Business home">
-            <Image src="/images/logo/abbeygate-business-logo.png" alt="Abbeygate Business" width={200} height={48} priority className="h-11 w-auto object-contain" />
+            <Image src="/images/logo/abbeygate-business-logo.png" alt="Abbeygate Business" width={200} height={62} priority className="h-11 sm:h-12 w-auto object-contain" />
           </Link>
         </div>
       </header>
