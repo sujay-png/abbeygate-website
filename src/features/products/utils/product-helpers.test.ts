@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getProductImageTransform } from './product-helpers';
+import { getProductImageTransform, isBicolourProduct, isHorizonProduct } from './product-helpers';
 import type { StoreProduct } from '../types/store-product';
 
 function makeMockProduct(name: string, categories: string[] = []): StoreProduct {
@@ -59,5 +59,19 @@ describe('getProductImageTransform', () => {
   it('flips oval key fobs horizontally so split-ring is on left', () => {
     const ovalFob = makeMockProduct('Dorchester Collection Key Fob', ['key-rings']);
     expect(getProductImageTransform(ovalFob)).toEqual({ rotate: 0, scaleX: -1, imagePadding: 0 });
+  });
+});
+
+describe('product-helpers classification', () => {
+  it('correctly identifies bi-colour products', () => {
+    expect(isBicolourProduct({ sku: 'NB-BK/AQ-U-096', name: 'Dorchester Bicolor Pocket Diary' })).toBe(true);
+    expect(isBicolourProduct({ sku: 'NB-BL/RB-P-084', name: 'Dorchester Bicolour Quarto Desk Diary' })).toBe(true);
+    expect(isBicolourProduct({ sku: 'CL-BK-U-31', name: 'Chelsea Leather Notebook' })).toBe(false);
+  });
+
+  it('correctly identifies horizon products', () => {
+    expect(isHorizonProduct({ sku: 'HZ-BK/RD-P-083', name: 'Dorchester Horizon Quarto Desk Diary' })).toBe(true);
+    expect(isHorizonProduct({ sku: 'NB-BK/YE-P-076', name: 'Dorchester Horizon A5 Desk' })).toBe(true);
+    expect(isHorizonProduct({ sku: 'NF-BK-U-095', name: 'Dorchester Pocket Diary' })).toBe(false);
   });
 });

@@ -1,6 +1,8 @@
 import type { StoreProduct, ProductFilters, FilterParamKey } from "../types/store-product";
 import { FILTER_TAXONOMY_MAP } from "../types/store-product";
 import { getParentColourSlug } from "./color-helpers";
+import { detectProductBounds } from "./detect-product-bounds";
+import type { ProductImageBounds } from "./corner-clips";
 
 export function getProductPhysicalDimensionsMm(product: StoreProduct): { width: number; height: number } {
   const sizeAttribute = product.attributes?.find((attr: any) =>
@@ -322,9 +324,17 @@ export function getLogoAnchors(product: StoreProduct) {
   return getLogoAnchorsFromMm(width, height);
 }
 
-const boundingBoxCache = new Map<string, { top: number, bottom: number, left: number, right: number } | null>();
+const boundingBoxCache = new Map<string, ProductImageBounds | null>();
 
-export async function getImageBoundingBox(imageUrl: string): Promise<{ top: number, bottom: number, left: number, right: number } | null> {
+/** Must match the server's working resolution so both paths agree exactly. */
+const DETECT_MAX_DIM = 800;
+
+/**
+ * Detect the product's edges and corners in its main image (percentages).
+ * Server-side detection via the image proxy is preferred; if that fails the
+ * same algorithm runs in the browser on a canvas.
+ */
+export async function getImageBoundingBox(imageUrl: string): Promise<ProductImageBounds | null> {
   if (boundingBoxCache.has(imageUrl)) {
     return boundingBoxCache.get(imageUrl) ?? null;
   }
@@ -356,256 +366,26 @@ export async function getImageBoundingBox(imageUrl: string): Promise<{ top: numb
   return new Promise((resolve) => {
     const img = new window.Image();
     img.crossOrigin = 'anonymous';
-    
+
     img.onload = () => {
+      const scale = Math.min(1, DETECT_MAX_DIM / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * scale));
+      const h = Math.max(1, Math.round(img.height * scale));
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
       if (!ctx) return resolve(null);
-      
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-      
-      let imageData;
+      canvas.width = w;
+      canvas.height = h;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, w, h);
+
+      let bounds: ProductImageBounds | null = null;
       try {
-        imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const { data } = ctx.getImageData(0, 0, w, h);
+        bounds = detectProductBounds(data, w, h, 4);
       } catch (e) {
         console.error('Canvas error:', e);
-        return resolve(null);
       }
-      const data = imageData.data;
-
-      // Check if this is a transparent-background PNG by sampling the 4 corners
-      const isTransparentPng =
-        data[3] < 250 ||
-        data[((canvas.width - 1) * 4) + 3] < 250 ||
-        data[((canvas.height - 1) * canvas.width * 4) + 3] < 250 ||
-        data[(((canvas.height - 1) * canvas.width + canvas.width - 1) * 4) + 3] < 250;
-
-      let minX = canvas.width;
-      let maxX = 0;
-      let minY = canvas.height;
-      let maxY = 0;
-
-      if (isTransparentPng) {
-        // For transparent PNGs: the physical book is fully opaque (alpha = 255),
-        // the drop shadow is semi-transparent (alpha < 255).
-        // Scanning for alpha > 240 gives us a pixel-perfect book boundary,
-        // completely immune to drop shadow shape or intensity.
-        for (let y = 0; y < canvas.height; y++) {
-          for (let x = 0; x < canvas.width; x++) {
-            const alpha = data[(y * canvas.width + x) * 4 + 3];
-            if (alpha > 240) {
-              if (x < minX) minX = x;
-              if (x > maxX) maxX = x;
-              if (y < minY) minY = y;
-              if (y > maxY) maxY = y;
-            }
-          }
-        }
-      } else {
-        // For solid images (JPEG, WebP, opaque PNG):
-        // Sample background color from the 4 corners using a 5% inset to avoid edge compression artifacts.
-        const insetX = Math.floor(canvas.width * 0.05);
-        const insetY = Math.floor(canvas.height * 0.05);
-        const getCornerSample = (x: number, y: number) => {
-          const idx = (y * canvas.width + x) * 4;
-          return [data[idx], data[idx + 1], data[idx + 2]];
-        };
-
-        const cornerSamples = [
-          getCornerSample(insetX, insetY),
-          getCornerSample(canvas.width - insetX, insetY),
-          getCornerSample(insetX, canvas.height - insetY),
-          getCornerSample(canvas.width - insetX, canvas.height - insetY),
-        ];
-
-        const bgR = cornerSamples.map((c) => c[0]).sort((a, b) => a - b)[1];
-        const bgG = cornerSamples.map((c) => c[1]).sort((a, b) => a - b)[2];
-        const bgB = cornerSamples.map((c) => c[2]).sort((a, b) => a - b)[1];
-
-        // Compute row and column occupancy of pixels that differ from the background.
-        // This finds the outer envelope of the product regardless of internal patterns,
-        // two-tone leather splits, stitching, or year stamping.
-        const DIST_THRESH = 28;
-        const rowOcc = new Int32Array(canvas.height);
-        const colOcc = new Int32Array(canvas.width);
-
-        for (let y = 1; y < canvas.height - 1; y++) {
-          for (let x = 1; x < canvas.width - 1; x++) {
-            const idx = (y * canvas.width + x) * 4;
-            const dist = Math.abs(data[idx] - bgR) + Math.abs(data[idx + 1] - bgG) + Math.abs(data[idx + 2] - bgB);
-            if (dist > DIST_THRESH) {
-              rowOcc[y]++;
-              colOcc[x]++;
-            }
-          }
-        }
-
-        const minRowPx = Math.max(10, Math.floor(canvas.width * 0.05));
-        const minColPx = Math.max(10, Math.floor(canvas.height * 0.05));
-
-        // Require 2 consecutive rows/cols to eliminate single-pixel noise/vignette
-        let occTop = 1;
-        while (occTop < canvas.height - 2 && !(rowOcc[occTop] >= minRowPx && rowOcc[occTop + 1] >= minRowPx)) {
-          occTop++;
-        }
-
-        let occBottom = canvas.height - 2;
-        while (occBottom > 1 && !(rowOcc[occBottom] >= minRowPx && rowOcc[occBottom - 1] >= minRowPx)) {
-          occBottom--;
-        }
-
-        let occLeft = 1;
-        while (occLeft < canvas.width - 2 && !(colOcc[occLeft] >= minColPx && colOcc[occLeft + 1] >= minColPx)) {
-          occLeft++;
-        }
-
-        let occRight = canvas.width - 2;
-        while (occRight > 1 && !(colOcc[occRight] >= minColPx && colOcc[occRight - 1] >= minColPx)) {
-          occRight--;
-        }
-
-        // Gradients across the canvas
-        const sumX = new Float64Array(canvas.width);
-        const sumY = new Float64Array(canvas.height);
-
-        const getBrightness = (x: number, y: number) => {
-          const i = (y * canvas.width + x) * 4;
-          const a = data[i + 3];
-          if (a < 10) return 255;
-          return (data[i] + data[i + 1] + data[i + 2]) / 3;
-        };
-
-        for (let y = 1; y < canvas.height; y++) {
-          for (let x = 1; x < canvas.width; x++) {
-            sumX[x] += Math.abs(getBrightness(x, y) - getBrightness(x - 1, y));
-            sumY[y] += Math.abs(getBrightness(x, y) - getBrightness(x, y - 1));
-          }
-        }
-
-        // Compute average gradients across dimensions
-        let avgGradY = 0;
-        for (let y = 0; y < canvas.height; y++) avgGradY += sumY[y];
-        avgGradY /= canvas.height;
-
-        let avgGradX = 0;
-        for (let x = 0; x < canvas.width; x++) avgGradX += sumX[x];
-        avgGradX /= canvas.width;
-
-        // Scan inward from an outer occupancy edge toward the product center.
-        // Soft drop-shadows may create an initial weak gradient boundary.
-        // The true physical leather boundary has a substantially higher gradient.
-        // We evaluate candidate peaks in the outer margin window and lock onto the dominant physical edge.
-        const snapInward = (
-          arr: Float64Array,
-          start: number,
-          inwardDelta: number,
-          step: 1 | -1,
-          threshold: number
-        ) => {
-          const end = start + step * inwardDelta;
-          const peaks: Array<{ idx: number; val: number }> = [];
-          let inPeak = false;
-          let curPeakIdx = start;
-          let curPeakVal = 0;
-
-          for (let i = start; step > 0 ? i <= end : i >= end; i += step) {
-            const val = arr[i];
-
-            if (val > threshold) {
-              if (!inPeak) {
-                inPeak = true;
-                curPeakIdx = i;
-                curPeakVal = val;
-              } else if (val > curPeakVal) {
-                curPeakVal = val;
-                curPeakIdx = i;
-              }
-            } else if (inPeak) {
-              peaks.push({ idx: curPeakIdx, val: curPeakVal });
-              inPeak = false;
-            }
-          }
-
-          if (inPeak) {
-            peaks.push({ idx: curPeakIdx, val: curPeakVal });
-          }
-
-          if (peaks.length === 0) {
-            let bestIdx = start;
-            let bestVal = 0;
-            for (let i = start; step > 0 ? i <= end : i >= end; i += step) {
-              if (arr[i] > bestVal) {
-                bestVal = arr[i];
-                bestIdx = i;
-              }
-            }
-            return bestIdx;
-          }
-
-          // Select the dominant physical peak across the outer margin
-          let dominant = peaks[0];
-          for (const p of peaks) {
-            if (p.val > dominant.val) {
-              dominant = p;
-            }
-          }
-          return dominant.idx;
-        };
-
-        const snapWindowY = Math.max(15, Math.floor(canvas.height * 0.08));
-        const snapWindowX = Math.max(15, Math.floor(canvas.width * 0.08));
-        const threshY = Math.max(avgGradY * 1.3, 1500);
-        const threshX = Math.max(avgGradX * 1.3, 1500);
-
-        const snappedTop = snapInward(sumY, occTop, snapWindowY, 1, threshY);
-        const snappedBottom = snapInward(sumY, occBottom, snapWindowY, -1, threshY);
-        const snappedLeft = snapInward(sumX, occLeft, snapWindowX, 1, threshX);
-        const snappedRight = snapInward(sumX, occRight, snapWindowX, -1, threshX);
-
-        const detectedWidth = (snappedRight - snappedLeft) / canvas.width;
-        const detectedHeight = (snappedBottom - snappedTop) / canvas.height;
-
-        if (detectedWidth >= 0.15 && detectedHeight >= 0.25) {
-          minX = snappedLeft;
-          maxX = snappedRight;
-          minY = snappedTop;
-          maxY = snappedBottom;
-        } else {
-          // Fallback: color distance from corner background
-          const cornerR = (data[0] + data[(canvas.width - 1) * 4] + data[(canvas.height - 1) * canvas.width * 4]) / 3;
-          const cornerG = (data[1] + data[(canvas.width - 1) * 4 + 1] + data[(canvas.height - 1) * canvas.width * 4 + 1]) / 3;
-          const cornerB = (data[2] + data[(canvas.width - 1) * 4 + 2] + data[(canvas.height - 1) * canvas.width * 4 + 2]) / 3;
-
-          const marginX = Math.floor(canvas.width * 0.05);
-          const marginY = Math.floor(canvas.height * 0.05);
-
-          for (let y = marginY; y < canvas.height - marginY; y++) {
-            for (let x = marginX; x < canvas.width - marginX; x++) {
-              const idx = (y * canvas.width + x) * 4;
-              const dist = Math.abs(data[idx] - cornerR) + Math.abs(data[idx + 1] - cornerG) + Math.abs(data[idx + 2] - cornerB);
-              if (dist > 35) {
-                if (x < minX) minX = x;
-                if (x > maxX) maxX = x;
-                if (y < minY) minY = y;
-                if (y > maxY) maxY = y;
-              }
-            }
-          }
-        }
-      }
-            if (minX >= maxX || minY >= maxY || (maxX - minX) / canvas.width < 0.15 || (maxY - minY) / canvas.height < 0.25) {
-        boundingBoxCache.set(imageUrl, null);
-        return resolve(null);
-      }
-      
-      const bounds = {
-        left: (minX / canvas.width) * 100,
-        right: (maxX / canvas.width) * 100,
-        top: (minY / canvas.height) * 100,
-        bottom: (maxY / canvas.height) * 100
-      };
       boundingBoxCache.set(imageUrl, bounds);
       resolve(bounds);
     };

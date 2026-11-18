@@ -1,14 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { composeProof } from './generate-proof';
 
-// Mock getImageBoundingBox and getConfiguredImageBounds
+// Mock getImageBoundingBox
 vi.mock('./product-helpers', () => ({
   getImageBoundingBox: vi.fn().mockResolvedValue({ top: 10, bottom: 90, left: 10, right: 90 }),
   getLogoAnchorsFromMm: vi.fn().mockReturnValue({ bookLeft: 10, bookRight: 90, bookTop: 10, bookBottom: 90 })
-}));
-
-vi.mock('./product-image-bounds', () => ({
-  getConfiguredImageBounds: vi.fn().mockReturnValue(null) // Fallback to mocked getImageBoundingBox
 }));
 
 describe('composeProof geometry calculations', () => {

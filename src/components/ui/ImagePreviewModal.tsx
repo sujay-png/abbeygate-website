@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import type { CartItem } from '@/features/cart/context/CartContext';
 import { getImageBoundingBox } from '@/features/products/utils/product-helpers';
-import { getConfiguredImageBounds } from '@/features/products/utils/product-image-bounds';
+import { getCornerClipLayout, type ProductImageBounds } from '@/features/products/utils/corner-clips';
 
 type ImagePreviewModalProps = {
   isOpen: boolean;
@@ -36,7 +36,7 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, imageUrl, title = 'Cu
     };
   }, [isOpen]);
 
-  const [imageBounds, setImageBounds] = useState<{ top: number, bottom: number, left: number, right: number } | null>(null);
+  const [imageBounds, setImageBounds] = useState<ProductImageBounds | null>(null);
   const [imageAspectRatio, setImageAspectRatio] = useState<number>(1);
 
   // New cart items include an exact, composited snapshot generated on the product
@@ -55,12 +55,6 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, imageUrl, title = 'Cu
       if (item.customization?.imageBounds) {
         setImageBounds(item.customization.imageBounds);
       } else {
-        const configuredBounds = getConfiguredImageBounds(item.image);
-        if (configuredBounds) {
-          setImageBounds(configuredBounds);
-          return;
-        }
-
         getImageBoundingBox(item.image)
           .then(bounds => setImageBounds(bounds))
           .catch(err => console.error('Failed to get bounds for modal', err));
@@ -311,15 +305,17 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, imageUrl, title = 'Cu
             {!useComposedPreview && imageBounds && hasCornerEdges && (
               <div style={{ position: 'absolute', top: '0', left: '0', width: '100%', height: '100%', zIndex: 15, pointerEvents: 'none' }}>
                 {(() => {
-                  const offset = 0;
+                  // Legacy cart items only (new ones use the composed snapshot); physical size unknown here.
+                  const layout = getCornerClipLayout(imageBounds);
                   return ([] as Array<{top?: number, bottom?: number, left?: number, right?: number, rotate: string}>).concat([
-                    { top: imageBounds.top - offset, right: 100 - imageBounds.right - offset, rotate: 'rotate-0' },
-                    { bottom: 100 - imageBounds.bottom - offset, right: 100 - imageBounds.right - offset, rotate: 'rotate-90' },
+                    { top: layout.topRight.y, right: 100 - layout.topRight.x, rotate: 'rotate-0' },
+                    { bottom: 100 - layout.bottomRight.y, right: 100 - layout.bottomRight.x, rotate: 'rotate-90' },
                   ]).map((pos, i) => (
                     <div
                       key={i}
-                      className={`absolute w-[8%] h-[8%] ${pos.rotate}`}
+                      className={`absolute aspect-square h-auto ${pos.rotate}`}
                       style={{
+                        width: `${layout.sizePct}%`,
                         top: pos.top !== undefined ? `${pos.top}%` : undefined,
                         bottom: pos.bottom !== undefined ? `${pos.bottom}%` : undefined,
                         left: pos.left !== undefined ? `${pos.left}%` : undefined,

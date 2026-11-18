@@ -1,7 +1,8 @@
 'use client';
 
 import type { StoreProduct } from '../types/store-product';
-import { getLogoAnchors, isBicolourProduct } from '../utils/product-helpers';
+import { getLogoAnchors, getProductPhysicalDimensionsMm, isBicolourProduct } from '../utils/product-helpers';
+import { getCornerClipLayout, parseCornerSizeMm, type ProductImageBounds } from '../utils/corner-clips';
 import type { CustomizationState } from './ProductCustomizer';
 import { getCornerEdgesPricing } from '../utils/pricing';
 
@@ -9,7 +10,7 @@ type ProductCustomizationOverlayProps = {
   product: StoreProduct;
   customization: CustomizationState;
   onPositionChange: (position: { x: number; y: number }) => void;
-  imageBounds?: { top: number, bottom: number, left: number, right: number } | null;
+  imageBounds?: ProductImageBounds | null;
 };
 
 export const ProductCustomizationOverlay = ({
@@ -199,21 +200,18 @@ export const ProductCustomizationOverlay = ({
       {customization.cornerEdges !== 'None' && customization.cornerEdges && (
         <div style={{ position: 'absolute', top: '0', left: '0', width: '100%', height: '100%', zIndex: 15, pointerEvents: 'none' }}>
           {(() => {
-            const offset = 0;
-            
-            const cornerPricing = getCornerEdgesPricing(product);
-            let cornerSizeClass = 'w-[8%] aspect-square h-auto';
-            if (cornerPricing.size === '18mm × 18mm') {
-              cornerSizeClass = 'w-[6.5%] aspect-square h-auto';
-            } else if (cornerPricing.size === '22mm × 22mm') {
-              cornerSizeClass = 'w-[8%] aspect-square h-auto';
-            } else if (cornerPricing.size === '27mm × 27mm') {
-              cornerSizeClass = 'w-[8%] aspect-square h-auto';
-            }
+            const clipBounds = imageBounds ?? { left: bookLeft, right: bookRight, top: bookTop, bottom: bookBottom };
+            const layout = getCornerClipLayout(clipBounds, {
+              cornerSizeMm: parseCornerSizeMm(getCornerEdgesPricing(product).size),
+              productWidthMm: getProductPhysicalDimensionsMm(product).width,
+            });
+            const cornerSizeClass = 'aspect-square h-auto';
 
+            // The clip's outer vertex is the box's top-right corner (rotated 90° for the bottom one),
+            // so anchor that vertex exactly on the detected product corner.
             return ([] as Array<{top?: number, bottom?: number, left?: number, right?: number, rotate: string}>).concat([
-              { top: bookTop - offset, right: 100 - bookRight - offset, rotate: 'rotate-0' }, // top-right
-              { bottom: 100 - bookBottom - offset, right: 100 - bookRight - offset, rotate: 'rotate-90' }, // bottom-right
+              { top: layout.topRight.y, right: 100 - layout.topRight.x, rotate: 'rotate-0' }, // top-right
+              { bottom: 100 - layout.bottomRight.y, right: 100 - layout.bottomRight.x, rotate: 'rotate-90' }, // bottom-right
             ]).map((pos, i) => (
             <div
               key={i}
@@ -223,6 +221,7 @@ export const ProductCustomizationOverlay = ({
                 bottom: pos.bottom !== undefined ? `${pos.bottom}%` : undefined,
                 left: pos.left !== undefined ? `${pos.left}%` : undefined,
                 right: pos.right !== undefined ? `${pos.right}%` : undefined,
+                width: `${layout.sizePct}%`,
                 transformOrigin: 'center center',
                 zIndex: 25,
               }}

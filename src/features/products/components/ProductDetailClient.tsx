@@ -11,7 +11,7 @@ import { useCart } from '@/features/cart/context/CartContext';
 import { useVat } from '@/context/VatContext';
 import { BRANDING_SETUP_FEE, CORNER_PAIRS_PER_PRODUCT, CUSTOMIZATION_MIN_QTY, formatGBP, getCornerEdgesPricing, isGiftsProduct, LOGO_BLOCKING_PRICES, LOGO_CUSTOMIZATION_FEE, VAT_RATE, calculateProductPrice } from '../utils/pricing';
 import { getLogoAnchors, getImageBoundingBox, getProductPhysicalDimensionsMm, sanitizeImageUrl, stripHtml, isBicolourProduct, isHorizonProduct } from '../utils/product-helpers';
-import { getConfiguredImageBounds } from '../utils/product-image-bounds';
+import { parseCornerSizeMm, type ProductImageBounds } from '../utils/corner-clips';
 import { composeProof } from '../utils/generate-proof';
 import { getColorBackground } from '../utils/color-helpers';
 import { TrustIndicators } from '@/components/home/TrustIndicators';
@@ -375,7 +375,7 @@ export const ProductDetailClient = ({
   const [isAdding, setIsAdding] = useState(false);
   const [pendingPropagate, setPendingPropagate] = useState<{ amendKey: string; customization: any; siblingsCount: number } | null>(null);
   const [isPropagating, setIsPropagating] = useState(false);
-  const [imageBounds, setImageBounds] = useState<{ top: number, bottom: number, left: number, right: number } | null>(null);
+  const [imageBounds, setImageBounds] = useState<ProductImageBounds | null>(null);
   const [isCalculatingBounds, setIsCalculatingBounds] = useState(false);
   const [imageAspectRatio, setImageAspectRatio] = useState<number>(1);
 
@@ -528,13 +528,6 @@ export const ProductDetailClient = ({
     // Only ever calculate bounds for the main product image, since that's the only one we customize
     const mainImageSrc = product.images[0]?.src || product.images[0]?.thumbnail || '';
     if (mainImageSrc) {
-      const configuredBounds = getConfiguredImageBounds(mainImageSrc);
-      if (configuredBounds) {
-        setImageBounds(configuredBounds);
-        setIsCalculatingBounds(false);
-        return;
-      }
-
       setImageBounds(null);
       setIsCalculatingBounds(true);
       getImageBoundingBox(mainImageSrc).then(bounds => {
@@ -590,7 +583,15 @@ export const ProductDetailClient = ({
         logoScale: customization.logoScale ?? 1,
         logoPreviewUrl: customization.logoPreviewUrl,
       },
-      geometry: { widthMm: width, heightMm: height, isDiary, isCurved, isBicolour, isHorizon },
+      geometry: {
+        widthMm: width,
+        heightMm: height,
+        isDiary,
+        isCurved,
+        isBicolour,
+        isHorizon,
+        cornerSizeMm: parseCornerSizeMm(getCornerEdgesPricing(product).size) ?? undefined,
+      },
     });
     return result; // { fullPreviewUrl, imageBounds, leftPercent, topPercent, widthPercent }
   };

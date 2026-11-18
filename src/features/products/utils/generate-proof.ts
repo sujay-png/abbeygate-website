@@ -1,5 +1,5 @@
 import { getImageBoundingBox, getLogoAnchorsFromMm } from './product-helpers';
-import { getConfiguredImageBounds } from './product-image-bounds';
+import { getCornerClipLayout, type ProductImageBounds } from './corner-clips';
 
 export type BrandingSpec = {
   blockingType: string;
@@ -17,11 +17,13 @@ export type ProofGeometry = {
   isCurved?: boolean;
   isBicolour?: boolean;
   isHorizon?: boolean;
+  /** Physical corner-clip size; drives clip scale relative to the cover. */
+  cornerSizeMm?: number;
 };
 
 export type ProofResult = {
   fullPreviewUrl: string;
-  imageBounds: { top: number; bottom: number; left: number; right: number } | null;
+  imageBounds: ProductImageBounds | null;
   leftPercent: number;
   topPercent: number;
   widthPercent: number;
@@ -96,7 +98,7 @@ export async function composeProof(args: {
   const { productImageUrl, branding, geometry } = args;
 
   let fullPreviewUrl: string | undefined = undefined;
-  let finalBounds: { top: number; bottom: number; left: number; right: number } | null = null;
+  let finalBounds: ProductImageBounds | null = null;
   let leftPercent = 50;
   let topPercent = 50;
   let widthPercent = 25 * (branding.logoScale || 1);
@@ -134,7 +136,7 @@ export async function composeProof(args: {
         }
         ctx.drawImage(productImg, drawX, drawY, drawW, drawH);
 
-        const bounds = getConfiguredImageBounds(productImageUrl) ?? await getImageBoundingBox(productImageUrl);
+        const bounds = await getImageBoundingBox(productImageUrl);
         if (bounds) finalBounds = bounds;
 
         const anchors = getLogoAnchorsFromMm(geometry.widthMm, geometry.heightMm);
@@ -296,15 +298,18 @@ export async function composeProof(args: {
         if (branding.cornerEdges && branding.cornerEdges !== 'None') {
           try {
             if (finalBounds) {
-              const offset = 0;
-              const clipW = CANVAS_SIZE * 0.08; // Increased from 0.06 to match 8% visual size
+              const layout = getCornerClipLayout(finalBounds, {
+                cornerSizeMm: geometry.cornerSizeMm,
+                productWidthMm: geometry.widthMm,
+              });
+              const clipW = (layout.sizePct / 100) * drawW;
               const clipH = clipW;
-              
-              const bookRightPx = drawX + (finalBounds.right / 100) * drawW;
-              const bookTopPx = drawY + (finalBounds.top / 100) * drawH;
-              const bookBottomPx = drawY + (finalBounds.bottom / 100) * drawH;
-
-              const isCurved = geometry.isCurved ?? false;
+              const toPx = (p: { x: number; y: number }) => ({
+                x: drawX + (p.x / 100) * drawW,
+                y: drawY + (p.y / 100) * drawH,
+              });
+              const trPx = toPx(layout.topRight);
+              const brPx = toPx(layout.bottomRight);
 
               const drawCorner = (x: number, y: number, rotation: number) => {
                 ctx.save();
@@ -382,8 +387,9 @@ export async function composeProof(args: {
                 ctx.restore();
               };
 
-              drawCorner(bookRightPx + offset - clipW, bookTopPx - offset, 0);
-              drawCorner(bookRightPx + offset - clipW, bookBottomPx + offset - clipH, 90);
+              // Clip's outer vertex is the box's top-right (bottom-right once rotated 90°).
+              drawCorner(trPx.x - clipW, trPx.y, 0);
+              drawCorner(brPx.x - clipW, brPx.y - clipH, 90);
             }
           } catch (e) {
             console.error('Failed to draw corners on canvas', e);
