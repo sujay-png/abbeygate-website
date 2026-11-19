@@ -166,7 +166,8 @@ export async function composeProof(args: {
         const safeBottom = bookBottom - marginY;
 
         const printableCenterX = (printableLeft + printableRight) / 2;
-        const printableCenterY = (safeTop + safeBottom) / 2;
+        // Use the actual vertical center of the book cover so diary pre-printed year offset doesn't push center down
+        const printableCenterY = (bookTop + bookBottom) / 2;
 
         if (branding.logoPreviewUrl) {
           const logoImg = await loadLogoImageElement(branding.logoPreviewUrl);

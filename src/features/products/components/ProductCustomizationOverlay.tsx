@@ -58,7 +58,8 @@ export const ProductCustomizationOverlay = ({
   const safeBottom = bookBottom - marginY;
 
   const printableCenterX = (printableLeft + printableRight) / 2;
-  const printableCenterY = (safeTop + safeBottom) / 2;
+  // Use the actual vertical center of the book cover so diary pre-printed year offset doesn't push center down
+  const printableCenterY = (bookTop + bookBottom) / 2;
 
   const getAlignX = (align: 'left' | 'center' | 'right') => {
     if (align === 'left') return printableLeft;

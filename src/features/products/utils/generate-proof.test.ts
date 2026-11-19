@@ -126,4 +126,38 @@ describe('composeProof geometry calculations', () => {
     // Bicolour center should shift rightwards onto the colored panel away from spine stitch
     expect(bicolourResult!.leftPercent).toBeGreaterThan(normalResult!.leftPercent);
   });
+
+  it('calculates the true vertical center for diaries without being pushed down by the year offset', async () => {
+    const notebookCenterResult = await composeProof({
+      ...baseArgs,
+      branding: { ...baseArgs.branding, positionLabel: 'center' },
+      geometry: { ...baseArgs.geometry, isDiary: false }
+    });
+
+    const diaryCenterResult = await composeProof({
+      ...baseArgs,
+      branding: { ...baseArgs.branding, positionLabel: 'center' },
+      geometry: { ...baseArgs.geometry, isDiary: true }
+    });
+
+    const diaryTopResult = await composeProof({
+      ...baseArgs,
+      branding: { ...baseArgs.branding, positionLabel: 'top-center' },
+      geometry: { ...baseArgs.geometry, isDiary: true }
+    });
+
+    const notebookTopResult = await composeProof({
+      ...baseArgs,
+      branding: { ...baseArgs.branding, positionLabel: 'top-center' },
+      geometry: { ...baseArgs.geometry, isDiary: false }
+    });
+
+    expect(notebookCenterResult).not.toBeNull();
+    expect(diaryCenterResult).not.toBeNull();
+    // Center Y on a diary should be the actual physical cover center, identical to a notebook
+    expect(diaryCenterResult!.topPercent).toBe(notebookCenterResult!.topPercent);
+
+    // However, top-center on a diary should be pushed down to avoid overlapping the year
+    expect(diaryTopResult!.topPercent).toBeGreaterThan(notebookTopResult!.topPercent);
+  });
 });
