@@ -102,11 +102,36 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
         'full-colour': '#fff',
       };
 
-      const genericTags = ['best seller', 'best-seller', 'bestseller', 'new', 'featured', 'popular', 'sale'];
-      const groupingTag = product.tags.find((t: { id: number; name: string; slug: string }) => !genericTags.includes(t.slug.toLowerCase()) && !genericTags.includes(t.name.toLowerCase()));
-      
-      const tagId = groupingTag ? groupingTag.id : product.tags[0].id;
-      const { products: siblings } = await getStoreProducts({ tagId, perPage: 20 });
+      const isGroupingTag = (t: { id: number; name: string; slug: string }) => {
+        const slug = t.slug.toLowerCase().trim();
+        const name = t.name.toLowerCase().trim();
+
+        // 1. Exclude 4-digit years (e.g. 2027, 2026, 2028)
+        if (/^\d{4}$/.test(slug) || /^\d{4}$/.test(name)) return false;
+
+        // 2. Exclude generic promotional / category tags
+        const genericTags = [
+          'best seller',
+          'best-seller',
+          'bestseller',
+          'new',
+          'featured',
+          'popular',
+          'sale',
+          'diary',
+          'diaries',
+          'notebook',
+          'notebooks',
+        ];
+        if (genericTags.includes(slug) || genericTags.includes(name)) return false;
+
+        return true;
+      };
+
+      const groupingTag = product.tags.find(isGroupingTag);
+      if (!groupingTag) return [];
+
+      const { products: siblings } = await getStoreProducts({ tagId: groupingTag.id, perPage: 50 });
       const siblingIds = [product.id, ...siblings.map(s => s.id)];
       const hexMap = await getProductHexValues(siblingIds);
       
