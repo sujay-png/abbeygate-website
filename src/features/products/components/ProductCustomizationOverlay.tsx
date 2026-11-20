@@ -5,6 +5,7 @@ import { getLogoAnchors, getProductPhysicalDimensionsMm, isBicolourProduct } fro
 import { getCornerClipLayout, parseCornerSizeMm, type ProductImageBounds } from '../utils/corner-clips';
 import type { CustomizationState } from './ProductCustomizer';
 import { getCornerEdgesPricing } from '../utils/pricing';
+import { useStampMaskUrl } from '../utils/logo-stamp-mask';
 
 type ProductCustomizationOverlayProps = {
   product: StoreProduct;
@@ -22,6 +23,7 @@ export const ProductCustomizationOverlay = ({
   imageAspect,
 }: ProductCustomizationOverlayProps) => {
   // Dragging logic removed by user request
+  const stampMaskUrl = useStampMaskUrl(customization.logoPreviewUrl);
 
   const anchors = getLogoAnchors(product);
   
@@ -125,8 +127,8 @@ export const ProductCustomizationOverlay = ({
             <div 
               className="w-full h-full pointer-events-none"
               style={{
-                maskImage: `url(${customization.logoPreviewUrl})`,
-                WebkitMaskImage: `url(${customization.logoPreviewUrl})`,
+                maskImage: `url(${stampMaskUrl})`,
+                WebkitMaskImage: `url(${stampMaskUrl})`,
                 maskSize: 'contain',
                 WebkitMaskSize: 'contain',
                 maskRepeat: 'no-repeat',
@@ -145,8 +147,8 @@ export const ProductCustomizationOverlay = ({
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
-                  maskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
-                  WebkitMaskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
+                  maskImage: `url(${stampMaskUrl}), url(${stampMaskUrl})`,
+                  WebkitMaskImage: `url(${stampMaskUrl}), url(${stampMaskUrl})`,
                   maskPosition: `${bgPosition}, calc(${posLabel.includes('left') ? '0%' : posLabel.includes('right') ? '100%' : '50%'} + 1.5px) calc(${posLabel.includes('top') ? '0%' : posLabel.includes('bottom') ? '100%' : '50%'} + 1.5px)`,
                   WebkitMaskPosition: `${bgPosition}, calc(${posLabel.includes('left') ? '0%' : posLabel.includes('right') ? '100%' : '50%'} + 1.5px) calc(${posLabel.includes('top') ? '0%' : posLabel.includes('bottom') ? '100%' : '50%'} + 1.5px)`,
                   maskSize: 'contain, contain',
@@ -164,8 +166,8 @@ export const ProductCustomizationOverlay = ({
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
-                  maskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
-                  WebkitMaskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
+                  maskImage: `url(${stampMaskUrl}), url(${stampMaskUrl})`,
+                  WebkitMaskImage: `url(${stampMaskUrl}), url(${stampMaskUrl})`,
                   maskPosition: `${bgPosition}, calc(${posLabel.includes('left') ? '0%' : posLabel.includes('right') ? '100%' : '50%'} - 1.5px) calc(${posLabel.includes('top') ? '0%' : posLabel.includes('bottom') ? '100%' : '50%'} - 1.5px)`,
                   WebkitMaskPosition: `${bgPosition}, calc(${posLabel.includes('left') ? '0%' : posLabel.includes('right') ? '100%' : '50%'} - 1.5px) calc(${posLabel.includes('top') ? '0%' : posLabel.includes('bottom') ? '100%' : '50%'} - 1.5px)`,
                   maskSize: 'contain, contain',
@@ -183,8 +185,8 @@ export const ProductCustomizationOverlay = ({
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
-                  maskImage: `url(${customization.logoPreviewUrl})`,
-                  WebkitMaskImage: `url(${customization.logoPreviewUrl})`,
+                  maskImage: `url(${stampMaskUrl})`,
+                  WebkitMaskImage: `url(${stampMaskUrl})`,
                   maskPosition: bgPosition,
                   WebkitMaskPosition: bgPosition,
                   maskSize: 'contain',

@@ -17,6 +17,7 @@ import {
   VAT_RATE,
 } from '../utils/pricing';
 import { processLogo } from '../utils/image-processing';
+import { useStampMaskUrl } from '../utils/logo-stamp-mask';
 import { getColorBackground } from '../utils/color-helpers';
 import { isBicolourProduct, isHorizonProduct } from '../utils/product-helpers';
 import { useVat } from '@/context/VatContext';
@@ -92,6 +93,7 @@ export const ProductCustomizer = ({
   const isBicolour = isBicolourProduct(product);
   const isHorizon = isHorizonProduct(product);
   const cornerEdgesPricing = getCornerEdgesPricing(product);
+  const stampMaskUrl = useStampMaskUrl(customization.logoPreviewUrl);
   const { showPricesIncludingVat } = useVat();
   const cornerPriceLabel = cornerEdgesPricing.pricePerPair > 0
     ? `+${formatGBP(cornerEdgesPricing.pricePerPair * (showPricesIncludingVat ? (1 + VAT_RATE) : 1))} per unit`
@@ -390,8 +392,8 @@ export const ProductCustomizer = ({
                       <div 
                         className="absolute inset-0 m-6 pointer-events-none"
                         style={{
-                          maskImage: `url(${customization.logoPreviewUrl})`,
-                          WebkitMaskImage: `url(${customization.logoPreviewUrl})`,
+                          maskImage: `url(${stampMaskUrl})`,
+                          WebkitMaskImage: `url(${stampMaskUrl})`,
                           maskSize: 'contain',
                           WebkitMaskSize: 'contain',
                           maskRepeat: 'no-repeat',
@@ -453,8 +455,8 @@ export const ProductCustomizer = ({
                         <div
                           className="absolute inset-0 pointer-events-none m-6"
                           style={{
-                            maskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
-                            WebkitMaskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
+                            maskImage: `url(${stampMaskUrl}), url(${stampMaskUrl})`,
+                            WebkitMaskImage: `url(${stampMaskUrl}), url(${stampMaskUrl})`,
                             maskPosition: 'center, calc(50% + 1.5px) calc(50% + 1.5px)',
                             WebkitMaskPosition: 'center, calc(50% + 1.5px) calc(50% + 1.5px)',
                             maskSize: 'contain, contain',
@@ -472,8 +474,8 @@ export const ProductCustomizer = ({
                         <div
                           className="absolute inset-0 pointer-events-none m-6"
                           style={{
-                            maskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
-                            WebkitMaskImage: `url(${customization.logoPreviewUrl}), url(${customization.logoPreviewUrl})`,
+                            maskImage: `url(${stampMaskUrl}), url(${stampMaskUrl})`,
+                            WebkitMaskImage: `url(${stampMaskUrl}), url(${stampMaskUrl})`,
                             maskPosition: 'center, calc(50% - 1.5px) calc(50% - 1.5px)',
                             WebkitMaskPosition: 'center, calc(50% - 1.5px) calc(50% - 1.5px)',
                             maskSize: 'contain, contain',
@@ -491,8 +493,8 @@ export const ProductCustomizer = ({
                         <div
                           className="absolute inset-0 pointer-events-none m-6"
                           style={{
-                            maskImage: `url(${customization.logoPreviewUrl})`,
-                            WebkitMaskImage: `url(${customization.logoPreviewUrl})`,
+                            maskImage: `url(${stampMaskUrl})`,
+                            WebkitMaskImage: `url(${stampMaskUrl})`,
                             maskPosition: 'center',
                             WebkitMaskPosition: 'center',
                             maskSize: 'contain',

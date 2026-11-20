@@ -6,6 +6,7 @@ import Image from 'next/image';
 import type { CartItem } from '@/features/cart/context/CartContext';
 import { getImageBoundingBox } from '@/features/products/utils/product-helpers';
 import { getCornerClipLayout, type ProductImageBounds } from '@/features/products/utils/corner-clips';
+import { useStampMaskUrl } from '@/features/products/utils/logo-stamp-mask';
 
 type ImagePreviewModalProps = {
   isOpen: boolean;
@@ -38,6 +39,7 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, imageUrl, title = 'Cu
 
   const [imageBounds, setImageBounds] = useState<ProductImageBounds | null>(null);
   const [imageAspectRatio, setImageAspectRatio] = useState<number>(1);
+  const stampMaskUrl = useStampMaskUrl(item?.customization?.logoPreviewUrl);
 
   // New cart items include an exact, composited snapshot generated on the product
   // page. Prefer it so every customization layer (including corner clips) stays
@@ -217,8 +219,8 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, imageUrl, title = 'Cu
                   <div 
                     className="w-full h-full"
                     style={{
-                      maskImage: `url(${item.customization.logoPreviewUrl})`,
-                      WebkitMaskImage: `url(${item.customization.logoPreviewUrl})`,
+                      maskImage: `url(${stampMaskUrl})`,
+                      WebkitMaskImage: `url(${stampMaskUrl})`,
                       maskSize: 'contain',
                       WebkitMaskSize: 'contain',
                       maskRepeat: 'no-repeat',
@@ -247,8 +249,8 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, imageUrl, title = 'Cu
                     <div
                       className="absolute inset-0 pointer-events-none"
                       style={{
-                        maskImage: `url(${item.customization.logoPreviewUrl}), url(${item.customization.logoPreviewUrl})`,
-                        WebkitMaskImage: `url(${item.customization.logoPreviewUrl}), url(${item.customization.logoPreviewUrl})`,
+                        maskImage: `url(${stampMaskUrl}), url(${stampMaskUrl})`,
+                        WebkitMaskImage: `url(${stampMaskUrl}), url(${stampMaskUrl})`,
                         maskPosition: 'center, calc(50% + 1.5px) calc(50% + 1.5px)',
                         WebkitMaskPosition: 'center, calc(50% + 1.5px) calc(50% + 1.5px)',
                         maskSize: 'contain, contain',
@@ -266,8 +268,8 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, imageUrl, title = 'Cu
                     <div
                       className="absolute inset-0 pointer-events-none"
                       style={{
-                        maskImage: `url(${item.customization.logoPreviewUrl}), url(${item.customization.logoPreviewUrl})`,
-                        WebkitMaskImage: `url(${item.customization.logoPreviewUrl}), url(${item.customization.logoPreviewUrl})`,
+                        maskImage: `url(${stampMaskUrl}), url(${stampMaskUrl})`,
+                        WebkitMaskImage: `url(${stampMaskUrl}), url(${stampMaskUrl})`,
                         maskPosition: 'center, calc(50% - 1.5px) calc(50% - 1.5px)',
                         WebkitMaskPosition: 'center, calc(50% - 1.5px) calc(50% - 1.5px)',
                         maskSize: 'contain, contain',
@@ -285,8 +287,8 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, imageUrl, title = 'Cu
                     <div
                       className="absolute inset-0 pointer-events-none"
                       style={{
-                        maskImage: `url(${item.customization.logoPreviewUrl})`,
-                        WebkitMaskImage: `url(${item.customization.logoPreviewUrl})`,
+                        maskImage: `url(${stampMaskUrl})`,
+                        WebkitMaskImage: `url(${stampMaskUrl})`,
                         maskPosition: 'center',
                         WebkitMaskPosition: 'center',
                         maskSize: 'contain',

@@ -1,5 +1,6 @@
 import { getImageBoundingBox, getLogoAnchorsFromMm } from './product-helpers';
 import { getCornerClipLayout, type ProductImageBounds } from './corner-clips';
+import { stampMaskFromImage } from './logo-stamp-mask';
 
 export type BrandingSpec = {
   blockingType: string;
@@ -221,13 +222,15 @@ export async function composeProof(args: {
           const logoW = CANVAS_SIZE * (drawLogoW / 100);
           const logoH = CANVAS_SIZE * (drawLogoH / 100);
 
+          // Foil / deboss stamp only the ink of the artwork (not white plates behind it).
+          const stampImg = branding.blockingType === 'UV Print' ? logoImg : stampMaskFromImage(logoImg);
           if (branding.blockingType === 'Foil blocked') {
             const tintCanvas = document.createElement('canvas');
             tintCanvas.width = logoW;
             tintCanvas.height = logoH;
             const tCtx = tintCanvas.getContext('2d');
             if (tCtx) {
-              tCtx.drawImage(logoImg, 0, 0, logoW, logoH);
+              tCtx.drawImage(stampImg, 0, 0, logoW, logoH);
               tCtx.globalCompositeOperation = 'source-in';
               tCtx.fillStyle = branding.foilColor === 'Gold' ? '#D4AF37' : '#C0C0C0';
               tCtx.fillRect(0, 0, logoW, logoH);
@@ -243,12 +246,12 @@ export async function composeProof(args: {
             darkEdge.width = logoW; darkEdge.height = logoH;
             const dCtx = darkEdge.getContext('2d');
             if (dCtx) {
-              dCtx.drawImage(logoImg, 0, 0, logoW, logoH);
+              dCtx.drawImage(stampImg, 0, 0, logoW, logoH);
               dCtx.globalCompositeOperation = 'source-in';
               dCtx.fillStyle = 'rgba(0,0,0,0.65)';
               dCtx.fillRect(0, 0, logoW, logoH);
               dCtx.globalCompositeOperation = 'destination-out';
-              dCtx.drawImage(logoImg, shift, shift, logoW, logoH);
+              dCtx.drawImage(stampImg, shift, shift, logoW, logoH);
 
               ctx.save();
               ctx.filter = 'blur(0.5px)';
@@ -262,12 +265,12 @@ export async function composeProof(args: {
             lightEdge.width = logoW; lightEdge.height = logoH;
             const lCtx = lightEdge.getContext('2d');
             if (lCtx) {
-              lCtx.drawImage(logoImg, 0, 0, logoW, logoH);
+              lCtx.drawImage(stampImg, 0, 0, logoW, logoH);
               lCtx.globalCompositeOperation = 'source-in';
               lCtx.fillStyle = 'rgba(255,255,255,0.5)';
               lCtx.fillRect(0, 0, logoW, logoH);
               lCtx.globalCompositeOperation = 'destination-out';
-              lCtx.drawImage(logoImg, -shift, -shift, logoW, logoH);
+              lCtx.drawImage(stampImg, -shift, -shift, logoW, logoH);
 
               ctx.save();
               ctx.filter = 'blur(0.5px)';
@@ -281,7 +284,7 @@ export async function composeProof(args: {
             baseFill.width = logoW; baseFill.height = logoH;
             const bCtx = baseFill.getContext('2d');
             if (bCtx) {
-              bCtx.drawImage(logoImg, 0, 0, logoW, logoH);
+              bCtx.drawImage(stampImg, 0, 0, logoW, logoH);
               bCtx.globalCompositeOperation = 'source-in';
               bCtx.fillStyle = 'rgba(0,0,0,0.08)';
               bCtx.fillRect(0, 0, logoW, logoH);
