@@ -47,8 +47,8 @@ type WooCoupon = {
   free_shipping: boolean;
 };
 
-async function applyCoupon(code: string | undefined, amountToDiscount: number): Promise<{ discount: number; couponCode?: string; freeShipping: boolean }> {
-  if (!code) return { discount: 0, freeShipping: false };
+async function applyCoupon(code: string | undefined, amountToDiscount: number): Promise<{ discount: number; couponCode?: string; freeShipping: boolean; isHundredPercent: boolean }> {
+  if (!code) return { discount: 0, freeShipping: false, isHundredPercent: false };
   const coupons = await woocommerceFetch<WooCoupon[]>({ path: '/coupons', params: { code, per_page: 1 }, revalidate: false });
   const coupon = coupons.find((candidate) => candidate.code.toUpperCase() === code);
   if (!coupon) throw new Error('Coupon code was not found.');
@@ -60,8 +60,14 @@ async function applyCoupon(code: string | undefined, amountToDiscount: number): 
   if (maximum > 0 && amountToDiscount > maximum) throw new Error(`Coupon is valid only up to £${maximum.toFixed(2)}.`);
 
   const amount = Number(coupon.amount || 0);
+  const isHundredPercent = coupon.discount_type === 'percent' && amount >= 100;
   const discount = coupon.discount_type === 'percent' ? amountToDiscount * (amount / 100) : amount;
-  return { discount: Number(Math.min(amountToDiscount, discount).toFixed(2)), couponCode: coupon.code, freeShipping: coupon.free_shipping };
+  return { 
+    discount: Number(Math.min(amountToDiscount, discount).toFixed(2)), 
+    couponCode: coupon.code, 
+    freeShipping: coupon.free_shipping || isHundredPercent,
+    isHundredPercent
+  };
 }
 
 async function getStoreProduct(productId: string): Promise<StoreProduct> {
@@ -136,14 +142,14 @@ export async function createCheckoutQuote(payload: unknown): Promise<CheckoutQuo
   // Apply coupon to the overall total (subtotal + shipping)
   const coupon = await applyCoupon(couponCode, subtotal + shipping.cost);
   
-  // Re-calculate shipping if the coupon explicitly grants free shipping
-  if (coupon.freeShipping || couponCode?.toLowerCase() === 'abbeygate100') {
+  // Re-calculate shipping if the coupon explicitly grants free shipping or is a 100% discount
+  if (coupon.freeShipping || coupon.isHundredPercent || couponCode?.toLowerCase() === 'abbeygate100') {
     shipping = calculateShipping(lines.map((line) => ({ product: line.product, quantity: line.quantity })), ['abbeygate100']);
   }
   
   // Taxable amount is the overall total minus the discount
   let discountAmount = coupon.discount;
-  if (couponCode?.toLowerCase() === 'abbeygate100') {
+  if (coupon.isHundredPercent || couponCode?.toLowerCase() === 'abbeygate100') {
     discountAmount = subtotal + shipping.cost;
   }
   const taxableAmount = Math.max(0, subtotal + shipping.cost - discountAmount);

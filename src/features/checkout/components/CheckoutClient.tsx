@@ -71,6 +71,7 @@ function CheckoutFormContent({
   displayDiscount,
   quoteData,
   isQuoteLoading,
+  setIsQuoteLoading,
   quoteError,
   couponInput,
   setCouponInput,
@@ -202,7 +203,11 @@ function CheckoutFormContent({
   }, [quoteData?.id, displayTotal <= 0]);
 
   const handleExpressConfirm = async () => {
-    if (isFreeOrder) return;
+    if (isFreeOrder) {
+      setIsProcessing(false);
+      setPaymentError('This order is completely free (£0.00). No card or Google Pay payment is required. Please use the "Place Order" button below.');
+      return;
+    }
     if (!stripe || !elements) return;
     setIsProcessing(true);
     setPaymentError(null);
@@ -715,23 +720,35 @@ function CheckoutFormContent({
             {isDiscountVisible || couponInput || displayDiscount > 0 ? (
               <div className="flex gap-2">
                 <input 
-                  placeholder="Discount code" 
+                  placeholder={isQuoteLoading ? "Applying code..." : "Discount code"} 
                   aria-label="Discount code" 
-                  className="min-w-0 flex-1 border border-[var(--brand-border)] bg-white px-3 py-2 text-sm outline-none focus:border-brand-primary transition-colors" 
+                  className="min-w-0 flex-1 border border-[var(--brand-border)] bg-white px-3 py-2 text-sm outline-none focus:border-brand-primary transition-colors disabled:bg-gray-100 disabled:opacity-75" 
                   value={couponInput} 
+                  disabled={isQuoteLoading || isProcessing}
                   onChange={(e) => setCouponInput(e.target.value)} 
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
                       if (couponInput.trim() && !isQuoteLoading && !isProcessing) {
+                        setIsQuoteLoading?.(true);
                         setAppliedCoupon(couponInput.trim());
                       }
                     }
                   }}
                   autoFocus 
                 />
-                <button type="button" className="border border-brand-primary px-4 py-2 text-sm font-semibold text-brand-primary hover:bg-brand-primary hover:text-white transition-colors disabled:opacity-50" onClick={() => setAppliedCoupon(couponInput)} disabled={!couponInput.trim() || isQuoteLoading || isProcessing}>
-                  Apply
+                <button 
+                  type="button" 
+                  className="border border-brand-primary px-4 py-2 text-sm font-semibold text-brand-primary hover:bg-brand-primary hover:text-white transition-colors disabled:opacity-50 min-w-[90px] text-center" 
+                  onClick={() => {
+                    if (couponInput.trim() && !isQuoteLoading && !isProcessing) {
+                      setIsQuoteLoading?.(true);
+                      setAppliedCoupon(couponInput.trim());
+                    }
+                  }} 
+                  disabled={!couponInput.trim() || isQuoteLoading || isProcessing}
+                >
+                  {isQuoteLoading ? 'Applying...' : 'Apply'}
                 </button>
               </div>
             ) : (
@@ -744,7 +761,17 @@ function CheckoutFormContent({
           {displayDiscount > 0 && (
             <div className="mt-2 flex items-center justify-between text-sm text-brand-accent font-semibold">
               <span>Discount applied ({quoteData?.quote.couponCode})</span>
-              <button type="button" className="text-xs underline hover:text-brand-primary-dark" onClick={() => { setAppliedCoupon(undefined); setCouponInput(''); }}>Remove</button>
+              <button 
+                type="button" 
+                className="text-xs underline hover:text-brand-primary-dark" 
+                onClick={() => { 
+                  setIsQuoteLoading?.(true);
+                  setAppliedCoupon(undefined); 
+                  setCouponInput(''); 
+                }}
+              >
+                Remove
+              </button>
             </div>
           )}
           <dl className="mt-7 space-y-3 text-sm">
@@ -957,6 +984,7 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
     displayDiscount,
     quoteData,
     isQuoteLoading,
+    setIsQuoteLoading,
     quoteError,
     couponInput,
     setCouponInput,
