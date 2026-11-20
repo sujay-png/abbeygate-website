@@ -21,7 +21,7 @@ export type CornerClipLayout = {
 const FALLBACK_CLIP_TO_COVER_WIDTH = 0.15;
 
 /** How far the clip overhangs the cover edge, as a fraction of clip size. */
-const CLIP_OVERHANG = 0.03;
+const CLIP_OVERHANG = 0.01;
 
 /** '22mm × 22mm' → 22 */
 export function parseCornerSizeMm(size: string | null | undefined): number | null {
