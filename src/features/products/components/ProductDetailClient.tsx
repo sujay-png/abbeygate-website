@@ -1227,6 +1227,7 @@ export const ProductDetailClient = ({
           <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[var(--brand-cream)]">
             <button
               onClick={() => setIsPreviewOpen(false)}
+              aria-label="Close image preview"
               className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors z-[110]"
             >
               <X className="w-5 h-5 text-gray-700" />
@@ -1235,6 +1236,8 @@ export const ProductDetailClient = ({
             {product.images.length > 1 && (
               <>
                 <button
+                  type="button"
+                  aria-label="Previous image"
                   onClick={(e) => {
                     e.stopPropagation();
                     setActiveImageIndex((prev) => (prev > 0 ? prev - 1 : product.images.length - 1));
@@ -1244,6 +1247,8 @@ export const ProductDetailClient = ({
                   <ChevronLeft className="w-5 h-5 ml-[-1px] text-gray-700" />
                 </button>
                 <button
+                  type="button"
+                  aria-label="Next image"
                   onClick={(e) => {
                     e.stopPropagation();
                     setActiveImageIndex((prev) => (prev < product.images.length - 1 ? prev + 1 : 0));
@@ -1326,6 +1331,7 @@ export const ProductDetailClient = ({
                   <button type="button" aria-label="Decrease quantity" className="px-3 text-gray-600 hover:bg-gray-50" onClick={() => setQuantity(Math.max(CUSTOMIZATION_MIN_QTY, quantity - 1))}>−</button>
                   <input
                     type="number"
+                    aria-label="Quantity"
                     min={CUSTOMIZATION_MIN_QTY}
                     value={quantity}
                     onChange={(e) => {
@@ -1591,6 +1597,7 @@ export const ProductDetailClient = ({
                     <button
                       key={color.slug}
                       title={color.name}
+                      aria-label={`Select ${color.name} colour`}
                       onClick={() => {
                         if (color.fullProduct && product.slug !== color.slug) {
                           router.replace(`/product/${color.slug}`, { scroll: false });
@@ -1609,11 +1616,13 @@ export const ProductDetailClient = ({
           {/* Quantity & Actions (Unwrapped) */}
           <div className="flex flex-col gap-4">
             <div className="flex justify-between items-start">
-              <label className="text-[14px] font-bold text-brand-body mt-2">Quantity</label>
+              <label htmlFor="product-quantity-input" className="text-[14px] font-bold text-brand-body mt-2">Quantity</label>
               <div className="flex flex-col items-end gap-2">
                 <div className="flex items-center border border-gray-300 bg-white rounded-md overflow-hidden h-[36px]">
-                  <button type="button" className="px-3 hover:bg-gray-100 text-gray-600 transition" onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
+                  <button type="button" aria-label="Decrease quantity" className="px-3 hover:bg-gray-100 text-gray-600 transition" onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
                   <input
+                    id="product-quantity-input"
+                    aria-label="Quantity"
                     type="number"
                     min={1}
                     value={quantity}
@@ -1623,7 +1632,7 @@ export const ProductDetailClient = ({
                     }}
                     className="w-[50px] text-center font-bold text-brand-body focus:outline-none"
                   />
-                  <button type="button" className="px-3 hover:bg-gray-100 text-gray-600 transition" onClick={() => setQuantity(quantity + 1)}>+</button>
+                  <button type="button" aria-label="Increase quantity" className="px-3 hover:bg-gray-100 text-gray-600 transition" onClick={() => setQuantity(quantity + 1)}>+</button>
                 </div>
                 <div className="text-[14px] font-bold text-brand-body mt-1">
                   {formatDisplayedPrice(priceDetails.unitPrice)} <span className="font-normal text-gray-500">per unit ({displayedVatLabel})</span>
