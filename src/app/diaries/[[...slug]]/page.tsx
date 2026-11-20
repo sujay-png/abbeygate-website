@@ -2,6 +2,8 @@ import { CategoryPage } from '@/features/products/components/CategoryPage';
 
 import { generateCategoryMetadata } from '@/lib/seo';
 
+export const revalidate = 3600;
+
 type PageProps = {
   params: Promise<{ slug?: string[] }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;

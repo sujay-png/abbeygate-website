@@ -14,16 +14,19 @@ const didactGothic = Didact_Gothic({
   weight: "400",
   variable: "--font-didact-gothic",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const workSans = Work_Sans({
   variable: "--font-work-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const josefinSans = Josefin_Sans({
   variable: "--font-josefin-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 import { getSEOMetadata, SITE_URL } from '@/lib/seo';
@@ -103,7 +106,7 @@ export default function RootLayout({
         </Script>
 
         {/* Microsoft Clarity (Marketing / SEO Behavioral Tracking) */}
-        <Script id="microsoft-clarity" strategy="afterInteractive">
+        <Script id="microsoft-clarity" strategy="lazyOnload">
           {`
             (function(c,l,a,r,i,t,y){
                 c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};

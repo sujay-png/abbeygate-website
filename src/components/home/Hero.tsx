@@ -122,10 +122,10 @@ export const Hero = () => {
             <div key={slide.id} className="relative flex-[0_0_100%] min-w-0 h-full">
               <Image
                 src={slide.bgImage}
-                alt=""
+                alt={slide.category ? `${slide.category} - Abbeygate Corporate Merchandise` : 'Abbeygate Corporate Merchandise'}
                 fill
                 priority={index === 0}
-                quality={95}
+                quality={80}
                 sizes="100vw"
                 className="object-cover object-center"
               />

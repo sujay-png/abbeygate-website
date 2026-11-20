@@ -6,13 +6,26 @@ import { ProductDetailClient, type ColorVariant } from '@/features/products/comp
 import { RelatedProducts } from '@/features/products/components/RelatedProducts';
 import { FAQ } from '@/components/home/FAQ';
 import { CustomisationCTA } from '@/components/shared/CustomisationCTA';
-import { getStoreProductBySlug, getStoreProducts, getProductCustomTabs, getStoreProductById } from '@/features/products/services/store-products';
+import { getStoreProductBySlug, getStoreProducts, getProductCustomTabs, getStoreProductById, getSitemapProducts } from '@/features/products/services/store-products';
 import { getProductPricingFromProduct } from '@/features/products/services/pricing';
 import { getProductHexValues } from '@/features/products/services/product-colors';
 import { getProductBreadcrumbs } from '@/features/products/utils/breadcrumb';
 import { getProductBaseAmount } from '@/features/products/utils/product-helpers';
 import type { Metadata } from 'next';
 import { getSEOMetadata, jsonLd, SITE_URL } from '@/lib/seo';
+
+export const revalidate = 3600; // Cache product page on Vercel Edge CDN for 1 hour (ISR)
+
+export async function generateStaticParams() {
+  try {
+    const products = await getSitemapProducts();
+    return products.slice(0, 30).map((product) => ({
+      slug: product.slug,
+    }));
+  } catch {
+    return [];
+  }
+}
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -270,7 +283,42 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
               "priceCurrency": "GBP",
               "price": pricing.basePrice,
               "itemCondition": "https://schema.org/NewCondition",
-              "availability": product.is_in_stock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+              "availability": product.is_in_stock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+              "shippingDetails": {
+                "@type": "OfferShippingDetails",
+                "shippingRate": {
+                  "@type": "MonetaryAmount",
+                  "value": "0.00",
+                  "currency": "GBP"
+                },
+                "shippingDestination": {
+                  "@type": "DefinedRegion",
+                  "addressCountry": "GB"
+                },
+                "deliveryTime": {
+                  "@type": "ShippingDeliveryTime",
+                  "handlingTime": {
+                    "@type": "QuantitativeValue",
+                    "minValue": 1,
+                    "maxValue": 3,
+                    "unitCode": "DAY"
+                  },
+                  "transitTime": {
+                    "@type": "QuantitativeValue",
+                    "minValue": 2,
+                    "maxValue": 5,
+                    "unitCode": "DAY"
+                  }
+                }
+              },
+              "hasMerchantReturnPolicy": {
+                "@type": "MerchantReturnPolicy",
+                "applicableCountry": "GB",
+                "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+                "merchantReturnDays": 14,
+                "returnMethod": "https://schema.org/ReturnByMail",
+                "returnFees": "https://schema.org/ReturnShippingFees"
+              }
             }
           })
         }}

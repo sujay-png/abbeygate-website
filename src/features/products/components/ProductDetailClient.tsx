@@ -1075,6 +1075,7 @@ export const ProductDetailClient = ({
                       key={img.id}
                       type="button"
                       onClick={() => setActiveImageIndex(index)}
+                      aria-label={`View ${product.name} image ${index + 1}`}
                       className={`relative h-20 w-20 lg:h-24 lg:w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${index === activeImageIndex ? 'border-brand-primary' : 'border-gray-200 hover:border-gray-300'
                         }`}
                       style={{ backgroundColor: 'white' }}
@@ -1109,6 +1110,7 @@ export const ProductDetailClient = ({
                     }}
                     className="absolute left-4 top-1/2 -translate-y-1/2 z-[30] w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm text-gray-700 hover:text-brand-primary-dark hover:bg-gray-50 transition-colors border border-gray-200"
                     title="Previous Image"
+                    aria-label="Previous image"
                   >
                     <ChevronLeft className="w-5 h-5 ml-[-1px]" />
                   </button>
@@ -1121,6 +1123,7 @@ export const ProductDetailClient = ({
                     }}
                     className="absolute right-4 top-1/2 -translate-y-1/2 z-[30] w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm text-gray-700 hover:text-brand-primary-dark hover:bg-gray-50 transition-colors border border-gray-200"
                     title="Next Image"
+                    aria-label="Next image"
                   >
                     <ChevronRight className="w-5 h-5 mr-[-1px]" />
                   </button>
@@ -1161,7 +1164,7 @@ export const ProductDetailClient = ({
                               alt={img.alt || product.name}
                               fill
                               priority={idx === 0}
-                              quality={95}
+                              quality={75}
                               sizes="(max-width: 768px) 100vw, 50vw"
                               className={`transition-all duration-500 object-contain ${idx === 0 ? 'mix-blend-multiply' : ''} ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
                             />
@@ -1284,7 +1287,7 @@ export const ProductDetailClient = ({
                     src={product.images[activeImageIndex]?.src || activeSrc}
                     alt={product.images[activeImageIndex]?.alt || product.name}
                     fill
-                    quality={95}
+                    quality={75}
                     sizes="80vw"
                     className={`object-contain ${activeImageIndex === 0 ? 'mix-blend-multiply' : ''}`}
                   />

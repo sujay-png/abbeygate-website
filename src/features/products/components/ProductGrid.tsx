@@ -22,7 +22,7 @@ export const ProductGrid = ({ products, hasProductsInCategory = true }: ProductG
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-12">
-      {products.map((product) => {
+      {products.map((product, index) => {
         const image = product.images[0];
         const imageSrc = sanitizeImageUrl(image?.thumbnail || image?.src);
         const { rotate, scaleX, imagePadding } = getProductImageTransform(product);
@@ -62,6 +62,8 @@ export const ProductGrid = ({ products, hasProductsInCategory = true }: ProductG
                   src={imageSrc}
                   alt={image?.alt || product.name}
                   fill
+                  priority={index < 2}
+                  quality={75}
                   sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   className="object-contain p-4 transition-transform duration-500 group-hover:scale-105 mix-blend-multiply"
                   style={transformStyle}
