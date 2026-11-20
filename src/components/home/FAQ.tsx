@@ -56,7 +56,10 @@ export const FAQ = ({ hideTitle = false, className = "bg-brand-light" }: FAQProp
               className="border-b border-gray-300 last:border-b-0"
             >
               <button
+                type="button"
                 onClick={() => toggleFAQ(index)}
+                aria-expanded={openIndex === index}
+                aria-controls={`faq-answer-${index}`}
                 className="w-full flex items-center justify-between p-6 text-left focus:outline-none focus-visible:bg-brand-primary/5 cursor-pointer transition-colors hover:bg-brand-primary-dark/5"
               >
                 <span className="font-semibold text-brand-primary-dark pr-8 text-[15px]">
@@ -81,7 +84,7 @@ export const FAQ = ({ hideTitle = false, className = "bg-brand-light" }: FAQProp
                     transition={{ duration: 0.3, ease: "easeInOut" }}
                     className="overflow-hidden"
                   >
-                    <div className="px-6 pb-6 pt-2 text-gray-700 font-work leading-relaxed text-[15px]">
+                    <div id={`faq-answer-${index}`} className="px-6 pb-6 pt-2 text-gray-700 font-work leading-relaxed text-[15px]">
                       {faq.answer}
                     </div>
                   </motion.div>
