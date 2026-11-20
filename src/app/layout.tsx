@@ -92,9 +92,9 @@ export default function RootLayout({
         {/* GA4 Script (Marketing Team Request) */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-9H299B89WM"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
-        <Script id="google-analytics" strategy="afterInteractive">
+        <Script id="google-analytics" strategy="lazyOnload">
           {`
             window.dataLayer = window.dataLayer || [];
             window.gtag = function(){window.dataLayer.push(arguments);}

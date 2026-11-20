@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import ReactDOM from 'react-dom';
 import { notFound } from 'next/navigation';
 import { Container } from '@/components/ui/Container';
 import { Breadcrumb } from '@/components/content/Breadcrumb';
@@ -10,7 +11,7 @@ import { getStoreProductBySlug, getStoreProducts, getProductCustomTabs, getStore
 import { getProductPricingFromProduct } from '@/features/products/services/pricing';
 import { getProductHexValues } from '@/features/products/services/product-colors';
 import { getProductBreadcrumbs } from '@/features/products/utils/breadcrumb';
-import { getProductBaseAmount } from '@/features/products/utils/product-helpers';
+import { getProductBaseAmount, sanitizeImageUrl } from '@/features/products/utils/product-helpers';
 import type { Metadata } from 'next';
 import { getSEOMetadata, jsonLd, SITE_URL } from '@/lib/seo';
 
@@ -65,6 +66,12 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
   }
 
   if (!product) notFound();
+
+  // Preload primary product image in the initial HTML head chunk to eliminate LCP discovery delay
+  const primaryImageSrc = product.images?.[0]?.src ? sanitizeImageUrl(product.images[0].src) : null;
+  if (primaryImageSrc) {
+    ReactDOM.preload(primaryImageSrc, { as: 'image', fetchPriority: 'high' });
+  }
 
   // These only depend on the product, so fetch them in parallel rather than back to back.
   const pricingPromise = getProductPricingFromProduct(product);
