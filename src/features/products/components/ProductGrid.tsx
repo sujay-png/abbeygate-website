@@ -63,7 +63,6 @@ export const ProductGrid = ({ products, hasProductsInCategory = true }: ProductG
                   alt={image?.alt || product.name}
                   fill
                   priority={index < 2}
-                  quality={75}
                   sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   className="object-contain p-4 transition-transform duration-500 group-hover:scale-105 mix-blend-multiply"
                   style={transformStyle}
