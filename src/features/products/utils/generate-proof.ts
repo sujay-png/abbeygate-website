@@ -302,6 +302,7 @@ export async function composeProof(args: {
               const layout = getCornerClipLayout(finalBounds, {
                 cornerSizeMm: geometry.cornerSizeMm,
                 productWidthMm: geometry.widthMm,
+                imageAspect: drawW / drawH,
               });
               const clipW = (layout.sizePct / 100) * drawW;
               const clipH = clipW;

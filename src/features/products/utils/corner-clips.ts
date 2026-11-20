@@ -20,6 +20,9 @@ export type CornerClipLayout = {
 /** Used only when the product's physical size or corner size is unknown. */
 const FALLBACK_CLIP_TO_COVER_WIDTH = 0.15;
 
+/** How far the clip overhangs the cover edge, as a fraction of clip size. */
+const CLIP_OVERHANG = 0.03;
+
 /** '22mm × 22mm' → 22 */
 export function parseCornerSizeMm(size: string | null | undefined): number | null {
   const mm = size ? parseFloat(size) : NaN;
@@ -39,7 +42,12 @@ export function parseCornerSizeMm(size: string | null | undefined): number | nul
  */
 export function getCornerClipLayout(
   bounds: ProductImageBounds,
-  opts: { cornerSizeMm?: number | null; productWidthMm?: number | null } = {},
+  opts: {
+    cornerSizeMm?: number | null;
+    productWidthMm?: number | null;
+    /** Image width ÷ height; needed to convert the overhang between axes. */
+    imageAspect?: number | null;
+  } = {},
 ): CornerClipLayout {
   const topRight = bounds.corners?.topRight ?? { x: bounds.right, y: bounds.top };
   const bottomRight = bounds.corners?.bottomRight ?? { x: bounds.right, y: bounds.bottom };
@@ -51,5 +59,18 @@ export function getCornerClipLayout(
     ? opts.cornerSizeMm / opts.productWidthMm
     : FALLBACK_CLIP_TO_COVER_WIDTH;
 
-  return { sizePct: coverWidthPct * ratio, topRight, bottomRight };
+  const sizePct = coverWidthPct * ratio;
+
+  // A real corner protector wraps over the board edge, so its outer face sits
+  // just beyond the cover face. Overhanging by a small fraction of the clip
+  // (well under its 15% arm thickness) also guarantees no sliver of cover
+  // shows past the metal after browser sub-pixel rounding.
+  const bleedX = sizePct * CLIP_OVERHANG;
+  const bleedY = bleedX * (opts.imageAspect ?? 1); // convert width-% to height-%
+
+  return {
+    sizePct: sizePct + bleedX,
+    topRight: { x: topRight.x + bleedX, y: topRight.y - bleedY },
+    bottomRight: { x: bottomRight.x + bleedX, y: bottomRight.y + bleedY },
+  };
 }

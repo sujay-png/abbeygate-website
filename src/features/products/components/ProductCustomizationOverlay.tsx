@@ -11,6 +11,7 @@ type ProductCustomizationOverlayProps = {
   customization: CustomizationState;
   onPositionChange: (position: { x: number; y: number }) => void;
   imageBounds?: ProductImageBounds | null;
+  imageAspect?: number;
 };
 
 export const ProductCustomizationOverlay = ({
@@ -18,6 +19,7 @@ export const ProductCustomizationOverlay = ({
   customization,
   onPositionChange,
   imageBounds,
+  imageAspect,
 }: ProductCustomizationOverlayProps) => {
   // Dragging logic removed by user request
 
@@ -205,6 +207,7 @@ export const ProductCustomizationOverlay = ({
             const layout = getCornerClipLayout(clipBounds, {
               cornerSizeMm: parseCornerSizeMm(getCornerEdgesPricing(product).size),
               productWidthMm: getProductPhysicalDimensionsMm(product).width,
+              imageAspect,
             });
             const cornerSizeClass = 'aspect-square h-auto';
 

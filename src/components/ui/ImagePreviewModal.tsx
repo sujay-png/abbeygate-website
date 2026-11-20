@@ -306,7 +306,7 @@ export const ImagePreviewModal = ({ isOpen, onClose, item, imageUrl, title = 'Cu
               <div style={{ position: 'absolute', top: '0', left: '0', width: '100%', height: '100%', zIndex: 15, pointerEvents: 'none' }}>
                 {(() => {
                   // Legacy cart items only (new ones use the composed snapshot); physical size unknown here.
-                  const layout = getCornerClipLayout(imageBounds);
+                  const layout = getCornerClipLayout(imageBounds, { imageAspect: imageAspectRatio });
                   return ([] as Array<{top?: number, bottom?: number, left?: number, right?: number, rotate: string}>).concat([
                     { top: layout.topRight.y, right: 100 - layout.topRight.x, rotate: 'rotate-0' },
                     { bottom: 100 - layout.bottomRight.y, right: 100 - layout.bottomRight.x, rotate: 'rotate-90' },

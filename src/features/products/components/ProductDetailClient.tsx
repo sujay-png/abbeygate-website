@@ -1177,6 +1177,7 @@ export const ProductDetailClient = ({
                               customization={customization}
                               onPositionChange={handlePositionChange}
                               imageBounds={imageBounds}
+                              imageAspect={imageAspectRatio}
                             />
                           </div>
                         )}
@@ -1302,6 +1303,7 @@ export const ProductDetailClient = ({
                       customization={customization}
                       onPositionChange={handlePositionChange}
                       imageBounds={imageBounds}
+                              imageAspect={imageAspectRatio}
                     />
                   )}
                 </div>

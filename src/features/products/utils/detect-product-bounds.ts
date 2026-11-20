@@ -381,11 +381,22 @@ export function detectProductBounds(
   // scanlines nearest that corner. That is the bounding vertex of the
   // (rounded, flared) corner — exactly where a corner protector's outer
   // vertex sits.
+  // Samples are in scanline order. A 5-tap running median removes isolated
+  // noisy samples but keeps genuine geometry (a slightly raised or tilted
+  // stretch of edge), then the most outward value is taken — the clip has to
+  // cover the highest point anywhere under its arm, not a typical one.
   const robustExtreme = (values: number[], dir: 1 | -1): number | null => {
-    if (values.length < 4) return null;
-    const sorted = [...values].sort((p, q) => (q - p) * dir); // most outward first
-    return sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.05))];
+    if (values.length < 5) return null;
+    let best = -Infinity;
+    for (let i = 2; i < values.length - 2; i++) {
+      const m = median(values.slice(i - 2, i + 3)) * dir;
+      if (m > best) best = m;
+    }
+    return best * dir;
   };
+  // Edge positions are the 50% point of the anti-aliased transition; the
+  // partially-covered pixel still shows ~half a pixel of cover beyond it.
+  const AA_MARGIN = 0.5;
   const BAND = 0.2;
   const refineCorner = (g: Point, hEdge: Edge, vEdge: Edge): Point => {
     const sx = outwardOf(vEdge); // +1 right, -1 left
@@ -394,8 +405,10 @@ export function detectProductBounds(
     const vs = sampleEdge(vEdge, g.y, g.y - sy * bookH * BAND, 400);
     // horizontal edge (top/bottom): scan columns from the corner inward by BAND·bookW
     const hs = sampleEdge(hEdge, g.x, g.x - sx * bookW * BAND, 400);
-    const x = robustExtreme(vs.sec, sx);
-    const y = robustExtreme(hs.sec, sy);
+    const rx = robustExtreme(vs.sec, sx);
+    const ry = robustExtreme(hs.sec, sy);
+    const x = rx === null ? null : rx + sx * AA_MARGIN;
+    const y = ry === null ? null : ry + sy * AA_MARGIN;
     const maxShiftX = bookW * 0.04;
     const maxShiftY = bookH * 0.04;
     return {
