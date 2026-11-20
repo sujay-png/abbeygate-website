@@ -1165,7 +1165,7 @@ export const ProductDetailClient = ({
                               fill
                               priority={idx === 0}
                               quality={95}
-                              sizes="(max-width: 640px) 90vw, (max-width: 1024px) 50vw, 650px"
+                              sizes="(max-width: 768px) 100vw, 50vw"
                               className={`transition-all duration-500 object-contain ${idx === 0 ? 'mix-blend-multiply' : ''} ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
                             />
                           );

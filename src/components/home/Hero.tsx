@@ -125,7 +125,7 @@ export const Hero = () => {
                 alt={slide.category ? `${slide.category} - Abbeygate Corporate Merchandise` : 'Abbeygate Corporate Merchandise'}
                 fill
                 priority={index === 0}
-                quality={80}
+                quality={95}
                 sizes="100vw"
                 className="object-cover object-center"
               />
