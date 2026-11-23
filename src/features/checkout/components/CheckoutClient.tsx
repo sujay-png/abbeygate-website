@@ -451,19 +451,19 @@ function CheckoutFormContent({
                 <ExpressCheckoutElement 
                   onConfirm={handleExpressConfirm} 
                   onReady={(event) => {
-                    const methods = (event as any)?.availablePaymentMethods;
+                    const methods = (event as any)?.availablePaymentMethods || (event as any)?.paymentMethods;
                     if (methods) {
-                      const hasMethods = Boolean(methods.applePay) || Boolean(methods.googlePay) || Boolean(methods.link);
-                      if (hasMethods) setIsExpressAvailable(true);
+                      const isApple = methods.applePay === true || Boolean(methods.applePay?.available);
+                      const isGoogle = methods.googlePay === true || Boolean(methods.googlePay?.available);
+                      if (isApple || isGoogle) setIsExpressAvailable(true);
                     }
                   }}
                   onAvailablePaymentMethodsChange={(event) => {
                     if (event.paymentMethods) {
                       console.log('[Stripe Express Checkout] Available methods:', event.paymentMethods);
-                      const hasMethods = Boolean(event.paymentMethods.applePay?.available) || 
-                                         Boolean(event.paymentMethods.googlePay?.available) || 
-                                         Boolean(event.paymentMethods.link?.available);
-                      setIsExpressAvailable(hasMethods);
+                      const isApple = (event.paymentMethods.applePay as any) === true || Boolean(event.paymentMethods.applePay?.available);
+                      const isGoogle = (event.paymentMethods.googlePay as any) === true || Boolean(event.paymentMethods.googlePay?.available);
+                      setIsExpressAvailable(isApple || isGoogle);
                     }
                   }}
                   onLoadError={(err) => {
@@ -472,7 +472,9 @@ function CheckoutFormContent({
                   }}
                   options={{
                     paymentMethods: {
-                      link: 'auto',
+                      applePay: 'auto',
+                      googlePay: 'auto',
+                      link: 'never',
                       amazonPay: 'never'
                     }
                   }}
