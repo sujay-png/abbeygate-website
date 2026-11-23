@@ -455,7 +455,8 @@ function CheckoutFormContent({
                     if (methods) {
                       const isApple = methods.applePay === true || Boolean(methods.applePay?.available);
                       const isGoogle = methods.googlePay === true || Boolean(methods.googlePay?.available);
-                      if (isApple || isGoogle) setIsExpressAvailable(true);
+                      const isLink = methods.link === true || Boolean(methods.link?.available);
+                      if (isApple || isGoogle || isLink) setIsExpressAvailable(true);
                     }
                   }}
                   onAvailablePaymentMethodsChange={(event) => {
@@ -463,7 +464,8 @@ function CheckoutFormContent({
                       console.log('[Stripe Express Checkout] Available methods:', event.paymentMethods);
                       const isApple = (event.paymentMethods.applePay as any) === true || Boolean(event.paymentMethods.applePay?.available);
                       const isGoogle = (event.paymentMethods.googlePay as any) === true || Boolean(event.paymentMethods.googlePay?.available);
-                      setIsExpressAvailable(isApple || isGoogle);
+                      const isLink = (event.paymentMethods.link as any) === true || Boolean(event.paymentMethods.link?.available);
+                      setIsExpressAvailable(isApple || isGoogle || isLink);
                     }
                   }}
                   onLoadError={(err) => {
@@ -471,12 +473,14 @@ function CheckoutFormContent({
                     setIsExpressAvailable(false);
                   }}
                   options={{
+                    buttonHeight: 48,
                     paymentMethods: {
                       applePay: 'auto',
                       googlePay: 'auto',
-                      link: 'never',
+                      link: 'auto',
                       amazonPay: 'never'
-                    }
+                    },
+                    paymentMethodOrder: ['applePay', 'googlePay', 'link']
                   }}
                 />
               </div>
