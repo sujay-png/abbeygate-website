@@ -445,27 +445,19 @@ function CheckoutFormContent({
       <form className="order-2 lg:order-1 bg-white px-5 py-10 sm:px-8 lg:px-12 lg:py-14" onSubmit={handleSubmit}>
         <div className="mx-auto max-w-[640px] space-y-10">
           {!isFreeOrder && (
-            <section className="mb-6">
+            <section className={isExpressAvailable ? "mb-6" : "h-0 overflow-hidden opacity-0"}>
               {isExpressAvailable && <h2 className="mb-4 text-center text-sm font-semibold text-brand-grey">Express checkout</h2>}
-              <div className="overflow-hidden rounded">
+              <div className={`overflow-hidden rounded ${isExpressAvailable ? 'min-h-[44px]' : 'h-0'}`}>
                 <ExpressCheckoutElement 
                   onConfirm={handleExpressConfirm} 
-                  onReady={(event) => {
-                    const methods = (event as any)?.availablePaymentMethods || (event as any)?.paymentMethods;
-                    if (methods) {
-                      const isApple = methods.applePay === true || Boolean(methods.applePay?.available);
-                      const isGoogle = methods.googlePay === true || Boolean(methods.googlePay?.available);
-                      const isLink = methods.link === true || Boolean(methods.link?.available);
-                      if (isApple || isGoogle || isLink) setIsExpressAvailable(true);
-                    }
-                  }}
                   onAvailablePaymentMethodsChange={(event) => {
                     if (event.paymentMethods) {
                       console.log('[Stripe Express Checkout] Available methods:', event.paymentMethods);
                       const isApple = (event.paymentMethods.applePay as any) === true || Boolean(event.paymentMethods.applePay?.available);
                       const isGoogle = (event.paymentMethods.googlePay as any) === true || Boolean(event.paymentMethods.googlePay?.available);
-                      const isLink = (event.paymentMethods.link as any) === true || Boolean(event.paymentMethods.link?.available);
-                      setIsExpressAvailable(isApple || isGoogle || isLink);
+                      setIsExpressAvailable(isApple || isGoogle);
+                    } else {
+                      setIsExpressAvailable(false);
                     }
                   }}
                   onLoadError={(err) => {
@@ -477,10 +469,9 @@ function CheckoutFormContent({
                     paymentMethods: {
                       applePay: 'auto',
                       googlePay: 'auto',
-                      link: 'auto',
+                      link: 'never',
                       amazonPay: 'never'
-                    },
-                    paymentMethodOrder: ['applePay', 'googlePay', 'link']
+                    }
                   }}
                 />
               </div>
