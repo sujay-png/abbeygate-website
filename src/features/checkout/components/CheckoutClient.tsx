@@ -453,14 +453,16 @@ function CheckoutFormContent({
                   onReady={(event) => {
                     const methods = (event as any)?.availablePaymentMethods;
                     if (methods) {
-                      const hasMethods = Boolean(methods.applePay) || Boolean(methods.googlePay);
+                      const hasMethods = Boolean(methods.applePay) || Boolean(methods.googlePay) || Boolean(methods.link);
                       if (hasMethods) setIsExpressAvailable(true);
                     }
                   }}
                   onAvailablePaymentMethodsChange={(event) => {
                     if (event.paymentMethods) {
                       console.log('[Stripe Express Checkout] Available methods:', event.paymentMethods);
-                      const hasMethods = Boolean(event.paymentMethods.applePay?.available) || Boolean(event.paymentMethods.googlePay?.available);
+                      const hasMethods = Boolean(event.paymentMethods.applePay?.available) || 
+                                         Boolean(event.paymentMethods.googlePay?.available) || 
+                                         Boolean(event.paymentMethods.link?.available);
                       setIsExpressAvailable(hasMethods);
                     }
                   }}
@@ -470,7 +472,7 @@ function CheckoutFormContent({
                   }}
                   options={{
                     paymentMethods: {
-                      link: 'never',
+                      link: 'auto',
                       amazonPay: 'never'
                     }
                   }}
