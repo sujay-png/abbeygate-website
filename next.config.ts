@@ -79,6 +79,51 @@ const nextConfig: NextConfig = {
         destination: "/blog",
         permanent: true,
       },
+      {
+        source: "/my-account/view-order/:id",
+        destination: "/account/orders/:id",
+        permanent: true,
+      },
+      {
+        source: "/account/view-order/:id",
+        destination: "/account/orders/:id",
+        permanent: true,
+      },
+      {
+        source: "/my-account/orders",
+        destination: "/account/orders",
+        permanent: true,
+      },
+      {
+        source: "/my-account/edit-address",
+        destination: "/account/addresses",
+        permanent: true,
+      },
+      {
+        source: "/my-account/edit-account",
+        destination: "/account/details",
+        permanent: true,
+      },
+      {
+        source: "/my-account/lost-password",
+        destination: "/account/reset-password",
+        permanent: true,
+      },
+      {
+        source: "/account/lost-password",
+        destination: "/account/reset-password",
+        permanent: true,
+      },
+      {
+        source: "/my-account",
+        destination: "/account",
+        permanent: true,
+      },
+      {
+        source: "/my-account/:path*",
+        destination: "/account/:path*",
+        permanent: true,
+      },
     ];
   },
 };
