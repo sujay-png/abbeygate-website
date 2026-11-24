@@ -468,8 +468,8 @@ function CheckoutFormContent({
                   options={{
                     buttonHeight: 48,
                     paymentMethods: {
-                      applePay: 'auto',
-                      googlePay: 'auto',
+                      applePay: 'always',
+                      googlePay: 'always',
                       paypal: 'auto',
                       link: 'never',
                       amazonPay: 'never'
