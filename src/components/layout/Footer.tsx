@@ -22,7 +22,7 @@ const FOOTER_LINKS = {
   information: [
     { label: "Our Blog", href: "/blog" },
     { label: "Resource Guide", href: "/resource-guide" },
-    { label: "Artwork Specification", href: "/artwork-specification" },
+    { label: "Artwork Specification", href: "/bespoke/artwork-specification" },
     { label: "Internal Page Layouts", href: "/internal-page-layouts" },
   ],
 };

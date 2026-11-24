@@ -16,12 +16,12 @@ export function jsonLd(data: unknown): string {
 // 1. Centralized SEO Configuration
 export const seoConfig: Record<string, { title: string; description: string; noindex?: boolean }> = {
   "/": {
-    title: "Abbeygate Business | Personalised Corporate Gifting & Diaries",
-    description: "Elevate your corporate gifting and bespoke merchandise with our expertly customised leather goods.",
+    title: "Business Diaries & Corporate Gifting | Abbeygate Business | ",
+    description: "Elevate your corporate gifting and bespoke merchandise with our expertly customised leather goods. Personalise with your brand logo.",
   },
   "/about": {
     title: "About Us | Abbeygate Business",
-    description: "Learn more about Abbeygate England, our heritage, and our commitment to craftsmanship.",
+    description: "Learn more about Abbeygate Business, our heritage, and our commitment to craftsmanship. Business & Corporate Gifts, Diaries & Notebooks, personalised with your brand logo.",
   },
   "/search": {
     title: "Search Results | Abbeygate Business",
@@ -47,8 +47,8 @@ export const seoConfig: Record<string, { title: string; description: string; noi
     description: "Find answers to common questions about our products, customisation, and shipping.",
   },
   "/blog": {
-    title: "Our Blog | Abbeygate Business",
-    description: "Insights, guides, and inspiration for corporate gifting, bespoke stationery, and British leather craftsmanship.",
+    title: "Abbeygate Business Blog | Abbeygate Business",
+    description: "Insights, guides, and inspiration for corporate gifting, bespoke stationery, and British leather craftsmanship products personalised with your brand logo.",
   },
   "/resource-guide": {
     title: "Resource Guide | Abbeygate Business",
@@ -64,7 +64,11 @@ export const seoConfig: Record<string, { title: string; description: string; noi
   },
   "/artwork-specification": {
     title: "Artwork Specification | Abbeygate Business",
-    description: "How to supply logo artwork for debossing, foil blocking and printing on your Abbeygate England products.",
+    description: "How to supply logo artwork for debossing, foil blocking and printing on your Abbeygate Business products. Personalise with your brand logo.",
+  },
+  "/bespoke/artwork-specification": {
+    title: "Artwork Specification | Abbeygate Business",
+    description: "How to supply logo artwork for debossing, foil blocking and printing on your Abbeygate Business products. Personalise with your brand logo.",
   },
   "/modern-slavery": {
     title: "Modern Slavery Statement | Abbeygate Business",
@@ -87,20 +91,20 @@ export const seoConfig: Record<string, { title: string; description: string; noi
     description: "Information on returns and refunds for Abbeygate England orders.",
   },
   "/bespoke": {
-    title: "Bespoke Corporate Gifts | Abbeygate Business",
-    description: "Explore our bespoke corporate gifting service: personalisation, additional finishing and client portfolio.",
+    title: "Corporate Gifts, Branded Gifts | Abbeygate Business",
+    description: "Elevate your corporate gifting and bespoke merchandise with our expertly customised leather goods. Personalise with your brand logo.",
   },
   "/bespoke/personalisation": {
     title: "Personalisation | Abbeygate Business",
-    description: "Blocking and foiling, UV printing, graphic print and special matter pages for corporate diaries, notebooks and leather goods.",
+    description: "Blocking and foiling, UV printing, graphic print and special matter pages for corporate diaries, notebooks and leather goods. Personalise with your brand logo.",
   },
   "/bespoke/additional-finishing": {
     title: "Additional Finishing | Abbeygate Business",
-    description: "Ribbon markers, pen loops, decorative corner protectors and gilded page edges for corporate diaries and notebooks.",
+    description: "Corporate & Business Diaries with your logo, ribbon markers, pen loops, decorative corner protectors and gilded page edges. Personalise with your brand logo.",
   },
   "/bespoke/portfolio": {
     title: "Bespoke Portfolio | Abbeygate Business",
-    description: "Explore our portfolio of bespoke projects, from personalised corporate diaries to fully branded leather goods.",
+    description: "Explore our portfolio of bespoke projects, from personalised corporate diaries to fully branded leather goods. Personalise with your brand logo.",
   },
   "/internal-page-layouts": {
     title: "Internal Page Layouts | Abbeygate Business",
@@ -170,7 +174,7 @@ export async function generateCategoryMetadata(basePath: string, slug?: string[]
       const route = getCategoryRoute(path);
 
       if (route) {
-        title = `${route.title} | Abbeygate Business`;
+        title = route.seoTitle || (route.title.includes('Abbeygate') ? route.title : `${route.title} | Abbeygate Business`);
         if (route.description) {
            description = route.description;
         }

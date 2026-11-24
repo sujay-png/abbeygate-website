@@ -13,6 +13,7 @@ import { getProductHexValues } from '@/features/products/services/product-colors
 import { getProductBreadcrumbs } from '@/features/products/utils/breadcrumb';
 import { getProductBaseAmount, sanitizeImageUrl } from '@/features/products/utils/product-helpers';
 import type { Metadata } from 'next';
+import { PRODUCT_SEO } from '@/data/product-seo';
 import { getSEOMetadata, jsonLd, SITE_URL } from '@/lib/seo';
 
 export const revalidate = 3600; // Cache product page on Vercel Edge CDN for 1 hour (ISR)
