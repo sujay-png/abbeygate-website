@@ -7,12 +7,14 @@ const SESSION_PREFIX = 'checkout:session:';
 
 export type CheckoutSession = {
   id: string;
-  status: 'quoted';
+  status: 'quoted' | 'processing' | 'completed';
   createdAt: string;
   expiresAt: string;
   quote: CheckoutQuote;
   customerId?: number;
   vatNumber?: string;
+  orderId?: number;
+  orderKey?: string;
 };
 
 function key(id: string) {

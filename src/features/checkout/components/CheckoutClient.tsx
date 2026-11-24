@@ -455,7 +455,8 @@ function CheckoutFormContent({
                       console.log('[Stripe Express Checkout] Available methods:', event.paymentMethods);
                       const isApple = (event.paymentMethods.applePay as any) === true || Boolean(event.paymentMethods.applePay?.available);
                       const isGoogle = (event.paymentMethods.googlePay as any) === true || Boolean(event.paymentMethods.googlePay?.available);
-                      setIsExpressAvailable(isApple || isGoogle);
+                      const isPaypal = (event.paymentMethods.paypal as any) === true || Boolean(event.paymentMethods.paypal?.available);
+                      setIsExpressAvailable(isApple || isGoogle || isPaypal);
                     } else {
                       setIsExpressAvailable(false);
                     }
@@ -469,6 +470,7 @@ function CheckoutFormContent({
                     paymentMethods: {
                       applePay: 'auto',
                       googlePay: 'auto',
+                      paypal: 'auto',
                       link: 'never',
                       amazonPay: 'never'
                     }
@@ -631,6 +633,11 @@ function CheckoutFormContent({
                 I agree to the <button type="button" onClick={() => setActivePolicy('terms')} className="underline">Terms &amp; Conditions</button>, <button type="button" onClick={() => setActivePolicy('privacy')} className="underline">Privacy Policy</button>, and <button type="button" onClick={() => setActivePolicy('returns')} className="underline">Refund &amp; Returns policy</button>.
               </span>
             </label>
+            {paymentError && (
+              <div className="mt-4 rounded border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                {paymentError}
+              </div>
+            )}
             <button type="submit" disabled={isSubmitDisabled} className="mt-6 w-full bg-brand-primary px-6 py-4 text-sm font-bold tracking-wide text-white hover:bg-brand-primary-dark disabled:opacity-75 disabled:cursor-not-allowed">
               {isProcessing ? 'Processing order...' : (isQuoteLoading ? 'Calculating total...' : (isFreeOrder ? 'Place Order' : `Pay ${formatPrice(displayTotal)}`))}
             </button>

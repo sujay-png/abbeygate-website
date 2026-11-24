@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStripeClient } from '@/lib/stripe/client';
-import { getCheckoutSession } from '@/features/checkout/services/session';
+import { getCheckoutSession, updateCheckoutSession } from '@/features/checkout/services/session';
 import { woocommerceApi } from '@/lib/woocommerce/client';
 import { invalidateCustomerOrdersCache, findCustomerIdByEmail } from '@/features/account/services/orders';
 import Stripe from 'stripe';
@@ -45,6 +45,12 @@ export async function POST(req: NextRequest) {
       if (!session) {
         console.error(`Checkout session not found for ID: ${sessionId}`);
         // In a production app, you might queue this or check if it was already created.
+        return NextResponse.json({ received: true });
+      }
+
+      // Idempotency: Do not duplicate orders if already processed
+      if (session.orderId) {
+        console.log(`Order already created for session ${sessionId}: ${session.orderId}`);
         return NextResponse.json({ received: true });
       }
 
@@ -145,11 +151,20 @@ export async function POST(req: NextRequest) {
       };
 
       try {
-        const orderRes = await woocommerceApi.request('orders', {
+        const orderRes = await woocommerceApi.request<any>('orders', {
           method: 'POST',
-          body: wcOrderPayload
+          body: wcOrderPayload,
+          timeoutMs: 45000,
         });
-        console.log('WooCommerce order created successfully:', (orderRes as any).id);
+        console.log('WooCommerce order created successfully:', (orderRes as any)?.id);
+
+        if ((orderRes as any)?.id && (orderRes as any)?.order_key) {
+          await updateCheckoutSession(sessionId, {
+            status: 'completed',
+            orderId: (orderRes as any).id,
+            orderKey: (orderRes as any).order_key,
+          }).catch(err => console.error('Failed to update session with order id:', err));
+        }
 
         if (resolvedCustomerId) {
           try {
@@ -158,7 +173,8 @@ export async function POST(req: NextRequest) {
               body: {
                 billing: wcOrderPayload.billing,
                 shipping: wcOrderPayload.shipping,
-              }
+              },
+              timeoutMs: 15000,
             });
             await invalidateCustomerOrdersCache(resolvedCustomerId);
           } catch (err) {

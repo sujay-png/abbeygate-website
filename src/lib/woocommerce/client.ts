@@ -134,7 +134,7 @@ export async function woocommerceFetch<T>(
   options: WooCommerceRequestOptions,
 ): Promise<T> {
   const { storeUrl, consumerKey, consumerSecret } = getConfig();
-  const { path, method = "GET", params, body, revalidate = 60, timeoutMs = 12000, tags } = options;
+  const { path, method = "GET", params, body, revalidate = 60, timeoutMs = (method === "GET" ? 12000 : 45000), tags } = options;
 
   const url = buildUrl(storeUrl, path, params);
   const cacheKey = `${method}:${url}`;

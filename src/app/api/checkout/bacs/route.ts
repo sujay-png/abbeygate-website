@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCheckoutSession } from '@/features/checkout/services/session';
+import { getCheckoutSession, updateCheckoutSession } from '@/features/checkout/services/session';
 import { woocommerceApi } from '@/lib/woocommerce/client';
 import { invalidateCustomerOrdersCache, findCustomerIdByEmail } from '@/features/account/services/orders';
 import { getSession } from '@/features/auth/utils/session';
@@ -16,6 +16,11 @@ export async function POST(req: NextRequest) {
     const session = await getCheckoutSession(sessionId);
     if (!session) {
       return NextResponse.json({ error: 'Checkout session expired or was not found' }, { status: 404 });
+    }
+
+    // Idempotency: If an order was already created for this checkout session, return it immediately
+    if (session.orderId && session.orderKey) {
+      return NextResponse.json({ success: true, orderId: session.orderId, orderKey: session.orderKey });
     }
 
     const nameParts = billingDetails.name?.split(' ') || [];
@@ -98,10 +103,22 @@ export async function POST(req: NextRequest) {
       ]
     };
 
-    const orderRes = await woocommerceApi.request('orders', {
+    const orderRes = await woocommerceApi.request<any>('orders', {
       method: 'POST',
-      body: wcOrderPayload
+      body: wcOrderPayload,
+      timeoutMs: 45000,
     });
+
+    const createdOrderId = orderRes?.id;
+    const createdOrderKey = orderRes?.order_key;
+
+    if (createdOrderId && createdOrderKey) {
+      await updateCheckoutSession(sessionId, {
+        status: 'completed',
+        orderId: createdOrderId,
+        orderKey: createdOrderKey,
+      }).catch(err => console.error('Failed to update session with order details:', err));
+    }
 
     if (resolvedCustomerId) {
       // Run customer address sync and cache invalidation in the background so the order confirmation responds immediately
@@ -112,7 +129,8 @@ export async function POST(req: NextRequest) {
             body: {
               billing: wcOrderPayload.billing,
               shipping: wcOrderPayload.shipping,
-            }
+            },
+            timeoutMs: 15000,
           });
           await invalidateCustomerOrdersCache(resolvedCustomerId);
         } catch (err) {
@@ -121,7 +139,7 @@ export async function POST(req: NextRequest) {
       })().catch(err => console.error('Background customer address update error:', err));
     }
 
-    return NextResponse.json({ success: true, orderId: (orderRes as any).id, orderKey: (orderRes as any).order_key });
+    return NextResponse.json({ success: true, orderId: createdOrderId, orderKey: createdOrderKey });
   } catch (error: any) {
     console.error('Failed to create BACS order:', error);
     return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
