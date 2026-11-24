@@ -33,6 +33,11 @@ export const seoConfig: Record<string, { title: string; description: string; noi
     description: "Review your selected Abbeygate England items before checkout.",
     noindex: true,
   },
+  "/account": {
+    title: "My Account | Abbeygate Business",
+    description: "Manage your Abbeygate Business account, orders, and details.",
+    noindex: true,
+  },
   "/checkout": {
     title: "Checkout | Abbeygate Business",
     description: "Complete your Abbeygate England purchase.",
