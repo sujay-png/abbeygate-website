@@ -776,7 +776,7 @@ export const ProductDetailClient = ({
         });
         
         import('@/lib/analytics').then(({ trackAddToCart }) => {
-          trackAddToCart(product, quantity, Math.round(priceDetails.unitPrice * 100));
+          trackAddToCart(product, quantity, priceDetails.unitPrice);
         });
       }
     } finally {

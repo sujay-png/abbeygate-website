@@ -26,6 +26,8 @@ export type NormalizedOrderConfirmation = {
   paymentMethod: string;
   lineItems: Array<{
     id: string | number;
+    productId?: string | number;
+    sku?: string;
     name: string;
     quantity: number;
     total: number;
@@ -66,6 +68,42 @@ export type NormalizedOrderConfirmation = {
   };
 };
 
+async function normalizeWooOrderToConfirmation(
+  order: any,
+  extras?: { orderKey?: string; stripeIntentId?: string },
+): Promise<NormalizedOrderConfirmation> {
+  const lineItems = await Promise.all((order.line_items || []).map(async (item: any) => ({
+    id: item.id,
+    productId: item.product_id,
+    sku: item.sku || undefined,
+    name: item.name,
+    quantity: item.quantity,
+    total: Number(item.total),
+    image: item.image?.src || await resolveProductImage(item.product_id),
+    meta: (item.meta_data || []).filter((m: any) => !m.key.startsWith('_')),
+  })));
+
+  const subtotal = lineItems.reduce((acc: number, item: any) => acc + item.total, 0);
+
+  return {
+    orderNumber: String(order.number || order.id),
+    orderId: order.id,
+    orderKey: extras?.orderKey || order.order_key,
+    ...(extras?.stripeIntentId ? { stripeIntentId: extras.stripeIntentId } : {}),
+    orderDate: new Date(order.date_created),
+    email: order.billing?.email || '',
+    total: Number(order.total),
+    paymentMethod: order.payment_method_title || 'Direct Order',
+    lineItems,
+    subtotal,
+    shippingTotal: Number(order.shipping_total || 0),
+    shippingLabel: order.shipping_lines?.[0]?.method_title || 'Standard Shipping',
+    taxTotal: Number(order.total_tax || 0),
+    billing: order.billing,
+    shipping: order.shipping,
+  };
+}
+
 export async function getOrderConfirmationData({
   orderId,
   key,
@@ -82,33 +120,7 @@ export async function getOrderConfirmationData({
     try {
       const order = await woocommerceFetch<any>({ path: `/orders/${orderId}`, revalidate: false });
       if (order && order.id && order.order_key === key) {
-        const lineItems = await Promise.all((order.line_items || []).map(async (item: any) => ({
-          id: item.id,
-          name: item.name,
-          quantity: item.quantity,
-          total: Number(item.total),
-          image: item.image?.src || await resolveProductImage(item.product_id),
-          meta: (item.meta_data || []).filter((m: any) => !m.key.startsWith('_')),
-        })));
-
-        const subtotal = lineItems.reduce((acc: number, item: any) => acc + item.total, 0);
-
-        return {
-          orderNumber: String(order.id),
-          orderId: order.id,
-          orderKey: key,
-          orderDate: new Date(order.date_created),
-          email: order.billing?.email || '',
-          total: Number(order.total),
-          paymentMethod: order.payment_method_title || 'Direct Order',
-          lineItems,
-          subtotal,
-          shippingTotal: Number(order.shipping_total || 0),
-          shippingLabel: order.shipping_lines?.[0]?.method_title || 'Standard Shipping',
-          taxTotal: Number(order.total_tax || 0),
-          billing: order.billing,
-          shipping: order.shipping,
-        };
+        return await normalizeWooOrderToConfirmation(order, { orderKey: key });
       }
     } catch (e) {
       console.error('Failed to retrieve order by ID and key:', e);
@@ -132,44 +144,29 @@ export async function getOrderConfirmationData({
       const session = resolvedSessionId ? await getCheckoutSession(resolvedSessionId) : null;
       const email = intent?.receipt_email || '';
 
-      // Check if WooCommerce order was already created by the Stripe webhook
+      // First try direct WooCommerce order lookup using session.orderId or Stripe metadata.order_id
+      const directOrderId = session?.orderId || intent?.metadata?.order_id;
+      if (directOrderId) {
+        try {
+          const matchingOrder = await woocommerceFetch<any>({ path: `/orders/${directOrderId}`, revalidate: false });
+          if (matchingOrder?.id) {
+            return await normalizeWooOrderToConfirmation(matchingOrder, { stripeIntentId: payment_intent });
+          }
+        } catch (err) {
+          console.error('Failed direct WooCommerce order lookup for stripe intent:', err);
+        }
+      }
+
+      // Fallback: search WooCommerce orders by customer email if available
       try {
-        const queryEmail = email || session?.quote?.lines?.[0]?.name ? email : '';
-        if (queryEmail) {
-          const orders = await woocommerceApi.request<any[]>(`orders?search=${encodeURIComponent(queryEmail)}`, { revalidate: false });
+        if (email && payment_intent) {
+          const orders = await woocommerceApi.request<any[]>(`orders?search=${encodeURIComponent(email)}`, { revalidate: false });
           const matchingOrder = orders?.find(o =>
             o.meta_data?.some((m: any) => m.key === '_stripe_intent_id' && m.value === payment_intent)
           );
 
           if (matchingOrder) {
-            const lineItems = await Promise.all((matchingOrder.line_items || []).map(async (item: any) => ({
-              id: item.id,
-              name: item.name,
-              quantity: item.quantity,
-              total: Number(item.total),
-              image: item.image?.src || await resolveProductImage(item.product_id),
-              meta: (item.meta_data || []).filter((m: any) => !m.key.startsWith('_')),
-            })));
-
-            const subtotal = lineItems.reduce((acc: number, item: any) => acc + item.total, 0);
-
-            return {
-              orderNumber: String(matchingOrder.id),
-              orderId: matchingOrder.id,
-              orderKey: matchingOrder.order_key,
-              stripeIntentId: payment_intent,
-              orderDate: new Date(matchingOrder.date_created),
-              email: matchingOrder.billing?.email || email,
-              total: Number(matchingOrder.total),
-              paymentMethod: matchingOrder.payment_method_title || 'Credit/Debit Card (Stripe)',
-              lineItems,
-              subtotal,
-              shippingTotal: Number(matchingOrder.shipping_total || 0),
-              shippingLabel: matchingOrder.shipping_lines?.[0]?.method_title || 'Standard Shipping',
-              taxTotal: Number(matchingOrder.total_tax || 0),
-              billing: matchingOrder.billing,
-              shipping: matchingOrder.shipping,
-            };
+            return await normalizeWooOrderToConfirmation(matchingOrder, { stripeIntentId: payment_intent });
           }
         }
       } catch (err) {
@@ -181,6 +178,7 @@ export async function getOrderConfirmationData({
         const quote = session.quote;
         const lineItems = await Promise.all(quote.lines.map(async (line, idx) => ({
           id: line.productId || idx,
+          productId: line.productId,
           name: line.name,
           quantity: line.quantity,
           total: line.lineTotal,

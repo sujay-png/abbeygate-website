@@ -24,9 +24,25 @@ export default async function CheckoutSuccessPage({ searchParams }: { searchPara
     await invalidateCustomerOrdersCache(session.userId);
   }
 
+  const resolvedTransactionId = orderData?.orderNumber || payment_intent || orderId;
+  const purchaseTrackingPayload = orderData
+    ? {
+        transactionId: resolvedTransactionId || `TXN-${Date.now()}`,
+        value: orderData.total,
+        shipping: orderData.shippingTotal,
+        tax: orderData.taxTotal,
+        items: orderData.lineItems.map((item) => ({
+          item_id: item.sku || String(item.productId || item.id),
+          item_name: item.name,
+          price: item.quantity > 0 ? item.total / item.quantity : item.total,
+          quantity: item.quantity,
+        })),
+      }
+    : undefined;
+
   return (
     <div className="min-h-screen bg-brand-cream flex flex-col">
-      <ClearCartOnLoad transactionId={payment_intent || orderId} />
+      <ClearCartOnLoad transactionId={resolvedTransactionId} purchase={purchaseTrackingPayload} />
 
       <header className="border-b border-[var(--brand-border)] bg-white">
         <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-center px-5 sm:px-8 lg:px-12">

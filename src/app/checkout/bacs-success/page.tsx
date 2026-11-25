@@ -47,10 +47,23 @@ export default async function BacsSuccessPage({ searchParams }: { searchParams: 
     sortCode: '404519'
   };
 
+  const purchaseTrackingPayload = {
+    transactionId: String(order.number || order.id),
+    value: total,
+    shipping: Number(order.shipping_total || 0),
+    tax: Number(order.total_tax || 0),
+    items: (order.line_items || []).map((item: any) => ({
+      item_id: item.sku || String(item.product_id || item.id),
+      item_name: item.name,
+      price: item.quantity > 0 ? Number(item.total) / item.quantity : Number(item.total),
+      quantity: Number(item.quantity) || 1,
+    })),
+  };
+
   return (
     <div className="min-h-screen bg-brand-cream text-brand-body flex flex-col">
       {/* We need a Client Component to clear the cart in IDB, since we're rendering a Server Component */}
-      <ClearCartOnLoad transactionId={orderId} />
+      <ClearCartOnLoad transactionId={purchaseTrackingPayload.transactionId} purchase={purchaseTrackingPayload} />
       
       <header className="border-b border-[var(--brand-border)] bg-white">
         <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-center px-5 sm:px-8 lg:px-12">

@@ -9,26 +9,57 @@ declare global {
   }
 }
 
+const roundCurrency = (amount: number) =>
+  Number((Number.isFinite(amount) ? amount : 0).toFixed(2));
+
+export type Ga4EcommerceItem = {
+  item_id: string;
+  item_name: string;
+  affiliation?: string;
+  index?: number;
+  item_brand?: string;
+  item_category?: string;
+  price: number;
+  quantity: number;
+};
+
+export type PurchaseTrackingInput = {
+  transactionId: string;
+  value: number;
+  shipping?: number;
+  tax?: number;
+  items?: Array<{
+    item_id: string;
+    item_name: string;
+    price: number;
+    quantity: number;
+  }>;
+};
+
 export const pushToDataLayer = (event: string, data: Record<string, unknown> = {}) => {
   if (typeof window !== 'undefined') {
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({ ecommerce: null }); // Clear previous ecommerce object per GA4 best practices
-    
-    // First, push to dataLayer for GTM (if they ever want to use it)
+
+    // Push to dataLayer for GTM compatibility
     window.dataLayer.push({ event, ...data });
 
-    // Second, if gtag is available (which we just added to the site), send the event directly to GA4.
-    // This bypasses the need to create custom triggers in GTM!
-    if (typeof window.gtag === 'function') {
-      window.gtag('event', event, data.ecommerce ? data.ecommerce : data);
+    // Ensure gtag command queue exists even before external gtag.js finishes loading
+    if (typeof window.gtag !== 'function') {
+      window.gtag = function (..._args: unknown[]) {
+        // eslint-disable-next-line prefer-rest-params
+        (window.dataLayer as unknown[]).push(arguments);
+      };
     }
+
+    window.gtag('event', event, data.ecommerce ? (data.ecommerce as Record<string, unknown>) : data);
   }
 };
 
-/** Map StoreProduct to GA4 Item */
-export const mapProductToGa4Item = (product: StoreProduct, quantity: number = 1, index?: number) => {
+/** Map StoreProduct to GA4 Item (prices in GBP pounds) */
+export const mapProductToGa4Item = (product: StoreProduct, quantity: number = 1, index?: number): Ga4EcommerceItem => {
   const category = product.categories?.[0]?.name || 'Uncategorized';
-  
+
   return {
     item_id: product.sku || product.id.toString(),
     item_name: product.name,
@@ -36,20 +67,20 @@ export const mapProductToGa4Item = (product: StoreProduct, quantity: number = 1,
     index,
     item_brand: 'Abbeygate',
     item_category: category,
-    price: getProductBaseAmount(product) / 100,
+    price: roundCurrency(getProductBaseAmount(product)),
     quantity,
   };
 };
 
-/** Map CartItem to GA4 Item */
-export const mapCartItemToGa4Item = (item: CartItem, index?: number) => {
+/** Map CartItem to GA4 Item (prices in GBP pounds) */
+export const mapCartItemToGa4Item = (item: CartItem, index?: number): Ga4EcommerceItem => {
   return {
     item_id: item.sku || item.productId.toString(),
     item_name: item.name,
     affiliation: 'Abbeygate England',
     index,
     item_brand: 'Abbeygate',
-    price: item.price / 100, // assuming CartItem prices are in pence (if they are in pounds, we divide if needed, wait. Actually wait! If basePrice is in GBP, what is it?)
+    price: roundCurrency(item.price),
     quantity: item.quantity,
   };
 };
@@ -70,22 +101,22 @@ export const trackViewItem = (product: StoreProduct) => {
   pushToDataLayer('view_item', {
     ecommerce: {
       currency: 'GBP',
-      value: getProductBaseAmount(product) / 100,
+      value: roundCurrency(getProductBaseAmount(product)),
       items: [mapProductToGa4Item(product, 1)]
     }
   });
 };
 
-// 3. add_to_cart
+// 3. add_to_cart (unitPrice in GBP pounds)
 export const trackAddToCart = (product: StoreProduct, quantity: number, priceValue: number) => {
   pushToDataLayer('add_to_cart', {
     ecommerce: {
       currency: 'GBP',
-      value: (priceValue * quantity) / 100,
+      value: roundCurrency(priceValue * quantity),
       items: [
         {
           ...mapProductToGa4Item(product, quantity),
-          price: priceValue / 100,
+          price: roundCurrency(priceValue),
         }
       ]
     }
@@ -97,45 +128,75 @@ export const trackRemoveFromCart = (item: CartItem) => {
   pushToDataLayer('remove_from_cart', {
     ecommerce: {
       currency: 'GBP',
-      value: (item.price * item.quantity) / 100,
+      value: roundCurrency(item.price * item.quantity),
       items: [mapCartItemToGa4Item(item)]
     }
   });
 };
 
-// 5. view_cart
+// 5. view_cart (totalValue in GBP pounds)
 export const trackViewCart = (items: CartItem[], totalValue: number) => {
   pushToDataLayer('view_cart', {
     ecommerce: {
       currency: 'GBP',
-      value: totalValue / 100,
+      value: roundCurrency(totalValue),
       items: items.map((item, i) => mapCartItemToGa4Item(item, i))
     }
   });
 };
 
-// 6. begin_checkout
+// 6. begin_checkout (totalValue in GBP pounds)
 export const trackBeginCheckout = (items: CartItem[], totalValue: number) => {
   pushToDataLayer('begin_checkout', {
     ecommerce: {
       currency: 'GBP',
-      value: totalValue / 100,
+      value: roundCurrency(totalValue),
       items: items.map((item, i) => mapCartItemToGa4Item(item, i))
     }
   });
 };
 
-// 7. purchase
-export const trackPurchase = (transactionId: string, items: CartItem[], totalValue: number, shipping: number, tax: number) => {
+// 7. purchase (totals in GBP pounds; supports either authoritative server order payload or legacy CartItem signature)
+export const trackPurchase = (
+  transactionIdOrPayload: string | PurchaseTrackingInput,
+  items?: CartItem[],
+  totalValue?: number,
+  shipping?: number,
+  tax?: number
+) => {
+  if (typeof transactionIdOrPayload === 'object') {
+    const payload = transactionIdOrPayload;
+    pushToDataLayer('purchase', {
+      ecommerce: {
+        transaction_id: payload.transactionId,
+        affiliation: 'Abbeygate England',
+        value: roundCurrency(payload.value),
+        tax: roundCurrency(payload.tax ?? 0),
+        shipping: roundCurrency(payload.shipping ?? 0),
+        currency: 'GBP',
+        items: (payload.items || []).map((item, index) => ({
+          item_id: item.item_id,
+          item_name: item.item_name,
+          affiliation: 'Abbeygate England',
+          item_brand: 'Abbeygate',
+          index,
+          price: roundCurrency(item.price),
+          quantity: item.quantity,
+        })),
+      },
+    });
+    return;
+  }
+
   pushToDataLayer('purchase', {
     ecommerce: {
-      transaction_id: transactionId,
+      transaction_id: transactionIdOrPayload,
       affiliation: 'Abbeygate England',
-      value: totalValue / 100,
-      tax: tax / 100,
-      shipping: shipping / 100,
+      value: roundCurrency(totalValue ?? 0),
+      tax: roundCurrency(tax ?? 0),
+      shipping: roundCurrency(shipping ?? 0),
       currency: 'GBP',
-      items: items.map((item, i) => mapCartItemToGa4Item(item, i))
+      items: (items || []).map((item, i) => mapCartItemToGa4Item(item, i))
     }
   });
 };
