@@ -3,6 +3,7 @@ import { getStripeClient } from '@/lib/stripe/client';
 import { getCheckoutSession, updateCheckoutSession } from '@/features/checkout/services/session';
 import { woocommerceApi } from '@/lib/woocommerce/client';
 import { invalidateCustomerOrdersCache, findCustomerIdByEmail } from '@/features/account/services/orders';
+import { buildStripeOrderInfo } from '@/features/checkout/utils/stripe-order-metadata';
 import Stripe from 'stripe';
 
 export const dynamic = 'force-dynamic';
@@ -164,6 +165,42 @@ export async function POST(req: NextRequest) {
             orderId: (orderRes as any).id,
             orderKey: (orderRes as any).order_key,
           }).catch(err => console.error('Failed to update session with order id:', err));
+        }
+
+        // Attach the WooCommerce order number and customer details to both the Stripe
+        // PaymentIntent and Charge so the Stripe Dashboard shows the order reference.
+        if ((orderRes as any)?.id) {
+          const stripeOrderInfo = buildStripeOrderInfo({
+            sessionId,
+            orderId: (orderRes as any).id,
+            orderNumber: (orderRes as any).number,
+            customerName: billingDetails?.name || paymentIntent.shipping?.name || '',
+            customerEmail,
+            lines: session.quote.lines,
+          });
+
+          const stripeUpdates: Promise<unknown>[] = [
+            stripe.paymentIntents.update(paymentIntent.id, {
+              description: stripeOrderInfo.description,
+              metadata: stripeOrderInfo.metadata,
+            }),
+          ];
+
+          if (typeof chargeId === 'string' && chargeId.startsWith('ch_')) {
+            stripeUpdates.push(
+              stripe.charges.update(chargeId, {
+                description: stripeOrderInfo.description,
+                metadata: stripeOrderInfo.metadata,
+              })
+            );
+          }
+
+          const updateResults = await Promise.allSettled(stripeUpdates);
+          for (const result of updateResults) {
+            if (result.status === 'rejected') {
+              console.error('Failed to enrich Stripe payment with order info:', result.reason);
+            }
+          }
         }
 
         if (resolvedCustomerId) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStripeClient } from '@/lib/stripe/client';
 import { getCheckoutSession, updateCheckoutSession } from '@/features/checkout/services/session';
+import { buildStripePrePaymentInfo } from '@/features/checkout/utils/stripe-order-metadata';
 import { checkoutRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
@@ -57,12 +58,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const prePaymentInfo = buildStripePrePaymentInfo(session.id, session.quote.lines);
+
     const paymentIntent = await stripe.paymentIntents.create({
       amount: expectedAmount, // Stripe expects amount in smallest currency unit (pence)
       currency: expectedCurrency,
-      metadata: {
-        checkoutSessionId: session.id
-      }
+      description: prePaymentInfo.description,
+      metadata: prePaymentInfo.metadata,
     });
 
     await updateCheckoutSession(session.id, { paymentIntentId: paymentIntent.id });
