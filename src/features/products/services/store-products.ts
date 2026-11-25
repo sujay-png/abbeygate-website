@@ -43,6 +43,31 @@ export async function getStoreProducts(
   return { products: data, total, totalPages };
 }
 
+/** Fetch the full published product catalog across Store API pages (cached per request & ISR). */
+export const getAllStoreProducts = cache(async (perPage = 100): Promise<StoreProduct[]> => {
+  try {
+    const first = await getStoreProducts({ page: 1, perPage });
+    const totalPages = Math.max(first.totalPages || 1, 1);
+
+    if (totalPages <= 1) {
+      return first.products || [];
+    }
+
+    const restPromises = Array.from({ length: totalPages - 1 }, (_, i) =>
+      getStoreProducts({ page: i + 2, perPage }),
+    );
+    const settledRest = await Promise.allSettled(restPromises);
+    const restProducts = settledRest
+      .filter((res): res is PromiseFulfilledResult<Awaited<ReturnType<typeof getStoreProducts>>> => res.status === 'fulfilled')
+      .flatMap((res) => res.value.products || []);
+
+    return [...(first.products || []), ...restProducts];
+  } catch (error) {
+    console.error("Failed to fetch full product catalog:", error);
+    return [];
+  }
+});
+
 /** Fetch category products (capped pages for speed). */
 export async function getAllStoreProductsByCategory(
   categoryId: number | string,

@@ -271,7 +271,7 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
           relatedProducts={
             // Streamed in after the main product so the slow related-products lookup never blocks the page.
             <Suspense fallback={null}>
-              <RelatedProducts categoryId={relatedCategoryId} currentProductId={product.id} currentProductName={product.name} currentColor={currentColor} />
+              <RelatedProducts currentProduct={product} categoryId={relatedCategoryId} currentProductId={product.id} currentProductName={product.name} currentColor={currentColor} />
             </Suspense>
           }
         />
