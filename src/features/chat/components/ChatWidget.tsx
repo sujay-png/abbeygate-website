@@ -17,12 +17,22 @@ export function ChatWidget() {
   const checkUnreadReplies = useCallback(async () => {
     try {
       const activeTicketId = localStorage.getItem('abbeygate_chat_ticket_id');
+      const ticketToken = localStorage.getItem('abbeygate_chat_ticket_token') || '';
       if (!activeTicketId) {
         setUnreadCount(0);
         return;
       }
 
-      const res = await fetch(`/api/chat/ticket?id=${activeTicketId}`);
+      const res = await fetch(
+        `/api/chat/ticket?id=${encodeURIComponent(activeTicketId)}&token=${encodeURIComponent(ticketToken)}`
+      );
+      if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem('abbeygate_chat_ticket_id');
+        localStorage.removeItem('abbeygate_chat_ticket_num');
+        localStorage.removeItem('abbeygate_chat_ticket_token');
+        setUnreadCount(0);
+        return;
+      }
       if (!res.ok) return;
 
       const data = await res.json();
@@ -75,9 +85,10 @@ export function ChatWidget() {
     setUnreadCount(0);
     try {
       const activeTicketId = localStorage.getItem('abbeygate_chat_ticket_id');
+      const ticketToken = localStorage.getItem('abbeygate_chat_ticket_token') || '';
       if (activeTicketId) {
         // Fetch to update seen count
-        fetch(`/api/chat/ticket?id=${activeTicketId}`)
+        fetch(`/api/chat/ticket?id=${encodeURIComponent(activeTicketId)}&token=${encodeURIComponent(ticketToken)}`)
           .then((r) => r.json())
           .then((data) => {
             if (data.success && data.ticket?.messages) {

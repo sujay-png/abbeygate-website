@@ -16,7 +16,7 @@ export function jsonLd(data: unknown): string {
 // 1. Centralized SEO Configuration
 export const seoConfig: Record<string, { title: string; description: string; noindex?: boolean }> = {
   "/": {
-    title: "Business Diaries & Corporate Gifting | Abbeygate Business | ",
+    title: "Business Diaries & Corporate Gifting | Abbeygate Business",
     description: "Elevate your corporate gifting and bespoke merchandise with our expertly customised leather goods. Personalise with your brand logo.",
   },
   "/about": {
@@ -30,7 +30,7 @@ export const seoConfig: Record<string, { title: string; description: string; noi
   },
   "/cart": {
     title: "Your Bag | Abbeygate Business",
-    description: "Review your selected Abbeygate England items before checkout.",
+    description: "Review your selected Abbeygate Business items before checkout.",
     noindex: true,
   },
   "/account": {
@@ -40,12 +40,12 @@ export const seoConfig: Record<string, { title: string; description: string; noi
   },
   "/checkout": {
     title: "Checkout | Abbeygate Business",
-    description: "Complete your Abbeygate England purchase.",
+    description: "Complete your Abbeygate Business purchase.",
     noindex: true,
   },
   "/contact": {
     title: "Contact Us | Abbeygate Business",
-    description: "Get in touch with the Abbeygate England team for corporate gifting inquiries and support.",
+    description: "Get in touch with the Abbeygate Business team for corporate gifting inquiries and support.",
   },
   "/faqs": {
     title: "Frequently Asked Questions | Abbeygate Business",
@@ -65,7 +65,7 @@ export const seoConfig: Record<string, { title: string; description: string; noi
   },
   "/heritage": {
     title: "Our Heritage | Abbeygate Business",
-    description: "Discover the rich history and craftsmanship behind Abbeygate England.",
+    description: "Discover the rich history and craftsmanship behind Abbeygate Business.",
   },
   "/artwork-specification": {
     title: "Artwork Specification | Abbeygate Business",
@@ -77,23 +77,23 @@ export const seoConfig: Record<string, { title: string; description: string; noi
   },
   "/modern-slavery": {
     title: "Modern Slavery Statement | Abbeygate Business",
-    description: "Abbeygate England's statement on preventing modern slavery and human trafficking in our business and supply chains.",
+    description: "Abbeygate Business's statement on preventing modern slavery and human trafficking in our business and supply chains.",
   },
   "/privacy": {
     title: "Privacy Policy | Abbeygate Business",
-    description: "How Abbeygate England collects, uses and protects your personal information.",
+    description: "How Abbeygate Business collects, uses and protects your personal information.",
   },
   "/terms": {
     title: "Terms & Conditions | Abbeygate Business",
-    description: "The terms and conditions that apply to orders placed with Abbeygate England.",
+    description: "The terms and conditions that apply to orders placed with Abbeygate Business.",
   },
   "/cookies": {
     title: "Cookie Policy | Abbeygate Business",
-    description: "How Abbeygate England uses cookies on this website.",
+    description: "How Abbeygate Business uses cookies on this website.",
   },
   "/returns": {
     title: "Returns Policy | Abbeygate Business",
-    description: "Information on returns and refunds for Abbeygate England orders.",
+    description: "Information on returns and refunds for Abbeygate Business orders.",
   },
   "/bespoke": {
     title: "Corporate Gifts, Branded Gifts | Abbeygate Business",
@@ -113,7 +113,7 @@ export const seoConfig: Record<string, { title: string; description: string; noi
   },
   "/internal-page-layouts": {
     title: "Internal Page Layouts | Abbeygate Business",
-    description: "Internal page layout options for Abbeygate England diaries and notebooks.",
+    description: "Internal page layout options for Abbeygate Business diaries and notebooks.",
   },
 };
 
@@ -134,7 +134,7 @@ export function getSEOMetadata(
   const canonicalUrl = path === '/' ? SITE_URL : `${SITE_URL}${path}`;
   const shareImage = dynamicOverrides?.image
     ? { url: dynamicOverrides.image, alt: finalTitle }
-    : { url: "/images/banners/hero-banner.png", width: 1200, height: 630, alt: "Abbeygate England Hero Image" };
+    : { url: "/images/banners/hero-banner.png", width: 1200, height: 630, alt: "Abbeygate Business Bespoke Diaries & Notebooks" };
 
   return {
     // absolute: true prevents Next.js from appending the layout template again

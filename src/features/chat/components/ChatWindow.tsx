@@ -85,6 +85,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
   // Active ticket tracking (for live thread replies)
   const [activeTicketId, setActiveTicketId] = useState<number | null>(null);
   const [activeTicketNumber, setActiveTicketNumber] = useState<string | null>(null);
+  const [activeTicketToken, setActiveTicketToken] = useState<string | null>(null);
   const [ticketStatus, setTicketStatus] = useState<string | null>(null);
 
   // Guest details state
@@ -133,6 +134,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
     try {
       const savedTicketId = localStorage.getItem('abbeygate_chat_ticket_id');
       const savedTicketNum = localStorage.getItem('abbeygate_chat_ticket_num');
+      const savedTicketToken = localStorage.getItem('abbeygate_chat_ticket_token');
       const savedGuestEmail = localStorage.getItem('abbeygate_chat_guest_email');
       const savedGuestName = localStorage.getItem('abbeygate_chat_guest_name');
 
@@ -142,7 +144,8 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
       if (savedTicketId && savedTicketNum) {
         setActiveTicketId(Number(savedTicketId));
         setActiveTicketNumber(savedTicketNum);
-        fetchTicketThread(Number(savedTicketId), savedTicketNum);
+        if (savedTicketToken) setActiveTicketToken(savedTicketToken);
+        fetchTicketThread(Number(savedTicketId), savedTicketNum, savedTicketToken || '');
         return;
       }
     } catch {
@@ -173,11 +176,11 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
     if (!activeTicketId || !isOpen) return;
 
     const interval = setInterval(() => {
-      fetchTicketThread(activeTicketId, activeTicketNumber || '');
+      fetchTicketThread(activeTicketId, activeTicketNumber || '', activeTicketToken || '');
     }, 15000);
 
     return () => clearInterval(interval);
-  }, [activeTicketId, activeTicketNumber, isOpen]);
+  }, [activeTicketId, activeTicketNumber, activeTicketToken, isOpen]);
 
   // Helper to strip technical metadata headers from customer messages
   const cleanCustomerMessage = (text: string) => {
@@ -209,9 +212,20 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
   };
 
   // Helper to fetch full ticket thread from API
-  const fetchTicketThread = async (ticketId: number, ticketNum: string) => {
+  const fetchTicketThread = async (ticketId: number, ticketNum: string, token = activeTicketToken || '') => {
     try {
-      const res = await fetch(`/api/chat/ticket?id=${ticketId}`);
+      const res = await fetch(`/api/chat/ticket?id=${encodeURIComponent(String(ticketId))}&token=${encodeURIComponent(token)}`);
+      if (res.status === 401 || res.status === 403) {
+        try {
+          localStorage.removeItem('abbeygate_chat_ticket_id');
+          localStorage.removeItem('abbeygate_chat_ticket_num');
+          localStorage.removeItem('abbeygate_chat_ticket_token');
+        } catch {}
+        setActiveTicketId(null);
+        setActiveTicketNumber(null);
+        setActiveTicketToken(null);
+        return;
+      }
       const data = await res.json();
       if (data.success && data.ticket) {
         const ticket = data.ticket;
@@ -251,13 +265,14 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
       fetch('/api/chat/resolve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticketId: activeTicketId }),
+        body: JSON.stringify({ ticketId: activeTicketId, ticketToken: activeTicketToken }),
       }).catch(() => {});
     }
 
     try {
       localStorage.removeItem('abbeygate_chat_ticket_id');
       localStorage.removeItem('abbeygate_chat_ticket_num');
+      localStorage.removeItem('abbeygate_chat_ticket_token');
       localStorage.removeItem('abbeygate_chat_seen_staff_count');
     } catch {}
 
@@ -265,6 +280,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
 
     setActiveTicketId(null);
     setActiveTicketNumber(null);
+    setActiveTicketToken(null);
     setTicketStatus(null);
     setSelectedTopic(null);
     setSelectedOrder(null);
@@ -549,6 +565,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ticket_id: activeTicketId,
+            ticket_token: activeTicketToken,
             message: messageText,
           }),
         });
@@ -595,11 +612,13 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
       if (data.success && data.ticket_id && data.ticket_number) {
         setActiveTicketId(data.ticket_id);
         setActiveTicketNumber(data.ticket_number);
+        if (data.ticket_token) setActiveTicketToken(data.ticket_token);
         setTicketStatus('open');
 
         try {
           localStorage.setItem('abbeygate_chat_ticket_id', String(data.ticket_id));
           localStorage.setItem('abbeygate_chat_ticket_num', data.ticket_number);
+          if (data.ticket_token) localStorage.setItem('abbeygate_chat_ticket_token', data.ticket_token);
           if (guestEmail) localStorage.setItem('abbeygate_chat_guest_email', guestEmail);
           if (guestName) localStorage.setItem('abbeygate_chat_guest_name', guestName);
         } catch {}
@@ -615,7 +634,7 @@ export function ChatWindow({ isOpen, onClose, onTicketResolved }: ChatWindowProp
         const errorMsg: ChatMessage = {
           id: `msg-err-${Date.now()}`,
           sender: 'bot',
-          text: `We couldn't send your message: ${data.error || 'Please try again or email enquiries@abbeygate-england.com'}.`,
+          text: `We couldn't send your message: ${data.error || 'Please try again or email sales@abbeygate-business.com'}.`,
           createdAt: new Date().toISOString(),
         };
         setMessages((prev) => [...prev, errorMsg]);

@@ -1,22 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/features/auth/utils/session';
+import { checkoutRateLimit } from '@/lib/rate-limit';
+import {
+  getHeadlessStoreUrl,
+  getRequiredHeadlessSecret,
+  signTicketToken,
+  verifyTicketToken,
+} from '@/features/chat/utils/ticket-auth';
 
 export const dynamic = 'force-dynamic';
-
-function getStoreUrl(): string {
-  return (
-    process.env.WOOCOMMERCE_STORE_URL ||
-    process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL ||
-    'https://dashboard.abbeygate-business.com'
-  ).replace(/\/$/, '');
-}
-
-function getHeadlessSecret(): string {
-  return (
-    process.env.WP_HEADLESS_SECRET ||
-    'a9718d4e0887ce1bc851ad90b0b4a39742623ce5eb94faf28a5bfe8abc584eb3'
-  );
-}
 
 /**
  * POST /api/chat/ticket
@@ -24,6 +16,12 @@ function getHeadlessSecret(): string {
  */
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';
+    const { success } = await checkoutRateLimit.limit(`chat-ticket:${ip}`);
+    if (!success) {
+      return NextResponse.json({ success: false, error: 'Too many requests. Please try again shortly.' }, { status: 429 });
+    }
+
     const body = await req.json();
     const session = await getSession();
 
@@ -69,12 +67,12 @@ export async function POST(req: NextRequest) {
       subject = body.subject.trim();
     }
 
-    const storeUrl = getStoreUrl();
+    const storeUrl = getHeadlessStoreUrl();
     const res = await fetch(`${storeUrl}/wp-json/headless/v1/tickets`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-headless-secret': getHeadlessSecret(),
+        'x-headless-secret': getRequiredHeadlessSecret(),
       },
       body: JSON.stringify({
         customer_id: userId || 0,
@@ -105,6 +103,7 @@ export async function POST(req: NextRequest) {
       success: true,
       ticket_id: data.ticket_id,
       ticket_number: data.ticket_number,
+      ticket_token: signTicketToken(data.ticket_id),
       message: 'Message sent successfully.',
     });
   } catch (error: any) {
@@ -153,19 +152,25 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
+    const token = searchParams.get('token');
 
-    if (!id) {
-      return NextResponse.json({ success: false, error: 'Missing ticket ID.' }, { status: 400 });
+    if (!id || !/^\d+$/.test(id)) {
+      return NextResponse.json({ success: false, error: 'Missing or invalid ticket ID.' }, { status: 400 });
     }
 
     const session = await getSession();
-    const storeUrl = getStoreUrl();
+    const hasValidToken = verifyTicketToken(id, token);
+    if (!session?.userId && !hasValidToken) {
+      return NextResponse.json({ success: false, error: 'Unauthorized ticket access.' }, { status: 401 });
+    }
+
+    const storeUrl = getHeadlessStoreUrl();
     const customerQuery = session?.userId ? `?customer_id=${session.userId}` : '';
 
     const res = await fetch(`${storeUrl}/wp-json/headless/v1/tickets/${id}${customerQuery}`, {
       method: 'GET',
       headers: {
-        'x-headless-secret': getHeadlessSecret(),
+        'x-headless-secret': getRequiredHeadlessSecret(),
       },
       cache: 'no-store',
     });

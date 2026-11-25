@@ -51,7 +51,7 @@ export async function GET() {
         ? accountOrders.map(sanitizeOrder)
         : [];
 
-      // Also check if any guest orders were placed with this email
+      // Also check if any guest orders were placed with this exact email
       if (session.email) {
         try {
           const emailOrders = await woocommerceApi.request<any[]>(
@@ -60,8 +60,13 @@ export async function GET() {
           );
           if (Array.isArray(emailOrders)) {
             const existingIds = new Set(combinedOrders.map((o) => o.id));
+            const normalizedEmail = session.email.toLowerCase();
             for (const eo of emailOrders) {
-              if (!existingIds.has(eo.id)) {
+              const belongsToUser =
+                Number(eo.customer_id) === Number(session.userId) ||
+                (typeof eo.billing?.email === 'string' &&
+                  eo.billing.email.toLowerCase() === normalizedEmail);
+              if (belongsToUser && !existingIds.has(eo.id)) {
                 combinedOrders.push(sanitizeOrder(eo));
                 existingIds.add(eo.id);
               }
@@ -69,21 +74,6 @@ export async function GET() {
           }
         } catch {
           // Ignore search error
-        }
-      }
-
-      // If user has no previous orders, fetch recent store orders so they can still see options in testing
-      if (combinedOrders.length === 0) {
-        try {
-          const recent = await woocommerceApi.request<any[]>(
-            '/orders?per_page=10&orderby=date&order=desc',
-            { revalidate: 30 }
-          );
-          if (Array.isArray(recent)) {
-            combinedOrders = recent.map(sanitizeOrder);
-          }
-        } catch {
-          // Ignore
         }
       }
 
@@ -104,30 +94,11 @@ export async function GET() {
       });
     }
 
-    // 2. Guest user (or tester not yet logged in)
-    // Fetch recent store orders so they can easily pick their recent order ID with latest first
-    let guestOrders: WooCommerceOrder[] = [];
-    try {
-      const recent = await woocommerceApi.request<any[]>(
-        '/orders?per_page=15&orderby=date&order=desc',
-        { revalidate: 30 }
-      );
-      if (Array.isArray(recent)) {
-        guestOrders = recent.map(sanitizeOrder);
-      }
-    } catch (err) {
-      console.warn('Failed to fetch recent orders for guest chat:', err);
-    }
-
-    guestOrders.sort(
-      (a, b) =>
-        new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
-    );
-
+    // 2. Guest user — never expose other customers' recent store orders
     return NextResponse.json({
       isLoggedIn: false,
       user: null,
-      orders: guestOrders,
+      orders: [],
     });
   } catch (error: any) {
     console.error('Chat session error:', error);

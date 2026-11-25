@@ -12,8 +12,8 @@ import { getProductPricingFromProduct } from '@/features/products/services/prici
 import { getProductHexValues } from '@/features/products/services/product-colors';
 import { getProductBreadcrumbs } from '@/features/products/utils/breadcrumb';
 import { getProductBaseAmount, sanitizeImageUrl } from '@/features/products/utils/product-helpers';
+import { parseStorePrice, VAT_RATE } from '@/features/products/utils/pricing';
 import type { Metadata } from 'next';
-import { PRODUCT_SEO } from '@/data/product-seo';
 import { getSEOMetadata, jsonLd, SITE_URL } from '@/lib/seo';
 
 export const revalidate = 3600; // Cache product page on Vercel Edge CDN for 1 hour (ISR)
@@ -246,6 +246,14 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
     currentBaseName = product.name;
   }
 
+  const rawIncVatPrice = parseStorePrice(
+    product.prices?.price ?? '0',
+    product.prices?.currency_minor_unit ?? 2
+  );
+  const schemaPrice = Number(
+    (rawIncVatPrice > 0 ? rawIncVatPrice : pricing.basePrice * (1 + VAT_RATE)).toFixed(2)
+  );
+
   return (
     <div className="min-h-screen bg-brand-cream">
       <Breadcrumb paths={breadcrumbPaths} />
@@ -289,14 +297,20 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
               "@type": "Offer",
               "url": `${SITE_URL}/product/${product.slug}`,
               "priceCurrency": "GBP",
-              "price": pricing.basePrice,
+              "price": schemaPrice,
+              "priceSpecification": {
+                "@type": "UnitPriceSpecification",
+                "price": schemaPrice,
+                "priceCurrency": "GBP",
+                "valueAddedTaxIncluded": true
+              },
               "itemCondition": "https://schema.org/NewCondition",
               "availability": product.is_in_stock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
               "shippingDetails": {
                 "@type": "OfferShippingDetails",
                 "shippingRate": {
                   "@type": "MonetaryAmount",
-                  "value": "0.00",
+                  "value": "15.75",
                   "currency": "GBP"
                 },
                 "shippingDestination": {

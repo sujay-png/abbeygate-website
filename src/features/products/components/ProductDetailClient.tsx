@@ -89,24 +89,7 @@ export const ProductDetailClient = ({
     trackViewItem(initialProduct);
   }, [initialProduct.slug, initialProduct]);
 
-  useEffect(() => {
-    // Silently preload variant images to warm up Next.js optimization cache and browser cache
-    if (!colorVariants || colorVariants.length === 0) return;
-
-    // Use a short delay so we don't compete with the main LCP image
-    const timeout = setTimeout(() => {
-      colorVariants.forEach(variant => {
-        if (variant.imageSrc && variant.slug !== product.slug) {
-          // Preload at a standard size (e.g., 1080w) that Next.js will generate for large views
-          const preloadUrl = `/_next/image?url=${encodeURIComponent(variant.imageSrc)}&w=1080&q=75`;
-          const img = new window.Image();
-          img.src = preloadUrl;
-        }
-      });
-    }, 1000);
-
-    return () => clearTimeout(timeout);
-  }, [colorVariants, product.slug]);
+  // Variant images are optimized and cached on demand when hovered/selected rather than preloading all 1080w images upfront.
 
   const { addItem, updateItem, items } = useCart();
   const isGifts = isGiftsProduct(product);

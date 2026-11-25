@@ -38,7 +38,15 @@ export function ChatOrderPicker({
     setIsLookingUp(true);
 
     try {
-      const res = await fetch(`/api/chat/order-lookup?orderId=${encodeURIComponent(manualOrderId.trim())}`);
+      let guestEmailQuery = '';
+      try {
+        const savedEmail = localStorage.getItem('abbeygate_chat_guest_email')?.trim();
+        if (savedEmail) guestEmailQuery = `&email=${encodeURIComponent(savedEmail)}`;
+      } catch {}
+
+      const res = await fetch(
+        `/api/chat/order-lookup?orderId=${encodeURIComponent(manualOrderId.trim())}${guestEmailQuery}`
+      );
       const data = await res.json();
 
       if (data.success && data.order) {

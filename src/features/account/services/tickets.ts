@@ -8,17 +8,10 @@ import type {
   CreateTicketInput,
 } from '../types/ticket';
 
-function getStoreUrl(): string {
-  return (
-    process.env.WOOCOMMERCE_STORE_URL ||
-    process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL ||
-    'https://dashboard.abbeygate-business.com'
-  ).replace(/\/$/, '');
-}
+import { getHeadlessStoreUrl, getRequiredHeadlessSecret } from '@/features/chat/utils/ticket-auth';
 
-function getHeadlessSecret(): string {
-  return process.env.WP_HEADLESS_SECRET || 'a9718d4e0887ce1bc851ad90b0b4a39742623ce5eb94faf28a5bfe8abc584eb3';
-}
+const getStoreUrl = getHeadlessStoreUrl;
+const getHeadlessSecret = getRequiredHeadlessSecret;
 
 /**
  * Fetch all support tickets belonging to the logged-in customer.

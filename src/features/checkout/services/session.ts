@@ -13,6 +13,7 @@ export type CheckoutSession = {
   quote: CheckoutQuote;
   customerId?: number;
   vatNumber?: string;
+  paymentIntentId?: string;
   orderId?: number;
   orderKey?: string;
 };

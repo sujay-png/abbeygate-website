@@ -5,8 +5,26 @@ import { checkoutRateLimit } from '@/lib/rate-limit';
 // This route uploads into the WordPress media library with admin credentials, so only accept
 // the artwork files checkout actually sends: logo_<n> / preview_<n> images of a sane size.
 const ALLOWED_FIELD = /^(logo|preview)_\d{1,3}$/;
+const ALLOWED_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/webp']);
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const MAX_FILES = 40;
+
+function hasValidRasterSignature(buffer: Buffer, mimeType: string): boolean {
+  if (buffer.length < 12) return false;
+  if (mimeType === 'image/png') {
+    return buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47;
+  }
+  if (mimeType === 'image/jpeg' || mimeType === 'image/jpg') {
+    return buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+  }
+  if (mimeType === 'image/webp') {
+    return (
+      buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
+      buffer.subarray(8, 12).toString('ascii') === 'WEBP'
+    );
+  }
+  return false;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,42 +52,48 @@ export async function POST(req: NextRequest) {
     if (entries.length > MAX_FILES) {
       return NextResponse.json({ error: 'Too many files' }, { status: 400 });
     }
+    const bufferedEntries: Array<{ key: string; buffer: Buffer; fileName: string; mimeType: string }> = [];
     for (const [key, value] of entries) {
       if (
         !ALLOWED_FIELD.test(key) ||
         !(value instanceof Blob) ||
-        !value.type.startsWith('image/') ||
+        !ALLOWED_MIME_TYPES.has(value.type.toLowerCase()) ||
         value.size > MAX_FILE_BYTES
       ) {
         return NextResponse.json({ error: 'Unsupported file' }, { status: 400 });
       }
+      const buffer = Buffer.from(await value.arrayBuffer());
+      const mimeType = value.type.toLowerCase() === 'image/jpg' ? 'image/jpeg' : value.type.toLowerCase();
+      if (!hasValidRasterSignature(buffer, mimeType)) {
+        return NextResponse.json({ error: 'Invalid image file signature' }, { status: 400 });
+      }
+      bufferedEntries.push({
+        key,
+        buffer,
+        fileName: value.name.replace(/[^a-zA-Z0-9.\-_]/g, '_'),
+        mimeType,
+      });
     }
 
-    for (const [key, value] of entries) {
-      if (value instanceof Blob) {
-        const buffer = Buffer.from(await value.arrayBuffer());
-        const fileName = value.name.replace(/[^a-zA-Z0-9.\-_]/g, '_'); // Sanitize filename
-        const mimeType = value.type;
+    for (const { key, buffer, fileName, mimeType } of bufferedEntries) {
+      const wpRes = await fetch(`${storeUrl}/wp-json/wp/v2/media`, {
+        method: 'POST',
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': mimeType,
+          'Content-Disposition': `attachment; filename="${fileName}"`
+        },
+        body: new Uint8Array(buffer)
+      });
 
-        const wpRes = await fetch(`${storeUrl}/wp-json/wp/v2/media`, {
-          method: 'POST',
-          headers: {
-            'Authorization': authHeader,
-            'Content-Type': mimeType,
-            'Content-Disposition': `attachment; filename="${fileName}"`
-          },
-          body: buffer
-        });
-
-        if (!wpRes.ok) {
-          const wpErr = await wpRes.text();
-          console.error(`Failed to upload ${fileName} to WordPress:`, wpErr);
-          throw new Error('WordPress media upload failed');
-        }
-
-        const wpData = await wpRes.json();
-        files[key] = wpData.source_url; // WordPress returns the full absolute URL here
+      if (!wpRes.ok) {
+        const wpErr = await wpRes.text();
+        console.error(`Failed to upload ${fileName} to WordPress:`, wpErr);
+        throw new Error('WordPress media upload failed');
       }
+
+      const wpData = await wpRes.json();
+      files[key] = wpData.source_url; // WordPress returns the full absolute URL here
     }
 
     return NextResponse.json({ success: true, files });

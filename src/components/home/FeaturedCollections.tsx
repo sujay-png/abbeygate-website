@@ -1,12 +1,6 @@
-"use client";
-
-import Image from "next/image";
 import { Container } from "../ui/Container";
 import { Button } from "../ui/Button";
 import { ArrowIcon } from "../ui/ArrowIcon";
-import useEmblaCarousel from "embla-carousel-react";
-import Autoplay from "embla-carousel-autoplay";
-import { useEffect, useState } from "react";
 
 // Customer reviews / testimonials commented out until genuine reviews are provided
 /*

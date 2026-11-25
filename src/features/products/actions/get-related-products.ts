@@ -120,7 +120,9 @@ export async function getRelatedProductsAction({
       }
     }
 
-    const priceMap = await getProductLowestPriceMap();
+    const priceMap = selected.length > 0
+      ? await getProductLowestPriceMap(selected.map((p) => p.id))
+      : {};
     return selected.map((p) => ({
       ...p,
       lowest_price: priceMap[p.id] || p.lowest_price,

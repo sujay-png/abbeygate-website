@@ -11,12 +11,10 @@ export const FeaturedProducts = async ({ title = "Best Sellers" }: { title?: str
   let priceMap: Record<number, number> = {};
 
   try {
-    const [fetchedProducts, fetchedPriceMap] = await Promise.all([
-      getFeaturedStoreProducts(4),
-      getProductLowestPriceMap(),
-    ]);
-    products = fetchedProducts;
-    priceMap = fetchedPriceMap;
+    products = await getFeaturedStoreProducts(4);
+    if (products.length > 0) {
+      priceMap = await getProductLowestPriceMap(products.map((p) => p.id));
+    }
   } catch {
     // Fallback to empty if API unavailable
   }

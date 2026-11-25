@@ -70,29 +70,48 @@ export function buildDefaultTiers(basePrice: number): PriceTier[] {
  * Uses WooCommerce REST API meta_data (_without_customisation_tiered_price or B2BKing pricetiers)
  * and caches the result with tag 'products' and 24-hour revalidation.
  */
-export const getProductLowestPriceMap = cache(async (): Promise<Record<number, number>> => {
+export const getProductLowestPriceMap = cache(async (productIds?: number[]): Promise<Record<number, number>> => {
   if (!hasRestCredentials()) {
     return {};
   }
 
   try {
-    const pages = [1, 2, 3];
-    const results = await Promise.all(
-      pages.map((page) =>
-        woocommerceApi.request<Array<{ id: number; regular_price?: string; meta_data?: { key: string; value: unknown }[] }>>(
-          '/products',
-          {
-            params: {
-              per_page: 100,
-              page,
-              _fields: 'id,regular_price,meta_data',
-            },
-            revalidate: 86400,
-            tags: ['products'],
-          }
-        ).catch(() => [])
-      )
-    );
+    let results: Array<Array<{ id: number; regular_price?: string; meta_data?: { key: string; value: unknown }[] }>>;
+
+    if (productIds && productIds.length > 0 && productIds.length <= 100) {
+      const uniqueIds = Array.from(new Set(productIds));
+      const targeted = await woocommerceApi.request<Array<{ id: number; regular_price?: string; meta_data?: { key: string; value: unknown }[] }>>(
+        '/products',
+        {
+          params: {
+            include: uniqueIds.join(','),
+            per_page: uniqueIds.length,
+            _fields: 'id,regular_price,meta_data',
+          },
+          revalidate: 86400,
+          tags: ['products'],
+        }
+      ).catch(() => []);
+      results = [targeted];
+    } else {
+      const pages = [1, 2, 3];
+      results = await Promise.all(
+        pages.map((page) =>
+          woocommerceApi.request<Array<{ id: number; regular_price?: string; meta_data?: { key: string; value: unknown }[] }>>(
+            '/products',
+            {
+              params: {
+                per_page: 100,
+                page,
+                _fields: 'id,regular_price,meta_data',
+              },
+              revalidate: 86400,
+              tags: ['products'],
+            }
+          ).catch(() => [])
+        )
+      );
+    }
 
     const priceMap: Record<number, number> = {};
 

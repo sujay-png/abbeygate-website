@@ -1,7 +1,7 @@
 import { getProductPricingFromProduct } from '@/features/products/services/pricing';
 import { storeFetch } from '@/lib/woocommerce/store-api';
 import { woocommerceFetch } from '@/lib/woocommerce/client';
-import { calculateProductPrice, getCornerEdgesPricing, VAT_RATE, BRANDING_SETUP_FEE, CUSTOMIZATION_MIN_QTY } from '@/features/products/utils/pricing';
+import { calculateProductPrice, getCornerEdgesPricing, isGiftsProduct, VAT_RATE, BRANDING_SETUP_FEE, CUSTOMIZATION_MIN_QTY } from '@/features/products/utils/pricing';
 import { calculateShipping } from '@/features/products/utils/shipping';
 import type { StoreProduct } from '@/features/products/types/store-product';
 import type { CheckoutQuote, CheckoutQuoteItemInput, CheckoutQuoteRequest } from '@/features/checkout/types/quote';
@@ -100,7 +100,7 @@ export async function createCheckoutQuote(payload: unknown): Promise<CheckoutQuo
     const cornerEdges = customization?.cornerEdges;
     const cornerEdgePrice = cornerEdges && cornerEdges !== 'None' ? getCornerEdgesPricing(product).pricePerPair : 0;
     
-    const isGifts = product.categories.some((category) => category.slug === 'gifts');
+    const isGifts = isGiftsProduct(product);
     const groupQty = groupQuantity(item, items);
     const customizationEnabled = !isGifts && groupQty >= CUSTOMIZATION_MIN_QTY && Boolean(customization?.enabled);
     
@@ -139,8 +139,8 @@ export async function createCheckoutQuote(payload: unknown): Promise<CheckoutQuo
   // Calculate base shipping before applying the coupon
   let shipping = calculateShipping(lines.map((line) => ({ product: line.product, quantity: line.quantity })), []);
   
-  // Apply coupon to the overall total (subtotal + shipping)
-  const coupon = await applyCoupon(couponCode, subtotal + shipping.cost);
+  // Apply coupon against merchandise subtotal so percentage coupons and min/max spend rules do not include shipping
+  const coupon = await applyCoupon(couponCode, subtotal);
   
   // Re-calculate shipping if the coupon explicitly grants free shipping or is a 100% discount
   if (coupon.freeShipping || coupon.isHundredPercent || couponCode?.toLowerCase() === 'abbeygate100') {
