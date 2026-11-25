@@ -8,7 +8,12 @@ export function NavigationTracker() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && typeof (window as any).gtag === 'function') {
+    if (typeof window === 'undefined') return;
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1' || host.endsWith('.vercel.app')) {
+      return;
+    }
+    if (typeof (window as any).gtag === 'function') {
       const queryString = searchParams.toString();
       const url = queryString ? `${pathname}?${queryString}` : pathname;
       (window as any).gtag('config', 'G-9H299B89WM', {

@@ -68,6 +68,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isGa4Production =
+    process.env.NODE_ENV === "production" &&
+    (!process.env.VERCEL || process.env.VERCEL_ENV === "production");
+
   return (
     <html
       lang="en"
@@ -85,24 +89,31 @@ export default function RootLayout({
         className="min-h-screen flex flex-col bg-brand-cream text-brand-body"
         suppressHydrationWarning
       >
-        <Suspense fallback={null}>
-          <NavigationTracker />
-        </Suspense>
-        {/* GA4 Script (Marketing Team Request) */}
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-9H299B89WM"
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            window.gtag = window.gtag || function(){window.dataLayer.push(arguments);};
-            window.gtag('js', new Date());
-            window.gtag('config', 'G-9H299B89WM', {
-              page_path: window.location.pathname,
-            });
-          `}
-        </Script>
+        {isGa4Production && (
+          <>
+            <Suspense fallback={null}>
+              <NavigationTracker />
+            </Suspense>
+            {/* GA4 Script (Production Only) */}
+            <Script
+              src="https://www.googletagmanager.com/gtag/js?id=G-9H299B89WM"
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                var host = window.location.hostname;
+                if (host !== 'localhost' && host !== '127.0.0.1' && !host.endsWith('.vercel.app')) {
+                  window.dataLayer = window.dataLayer || [];
+                  window.gtag = window.gtag || function(){window.dataLayer.push(arguments);};
+                  window.gtag('js', new Date());
+                  window.gtag('config', 'G-9H299B89WM', {
+                    page_path: window.location.pathname,
+                  });
+                }
+              `}
+            </Script>
+          </>
+        )}
 
         {/* Microsoft Clarity (Marketing / SEO Behavioral Tracking) */}
         <Script id="microsoft-clarity" strategy="lazyOnload">
