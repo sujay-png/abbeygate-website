@@ -1,51 +1,30 @@
 "use client";
 
 import { ReactLenis, useLenis } from 'lenis/react';
-import { ReactNode, useEffect, Suspense } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { ReactNode, useEffect, useRef, Suspense } from 'react';
+import { usePathname } from 'next/navigation';
 
 function RouteChangeScroller() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const lenis = useLenis();
+  const prevPathnameRef = useRef(pathname);
 
-  const resetScroll = () => {
+  useEffect(() => {
+    // Only reset scroll once the new route has committed (not on initial link click before
+    // loading.tsx mounts, and not when only filter searchParams change with scroll: false).
+    if (prevPathnameRef.current === pathname) return;
+    prevPathnameRef.current = pathname;
+
     if (lenis) {
+      lenis.stop();
       lenis.resize();
-      lenis.scrollTo(0, { immediate: true });
+      lenis.scrollTo(0, { immediate: true, force: true });
+      lenis.start();
     }
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
-  };
-
-  // Immediate scroll to top the moment user clicks any internal link
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      const anchor = (e.target as HTMLElement)?.closest('a');
-      if (!anchor) return;
-      const href = anchor.getAttribute('href');
-      if (
-        href &&
-        href.startsWith('/') &&
-        !href.startsWith('/#') &&
-        !href.includes('#') &&
-        anchor.target !== '_blank' &&
-        !e.ctrlKey &&
-        !e.metaKey &&
-        !e.shiftKey
-      ) {
-        resetScroll();
-      }
-    };
-
-    document.addEventListener('click', handleClick, { capture: true });
-    return () => document.removeEventListener('click', handleClick, { capture: true });
-  }, [lenis]);
-
-  useEffect(() => {
-    resetScroll();
-  }, [pathname, searchParams, lenis]);
+  }, [pathname, lenis]);
 
   return null;
 }

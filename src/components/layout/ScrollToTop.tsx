@@ -8,8 +8,10 @@ export function ScrollToTop() {
   
   const reset = () => {
     if (lenis) {
+      lenis.stop();
       lenis.resize();
-      lenis.scrollTo(0, { immediate: true });
+      lenis.scrollTo(0, { immediate: true, force: true });
+      lenis.start();
     }
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
