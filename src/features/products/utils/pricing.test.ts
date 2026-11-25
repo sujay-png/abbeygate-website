@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getCornerEdgesPricing } from './pricing';
+import { getCornerEdgesPricing, isUvOnlyProduct } from './pricing';
 
 describe('getCornerEdgesPricing', () => {
   it('returns null size and 0 price for A6 notebooks where extras are disabled', () => {
@@ -42,6 +42,15 @@ describe('getCornerEdgesPricing', () => {
       slug: 'dorchester-horizon-quarto-desk-diary',
     };
     expect(getCornerEdgesPricing(quartoDiary)).toEqual({ size: '27mm × 27mm', pricePerPair: 0.48 });
+  });
+});
+
+describe('isUvOnlyProduct', () => {
+  it('returns true for Ocean Clean notebooks and false for Apple Peel or classic ranges', () => {
+    expect(isUvOnlyProduct({ name: 'Ocean Clean Eco A5 Notebook, Sage', slug: 'ocean-clean-eco-a5-notebook-sage', sku: 'OC-SG-U-31' })).toBe(true);
+    expect(isUvOnlyProduct({ name: 'Eco Notebook', slug: 'some-slug', sku: 'OC-BS-U-31' })).toBe(true);
+    expect(isUvOnlyProduct({ name: 'Apple Peel Eco A5 Notebook', slug: 'apple-peel-eco-a5-notebook', sku: 'AJ-RD-U-31' })).toBe(false);
+    expect(isUvOnlyProduct({ name: 'Dorchester A5 Notebook', slug: 'dorchester-a5-notebook', sku: 'DR-BK-U-31' })).toBe(false);
   });
 });
 

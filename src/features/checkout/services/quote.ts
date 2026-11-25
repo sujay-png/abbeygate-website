@@ -1,7 +1,7 @@
 import { getProductPricingFromProduct } from '@/features/products/services/pricing';
 import { storeFetch } from '@/lib/woocommerce/store-api';
 import { woocommerceFetch } from '@/lib/woocommerce/client';
-import { calculateProductPrice, getCornerEdgesPricing, isGiftsProduct, VAT_RATE, BRANDING_SETUP_FEE, CUSTOMIZATION_MIN_QTY } from '@/features/products/utils/pricing';
+import { calculateProductPrice, getCornerEdgesPricing, isGiftsProduct, isUvOnlyProduct, VAT_RATE, BRANDING_SETUP_FEE, CUSTOMIZATION_MIN_QTY } from '@/features/products/utils/pricing';
 import { calculateShipping } from '@/features/products/utils/shipping';
 import type { StoreProduct } from '@/features/products/types/store-product';
 import type { CheckoutQuote, CheckoutQuoteItemInput, CheckoutQuoteRequest } from '@/features/checkout/types/quote';
@@ -71,7 +71,7 @@ async function applyCoupon(code: string | undefined, amountToDiscount: number): 
 }
 
 async function getStoreProduct(productId: string): Promise<StoreProduct> {
-  return storeFetch<StoreProduct>(`/products/${productId}`, { revalidate: 0 });
+  return storeFetch<StoreProduct>(`/products/${productId}`, { revalidate: 60, tags: ['products', `product-${productId}`] });
 }
 
 function groupQuantity(item: CheckoutQuoteItemInput, allItems: CheckoutQuoteItemInput[]): number {
@@ -101,15 +101,22 @@ export async function createCheckoutQuote(payload: unknown): Promise<CheckoutQuo
     const cornerEdgePrice = cornerEdges && cornerEdges !== 'None' ? getCornerEdgesPricing(product).pricePerPair : 0;
     
     const isGifts = isGiftsProduct(product);
+    const isUvOnly = isUvOnlyProduct(product);
     const groupQty = groupQuantity(item, items);
     const customizationEnabled = !isGifts && groupQty >= CUSTOMIZATION_MIN_QTY && Boolean(customization?.enabled);
+    const effectiveCustomization = customization
+      ? {
+          ...customization,
+          ...(isUvOnly && customizationEnabled ? { choice: 'UV Print', foilColor: undefined } : {}),
+        }
+      : undefined;
     
     const price = calculateProductPrice({
       quantity: groupQty,
       basePrice: pricing.basePrice,
       tiers: pricing.tiers,
       customizationEnabled,
-      blockingType: customization?.choice,
+      blockingType: effectiveCustomization?.choice,
       cornerEdges,
       cornerEdgePrice,
       isGifts,
@@ -128,7 +135,7 @@ export async function createCheckoutQuote(payload: unknown): Promise<CheckoutQuo
       quantity: item.quantity,
       unitPrice: Number(price.unitPrice.toFixed(2)),
       lineTotal: Number((price.unitPrice * item.quantity + setupFee).toFixed(2)),
-      customization,
+      customization: effectiveCustomization,
       image: item.customization?.fullPreviewUrl || product.images?.[0]?.src || product.images?.[0]?.thumbnail,
       product,
     };

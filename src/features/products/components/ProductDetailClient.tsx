@@ -9,7 +9,7 @@ import { ProductCustomizer, type CustomizationState } from './ProductCustomizer'
 import { ProductCustomizationOverlay } from './ProductCustomizationOverlay';
 import { useCart } from '@/features/cart/context/CartContext';
 import { useVat } from '@/context/VatContext';
-import { BRANDING_SETUP_FEE, CORNER_PAIRS_PER_PRODUCT, CUSTOMIZATION_MIN_QTY, formatGBP, getCornerEdgesPricing, isGiftsProduct, LOGO_BLOCKING_PRICES, LOGO_CUSTOMIZATION_FEE, VAT_RATE, calculateProductPrice } from '../utils/pricing';
+import { BRANDING_SETUP_FEE, CORNER_PAIRS_PER_PRODUCT, CUSTOMIZATION_MIN_QTY, formatGBP, getCornerEdgesPricing, isGiftsProduct, isUvOnlyProduct, LOGO_BLOCKING_PRICES, LOGO_CUSTOMIZATION_FEE, VAT_RATE, calculateProductPrice } from '../utils/pricing';
 import { getLogoAnchors, getImageBoundingBox, getProductPhysicalDimensionsMm, sanitizeImageUrl, stripHtml, isBicolourProduct, isHorizonProduct } from '../utils/product-helpers';
 import { parseCornerSizeMm, type ProductImageBounds } from '../utils/corner-clips';
 import { composeProof } from '../utils/generate-proof';
@@ -93,6 +93,8 @@ export const ProductDetailClient = ({
 
   const { addItem, updateItem, items } = useCart();
   const isGifts = isGiftsProduct(product);
+  const isUvOnly = isUvOnlyProduct(product);
+  const defaultBlockingType = isUvOnly ? 'UV Print' : 'Embossed';
   const cornerEdgesPricing = getCornerEdgesPricing(product);
   const activeColorHex = colorVariants.find(c => c.slug === product.slug)?.hex;
   const activeColorName = colorVariants.find(c => c.slug === product.slug)?.name;
@@ -168,6 +170,17 @@ export const ProductDetailClient = ({
   const [isCustomizingStarted, setIsCustomizingStarted] = useState(false);
   const [customizerStep, setCustomizerStep] = useState<1 | 2 | 3 | 4>(1);
 
+  useEffect(() => {
+    if (isCustomizingStarted) {
+      if (zoomTimeoutRef.current) {
+        clearTimeout(zoomTimeoutRef.current);
+        zoomTimeoutRef.current = null;
+      }
+      setIsZooming(false);
+      setZoomOrigin('center center');
+    }
+  }, [isCustomizingStarted]);
+
   // If extras are disabled for this product, bypass step 3 (Extras)
   useEffect(() => {
     if (!cornerEdgesPricing.size && customizerStep === 3) {
@@ -214,7 +227,7 @@ export const ProductDetailClient = ({
   const isCustomizationSurface = activeImageIndex === 0;
   const [customization, setCustomization] = useState<CustomizationState>({
     enabled: !isGifts,
-    blockingType: 'Embossed',
+    blockingType: defaultBlockingType,
     logoScale: 1.0,
     logoPosition: { x: 0, y: 0 },
     cornerEdges: 'None',
@@ -234,7 +247,8 @@ export const ProductDetailClient = ({
           setCustomization(prev => ({
             ...prev,
             ...parsed,
-            blockingType: parsed.choice || prev.blockingType,
+            blockingType: isUvOnly ? 'UV Print' : (parsed.choice || prev.blockingType),
+            foilColor: isUvOnly ? undefined : parsed.foilColor,
             logoPosition: {
               ...prev.logoPosition,
               label: parsed.positionLabel || prev.logoPosition?.label,
@@ -309,34 +323,39 @@ export const ProductDetailClient = ({
         }
         if (draft) {
           // If the draft contains a base64 logoPreviewUrl, convert it back to a File object for checkout
-          if (draft.logoPreviewUrl && draft.logoPreviewUrl.startsWith('data:image')) {
-            fetch(draft.logoPreviewUrl)
+          const normalizedDraft = {
+            ...draft,
+            blockingType: isUvOnly ? 'UV Print' : draft.blockingType,
+            foilColor: isUvOnly ? undefined : draft.foilColor,
+          };
+          if (normalizedDraft.logoPreviewUrl && normalizedDraft.logoPreviewUrl.startsWith('data:image')) {
+            fetch(normalizedDraft.logoPreviewUrl)
               .then(res => res.blob())
               .then(blob => {
-                const originalName = draft.fileName || 'restored-logo.png';
+                const originalName = normalizedDraft.fileName || 'restored-logo.png';
                 const file = new File([blob], originalName, { type: blob.type });
-                setCustomization({ ...draft, logoFile: file });
+                setCustomization({ ...normalizedDraft, logoFile: file });
               })
               .catch(e => {
                 console.error("Failed to restore logo file from base64", e);
-                setCustomization(draft);
+                setCustomization(normalizedDraft);
               });
           } else {
-            setCustomization(draft);
+            setCustomization(normalizedDraft);
           }
         }
       }
     }).catch(e => {
       console.error("Failed to rehydrate customization draft", e);
     });
-  }, [product, isGifts, amendKey]);
+  }, [product, isGifts, isUvOnly, amendKey]);
 
   // Persist customization state to localStorage on change
   useEffect(() => {
     if (!product || !product.slug || isGifts || !isCustomizingStarted || amendKey) return;
 
     const isDefault =
-      customization.blockingType === 'Embossed' &&
+      customization.blockingType === defaultBlockingType &&
       customization.logoScale === 1.0 &&
       customization.cornerEdges === 'None' &&
       !customization.logoPreviewUrl;
@@ -1117,15 +1136,15 @@ export const ProductDetailClient = ({
                 <div
                   className="absolute inset-0 overflow-hidden"
                   ref={previewContainerRef}
-                  onMouseEnter={handleMouseEnter}
-                  onMouseLeave={handleMouseLeave}
-                  onMouseMove={handleMouseMove}
+                  onMouseEnter={!isCustomizingStarted ? handleMouseEnter : undefined}
+                  onMouseLeave={!isCustomizingStarted ? handleMouseLeave : undefined}
+                  onMouseMove={!isCustomizingStarted ? handleMouseMove : undefined}
                 >
                   <div
                     className="absolute inset-0 transition-transform duration-300 ease-out"
                     style={{
-                      transformOrigin: zoomOrigin,
-                      transform: isZooming ? 'scale(2.2)' : 'scale(1)'
+                      transformOrigin: isCustomizingStarted ? 'center center' : zoomOrigin,
+                      transform: !isCustomizingStarted && isZooming ? 'scale(2.2)' : 'scale(1)'
                     }}
                   >
                     <AnimatePresence mode="wait">

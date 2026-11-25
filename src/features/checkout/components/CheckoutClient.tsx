@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronDown, CreditCard, Landmark, LockKeyhole, PackageCheck, User, ShoppingBag } from 'lucide-react';
@@ -71,8 +71,12 @@ function CheckoutFormContent({
   displayDiscount,
   quoteData,
   isQuoteLoading,
-  setIsQuoteLoading,
+  isApplyingCoupon,
+  setIsApplyingCoupon,
+  setQuoteNonce,
   quoteError,
+  setQuoteError,
+  ensureArtworkUploaded,
   couponInput,
   setCouponInput,
   setAppliedCoupon,
@@ -244,6 +248,7 @@ function CheckoutFormContent({
     }
 
     try {
+      await ensureArtworkUploaded(quoteData?.id);
       const { error } = await stripe.confirmPayment({
         elements,
         clientSecret: activeClientSecret,
@@ -315,6 +320,7 @@ function CheckoutFormContent({
       };
 
       try {
+        await ensureArtworkUploaded(quoteData.id);
         const res = await fetch('/api/checkout/free', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -356,6 +362,7 @@ function CheckoutFormContent({
       }
 
       try {
+        await ensureArtworkUploaded(quoteData?.id);
         const { error: submitError } = await elements.submit();
         if (submitError) {
           setPaymentError(submitError.message ?? 'Payment validation failed');
@@ -417,23 +424,30 @@ function CheckoutFormContent({
         }
       };
 
-      const res = await fetch('/api/checkout/bacs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId: quoteData.id,
-          billingDetails,
-          shippingDetails,
-          vatNumber: fullVatNumber
-        })
-      });
+      try {
+        await ensureArtworkUploaded(quoteData.id);
+        const res = await fetch('/api/checkout/bacs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: quoteData.id,
+            billingDetails,
+            shippingDetails,
+            vatNumber: fullVatNumber
+          })
+        });
 
-      if (!res.ok) {
-        setPaymentError('Failed to process BACS order');
+        if (!res.ok) {
+          setPaymentError('Failed to process BACS order');
+          setIsProcessing(false);
+        } else {
+          const data = await res.json();
+          window.location.href = `/checkout/bacs-success?orderId=${data.orderId}&key=${data.orderKey}`;
+        }
+      } catch (err) {
+        console.error('BACS submission error:', err);
+        setPaymentError('Failed to upload artwork or process BACS order. Please try again.');
         setIsProcessing(false);
-      } else {
-        const data = await res.json();
-        window.location.href = `/checkout/bacs-success?orderId=${data.orderId}&key=${data.orderKey}`;
       }
     }
   };
@@ -656,7 +670,7 @@ function CheckoutFormContent({
             <h2 className="text-[15px] font-semibold flex items-center gap-1.5 text-brand-primary-dark hover:text-brand-primary transition-colors">
               Order summary <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isMobileSummaryOpen ? 'rotate-180' : ''}`} />
             </h2>
-            <span className="font-bold text-[17px] text-brand-primary-dark">{isQuoteLoading ? '...' : formatPrice(displayTotal)}</span>
+            <span className="font-bold text-[17px] text-brand-primary-dark">{isApplyingCoupon ? '...' : formatPrice(displayTotal)}</span>
           </div>
 
           {/* Desktop Header */}
@@ -726,18 +740,20 @@ function CheckoutFormContent({
             {isDiscountVisible || couponInput || displayDiscount > 0 ? (
               <div className="flex gap-2">
                 <input 
-                  placeholder={isQuoteLoading ? "Applying code..." : "Discount code"} 
+                  placeholder={isApplyingCoupon ? "Applying code..." : "Discount code"} 
                   aria-label="Discount code" 
                   className="min-w-0 flex-1 border border-[var(--brand-border)] bg-white px-3 py-2 text-sm outline-none focus:border-brand-primary transition-colors disabled:bg-gray-100 disabled:opacity-75" 
                   value={couponInput} 
-                  disabled={isQuoteLoading || isProcessing}
+                  disabled={isApplyingCoupon || isProcessing}
                   onChange={(e) => setCouponInput(e.target.value)} 
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
-                      if (couponInput.trim() && !isQuoteLoading && !isProcessing) {
-                        setIsQuoteLoading?.(true);
+                      if (couponInput.trim() && !isApplyingCoupon && !isProcessing) {
+                        setIsApplyingCoupon(true);
+                        setQuoteError(null);
                         setAppliedCoupon(couponInput.trim());
+                        setQuoteNonce((n: number) => n + 1);
                       }
                     }
                   }}
@@ -747,14 +763,16 @@ function CheckoutFormContent({
                   type="button" 
                   className="border border-brand-primary px-4 py-2 text-sm font-semibold text-brand-primary hover:bg-brand-primary hover:text-white transition-colors disabled:opacity-50 min-w-[90px] text-center" 
                   onClick={() => {
-                    if (couponInput.trim() && !isQuoteLoading && !isProcessing) {
-                      setIsQuoteLoading?.(true);
+                    if (couponInput.trim() && !isApplyingCoupon && !isProcessing) {
+                      setIsApplyingCoupon(true);
+                      setQuoteError(null);
                       setAppliedCoupon(couponInput.trim());
+                      setQuoteNonce((n: number) => n + 1);
                     }
                   }} 
-                  disabled={!couponInput.trim() || isQuoteLoading || isProcessing}
+                  disabled={!couponInput.trim() || isApplyingCoupon || isProcessing}
                 >
-                  {isQuoteLoading ? 'Applying...' : 'Apply'}
+                  {isApplyingCoupon ? 'Applying...' : 'Apply'}
                 </button>
               </div>
             ) : (
@@ -771,9 +789,11 @@ function CheckoutFormContent({
                 type="button" 
                 className="text-xs underline hover:text-brand-primary-dark" 
                 onClick={() => { 
-                  setIsQuoteLoading?.(true);
+                  setIsApplyingCoupon(true);
+                  setQuoteError(null);
                   setAppliedCoupon(undefined); 
-                  setCouponInput(''); 
+                  setCouponInput('');
+                  setQuoteNonce((n: number) => n + 1);
                 }}
               >
                 Remove
@@ -801,11 +821,11 @@ function CheckoutFormContent({
             </div>
             <div className="mt-5 flex justify-between gap-5 border-t border-[var(--brand-border)] pt-5 text-xl font-bold text-brand-primary-dark">
               <dt>Total (inc VAT)</dt>
-              <dd>{isQuoteLoading ? '...' : formatPrice(displayTotal)}</dd>
+              <dd>{isApplyingCoupon ? '...' : formatPrice(displayTotal)}</dd>
             </div>
             <div className="flex justify-between gap-5 text-md font-bold text-brand-primary-dark border-t border-[var(--brand-border)] pt-2 mt-2">
               <dt>Total (ex VAT)</dt>
-              <dd>{isQuoteLoading ? '...' : formatPrice(displayTotal - displayVat)}</dd>
+              <dd>{isApplyingCoupon ? '...' : formatPrice(displayTotal - displayVat)}</dd>
             </div>
           </dl>
           <div className="mt-7 flex items-center gap-3 border-t border-[var(--brand-border)] pt-6 text-xs text-brand-grey">
@@ -823,13 +843,114 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
   const { items, pricedItems, itemCount, subtotal, shippingCost, shippingLabel, vatCost, total } = useCart();
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<string | undefined>();
+  const [quoteNonce, setQuoteNonce] = useState(0);
   const [quoteData, setQuoteData] = useState<{ id: string; quote: CheckoutQuote } | null>(null);
   const [previewItem, setPreviewItem] = useState<any | null>(null);
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
   const uploadedUrlsCache = useRef<Record<string, string>>({});
+  const latestSessionIdRef = useRef<string | null>(null);
+  const patchedArtworkSigRef = useRef<Record<string, string>>({});
+  const artworkUploadPromiseRef = useRef<Promise<Record<string, string>> | null>(null);
+
+  useEffect(() => {
+    latestSessionIdRef.current = quoteData?.id ?? null;
+  }, [quoteData?.id]);
+
+  const patchSessionArtwork = useCallback(async (sessionId: string, files: Record<string, string>) => {
+    const relevantFiles = Object.fromEntries(
+      Object.entries(files).filter(([, value]) => typeof value === 'string' && value.length > 0)
+    );
+    if (Object.keys(relevantFiles).length === 0) return;
+
+    const sig = JSON.stringify(relevantFiles);
+    if (patchedArtworkSigRef.current[sessionId] === sig) return;
+
+    const patchRes = await fetch('/api/checkout/session', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, files: relevantFiles })
+    });
+    if (patchRes.ok) {
+      patchedArtworkSigRef.current[sessionId] = sig;
+    }
+  }, []);
+
+  const uploadMissingArtwork = useCallback(async () => {
+    const formData = new FormData();
+    const pendingPreviewFetches: Array<Promise<void>> = [];
+    let hasFilesToUpload = false;
+
+    for (let index = 0; index < items.length; index++) {
+      const item = items[index];
+      if (!item.customization?.enabled) continue;
+
+      const logoKey = `logo_${index}`;
+      const previewKey = `preview_${index}`;
+
+      if (item.customization.logoFile && !uploadedUrlsCache.current[logoKey]) {
+        try {
+          formData.append(logoKey, item.customization.logoFile as Blob, item.customization.fileName || 'logo.png');
+          hasFilesToUpload = true;
+        } catch (e) {
+          console.warn('Failed to append logoFile', e);
+        }
+      }
+      if (item.customization.fullPreviewUrl && !uploadedUrlsCache.current[previewKey]) {
+        const previewUrl = item.customization.fullPreviewUrl;
+        pendingPreviewFetches.push(
+          fetch(previewUrl)
+            .then((res) => res.blob())
+            .then((blob) => {
+              formData.append(previewKey, blob, 'preview.png');
+              hasFilesToUpload = true;
+            })
+            .catch((e) => {
+              console.warn('Failed to convert preview to blob', e);
+            })
+        );
+      }
+    }
+
+    await Promise.all(pendingPreviewFetches);
+
+    if (hasFilesToUpload) {
+      const uploadRes = await fetch('/api/checkout/upload', {
+        method: 'POST',
+        body: formData
+      });
+      if (!uploadRes.ok) {
+        const errorText = await uploadRes.text();
+        throw new Error('Failed to upload logo files to WordPress: ' + errorText);
+      }
+      const uploadData = await uploadRes.json();
+      Object.assign(uploadedUrlsCache.current, uploadData.files || {});
+    }
+
+    return uploadedUrlsCache.current;
+  }, [items]);
+
+  const ensureArtworkUploaded = useCallback(async (sessionId?: string | null) => {
+    let files: Record<string, string> = uploadedUrlsCache.current;
+    if (artworkUploadPromiseRef.current) {
+      try {
+        files = await artworkUploadPromiseRef.current;
+      } catch {
+        // Retry once cleanly before completing payment/order submission
+        files = await uploadMissingArtwork();
+      }
+    } else {
+      files = await uploadMissingArtwork();
+    }
+
+    const targetSessionId = sessionId || latestSessionIdRef.current;
+    if (targetSessionId && Object.keys(files).length > 0) {
+      await patchSessionArtwork(targetSessionId, files);
+    }
+  }, [patchSessionArtwork, uploadMissingArtwork]);
 
   useEffect(() => {
     fetch('/api/checkout/payment-config')
@@ -847,57 +968,32 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
   useEffect(() => {
     if (items.length === 0) {
       setQuoteData(null);
+      setIsQuoteLoading(false);
+      setIsApplyingCoupon(false);
       return;
     }
+
+    const controller = new AbortController();
+
+    // Start artwork uploads in parallel without blocking quote totals or coupon input
+    const uploadPromise = uploadMissingArtwork()
+      .then(async (files) => {
+        if (!controller.signal.aborted && latestSessionIdRef.current && Object.keys(files).length > 0) {
+          await patchSessionArtwork(latestSessionIdRef.current, files).catch((err) => {
+            console.warn('Background artwork session attach failed:', err);
+          });
+        }
+        return files;
+      });
+    artworkUploadPromiseRef.current = uploadPromise;
+    uploadPromise.catch((err) => {
+      console.warn('Background artwork upload failed:', err);
+    });
 
     const fetchQuote = async () => {
       setIsQuoteLoading(true);
       setQuoteError(null);
       try {
-        const formData = new FormData();
-        let hasFilesToUpload = false;
-        
-        for (let index = 0; index < items.length; index++) {
-          const item = items[index];
-          if (item.customization?.enabled) {
-            const logoKey = `logo_${index}`;
-            const previewKey = `preview_${index}`;
-
-            if (item.customization.logoFile && !uploadedUrlsCache.current[logoKey]) {
-              try {
-                formData.append(logoKey, item.customization.logoFile as Blob, item.customization.fileName || 'logo.png');
-                hasFilesToUpload = true;
-              } catch (e) {
-                console.warn('Failed to append logoFile', e);
-              }
-            }
-            if (item.customization.fullPreviewUrl && !uploadedUrlsCache.current[previewKey]) {
-              try {
-                const res = await fetch(item.customization.fullPreviewUrl);
-                const blob = await res.blob();
-                formData.append(previewKey, blob, 'preview.png');
-                hasFilesToUpload = true;
-              } catch (e) {
-                console.warn('Failed to convert preview to blob', e);
-              }
-            }
-          }
-        }
-
-        if (hasFilesToUpload) {
-          const uploadRes = await fetch('/api/checkout/upload', {
-            method: 'POST',
-            body: formData
-          });
-          if (uploadRes.ok) {
-            const uploadData = await uploadRes.json();
-            Object.assign(uploadedUrlsCache.current, uploadData.files || {});
-          } else {
-            const errorText = await uploadRes.text();
-            throw new Error('Failed to upload logo files to WordPress: ' + errorText);
-          }
-        }
-
         const payload = {
           items: items.map((item, index) => ({
             productId: item.productId,
@@ -921,7 +1017,8 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
         const res = await fetch('/api/checkout/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
+          signal: controller.signal
         });
         
         if (!res.ok) {
@@ -930,8 +1027,14 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
         }
         
         const data = await res.json();
+        latestSessionIdRef.current = data.id;
         setQuoteData(data);
+
+        if (Object.keys(uploadedUrlsCache.current).length > 0) {
+          void patchSessionArtwork(data.id, uploadedUrlsCache.current).catch(() => {});
+        }
       } catch (error) {
+        if (controller.signal.aborted) return;
         const msg = error instanceof Error ? error.message : 'Unknown error';
         if (msg.includes('Unexpected token') || msg.includes('is not valid JSON') || msg.includes('JSON')) {
           setQuoteError('Failed to process checkout request due to a server connection issue. Please try again.');
@@ -939,13 +1042,16 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
           setQuoteError(msg);
         }
       } finally {
-        setIsQuoteLoading(false);
+        if (!controller.signal.aborted) {
+          setIsQuoteLoading(false);
+          setIsApplyingCoupon(false);
+        }
       }
     };
 
-    const timer = setTimeout(fetchQuote, 300);
-    return () => clearTimeout(timer);
-  }, [items, appliedCoupon]);
+    void fetchQuote();
+    return () => controller.abort();
+  }, [items, appliedCoupon, quoteNonce, patchSessionArtwork, uploadMissingArtwork]);
 
   const displaySubtotal = quoteData?.quote.subtotal ?? subtotal;
   const displayShipping = quoteData ? quoteData.quote.shipping.cost : shippingCost;
@@ -990,8 +1096,12 @@ export function CheckoutClient({ initialDetails, isLoggedIn }: { initialDetails?
     displayDiscount,
     quoteData,
     isQuoteLoading,
-    setIsQuoteLoading,
+    isApplyingCoupon,
+    setIsApplyingCoupon,
+    setQuoteNonce,
     quoteError,
+    setQuoteError,
+    ensureArtworkUploaded,
     couponInput,
     setCouponInput,
     setAppliedCoupon,

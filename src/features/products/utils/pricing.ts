@@ -34,6 +34,17 @@ export function isFoilBlockedProduct(product: StoreProduct): boolean {
   return Boolean(product?.categories?.some((cat) => cat.slug === "foil-blocked"));
 }
 
+/** Ocean Clean eco range products support UV Print branding only (no foil blocking or blind debossing). */
+export function isUvOnlyProduct(
+  product?: Pick<StoreProduct, "name" | "slug" | "sku"> | null
+): boolean {
+  if (!product) return false;
+  const name = (product.name ?? "").toLowerCase();
+  const slug = (product.slug ?? "").toLowerCase();
+  const sku = (product.sku ?? "").toUpperCase();
+  return name.includes("ocean clean") || slug.includes("ocean-clean") || sku.startsWith("OC-");
+}
+
 export type CornerEdgesPricing = {
   size: '18mm × 18mm' | '22mm × 22mm' | '27mm × 27mm' | null;
   pricePerPair: number;

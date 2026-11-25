@@ -75,26 +75,30 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    for (const { key, buffer, fileName, mimeType } of bufferedEntries) {
-      const wpRes = await fetch(`${storeUrl}/wp-json/wp/v2/media`, {
-        method: 'POST',
-        headers: {
-          'Authorization': authHeader,
-          'Content-Type': mimeType,
-          'Content-Disposition': `attachment; filename="${fileName}"`
-        },
-        body: new Uint8Array(buffer)
-      });
+    const uploadedEntries = await Promise.all(
+      bufferedEntries.map(async ({ key, buffer, fileName, mimeType }) => {
+        const wpRes = await fetch(`${storeUrl}/wp-json/wp/v2/media`, {
+          method: 'POST',
+          headers: {
+            'Authorization': authHeader,
+            'Content-Type': mimeType,
+            'Content-Disposition': `attachment; filename="${fileName}"`
+          },
+          body: new Uint8Array(buffer)
+        });
 
-      if (!wpRes.ok) {
-        const wpErr = await wpRes.text();
-        console.error(`Failed to upload ${fileName} to WordPress:`, wpErr);
-        throw new Error('WordPress media upload failed');
-      }
+        if (!wpRes.ok) {
+          const wpErr = await wpRes.text();
+          console.error(`Failed to upload ${fileName} to WordPress:`, wpErr);
+          throw new Error('WordPress media upload failed');
+        }
 
-      const wpData = await wpRes.json();
-      files[key] = wpData.source_url; // WordPress returns the full absolute URL here
-    }
+        const wpData = await wpRes.json();
+        return [key, wpData.source_url as string] as const;
+      })
+    );
+
+    Object.assign(files, Object.fromEntries(uploadedEntries));
 
     return NextResponse.json({ success: true, files });
   } catch (error: any) {

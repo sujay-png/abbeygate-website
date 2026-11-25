@@ -101,4 +101,43 @@ describe('createCheckoutQuote', () => {
     // Gifts must not incur £48 branding setup fee
     expect(quote.subtotal).toBe(100);
   });
+
+  it('enforces UV Print and strips foilColor for Ocean Clean products', async () => {
+    vi.mocked(storeFetch).mockResolvedValue({
+      id: 1344,
+      name: 'Ocean Clean Eco A5 Notebook, Sage',
+      slug: 'ocean-clean-eco-a5-notebook-sage',
+      sku: 'OC-SG-U-31',
+      is_purchasable: true,
+      is_in_stock: true,
+      categories: [{ id: 173, name: 'Eco-Friendly Notebooks', slug: 'eco-friendly-notebooks', link: '' }],
+      attributes: [],
+      images: [],
+      prices: { price: '1000', regular_price: '1000', sale_price: '1000', currency_minor_unit: 2 },
+    } as any);
+
+    vi.mocked(getProductPricingFromProduct).mockResolvedValue({
+      productId: 1344,
+      basePrice: 10,
+      tiers: [{ min: 25, max: 49, price: 10, uvPrice: 12 }],
+    });
+
+    const quote = await createCheckoutQuote({
+      items: [
+        {
+          productId: '1344',
+          quantity: 25,
+          customization: {
+            enabled: true,
+            choice: 'Foil blocked',
+            foilColor: 'Gold',
+          },
+        },
+      ],
+    });
+
+    expect(quote.lines[0].customization?.choice).toBe('UV Print');
+    expect(quote.lines[0].customization?.foilColor).toBeUndefined();
+    expect(quote.lines[0].unitPrice).toBe(12);
+  });
 });

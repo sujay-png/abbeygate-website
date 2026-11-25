@@ -10,6 +10,7 @@ import {
   formatGBP,
   isFoilBlockedProduct,
   isGiftsProduct,
+  isUvOnlyProduct,
   LOGO_BLOCKING_PRICES,
   LOGO_CUSTOMIZATION_FEE,
   CORNER_PAIRS_PER_PRODUCT,
@@ -90,6 +91,7 @@ export const ProductCustomizer = ({
 }: ProductCustomizerProps) => {
   const isGifts = isGiftsProduct(product);
   const isFoil = isFoilBlockedProduct(product);
+  const isUvOnly = isUvOnlyProduct(product);
   const isBicolour = isBicolourProduct(product);
   const isHorizon = isHorizonProduct(product);
   const cornerEdgesPricing = getCornerEdgesPricing(product);
@@ -203,13 +205,23 @@ export const ProductCustomizer = ({
     }, 100);
   }, [step, lenis]);
 
+  useEffect(() => {
+    if (isUvOnly && (customization.blockingType !== 'UV Print' || customization.foilColor)) {
+      onCustomizationChange({
+        ...customization,
+        blockingType: 'UV Print',
+        foilColor: undefined,
+      });
+    }
+  }, [isUvOnly, customization, onCustomizationChange]);
+
   const [priceResult, setPriceResult] = useState(() =>
     calculateProductPrice({
       quantity,
       basePrice,
       tiers,
       customizationEnabled: !isGifts,
-      blockingType: isFoil ? 'Foil blocked' : 'Embossed',
+      blockingType: isUvOnly ? 'UV Print' : (isFoil ? 'Foil blocked' : 'Embossed'),
       isGifts,
       cornerEdges: customization.cornerEdges,
     }),
@@ -370,8 +382,9 @@ export const ProductCustomizer = ({
 
           <div>
             <div className="text-xl font-bold text-brand-body mb-4">Choose Branding Type</div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              
+            <div className={`grid grid-cols-1 ${isUvOnly ? 'max-w-sm' : 'sm:grid-cols-3'} gap-4`}>
+              {!isUvOnly && (
+                <>
               {/* Foil Blocked Card */}
               <div 
                 onClick={() => {
@@ -514,6 +527,8 @@ export const ProductCustomizer = ({
                  <div className="text-[12px] text-gray-500 mt-1 mb-2 leading-relaxed">Logo is pressed directly into the material for a subtle effect.</div>
 
               </div>
+                </>
+              )}
 
               {/* UV Print Card */}
               <div 
