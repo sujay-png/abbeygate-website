@@ -78,11 +78,21 @@ export const ProductDetailClient = ({
   basePrice,
   colorVariants = [],
   customTabs = [],
-  amendKey,
+  amendKey: propAmendKey,
   relatedProducts,
 }: ProductDetailClientProps) => {
   const router = useRouter();
   const [product, setProduct] = useState(initialProduct);
+  const [amendKey, setAmendKey] = useState<string | undefined>(propAmendKey);
+
+  useEffect(() => {
+    if (propAmendKey !== undefined) {
+      setAmendKey(propAmendKey);
+    } else if (typeof window !== 'undefined') {
+      const param = new URLSearchParams(window.location.search).get('amend');
+      if (param) setAmendKey(param);
+    }
+  }, [propAmendKey]);
 
   useEffect(() => {
     setProduct(initialProduct);

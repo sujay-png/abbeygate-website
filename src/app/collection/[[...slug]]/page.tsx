@@ -1,12 +1,15 @@
 import { CategoryPage } from '@/features/products/components/CategoryPage';
-
+import { getStaticCategoryParams } from '@/data/category-routes';
 import { generateCategoryMetadata } from '@/lib/seo';
 
 export const revalidate = 3600;
 
+export function generateStaticParams() {
+  return getStaticCategoryParams('/collection');
+}
+
 type PageProps = {
   params: Promise<{ slug?: string[] }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export async function generateMetadata({ params }: PageProps) {
@@ -14,8 +17,8 @@ export async function generateMetadata({ params }: PageProps) {
   return generateCategoryMetadata('/collection', slug);
 }
 
-export default async function CollectionPage({ params, searchParams }: PageProps) {
+export default async function CollectionPage({ params }: PageProps) {
   const { slug } = await params;
   const path = slug?.length ? `/collection/${slug.join('/')}` : '/collection';
-  return <CategoryPage path={path} searchParams={searchParams} />;
+  return <CategoryPage path={path} />;
 }

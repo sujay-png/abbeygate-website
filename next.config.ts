@@ -33,6 +33,9 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   experimental: {
     agentUpgrade: 'security',
+    staticGenerationRetryCount: 2,
+    staticGenerationMaxConcurrency: 2,
+    staticGenerationMinPagesPerWorker: 100,
     serverActions: {
       bodySizeLimit: '10mb',
       allowedOrigins: ['abbeygate-business.com', 'local.abbeygate-business.com', 'local.abbeygate-england.com'],

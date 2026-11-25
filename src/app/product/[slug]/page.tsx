@@ -7,7 +7,7 @@ import { ProductDetailClient, type ColorVariant } from '@/features/products/comp
 import { RelatedProducts } from '@/features/products/components/RelatedProducts';
 import { FAQ } from '@/components/home/FAQ';
 import { CustomisationCTA } from '@/components/shared/CustomisationCTA';
-import { getStoreProductBySlug, getStoreProducts, getProductCustomTabs, getStoreProductById, getSitemapProducts } from '@/features/products/services/store-products';
+import { getAllStoreProducts, getStoreProductBySlug, getStoreProducts, getProductCustomTabs, getStoreProductById, getSitemapProducts } from '@/features/products/services/store-products';
 import { getProductPricingFromProduct } from '@/features/products/services/pricing';
 import { getProductHexValues } from '@/features/products/services/product-colors';
 import { getProductBreadcrumbs } from '@/features/products/utils/breadcrumb';
@@ -22,7 +22,7 @@ export const revalidate = 3600; // Cache product page on Vercel Edge CDN for 1 h
 export async function generateStaticParams() {
   try {
     const products = await getSitemapProducts();
-    return products.slice(0, 30).map((product) => ({
+    return products.map((product) => ({
       slug: product.slug,
     }));
   } catch {
@@ -32,7 +32,6 @@ export async function generateStaticParams() {
 
 type PageProps = {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -54,10 +53,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-export default async function ProductPage({ params, searchParams }: PageProps) {
+export default async function ProductPage({ params }: PageProps) {
   const { slug } = await params;
-  const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const amendKey = typeof resolvedSearchParams?.amend === 'string' ? resolvedSearchParams.amend : undefined;
 
   let product = null;
   try {
@@ -155,7 +152,10 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
       const groupingTag = product.tags.find(isGroupingTag);
       if (!groupingTag) return [];
 
-      const { products: siblings } = await getStoreProducts({ tagId: groupingTag.id, perPage: 50 });
+      const allCatalog = await getAllStoreProducts();
+      const siblings = allCatalog.length > 0
+        ? allCatalog.filter((p) => p.tags?.some((t) => t.id === groupingTag.id))
+        : (await getStoreProducts({ tagId: groupingTag.id, perPage: 50 })).products;
       const siblingIds = [product.id, ...siblings.map(s => s.id)];
       const hexMap = await getProductHexValues(siblingIds);
       
@@ -267,7 +267,6 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
           basePrice={pricing.basePrice}
           colorVariants={colorVariants}
           customTabs={customTabs}
-          amendKey={amendKey}
           relatedProducts={
             // Streamed in after the main product so the slow related-products lookup never blocks the page.
             <Suspense fallback={null}>

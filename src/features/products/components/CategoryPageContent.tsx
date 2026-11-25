@@ -19,8 +19,7 @@ type CategoryPageContentProps = {
   filterConfig: FilterConfig;
 };
 
-import { useEffect, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import { trackViewItemList } from '@/lib/analytics';
 
 export const CategoryPageContent = ({
@@ -32,8 +31,24 @@ export const CategoryPageContent = ({
   attributeTerms,
   filterConfig,
 }: CategoryPageContentProps) => {
-  // Filters live in the URL but are applied here on the client, so changing them is instant.
-  const searchParams = useSearchParams();
+  // Keep SSR output full & static (for Edge ISR + SEO) and apply URL filters client-side.
+  const [searchString, setSearchString] = useState('');
+
+  useEffect(() => {
+    const syncFromLocation = () => setSearchString(window.location.search || '');
+    const handleFilterChange = (e: Event) => {
+      const detail = (e as CustomEvent<string>).detail;
+      setSearchString(typeof detail === 'string' ? detail : (window.location.search || ''));
+    };
+
+    syncFromLocation();
+    window.addEventListener('popstate', syncFromLocation);
+    window.addEventListener('abbeygate:filters-changed', handleFilterChange);
+    return () => {
+      window.removeEventListener('popstate', syncFromLocation);
+      window.removeEventListener('abbeygate:filters-changed', handleFilterChange);
+    };
+  }, []);
 
   useEffect(() => {
     if (allProducts.length > 0) {
@@ -42,10 +57,11 @@ export const CategoryPageContent = ({
   }, [title, allProducts]);
 
   const filteredProducts = useMemo(() => {
-    const filters = parseFiltersFromSearchParams(Object.fromEntries(searchParams.entries()));
-    const sort = (searchParams.get('sort') || 'bestselling') as SortOption;
+    const params = new URLSearchParams(searchString);
+    const filters = parseFiltersFromSearchParams(Object.fromEntries(params.entries()));
+    const sort = (params.get('sort') || 'bestselling') as SortOption;
     return sortProducts(allProducts.filter((p) => productMatchesFilters(p, filters)), sort);
-  }, [allProducts, searchParams]);
+  }, [allProducts, searchString]);
 
   return (
     <div className="bg-brand-cream min-h-screen">

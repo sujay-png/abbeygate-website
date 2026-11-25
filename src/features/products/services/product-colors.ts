@@ -1,17 +1,10 @@
-import { woocommerceApi } from "@/lib/woocommerce/client";
+import { getAllRestProducts } from "./store-products";
 import { parseHexValue, isBicolorProduct } from "../utils/color-helpers";
-
-type ProductMetaItem = {
-  id: number;
-  name?: string;
-  meta_data?: Array<{ key: string; value: unknown }>;
-};
 
 /**
  * Fetches hex values added in WordPress product meta_data (key: 'hex_value')
- * for the specified product IDs.
- *
- * Cached with Next.js ISR revalidation (1 hour) to ensure fast page loads.
+ * for the specified product IDs, reusing the cached catalog REST meta list so
+ * product pages and builds never burst individual WooCommerce REST requests.
  */
 export async function getProductHexValues(
   productIds: (number | string)[]
@@ -19,16 +12,13 @@ export async function getProductHexValues(
   if (!productIds || productIds.length === 0) return {};
 
   try {
-    const uniqueIds = Array.from(new Set(productIds.map(String))).filter(Boolean);
-    if (uniqueIds.length === 0) return {};
+    const uniqueIds = new Set(productIds.map(String).filter(Boolean));
+    if (uniqueIds.size === 0) return {};
 
-    const products = await woocommerceApi.request<ProductMetaItem[]>(
-      `/products?include=${uniqueIds.join(',')}&_fields=id,name,meta_data`,
-      { revalidate: 60, tags: ['products', 'colors'] }
-    );
-
+    const products = await getAllRestProducts();
     const map: Record<string, string> = {};
-    for (const p of products || []) {
+    for (const p of products) {
+      if (!uniqueIds.has(String(p.id))) continue;
       const hexMeta = p.meta_data?.find((m) => m.key === 'hex_value');
       if (hexMeta && typeof hexMeta.value === 'string') {
         const isBicolor = isBicolorProduct(p.name);

@@ -125,6 +125,7 @@ const ProductFiltersInner = ({
         // Next.js syncs useSearchParams with history.pushState, so the grid re-filters instantly
         // without re-rendering the page on the server.
         window.history.pushState(null, '', newUrl);
+        window.dispatchEvent(new CustomEvent('abbeygate:filters-changed', { detail: query ? `?${query}` : '' }));
         return;
       }
 

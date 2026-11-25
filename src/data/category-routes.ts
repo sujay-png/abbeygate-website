@@ -644,3 +644,27 @@ export function getFilterConfigForPath(path: string): FilterConfig {
 
   return dynamicConfig;
 }
+
+/**
+ * Generates Next.js `generateStaticParams` tuples for an optional catch-all `[[...slug]]`
+ * route sharing `basePrefix` (e.g. '/collection', '/diaries', '/notebooks', '/custom-gifts').
+ */
+export function getStaticCategoryParams(basePrefix: string): { slug?: string[] }[] {
+  const normalizedPrefix = basePrefix.replace(/\/+$/, '');
+  const seen = new Set<string>();
+  const params: { slug?: string[] }[] = [];
+
+  for (const route of CATEGORY_ROUTES) {
+    if (route.path === normalizedPrefix || route.path.startsWith(`${normalizedPrefix}/`)) {
+      const remainder = route.path.slice(normalizedPrefix.length).replace(/^\/+/, '');
+      const slug = remainder ? remainder.split('/').filter(Boolean) : [];
+      const key = slug.join('/');
+      if (!seen.has(key)) {
+        seen.add(key);
+        params.push({ slug });
+      }
+    }
+  }
+
+  return params;
+}

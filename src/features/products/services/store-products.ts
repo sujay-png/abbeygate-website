@@ -68,7 +68,7 @@ export const getAllStoreProducts = cache(async (perPage = 100): Promise<StorePro
   }
 });
 
-/** Fetch category products (capped pages for speed). */
+/** Fetch category products from the cached full catalog (skipping synthetic placeholder IDs >= 990000). */
 export async function getAllStoreProductsByCategory(
   categoryId: number | string,
   options: { maxPages?: number; perPage?: number } = {},
@@ -76,8 +76,23 @@ export async function getAllStoreProductsByCategory(
   const { maxPages = 5, perPage = 100 } = options;
 
   try {
-    // Page 1 tells us how many pages exist; fetch the rest in parallel rather than one by one.
-    const first = await getStoreProducts({ categoryId, page: 1, perPage });
+    const rawIds = String(categoryId)
+      .split(',')
+      .map((s) => Number(s.trim()))
+      .filter((n) => Number.isFinite(n) && n > 0);
+    const validIds = rawIds.filter((id) => id < 990000);
+    if (validIds.length === 0) {
+      return [];
+    }
+
+    const allCatalog = await getAllStoreProducts();
+    if (allCatalog.length > 0) {
+      const idSet = new Set(validIds);
+      return allCatalog.filter((p) => p.categories?.some((c) => idSet.has(c.id)));
+    }
+
+    const queryCategory = validIds.join(',');
+    const first = await getStoreProducts({ categoryId: queryCategory, page: 1, perPage });
     const lastPage = Math.min(first.totalPages || 1, maxPages);
 
     if (lastPage <= 1) {
@@ -85,7 +100,7 @@ export async function getAllStoreProductsByCategory(
     }
 
     const restPromises = Array.from({ length: lastPage - 1 }, (_, i) =>
-      getStoreProducts({ categoryId, page: i + 2, perPage }),
+      getStoreProducts({ categoryId: queryCategory, page: i + 2, perPage }),
     );
 
     const settledRest = await Promise.allSettled(restPromises);
@@ -104,6 +119,10 @@ export const getStoreProductBySlug = cache(async (
   slug: string,
 ): Promise<StoreProduct | null> => {
   try {
+    const allCatalog = await getAllStoreProducts();
+    const fromCatalog = allCatalog.find((p) => p.slug === slug);
+    if (fromCatalog) return fromCatalog;
+
     const products = await storeFetch<StoreProduct[]>("/products", {
       params: { slug },
       revalidate: 86400,
@@ -120,6 +139,10 @@ export const getStoreProductBySlug = cache(async (
 export const getStoreProductById = cache(async (
   id: number,
 ): Promise<StoreProduct> => {
+  const allCatalog = await getAllStoreProducts();
+  const fromCatalog = allCatalog.find((p) => p.id === id);
+  if (fromCatalog) return fromCatalog;
+
   return storeFetch<StoreProduct>(`/products/${id}`, {
     revalidate: 86400,
     tags: ["products", `product-${id}`],
@@ -137,7 +160,12 @@ export async function getStoreCategories(): Promise<StoreCategory[]> {
 export const getStoreCategoryById = cache(async (
   id: number,
 ): Promise<StoreCategory | null> => {
+  if (!Number.isFinite(id) || id <= 0 || id >= 990000) return null;
   try {
+    const categories = await getStoreCategories();
+    const match = categories.find((c) => c.id === id);
+    if (match) return match;
+
     return await storeFetch<StoreCategory>(`/products/categories/${id}`, {
       revalidate: 86400,
       tags: ["categories", `category-${id}`],
@@ -203,14 +231,58 @@ export type CustomTab = {
 };
 
 /** Fetch custom product tabs (e.g., YIKES Custom Product Tabs) via the authenticated v3 API. */
+export type RestProductMetaRecord = {
+  id: number;
+  name?: string;
+  regular_price?: string;
+  meta_data?: { key: string; value: unknown }[];
+};
+
+/**
+ * Fetch lightweight REST v3 product metadata (tier pricing, hex values, custom tabs)
+ * across the catalog in 3 cached pages so builds and category/PDP renders don't spam WooCommerce.
+ */
+export const getAllRestProducts = cache(async (): Promise<RestProductMetaRecord[]> => {
+  if (!process.env.WOOCOMMERCE_CONSUMER_KEY || !process.env.WOOCOMMERCE_CONSUMER_SECRET) {
+    return [];
+  }
+
+  try {
+    const pages = [1, 2, 3];
+    const results: RestProductMetaRecord[] = [];
+    for (const page of pages) {
+      const pageItems = await woocommerceApi.request<RestProductMetaRecord[]>('/products', {
+        params: {
+          per_page: 100,
+          page,
+          _fields: 'id,name,regular_price,meta_data',
+        },
+        revalidate: 86400,
+        tags: ['products'],
+      });
+      if (!Array.isArray(pageItems) || pageItems.length === 0) break;
+      results.push(...pageItems);
+      if (pageItems.length < 100) break;
+    }
+    return results;
+  } catch (error) {
+    console.warn('Failed to fetch REST product catalog meta:', error);
+    return [];
+  }
+});
+
 /**
  * Authenticated v3 product record (meta_data holds B2B King tiers and custom tabs).
- * Cached per request so pricing and custom tabs share a single round-trip.
+ * Reads from the cached catalog batch first, falling back to single-product REST if absent.
  */
 export const getRestProductMeta = cache(async (
   productId: number,
 ): Promise<{ id: number; meta_data?: { key: string; value: unknown }[] } | null> => {
   try {
+    const allRest = await getAllRestProducts();
+    const fromBatch = allRest.find((p) => p.id === productId);
+    if (fromBatch) return fromBatch;
+
     return await woocommerceApi.request(`/products/${productId}`, {
       revalidate: 86400,
       tags: ["products", `product-${productId}`],

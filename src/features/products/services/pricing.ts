@@ -2,8 +2,7 @@ import { cache } from "react";
 import type { PriceTier } from "../types/store-product";
 import type { StoreProduct } from "../types/store-product";
 import { parsePriceTiersFromMeta, parseStorePrice } from "../utils/pricing";
-import { getRestProductMeta } from "./store-products";
-import { woocommerceApi } from "@/lib/woocommerce/client";
+import { getAllRestProducts, getRestProductMeta } from "./store-products";
 
 export type ProductPricingData = {
   productId: number;
@@ -76,92 +75,54 @@ export const getProductLowestPriceMap = cache(async (productIds?: number[]): Pro
   }
 
   try {
-    let results: Array<Array<{ id: number; regular_price?: string; meta_data?: { key: string; value: unknown }[] }>>;
-
-    if (productIds && productIds.length > 0 && productIds.length <= 100) {
-      const uniqueIds = Array.from(new Set(productIds));
-      const targeted = await woocommerceApi.request<Array<{ id: number; regular_price?: string; meta_data?: { key: string; value: unknown }[] }>>(
-        '/products',
-        {
-          params: {
-            include: uniqueIds.join(','),
-            per_page: uniqueIds.length,
-            _fields: 'id,regular_price,meta_data',
-          },
-          revalidate: 86400,
-          tags: ['products'],
-        }
-      ).catch(() => []);
-      results = [targeted];
-    } else {
-      const pages = [1, 2, 3];
-      results = await Promise.all(
-        pages.map((page) =>
-          woocommerceApi.request<Array<{ id: number; regular_price?: string; meta_data?: { key: string; value: unknown }[] }>>(
-            '/products',
-            {
-              params: {
-                per_page: 100,
-                page,
-                _fields: 'id,regular_price,meta_data',
-              },
-              revalidate: 86400,
-              tags: ['products'],
-            }
-          ).catch(() => [])
-        )
-      );
-    }
-
+    const allRest = await getAllRestProducts();
+    const idFilter = productIds && productIds.length > 0 ? new Set(productIds) : null;
     const priceMap: Record<number, number> = {};
 
-    for (const productList of results) {
-      if (!Array.isArray(productList)) continue;
+    for (const p of allRest) {
+      if (!p || !p.id) continue;
+      if (idFilter && !idFilter.has(p.id)) continue;
+      const metaData = p.meta_data || [];
+      const basePrice = parseFloat(p.regular_price || '0') || 0;
 
-      for (const p of productList) {
-        if (!p || !p.id) continue;
-        const metaData = p.meta_data || [];
-        const basePrice = parseFloat(p.regular_price || '0') || 0;
-
-        // 1. Check _without_customisation_tiered_price (first priority for No Customisation)
-        const noCustMeta = metaData.find(
-          (m) => m.key === '_without_customisation_tiered_price' && m.value
-        );
-        if (noCustMeta && typeof noCustMeta.value === 'string' && noCustMeta.value.includes(':')) {
-          const prices = noCustMeta.value
-            .split(';')
-            .map((s) => s.trim())
-            .filter(Boolean)
-            .map((part) => parseFloat(part.split(':')[1]))
-            .filter((val) => !isNaN(val) && val > 0);
-          if (prices.length > 0) {
-            priceMap[p.id] = Math.min(...prices);
-            continue;
-          }
+      // 1. Check _without_customisation_tiered_price (first priority for No Customisation)
+      const noCustMeta = metaData.find(
+        (m) => m.key === '_without_customisation_tiered_price' && m.value
+      );
+      if (noCustMeta && typeof noCustMeta.value === 'string' && noCustMeta.value.includes(':')) {
+        const prices = noCustMeta.value
+          .split(';')
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .map((part) => parseFloat(part.split(':')[1]))
+          .filter((val) => !isNaN(val) && val > 0);
+        if (prices.length > 0) {
+          priceMap[p.id] = Math.min(...prices);
+          continue;
         }
+      }
 
-        // 2. Check b2bking tiers
-        const b2bMeta = metaData.find(
-          (m) =>
-            (m.key.includes('b2bking_product_pricetiers') || m.key === 'b2bking_tiered_price_rules') &&
-            m.value
-        );
-        if (b2bMeta && typeof b2bMeta.value === 'string' && b2bMeta.value.includes(':')) {
-          const prices = b2bMeta.value
-            .split(';')
-            .map((s) => s.trim())
-            .filter(Boolean)
-            .map((part) => parseFloat(part.split(':')[1]))
-            .filter((val) => !isNaN(val) && val > 0);
-          if (prices.length > 0) {
-            priceMap[p.id] = Math.min(...prices);
-            continue;
-          }
+      // 2. Check b2bking tiers
+      const b2bMeta = metaData.find(
+        (m) =>
+          (m.key.includes('b2bking_product_pricetiers') || m.key === 'b2bking_tiered_price_rules') &&
+          m.value
+      );
+      if (b2bMeta && typeof b2bMeta.value === 'string' && b2bMeta.value.includes(':')) {
+        const prices = b2bMeta.value
+          .split(';')
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .map((part) => parseFloat(part.split(':')[1]))
+          .filter((val) => !isNaN(val) && val > 0);
+        if (prices.length > 0) {
+          priceMap[p.id] = Math.min(...prices);
+          continue;
         }
+      }
 
-        if (basePrice > 0) {
-          priceMap[p.id] = basePrice;
-        }
+      if (basePrice > 0) {
+        priceMap[p.id] = basePrice;
       }
     }
 
