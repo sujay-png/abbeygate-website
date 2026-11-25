@@ -14,6 +14,7 @@ import { getProductBreadcrumbs } from '@/features/products/utils/breadcrumb';
 import { getProductBaseAmount, sanitizeImageUrl } from '@/features/products/utils/product-helpers';
 import { parseStorePrice, VAT_RATE } from '@/features/products/utils/pricing';
 import type { Metadata } from 'next';
+import { PRODUCT_SEO } from '@/data/product-seo';
 import { getSEOMetadata, jsonLd, SITE_URL } from '@/lib/seo';
 
 export const revalidate = 3600; // Cache product page on Vercel Edge CDN for 1 hour (ISR)
@@ -42,10 +43,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     if (!product && /^\d+$/.test(slug)) {
       product = await getStoreProductById(Number(slug));
     }
-    const title = product ? `${product.name} | Abbeygate Business` : 'Product | Abbeygate Business';
-    const description = product?.short_description?.replace(/<[^>]*>/g, '').slice(0, 160) || 'Bespoke corporate gifting by Abbeygate Business.';
+    const resolvedSlug = product?.slug ?? slug;
+    const seoOverride = PRODUCT_SEO[resolvedSlug] || PRODUCT_SEO[slug];
+    const title = seoOverride?.title || (product ? `${product.name} | Abbeygate Business` : 'Product | Abbeygate Business');
+    const description = seoOverride?.description || product?.short_description?.replace(/<[^>]*>/g, '').slice(0, 160) || 'Bespoke corporate gifting by Abbeygate Business.';
     
-    return getSEOMetadata(`/product/${product?.slug ?? slug}`, { title, description, image: product?.images?.[0]?.src });
+    return getSEOMetadata(`/product/${resolvedSlug}`, { title, description, image: product?.images?.[0]?.src });
   } catch {
     return getSEOMetadata(`/product/${slug}`, { title: 'Product | Abbeygate Business' });
   }
