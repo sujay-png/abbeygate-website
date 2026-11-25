@@ -235,11 +235,13 @@ export type RestProductMetaRecord = {
   id: number;
   name?: string;
   regular_price?: string;
+  upsell_ids?: number[];
+  cross_sell_ids?: number[];
   meta_data?: { key: string; value: unknown }[];
 };
 
 /**
- * Fetch lightweight REST v3 product metadata (tier pricing, hex values, custom tabs)
+ * Fetch lightweight REST v3 product metadata (tier pricing, hex values, custom tabs, linked products)
  * across the catalog in 3 cached pages so builds and category/PDP renders don't spam WooCommerce.
  */
 export const getAllRestProducts = cache(async (): Promise<RestProductMetaRecord[]> => {
@@ -255,7 +257,7 @@ export const getAllRestProducts = cache(async (): Promise<RestProductMetaRecord[
         params: {
           per_page: 100,
           page,
-          _fields: 'id,name,regular_price,meta_data',
+          _fields: 'id,name,regular_price,upsell_ids,cross_sell_ids,meta_data',
         },
         revalidate: 86400,
         tags: ['products'],
@@ -272,12 +274,12 @@ export const getAllRestProducts = cache(async (): Promise<RestProductMetaRecord[
 });
 
 /**
- * Authenticated v3 product record (meta_data holds B2B King tiers and custom tabs).
+ * Authenticated v3 product record (meta_data holds B2B King tiers, custom tabs, and linked product IDs).
  * Reads from the cached catalog batch first, falling back to single-product REST if absent.
  */
 export const getRestProductMeta = cache(async (
   productId: number,
-): Promise<{ id: number; meta_data?: { key: string; value: unknown }[] } | null> => {
+): Promise<RestProductMetaRecord | null> => {
   try {
     const allRest = await getAllRestProducts();
     const fromBatch = allRest.find((p) => p.id === productId);

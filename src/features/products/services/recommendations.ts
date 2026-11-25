@@ -1,4 +1,4 @@
-import { getAllStoreProducts } from './store-products';
+import { getAllStoreProducts, getRestProductMeta } from './store-products';
 import { getProductLowestPriceMap } from './pricing';
 import { getRecommendedProducts } from '../utils/recommendations';
 import type { StoreProduct } from '../types/store-product';
@@ -12,14 +12,21 @@ export type RecommendationQuery = {
 };
 
 /**
- * Pipeline hook reserved for manual PDP recommendation overrides.
- * Currently unlinked (returns `[]`) while Abbeygate Sales signs off; to activate,
- * read `upsell_ids` / `cross_sell_ids` via `getRestProductMeta(productId)` (already
- * cached via React `cache()` and ISR) or merge an editorial override table here.
+ * Reads manual PDP recommendation overrides from WooCommerce Linked Products
+ * (`upsell_ids` first, then `cross_sell_ids`) via cached REST metadata.
  */
 export async function resolveManualOverrideIds(productId: number): Promise<number[]> {
-  void productId;
-  return [];
+  try {
+    const restProduct = await getRestProductMeta(productId);
+    if (!restProduct) return [];
+    const combined = [
+      ...(Array.isArray(restProduct.upsell_ids) ? restProduct.upsell_ids : []),
+      ...(Array.isArray(restProduct.cross_sell_ids) ? restProduct.cross_sell_ids : []),
+    ];
+    return Array.from(new Set(combined.filter((id) => Number.isInteger(id) && id > 0)));
+  } catch {
+    return [];
+  }
 }
 
 /**
