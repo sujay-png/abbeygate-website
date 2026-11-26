@@ -4,6 +4,7 @@ import { getCheckoutSession, updateCheckoutSession } from '@/features/checkout/s
 import { woocommerceApi } from '@/lib/woocommerce/client';
 import { invalidateCustomerOrdersCache, findCustomerIdByEmail } from '@/features/account/services/orders';
 import { buildStripeOrderInfo } from '@/features/checkout/utils/stripe-order-metadata';
+import { buildWooOrderLineItems } from '@/features/checkout/utils/woo-order-lines';
 import Stripe from 'stripe';
 
 export const dynamic = 'force-dynamic';
@@ -110,20 +111,7 @@ export async function POST(req: NextRequest) {
           postcode: paymentIntent.shipping?.address?.postal_code || '',
           country: paymentIntent.shipping?.address?.country || '',
         },
-        line_items: session.quote.lines.map(line => ({
-          product_id: parseInt(line.productId, 10),
-          ...(line.variationId ? { variation_id: parseInt(line.variationId, 10) } : {}),
-          quantity: line.quantity,
-          total: String(line.lineTotal),
-          meta_data: line.customization && line.customization.enabled ? [
-            { key: 'Custom Logo Choice', value: line.customization.choice || '' },
-            ...(line.customization.foilColor ? [{ key: 'Foil Colour', value: line.customization.foilColor }] : []),
-            ...(line.customization.cornerEdges ? [{ key: 'Corner Edges', value: line.customization.cornerEdges }] : []),
-            ...(line.customization.fileName ? [{ key: 'Uploaded File', value: line.customization.fileName }] : []),
-            ...(line.customization.logoUrl ? [{ key: 'View Logo', value: line.customization.logoUrl }] : []),
-            ...(line.customization.previewUrl ? [{ key: 'View Proof', value: line.customization.previewUrl }] : []),
-          ] : []
-        })),
+        line_items: buildWooOrderLineItems(session.quote.lines, session.quote.discount),
         shipping_lines: [
           {
             method_id: 'flat_rate',

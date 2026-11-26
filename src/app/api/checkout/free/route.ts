@@ -3,6 +3,7 @@ import { getCheckoutSession, updateCheckoutSession } from '@/features/checkout/s
 import { woocommerceApi } from '@/lib/woocommerce/client';
 import { invalidateCustomerOrdersCache, findCustomerIdByEmail } from '@/features/account/services/orders';
 import { getSession } from '@/features/auth/utils/session';
+import { buildWooOrderLineItems } from '@/features/checkout/utils/woo-order-lines';
 
 export async function POST(req: NextRequest) {
   try {
@@ -72,20 +73,7 @@ export async function POST(req: NextRequest) {
         postcode: shippingDetails?.address?.postal_code || billingDetails.address?.postal_code || '',
         country: shippingDetails?.address?.country || billingDetails.address?.country || '',
       },
-      line_items: session.quote.lines.map(line => ({
-        product_id: parseInt(line.productId, 10),
-        ...(line.variationId ? { variation_id: parseInt(line.variationId, 10) } : {}),
-        quantity: line.quantity,
-        total: String(line.lineTotal),
-        meta_data: line.customization && line.customization.enabled ? [
-          { key: 'Custom Logo Choice', value: line.customization.choice || '' },
-          ...(line.customization.foilColor ? [{ key: 'Foil Colour', value: line.customization.foilColor }] : []),
-          ...(line.customization.cornerEdges ? [{ key: 'Corner Edges', value: line.customization.cornerEdges }] : []),
-          ...(line.customization.fileName ? [{ key: 'Uploaded File', value: line.customization.fileName }] : []),
-          ...(line.customization.logoUrl ? [{ key: 'View Logo', value: line.customization.logoUrl }] : []),
-          ...(line.customization.previewUrl ? [{ key: 'View Proof', value: line.customization.previewUrl }] : []),
-        ] : []
-      })),
+      line_items: buildWooOrderLineItems(session.quote.lines, session.quote.discount),
       shipping_lines: [
         {
           method_id: 'free_shipping',
