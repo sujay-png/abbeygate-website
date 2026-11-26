@@ -56,15 +56,15 @@ export const seoConfig: Record<string, { title: string; description: string; noi
     description: "Insights, guides, and inspiration for corporate gifting, bespoke stationery, and British leather craftsmanship products personalised with your brand logo.",
   },
   "/resource-guide": {
-    title: "Resource Guide | Abbeygate Business",
-    description: "Helpful resources and guides for corporate gifting and bespoke products.",
+    title: "Branding Diaries, Resource Guide | Abbeygate Business",
+    description: "Helpful resources and guides for corporate gifting and bespoke products, personalised with your brand logo.",
   },
   "/quote": {
-    title: "Request a Quote | Abbeygate Business",
-    description: "Request a bespoke quote for corporate gifting and custom leather goods.",
+    title: "Branded Diary, Personalised Diaries, Request a Quote | Abbeygate Business",
+    description: "Request a bespoke quote for corporate gifting and custom leather goods personalised with your brand logo.",
   },
   "/heritage": {
-    title: "Our Heritage | Abbeygate Business",
+    title: "Our Leather Craft Heritage | Abbeygate Business",
     description: "Discover the rich history and craftsmanship behind Abbeygate Business.",
   },
   "/artwork-specification": {
@@ -112,7 +112,7 @@ export const seoConfig: Record<string, { title: string; description: string; noi
     description: "Explore our portfolio of bespoke projects, from personalised corporate diaries to fully branded leather goods. Personalise with your brand logo.",
   },
   "/internal-page-layouts": {
-    title: "Internal Page Layouts | Abbeygate Business",
+    title: "Diary Pages, Internal Page Layouts | Abbeygate Business",
     description: "Internal page layout options for Abbeygate Business diaries and notebooks.",
   },
 };
