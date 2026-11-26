@@ -99,7 +99,7 @@ export default function RootLayout({
               src="https://www.googletagmanager.com/gtag/js?id=G-9H299B89WM"
               strategy="afterInteractive"
             />
-            <Script id="google-analytics" strategy="afterInteractive">
+            <Script id="google-analytics" strategy="beforeInteractive">
               {`
                 var host = window.location.hostname;
                 if (host !== 'localhost' && host !== '127.0.0.1' && !host.endsWith('.vercel.app')) {
