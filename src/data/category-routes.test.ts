@@ -75,4 +75,16 @@ describe('category-routes filters, SEO separation, and mappings', () => {
     const bestSellers = getCategoryRoute('/collection/best-sellers');
     expect(bestSellers?.categoryId).toBe(159);
   });
+
+  it('resolves root /collection SEO metadata and primaryCategoryId for multi-ID category routes', async () => {
+    const collectionRoute = getCategoryRoute('/collection');
+    const rootMetadata = await generateCategoryMetadata('/collection');
+    expect(rootMetadata.description).toBe(collectionRoute?.seoDescription);
+
+    expect(getCategoryRoute('/collection/notebooks/real-leather-notebooks')?.primaryCategoryId).toBe(47);
+    expect(getCategoryRoute('/collection/custom-gifts')?.primaryCategoryId).toBe(176);
+    expect(getCategoryRoute('/collection/custom-gifts/luggage-tags')?.primaryCategoryId).toBe(182);
+    expect(getCategoryRoute('/collection/custom-gifts/card-holders')?.primaryCategoryId).toBe(178);
+    expect(getCategoryRoute('/collection/custom-gifts/keyrings')?.primaryCategoryId).toBe(183);
+  });
 });

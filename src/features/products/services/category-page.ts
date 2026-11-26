@@ -16,10 +16,25 @@ export async function loadCategoryPageData(path: string) {
 
   // Fire the independent WooCommerce requests together instead of one after another.
   preloadFilterAttributes();
-  const categoryPromise =
-    typeof route.categoryId === 'number' || !String(route.categoryId).includes(',')
-      ? getStoreCategoryById(Number(route.categoryId))
-      : Promise.resolve(null);
+  const categoryIdsToCheck = route.primaryCategoryId
+    ? Array.from(
+        new Set([
+          route.primaryCategoryId,
+          ...String(route.categoryId)
+            .split(',')
+            .map((id) => Number(id.trim()))
+            .filter((id) => Number.isFinite(id) && id > 0),
+        ]),
+      )
+    : typeof route.categoryId === 'number' || !String(route.categoryId).includes(',')
+      ? [Number(route.categoryId)]
+      : [];
+
+  const categoryPromise = (async () => {
+    if (categoryIdsToCheck.length === 0) return null;
+    const cats = await Promise.all(categoryIdsToCheck.map((id) => getStoreCategoryById(id)));
+    return cats.find((c) => c?.description?.trim()) || cats.find(Boolean) || null;
+  })();
 
   try {
     let rawProducts = await getAllStoreProductsByCategory(route.categoryId);

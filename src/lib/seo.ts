@@ -172,28 +172,26 @@ export async function generateCategoryMetadata(basePath: string, slug?: string[]
   
   const path = slug?.length ? `${basePath}/${slug.join('/')}` : basePath;
 
-  if (slug?.length) {
-    const pathSlug = slug[slug.length - 1];
-    try {
-      const { getCategoryRoute } = await import('@/data/category-routes');
-      const route = getCategoryRoute(path);
+  try {
+    const { getCategoryRoute } = await import('@/data/category-routes');
+    const route = getCategoryRoute(path);
 
-      if (route) {
-        title = route.seoTitle || (route.title.includes('Abbeygate') ? route.title : `${route.title} | Abbeygate Business`);
-        if (route.seoDescription || route.description) {
-           description = route.seoDescription || route.description || description;
-        }
-      } else {
-        const categories = await getStoreCategories();
-        const category = categories.find(c => c.slug === pathSlug);
-        if (category) {
-          title = `${category.name} | Abbeygate Business`;
-          description = category.description || description;
-        }
+    if (route) {
+      title = route.seoTitle || (route.title.includes('Abbeygate') ? route.title : `${route.title} | Abbeygate Business`);
+      if (route.seoDescription || route.description) {
+        description = route.seoDescription || route.description || description;
       }
-    } catch (error) {
-      console.error('Error fetching categories for metadata:', error);
+    } else if (slug?.length) {
+      const pathSlug = slug[slug.length - 1];
+      const categories = await getStoreCategories();
+      const category = categories.find(c => c.slug === pathSlug);
+      if (category) {
+        title = `${category.name} | Abbeygate Business`;
+        description = category.description || description;
+      }
     }
+  } catch (error) {
+    console.error('Error fetching categories for metadata:', error);
   }
 
   // Use the central helper to ensure canonicals, OG, and robots are properly attached!
