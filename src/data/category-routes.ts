@@ -229,8 +229,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
   },
   {
     "path": "/collection/notebooks/real-leather-notebooks",
-    "categoryId": "47,160",
-    "primaryCategoryId": 47,
+    "categoryId": 47,
     "title": "Leather Notebooks",
     "seoTitle": "Leather Notebooks, Business Notebooks | Abbeygate Business",
     "seoDescription": "Leather notebooks & business notebooks, expertly made and customised to suit. Personalise with your brand logo.",
@@ -241,8 +240,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
   },
   {
     "path": "/notebooks/real-leather",
-    "categoryId": "47,160",
-    "primaryCategoryId": 47,
+    "categoryId": 47,
     "title": "Leather Notebooks",
     "seoTitle": "Leather Notebooks, Business Notebooks | Abbeygate Business",
     "seoDescription": "Leather notebooks & business notebooks, expertly made and customised to suit. Personalise with your brand logo.",
@@ -259,7 +257,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
     "seoDescription": "Faux leather notebooks & branded notebooks for business and corporate gifting. Personalise with your brand logo.",
     "fallbackExcludeCategoryIds": {
       "parentCategoryId": 17,
-      "excludeCategoryIds": [47, 160, 173]
+      "excludeCategoryIds": [47, 173]
     },
     "filterConfig": {
       "disableLayout": true,
@@ -274,7 +272,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
     "seoDescription": "Faux leather notebooks & branded notebooks for business and corporate gifting. Personalise with your brand logo.",
     "fallbackExcludeCategoryIds": {
       "parentCategoryId": 17,
-      "excludeCategoryIds": [47, 160, 173]
+      "excludeCategoryIds": [47, 173]
     },
     "filterConfig": {
       "disableLayout": true,
@@ -307,8 +305,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
   },
   {
     "path": "/collection/custom-gifts",
-    "categoryId": "176,126",
-    "primaryCategoryId": 176,
+    "categoryId": 176,
     "title": "Custom Gifts",
     "seoTitle": "Corporate Gifts, Custom Gifts| Abbeygate Business",
     "seoDescription": "Corporate gifts & custom gifts, expertly made leather goods for clients and staff. Personalise with your brand logo.",
@@ -316,8 +313,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
   },
   {
     "path": "/custom-gifts",
-    "categoryId": "176,126",
-    "primaryCategoryId": 176,
+    "categoryId": 176,
     "title": "Custom Gifts",
     "seoTitle": "Corporate Gifts, Custom Gifts| Abbeygate Business",
     "seoDescription": "Corporate gifts & custom gifts, expertly made leather goods for clients and staff. Personalise with your brand logo.",
@@ -325,48 +321,42 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
   },
   {
     "path": "/collection/custom-gifts/luggage-tags",
-    "categoryId": "182,144",
-    "primaryCategoryId": 182,
+    "categoryId": 182,
     "title": "Luggage Tags",
     "seoTitle": "Business Gifts, Luggage Tags | Abbeygate Business",
     "seoDescription": "Business gifts & leather luggage tags for corporate gifting and travel merchandise. Personalise with your brand logo."
   },
   {
     "path": "/custom-gifts/luggage-tags",
-    "categoryId": "182,144",
-    "primaryCategoryId": 182,
+    "categoryId": 182,
     "title": "Luggage Tags",
     "seoTitle": "Business Gifts, Luggage Tags | Abbeygate Business",
     "seoDescription": "Business gifts & leather luggage tags for corporate gifting and travel merchandise. Personalise with your brand logo."
   },
   {
     "path": "/collection/custom-gifts/card-holders",
-    "categoryId": "178,152",
-    "primaryCategoryId": 178,
+    "categoryId": 178,
     "title": "Card Holders",
     "seoTitle": "Leather Card Holders | Abbeygate Business",
     "seoDescription": "Leather card holders for business and corporate gifting, finished with your logo. Personalise with your brand logo."
   },
   {
     "path": "/custom-gifts/card-holders",
-    "categoryId": "178,152",
-    "primaryCategoryId": 178,
+    "categoryId": 178,
     "title": "Card Holders",
     "seoTitle": "Leather Card Holders | Abbeygate Business",
     "seoDescription": "Leather card holders for business and corporate gifting, finished with your logo. Personalise with your brand logo."
   },
   {
     "path": "/collection/custom-gifts/keyrings",
-    "categoryId": "183,149",
-    "primaryCategoryId": 183,
+    "categoryId": 183,
     "title": "Keyrings",
     "seoTitle": "Leather Keyrings, Personalised Keyrings | Abbeygate Business",
     "seoDescription": "Leather keyrings & personalised keyrings, a small business gift with big impact. Personalise with your brand logo."
   },
   {
     "path": "/custom-gifts/keyrings",
-    "categoryId": "183,149",
-    "primaryCategoryId": 183,
+    "categoryId": 183,
     "title": "Keyrings",
     "seoTitle": "Leather Keyrings, Personalised Keyrings | Abbeygate Business",
     "seoDescription": "Leather keyrings & personalised keyrings, a small business gift with big impact. Personalise with your brand logo."
@@ -541,7 +531,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
   },
   {
     "path": "/collection/custom-gifts/all",
-    "categoryId": "176,126",
+    "categoryId": 176,
     "title": "All Gifts",
     "seoTitle": "Custom Gifts, Branded Gifts | Abbeygate Business",
     "seoDescription": "Custom & branded gifts in leather, ideal for corporate gifting and events. Personalise with your brand logo.",
@@ -549,7 +539,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
   },
   {
     "path": "/custom-gifts/all",
-    "categoryId": "176,126",
+    "categoryId": 176,
     "title": "All Gifts",
     "seoTitle": "Custom Gifts, Branded Gifts | Abbeygate Business",
     "seoDescription": "Custom & branded gifts in leather, ideal for corporate gifting and events. Personalise with your brand logo.",

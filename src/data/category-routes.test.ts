@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getCategoryRoute, getFilterConfigForPath } from './category-routes';
+import { expandCategoryIdsWithDuplicates } from '@/features/products/services/store-products';
 import { generateCategoryMetadata } from '@/lib/seo';
 
 describe('category-routes filters, SEO separation, and mappings', () => {
@@ -37,9 +38,9 @@ describe('category-routes filters, SEO separation, and mappings', () => {
     });
   });
 
-  it('includes WooCommerce category 160 for Real Leather Notebooks and fallback for Faux Leather routes', () => {
+  it('uses canonical WooCommerce category 47 for Real Leather Notebooks and fallback for Faux Leather routes', () => {
     const rlNb = getCategoryRoute('/collection/notebooks/real-leather-notebooks');
-    expect(String(rlNb?.categoryId).split(',')).toContain('160');
+    expect(rlNb?.categoryId).toBe(47);
 
     const flDiaries = getCategoryRoute('/collection/diaries/faux-leather-diaries');
     expect(flDiaries?.fallbackExcludeCategoryIds).toEqual({
@@ -50,8 +51,23 @@ describe('category-routes filters, SEO separation, and mappings', () => {
     const flNotebooks = getCategoryRoute('/collection/notebooks/faux-leather-notebooks');
     expect(flNotebooks?.fallbackExcludeCategoryIds).toEqual({
       parentCategoryId: 17,
-      excludeCategoryIds: [47, 160, 173],
+      excludeCategoryIds: [47, 173],
     });
+  });
+
+  it('auto-includes accidental same-parent duplicate categories (-2 / same name) without pulling sibling parents', () => {
+    const mockCategories = [
+      { id: 43, name: 'Real Leather', slug: 'real-leather', parent: 18 },
+      { id: 47, name: 'Real Leather Notebooks', slug: 'real-leather-notebooks', parent: 17 },
+      { id: 160, name: 'Real Leather', slug: 'real-leather-notebooks-2', parent: 17 },
+      { id: 250, name: 'Real Leather Notebooks', slug: 'real-leather-nb-copy', parent: 17 },
+    ];
+
+    const expanded = expandCategoryIdsWithDuplicates([47], mockCategories);
+    expect(expanded).toContain(47);
+    expect(expanded).toContain(160);
+    expect(expanded).toContain(250);
+    expect(expanded).not.toContain(43);
   });
 
   it('keeps SEO meta description separate from on-page collection copy', async () => {
@@ -76,15 +92,15 @@ describe('category-routes filters, SEO separation, and mappings', () => {
     expect(bestSellers?.categoryId).toBe(159);
   });
 
-  it('resolves root /collection SEO metadata and primaryCategoryId for multi-ID category routes', async () => {
+  it('resolves root /collection SEO metadata and canonical gift category IDs', async () => {
     const collectionRoute = getCategoryRoute('/collection');
     const rootMetadata = await generateCategoryMetadata('/collection');
     expect(rootMetadata.description).toBe(collectionRoute?.seoDescription);
 
-    expect(getCategoryRoute('/collection/notebooks/real-leather-notebooks')?.primaryCategoryId).toBe(47);
-    expect(getCategoryRoute('/collection/custom-gifts')?.primaryCategoryId).toBe(176);
-    expect(getCategoryRoute('/collection/custom-gifts/luggage-tags')?.primaryCategoryId).toBe(182);
-    expect(getCategoryRoute('/collection/custom-gifts/card-holders')?.primaryCategoryId).toBe(178);
-    expect(getCategoryRoute('/collection/custom-gifts/keyrings')?.primaryCategoryId).toBe(183);
+    expect(getCategoryRoute('/collection/notebooks/real-leather-notebooks')?.categoryId).toBe(47);
+    expect(getCategoryRoute('/collection/custom-gifts')?.categoryId).toBe(176);
+    expect(getCategoryRoute('/collection/custom-gifts/luggage-tags')?.categoryId).toBe(182);
+    expect(getCategoryRoute('/collection/custom-gifts/card-holders')?.categoryId).toBe(178);
+    expect(getCategoryRoute('/collection/custom-gifts/keyrings')?.categoryId).toBe(183);
   });
 });

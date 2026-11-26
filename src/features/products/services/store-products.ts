@@ -68,6 +68,37 @@ export const getAllStoreProducts = cache(async (perPage = 100): Promise<StorePro
   }
 });
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Expands canonical category IDs to also catch accidental same-parent WooCommerce duplicates
+ * (matching normalized name or `-2`/`-3` duplicate slug suffixes under the same parent).
+ */
+export function expandCategoryIdsWithDuplicates(
+  categoryIds: number[],
+  categories: Pick<StoreCategory, 'id' | 'name' | 'slug' | 'parent'>[],
+): number[] {
+  const expanded = new Set(categoryIds);
+  for (const id of categoryIds) {
+    const target = categories.find((c) => c.id === id);
+    if (!target) continue;
+    const normalizedTargetName = target.name.trim().toLowerCase();
+    const dupSlugRegex = new RegExp(`^${escapeRegExp(target.slug)}-\\d+$`);
+    for (const candidate of categories) {
+      if (candidate.parent !== target.parent) continue;
+      if (
+        candidate.name.trim().toLowerCase() === normalizedTargetName ||
+        dupSlugRegex.test(candidate.slug)
+      ) {
+        expanded.add(candidate.id);
+      }
+    }
+  }
+  return Array.from(expanded);
+}
+
 /** Fetch category products from the cached full catalog (skipping synthetic placeholder IDs >= 990000). */
 export async function getAllStoreProductsByCategory(
   categoryId: number | string,
@@ -85,13 +116,18 @@ export async function getAllStoreProductsByCategory(
       return [];
     }
 
-    const allCatalog = await getAllStoreProducts();
+    const [categories, allCatalog] = await Promise.all([
+      getStoreCategories().catch(() => [] as StoreCategory[]),
+      getAllStoreProducts(),
+    ]);
+    const resolvedIds = expandCategoryIdsWithDuplicates(validIds, categories);
+
     if (allCatalog.length > 0) {
-      const idSet = new Set(validIds);
+      const idSet = new Set(resolvedIds);
       return allCatalog.filter((p) => p.categories?.some((c) => idSet.has(c.id)));
     }
 
-    const queryCategory = validIds.join(',');
+    const queryCategory = resolvedIds.join(',');
     const first = await getStoreProducts({ categoryId: queryCategory, page: 1, perPage });
     const lastPage = Math.min(first.totalPages || 1, maxPages);
 

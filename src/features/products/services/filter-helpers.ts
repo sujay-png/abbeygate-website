@@ -365,7 +365,7 @@ export async function getFilterDataForProducts(rawProducts: StoreProduct[]) {
   // filter all categories, collections, layouts, sizes, and colours.
   const allProducts = rawProducts.map((product) => {
     const productTypeTerms = product.categories
-      .filter((cat) => cat.id !== 126 && cat.id !== 176 && !cat.name.toLowerCase().includes('collection')) // Exclude parent and collections
+      .filter((cat) => cat.id !== 176 && !cat.name.toLowerCase().includes('collection')) // Exclude parent and collections
       .map((cat) => ({ id: cat.id, name: cat.name, slug: cat.slug }));
 
     const collectionTerms = extractCollectionTerms(product);
