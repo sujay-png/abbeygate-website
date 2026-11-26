@@ -92,6 +92,19 @@ describe('filter-helpers collection extraction and counting', () => {
     const terms = attributeTerms[collAttr!.id];
     expect(terms.map((t) => t.name)).toEqual(['Chelsea', 'Dorchester', 'Richmond']);
 
+    // Best Sellers (category 159 / slug 'collection-best-sellers') must never be treated as a collection
+    const bestSellerProduct = createMockProduct({
+      id: 104,
+      name: 'Lewes Best Seller Diary',
+      categories: [
+        { id: 52, name: 'Lewes Collection', slug: 'lewes-collection', link: '' },
+        { id: 159, name: 'Best Sellers', slug: 'collection-best-sellers', link: '' },
+      ],
+    });
+    const bestSellerFilter = await getFilterDataForProducts([bestSellerProduct]);
+    const bsCollAttr = bestSellerFilter.filterAttributes.find((a) => a.taxonomy === 'pa_collection');
+    expect(bestSellerFilter.attributeTerms[bsCollAttr!.id].map((t) => t.name)).toEqual(['Lewes']);
+
     // Verify countProductsForTerm
     const dorchesterCount = countProductsForTerm(allProducts, 'pa_collection', 'dorchester', {}, 'filter_collection');
     const richmondCount = countProductsForTerm(allProducts, 'pa_collection', 'richmond', {}, 'filter_collection');

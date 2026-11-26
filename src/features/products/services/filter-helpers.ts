@@ -280,10 +280,13 @@ function extractCollectionTerms(product: StoreProduct): StoreAttributeTerm[] {
     });
   }
 
-  // 2. Categories with "collection" in name or slug
+  // 2. Categories with "collection" in name or slug (excluding promotional categories like Best Sellers)
   (product.categories || []).forEach((cat) => {
     const nameLower = cat.name.toLowerCase();
     const slugLower = cat.slug.toLowerCase();
+    if (cat.id === 159 || slugLower.includes('best-seller') || nameLower.includes('best seller')) {
+      return;
+    }
     if (nameLower.includes('collection') || slugLower.includes('collection')) {
       const cleanSlug = slugLower.replace(/-collection$/, '');
       let cleanName = cat.name.replace(/\s+Collection$/i, '').trim();

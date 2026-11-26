@@ -30,6 +30,17 @@ function slugToTitle(slug: string): string {
  * The final product item is intentionally created without an `href` so it remains
  * unclickable text in compliance with standard UX guidelines.
  */
+const NON_COLLECTION_PREFIXES = new Set(['diaries', 'notebooks', 'custom-gifts', 'best-sellers']);
+
+function isHierarchicalCategoryRoute(path: string): boolean {
+  const parts = path.split('/').filter(Boolean);
+  if (parts.length === 0) return false;
+  if (parts[0] === 'collection') {
+    return parts.length > 1 && NON_COLLECTION_PREFIXES.has(parts[1]) && parts[1] !== 'best-sellers';
+  }
+  return parts[0] !== 'category';
+}
+
 export function getProductBreadcrumbs(product: StoreProduct): BreadcrumbItem[] {
   const breadcrumbs: BreadcrumbItem[] = [
     { label: 'Home', href: '/' },
@@ -38,30 +49,56 @@ export function getProductBreadcrumbs(product: StoreProduct): BreadcrumbItem[] {
   if (product.categories && product.categories.length > 0) {
     // 1. Find all predefined routes that match any of the product's assigned categories
     const matchedRoutes = product.categories
-      .map(cat => CATEGORY_ROUTES.find(r => r.categoryId === cat.id || String(r.categoryId).split(',').includes(String(cat.id))))
-      .filter((r): r is NonNullable<typeof r> => r !== undefined);
+      .flatMap((cat) =>
+        CATEGORY_ROUTES.filter(
+          (r) =>
+            r.categoryId === cat.id ||
+            String(r.categoryId).split(',').map((s) => s.trim()).includes(String(cat.id))
+        )
+      )
+      .filter((route, idx, arr) => arr.findIndex((r) => r.path === route.path) === idx);
 
     if (matchedRoutes.length > 0) {
-      // 2. Separate standard hierarchical routes (/diaries, /notebooks, /custom-gifts) from flat collections (/collection)
-      const standardRoutes = matchedRoutes.filter(
-        r => !r.path.startsWith('/collection') && !r.path.startsWith('/category')
-      );
+      // 2. Separate standard hierarchical routes (/collection/diaries, /collection/notebooks, /collection/custom-gifts)
+      //    from named collections (/collection/chelsea, etc.) and Best Sellers.
+      const standardRoutes = matchedRoutes.filter((r) => isHierarchicalCategoryRoute(r.path));
+      const namedCollectionRoutes = matchedRoutes.filter((r) => r.path !== '/collection/best-sellers');
 
-      // 3. Pick the deepest candidate route to represent the leaf category
-      const candidateRoutes = standardRoutes.length > 0 ? standardRoutes : matchedRoutes;
+      // 3. Pick the deepest candidate route (preferring canonical /collection/... URLs over legacy redirects)
+      const candidateRoutes =
+        standardRoutes.length > 0
+          ? standardRoutes
+          : namedCollectionRoutes.length > 0
+            ? namedCollectionRoutes
+            : matchedRoutes;
+
       const deepestRoute = candidateRoutes.reduce((prev, curr) => {
-        const prevDepth = prev.path.split('/').filter(Boolean).length;
-        const currDepth = curr.path.split('/').filter(Boolean).length;
-        return currDepth > prevDepth ? curr : prev;
+        const prevParts = prev.path.split('/').filter(Boolean);
+        const currParts = curr.path.split('/').filter(Boolean);
+        const prevDepth = prevParts[0] === 'collection' && NON_COLLECTION_PREFIXES.has(prevParts[1])
+          ? prevParts.length - 1
+          : prevParts.length;
+        const currDepth = currParts[0] === 'collection' && NON_COLLECTION_PREFIXES.has(currParts[1])
+          ? currParts.length - 1
+          : currParts.length;
+        if (currDepth !== prevDepth) return currDepth > prevDepth ? curr : prev;
+        // Prefer canonical /collection/... route on depth tie
+        if (curr.path.startsWith('/collection/') && !prev.path.startsWith('/collection/')) return curr;
+        return prev;
       });
 
-      // 4. Decompose deepest route into its complete ancestor hierarchy
-      // e.g. path "/diaries/a5" -> ['/diaries', '/diaries/a5']
+      // 4. Decompose deepest route into its ancestor hierarchy.
+      //    Strip the leading `/collection` GA4 grouping prefix for diaries/notebooks/custom-gifts
+      //    so breadcrumbs read `Home > Diaries > A5 Diaries` instead of `Home > Our Collections > Diaries > A5 Diaries`.
       const segments = deepestRoute.path.split('/').filter(Boolean);
+      const skipCollectionPrefix =
+        segments[0] === 'collection' && segments.length > 1 && NON_COLLECTION_PREFIXES.has(segments[1]);
+
       segments.forEach((_, idx) => {
+        if (skipCollectionPrefix && idx === 0) return;
         const subPath = '/' + segments.slice(0, idx + 1).join('/');
-        const matchingRoute = CATEGORY_ROUTES.find(r => r.path === subPath);
-        
+        const matchingRoute = CATEGORY_ROUTES.find((r) => r.path === subPath);
+
         const label = matchingRoute
           ? cleanCategoryTitle(matchingRoute.title)
           : slugToTitle(segments[idx]);
@@ -70,11 +107,11 @@ export function getProductBreadcrumbs(product: StoreProduct): BreadcrumbItem[] {
       });
     } else {
       // Fallback if none of the categories map to a defined route
-      breadcrumbs.push({ label: 'Products', href: '/notebooks' });
+      breadcrumbs.push({ label: 'Products', href: '/collection/notebooks' });
     }
   } else {
     // Fallback if product has no categories
-    breadcrumbs.push({ label: 'Products', href: '/notebooks' });
+    breadcrumbs.push({ label: 'Products', href: '/collection/notebooks' });
   }
 
   // Final destination: Current product name (not clickable)

@@ -323,7 +323,9 @@ function buildMeta(product: StoreProduct, explicitColorHint?: string): Candidate
     colours: getProductColours(product, explicitColorHint),
     giftType: getGiftType(product),
     giftSegment: getGiftSegment(product),
-    isBestSeller: (product.categories || []).some((c) => c.slug === 'best-seller'),
+    isBestSeller: (product.categories || []).some(
+      (c) => c.id === 159 || c.slug === 'collection-best-sellers' || c.slug === 'best-sellers' || c.slug === 'best-seller',
+    ),
     collectionWeight: getCollectionWeight(product),
   };
 }

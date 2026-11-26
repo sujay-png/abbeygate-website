@@ -30,7 +30,7 @@ export const FeaturedProducts = async ({ title = "Best Sellers" }: { title?: str
             <ArrowIcon className="absolute -right-10 -top-1 hidden md:block" />
           </div>
 
-          <Button href="/collection" variant="primary" className="md:w-auto w-full max-w-[200px]">
+          <Button href="/collection/best-sellers" variant="primary" className="md:w-auto w-full max-w-[200px]">
             Shop All
           </Button>
         </div>

@@ -4,7 +4,7 @@ test.describe('Breadcrumb Navigation E2E', () => {
   test('desktop shows full hierarchical breadcrumbs and non-clickable current page', async ({ page, isMobile }) => {
     test.skip(isMobile, 'Desktop only test');
 
-    await page.goto('/diaries/a5');
+    await page.goto('/collection/diaries/a5-diaries');
 
     // On desktop, the breadcrumb <ol> should be visible
     const desktopBreadcrumbs = page.locator('nav[aria-label="Breadcrumb"]');
@@ -15,7 +15,7 @@ test.describe('Breadcrumb Navigation E2E', () => {
     await expect(homeLink).toBeVisible();
 
     // Check Diaries parent link
-    const parentLink = desktopBreadcrumbs.locator('a[href="/diaries"]');
+    const parentLink = desktopBreadcrumbs.locator('a[href="/collection/diaries"]');
     await expect(parentLink).toBeVisible();
 
     // Check current page item has aria-current="page" and is not a link
@@ -27,14 +27,14 @@ test.describe('Breadcrumb Navigation E2E', () => {
   test('mobile shows "Back to [Previous Level]" button', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'Mobile only test');
 
-    await page.goto('/diaries/a5');
+    await page.goto('/collection/diaries/a5-diaries');
 
     // On mobile, the mobile breadcrumb should be visible
     const mobileNav = page.locator('nav[aria-label="Mobile Breadcrumb"]');
     await expect(mobileNav).toBeVisible();
 
-    // Check it says "Back to Diaries" and links to /diaries
-    const backLink = mobileNav.locator('a[href="/diaries"]');
+    // Check it says "Back to Diaries" and links to /collection/diaries
+    const backLink = mobileNav.locator('a[href="/collection/diaries"]');
     await expect(backLink).toBeVisible();
     await expect(backLink).toContainText('Back to Diaries');
   });

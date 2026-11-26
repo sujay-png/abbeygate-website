@@ -22,7 +22,7 @@ const SLIDES = [
     bgImage:
       '/images/banners/hero-banner.png',
     cta1: <>Shop Express</>,
-    cta1Link: '/notebooks',
+    cta1Link: '/collection/notebooks',
     cta2: <>Bespoke Orders</>,
     cta2Link: '/quote',
   },
@@ -40,7 +40,7 @@ const SLIDES = [
     bgImage:
       '/images/banners/hero-banner-2.png',
     cta1: <>Shop All</>,
-    cta1Link: '/diaries',
+    cta1Link: '/collection/diaries',
     cta2: <>Request a Sample</>,
     cta2Link: '/contact',
   },

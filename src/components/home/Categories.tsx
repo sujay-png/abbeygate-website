@@ -8,13 +8,13 @@ const CATEGORIES = [
     title: "Diaries",
     image:
       "/images/categories/diaries-collection.webp",
-    href: "/diaries",
+    href: "/collection/diaries",
   },
   {
     title: "Journals & Notebooks",
     image:
       "/images/categories/notebooks-journals.webp",
-    href: "/notebooks",
+    href: "/collection/notebooks",
   },
 ];
 

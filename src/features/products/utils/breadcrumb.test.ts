@@ -19,8 +19,8 @@ describe('getProductBreadcrumbs', () => {
 
     expect(breadcrumbs).toEqual([
       { label: 'Home', href: '/' },
-      { label: 'Diaries', href: '/diaries' },
-      { label: 'A5 Diaries', href: '/diaries/a5' },
+      { label: 'Diaries', href: '/collection/diaries' },
+      { label: 'A5 Diaries', href: '/collection/diaries/a5-diaries' },
       { label: 'Richmond Blue WTV A5 Diary' },
     ]);
 
@@ -43,8 +43,8 @@ describe('getProductBreadcrumbs', () => {
 
     expect(breadcrumbs).toEqual([
       { label: 'Home', href: '/' },
-      { label: 'Diaries', href: '/diaries' },
-      { label: 'Quarto Diaries', href: '/diaries/quarto' },
+      { label: 'Diaries', href: '/collection/diaries' },
+      { label: 'Quarto Diaries', href: '/collection/diaries/quarto-diaries' },
       { label: 'Chelsea Quarto Diary' },
     ]);
   });
@@ -63,9 +63,27 @@ describe('getProductBreadcrumbs', () => {
 
     expect(breadcrumbs).toEqual([
       { label: 'Home', href: '/' },
-      { label: 'Custom Gifts', href: '/custom-gifts' },
-      { label: 'Passport Wallets', href: '/custom-gifts/passport-wallets' },
+      { label: 'Custom Gifts', href: '/collection/custom-gifts' },
+      { label: 'Passport Wallets', href: '/collection/custom-gifts/passport-wallets' },
       { label: 'Richmond Leather Passport Wallet' },
+    ]);
+  });
+
+  it('keeps Our Collections breadcrumb only for standalone named collections', () => {
+    const mockProduct = {
+      id: 202,
+      name: 'Chelsea Showcase Item',
+      slug: 'chelsea-showcase-item',
+      categories: [
+        { id: 49, name: 'Chelsea Collection', slug: 'chelsea-collection', link: '' },
+      ],
+    } as unknown as StoreProduct;
+
+    expect(getProductBreadcrumbs(mockProduct)).toEqual([
+      { label: 'Home', href: '/' },
+      { label: 'Our Collections', href: '/collection' },
+      { label: 'Chelsea Collection', href: '/collection/chelsea' },
+      { label: 'Chelsea Showcase Item' },
     ]);
   });
 
@@ -81,7 +99,7 @@ describe('getProductBreadcrumbs', () => {
 
     expect(breadcrumbs).toEqual([
       { label: 'Home', href: '/' },
-      { label: 'Products', href: '/notebooks' },
+      { label: 'Products', href: '/collection/notebooks' },
       { label: 'Uncategorized Sample Item' },
     ]);
   });

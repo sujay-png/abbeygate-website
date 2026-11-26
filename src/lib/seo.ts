@@ -180,8 +180,8 @@ export async function generateCategoryMetadata(basePath: string, slug?: string[]
 
       if (route) {
         title = route.seoTitle || (route.title.includes('Abbeygate') ? route.title : `${route.title} | Abbeygate Business`);
-        if (route.description) {
-           description = route.description;
+        if (route.seoDescription || route.description) {
+           description = route.seoDescription || route.description || description;
         }
       } else {
         const categories = await getStoreCategories();

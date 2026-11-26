@@ -22,7 +22,15 @@ export async function loadCategoryPageData(path: string) {
       : Promise.resolve(null);
 
   try {
-    const rawProducts = await getAllStoreProductsByCategory(route.categoryId);
+    let rawProducts = await getAllStoreProductsByCategory(route.categoryId);
+    if (rawProducts.length === 0 && route.fallbackExcludeCategoryIds) {
+      const { parentCategoryId, excludeCategoryIds } = route.fallbackExcludeCategoryIds;
+      const excludeSet = new Set(excludeCategoryIds);
+      const parentProducts = await getAllStoreProductsByCategory(parentCategoryId);
+      rawProducts = parentProducts.filter(
+        (p) => !p.categories?.some((c) => excludeSet.has(c.id)),
+      );
+    }
     const filterData = await getFilterDataForProducts(rawProducts);
     
     allProducts = filterData.allProducts.map(toListingProduct);
@@ -45,20 +53,28 @@ export async function loadCategoryPageData(path: string) {
   };
 
   const pathParts = path.split('/').filter(Boolean);
-  const breadcrumbItems = pathParts.map((part, index) => {
-    const href = '/' + pathParts.slice(0, index + 1).join('/');
-    const matchingRoute = getCategoryRoute(href);
-    const label = matchingRoute
-      ? matchingRoute.title.replace(/^All\s+/i, '')
-      : part
-          .split('-')
-          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-          .join(' ');
+  const skipCollectionPrefix =
+    pathParts[0] === 'collection' &&
+    pathParts.length > 1 &&
+    ['diaries', 'notebooks', 'custom-gifts', 'best-sellers'].includes(pathParts[1]);
 
-    return index === pathParts.length - 1
-      ? { label: matchingRoute?.title ? matchingRoute.title.replace(/^All\s+/i, '') : (wooCategory?.name || label) }
-      : { label, href };
-  });
+  const breadcrumbItems = pathParts
+    .map((part, index) => {
+      if (skipCollectionPrefix && index === 0) return null;
+      const href = '/' + pathParts.slice(0, index + 1).join('/');
+      const matchingRoute = getCategoryRoute(href);
+      const label = matchingRoute
+        ? matchingRoute.title.replace(/^All\s+/i, '')
+        : part
+            .split('-')
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+
+      return index === pathParts.length - 1
+        ? { label: matchingRoute?.title ? matchingRoute.title.replace(/^All\s+/i, '') : (wooCategory?.name || label) }
+        : { label, href };
+    })
+    .filter((item): item is { label: string; href?: string } => item !== null);
 
   let description = wooCategory?.description || route.description || '';
   if (description && !description.includes('<p>') && !description.includes('<h')) {
