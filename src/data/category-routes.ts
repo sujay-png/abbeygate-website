@@ -186,7 +186,7 @@ export const CATEGORY_ROUTES: CategoryRoute[] = [
   {
     "path": "/collection/notebooks/a5-notebook",
     "categoryId": 19,
-    "title": "A5 Desk",
+    "title": "A5 Notebooks",
     "seoTitle": "A5 Diaries, Desk Diaries | Abbeygate Business",
     "seoDescription": "A5 diaries & desk diaries for the office, customised for business use. Personalise with your brand logo.",
     "filterConfig": {
