@@ -38,11 +38,38 @@ const SORT_OPTIONS: { label: string; value: SortOption }[] = [
   { label: 'Price: High - Low', value: 'price-high' },
 ];
 
-export const ProductFilters = (props: ProductFiltersProps) => (
-  <Suspense fallback={<div className="h-20 bg-brand-cream animate-pulse rounded mb-8 border border-gray-200" />}>
-    <ProductFiltersInner {...props} />
-  </Suspense>
-);
+type ReadableSearchParams = Pick<URLSearchParams, 'get' | 'toString'>;
+
+export const ProductFilters = ({
+  searchString,
+  ...props
+}: ProductFiltersProps & {
+  /**
+   * The current `location.search`, when the parent already tracks it (category pages).
+   * Passing it lets the filter bar render fully on the server: useSearchParams() in a
+   * statically rendered route would bail this component out to client-only rendering.
+   */
+  searchString?: string;
+}) => {
+  if (searchString !== undefined) {
+    return <ProductFiltersFromString searchString={searchString} {...props} />;
+  }
+  return (
+    <Suspense fallback={<div className="h-20 bg-brand-cream animate-pulse rounded mb-8 border border-gray-200" />}>
+      <ProductFiltersFromUrl {...props} />
+    </Suspense>
+  );
+};
+
+const ProductFiltersFromUrl = (props: ProductFiltersProps) => {
+  const searchParams = useSearchParams();
+  return <ProductFiltersInner {...props} searchParams={searchParams} />;
+};
+
+const ProductFiltersFromString = ({ searchString, ...props }: ProductFiltersProps & { searchString: string }) => {
+  const searchParams = useMemo(() => new URLSearchParams(searchString), [searchString]);
+  return <ProductFiltersInner {...props} searchParams={searchParams} />;
+};
 
 const ProductFiltersInner = ({
   products,
@@ -51,10 +78,10 @@ const ProductFiltersInner = ({
   filterConfig,
   resultCount,
   clientSideFiltering = false,
-}: ProductFiltersProps) => {
+  searchParams,
+}: ProductFiltersProps & { searchParams: ReadableSearchParams }) => {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const filterTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const [openDropdown, setOpenDropdown] = useState<FilterParamKey | 'sort' | null>(null);

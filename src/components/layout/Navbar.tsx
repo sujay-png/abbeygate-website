@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
@@ -8,6 +8,7 @@ import { Search, Menu, X, ChevronDown, User } from 'lucide-react';
 import { AnimatePresence, motion, Variants, Transition } from 'framer-motion';
 import { NAV_ITEMS } from '@/data/navigation';
 import { useCart } from '@/features/cart/context/CartContext';
+import { ClientOnly } from '@/components/layout/ClientOnly';
 import { useVat } from '@/context/VatContext';
 
 const CLOSE_DELAY = 200;
@@ -23,10 +24,28 @@ const COLUMN_VARIANT: Variants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } },
 };
 
+/**
+ * Reads `?q=` on /search and pushes it into the header search box.
+ *
+ * Isolated in its own client-only component on purpose: calling useSearchParams() in a
+ * statically rendered route makes React bail out to client-side rendering up to the nearest
+ * Suspense boundary. When this lived in Navbar, that bailout blanked the whole server HTML
+ * (header, H1, page content) for crawlers. It renders nothing, so it only mounts in the browser.
+ */
+const SearchQuerySync = ({ onQuery }: { onQuery: (q: string | null) => void }) => {
+  const pathname = usePathname();
+  const urlSearchParams = useSearchParams();
+
+  useEffect(() => {
+    onQuery(pathname === '/search' ? urlSearchParams.get('q') : null);
+  }, [pathname, urlSearchParams, onQuery]);
+
+  return null;
+};
+
 export const Navbar = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const urlSearchParams = useSearchParams();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isMounted, setIsMounted] = useState(false);
@@ -65,15 +84,14 @@ export const Navbar = () => {
     }
   }, [activeMenuId]);
 
-  useEffect(() => {
+  const handleUrlQuery = useCallback((q: string | null) => {
     if (pathname === '/search') {
-      const q = urlSearchParams.get('q');
       if (q) setSearchQuery(q);
     } else {
       setSearchQuery('');
       setIsSearchOpen(false);
     }
-  }, [pathname, urlSearchParams]);
+  }, [pathname]);
 
   useEffect(() => {
     const handleClickOutside = (event: Event) => {
@@ -213,6 +231,37 @@ export const Navbar = () => {
       className="sticky top-0 z-50 w-full bg-white relative"
       onMouseLeave={scheduleClose}
     >
+      <ClientOnly>
+        <Suspense fallback={null}>
+          <SearchQuerySync onQuery={handleUrlQuery} />
+        </Suspense>
+      </ClientOnly>
+      {/* The mega menu and mobile menu only mount their sub-links while open, so without this
+          list every sub-category link was missing from the server HTML (crawlers never hover),
+          and keyboard/screen-reader users could not reach them. Always rendered, visually hidden. */}
+      <nav aria-label="All categories" className="sr-only">
+        <ul>
+          {NAV_ITEMS.filter((item) => item.megaMenu?.columns?.length).map((item) => (
+            <li key={item.id}>
+              <Link href={item.href} prefetch={false}>{item.label}</Link>
+              <ul>
+                {item.megaMenu!.columns.map((column) => (
+                  <li key={column.id}>
+                    {column.href ? <Link href={column.href} prefetch={false}>{column.title || item.label}</Link> : column.title}
+                    <ul>
+                      {column.links.map((link) => (
+                        <li key={link.id}>
+                          <Link href={link.href} prefetch={false}>{link.label}</Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      </nav>
       {/* Contact Strip (Desktop Only) */}
       <div className="hidden lg:flex w-full bg-brand-cream border-b border-gray-100 h-10 items-center">
         <div className="w-full px-6 lg:px-10 xl:px-16 flex justify-between items-center text-[10px] font-bold tracking-[0.15em] text-gray-700 uppercase">

@@ -8,6 +8,7 @@ import { LenisProvider } from '@/components/layout/LenisProvider';
 import { VatProvider } from '@/context/VatContext';
 import { SiteChrome } from '@/components/layout/SiteChrome';
 import { NavigationTracker } from '@/components/layout/NavigationTracker';
+import { ClientOnly } from '@/components/layout/ClientOnly';
 import Script from 'next/script';
 
 const didactGothic = Didact_Gothic({
@@ -91,9 +92,13 @@ export default function RootLayout({
       >
         {isGa4Production && (
           <>
-            <Suspense fallback={null}>
-              <NavigationTracker />
-            </Suspense>
+            {/* Client-only: it renders nothing, and rendering it on the server would add a
+                client-side-rendering bailout marker (<!--$!-->) to every page's HTML. */}
+            <ClientOnly>
+              <Suspense fallback={null}>
+                <NavigationTracker />
+              </Suspense>
+            </ClientOnly>
             {/* GA4 Script (Production Only) */}
             <Script
               src="https://www.googletagmanager.com/gtag/js?id=G-9H299B89WM"
@@ -130,7 +135,11 @@ export default function RootLayout({
         <VatProvider>
           <LenisProvider>
             <CartProvider>
-              <Suspense fallback={null}><SiteChrome>{children}</SiteChrome></Suspense>
+              {/* Deliberately NOT wrapped in <Suspense fallback={null}>. A boundary here turns any
+                  client-only bailout inside the header/page (e.g. an unwrapped useSearchParams)
+                  into an empty server-rendered <body>, which hid all content from Google.
+                  Without it, such a mistake fails `next build` instead of shipping silently. */}
+              <SiteChrome>{children}</SiteChrome>
               <Toaster position="bottom-left" toastOptions={{ duration: 4000, style: { background: '#341a3d', color: '#fff' } }} />
             </CartProvider>
           </LenisProvider>

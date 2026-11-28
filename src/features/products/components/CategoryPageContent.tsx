@@ -82,6 +82,7 @@ export const CategoryPageContent = ({
           filterConfig={filterConfig}
           resultCount={filteredProducts.length}
           clientSideFiltering
+          searchString={searchString}
         />
 
         <div className="mt-8">
