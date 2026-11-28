@@ -1,5 +1,9 @@
 'use server';
 
+import { headers } from 'next/headers';
+import { authRateLimit } from '@/lib/rate-limit';
+import { getWooStoreUrl } from '@/lib/woocommerce/config';
+
 export type ResetPasswordState = {
   success: boolean;
   message: string;
@@ -11,6 +15,13 @@ export async function resetCustomerPassword(
   formData: FormData
 ): Promise<ResetPasswordState> {
   try {
+    const requestHeaders = await headers();
+    const ip = requestHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';
+    const { success } = await authRateLimit.limit(`reset-password:${ip}`);
+    if (!success) {
+      return { success: false, message: 'Too many password reset attempts. Please try again shortly.' };
+    }
+
     const key = formData.get('key') as string;
     const login = formData.get('login') as string;
     const password = formData.get('password') as string;
@@ -33,8 +44,7 @@ export async function resetCustomerPassword(
     }
 
     // Call the custom WP REST API endpoint we created
-    // Use the base store URL from our config, removing trailing slash if present
-    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://dashboard.abbeygate-business.com';
+    const storeUrl = getWooStoreUrl();
     
     const response = await fetch(`${storeUrl}/wp-json/headless/v1/reset-password`, {
       method: 'POST',
@@ -78,13 +88,20 @@ export async function requestPasswordReset(
   formData: FormData
 ): Promise<ResetPasswordState> {
   try {
+    const requestHeaders = await headers();
+    const ip = requestHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';
+    const { success } = await authRateLimit.limit(`lost-password:${ip}`);
+    if (!success) {
+      return { success: false, message: 'Too many password reset requests. Please try again shortly.' };
+    }
+
     const email = formData.get('email') as string;
 
     if (!email) {
       return { success: false, message: 'Please enter your email address.' };
     }
 
-    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://dashboard.abbeygate-business.com';
+    const storeUrl = getWooStoreUrl();
     
     const response = await fetch(`${storeUrl}/wp-json/headless/v1/lost-password`, {
       method: 'POST',

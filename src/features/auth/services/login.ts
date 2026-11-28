@@ -3,6 +3,8 @@
 import { createSession, deleteSession } from '../utils/session';
 import { redirect } from 'next/navigation';
 import { cookies, headers } from 'next/headers';
+import { authRateLimit } from '@/lib/rate-limit';
+import { getWooStoreUrl } from '@/lib/woocommerce/config';
 
 export type LoginState = {
   success: boolean;
@@ -71,6 +73,13 @@ export async function loginCustomer(
   formData: FormData
 ): Promise<LoginState> {
   try {
+    const requestHeaders = await headers();
+    const ip = requestHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';
+    const { success } = await authRateLimit.limit(`login:${ip}`);
+    if (!success) {
+      return { success: false, message: 'Too many login attempts. Please try again shortly.' };
+    }
+
     const username = formData.get('username') as string;
     const password = formData.get('password') as string;
 
@@ -79,7 +88,7 @@ export async function loginCustomer(
     }
 
     // Call the custom WP REST API login endpoint
-    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://dashboard.abbeygate-business.com';
+    const storeUrl = getWooStoreUrl();
     
     const response = await fetch(`${storeUrl}/wp-json/headless/v1/login`, {
       method: 'POST',

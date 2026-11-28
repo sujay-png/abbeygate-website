@@ -74,10 +74,76 @@ async function getStoreProduct(productId: string): Promise<StoreProduct> {
   return storeFetch<StoreProduct>(`/products/${productId}`, { revalidate: 60, tags: ['products', `product-${productId}`] });
 }
 
-function groupQuantity(item: CheckoutQuoteItemInput, allItems: CheckoutQuoteItemInput[]): number {
-  const groupId = item.colourGroupId;
-  if (!groupId) return item.quantity;
-  return allItems.filter((candidate) => candidate.colourGroupId === groupId).reduce((sum, candidate) => sum + candidate.quantity, 0);
+const GENERIC_GROUPING_TAGS = new Set([
+  'best seller',
+  'best-seller',
+  'bestseller',
+  'new',
+  'featured',
+  'popular',
+  'sale',
+  'diary',
+  'diaries',
+  'notebook',
+  'notebooks',
+]);
+
+function getGroupingTagKeys(product: StoreProduct): Set<string> {
+  const keys = new Set<string>();
+  for (const tag of product.tags || []) {
+    const slug = (tag.slug || '').toLowerCase().trim();
+    const name = (tag.name || '').toLowerCase().trim();
+    if (!slug && !name) continue;
+    if (/^\d{4}$/.test(slug) || /^\d{4}$/.test(name)) continue;
+    if (GENERIC_GROUPING_TAGS.has(slug) || GENERIC_GROUPING_TAGS.has(name)) continue;
+    keys.add(tag.id ? `id:${tag.id}` : `slug:${slug || name}`);
+  }
+  return keys;
+}
+
+function canShareColourGroup(a: StoreProduct, b: StoreProduct): boolean {
+  if (a.id === b.id) return true;
+  const tagsA = getGroupingTagKeys(a);
+  if (tagsA.size === 0) return false;
+  const tagsB = getGroupingTagKeys(b);
+  for (const key of tagsA) {
+    if (tagsB.has(key)) return true;
+  }
+  return false;
+}
+
+function resolveGroupAnchorIndex(
+  index: number,
+  items: CheckoutQuoteItemInput[],
+  products: StoreProduct[],
+): number {
+  const groupId = items[index].colourGroupId;
+  if (!groupId) return index;
+  const match = items.findIndex(
+    (candidate, candidateIndex) =>
+      candidate.colourGroupId === groupId &&
+      canShareColourGroup(products[candidateIndex], products[index]),
+  );
+  return match === -1 ? index : match;
+}
+
+function verifiedGroupQuantity(
+  index: number,
+  items: CheckoutQuoteItemInput[],
+  products: StoreProduct[],
+): number {
+  const groupId = items[index].colourGroupId;
+  if (!groupId) return items[index].quantity;
+  const targetAnchor = resolveGroupAnchorIndex(index, items, products);
+  return items.reduce((sum, candidate, candidateIndex) => {
+    if (
+      candidate.colourGroupId === groupId &&
+      resolveGroupAnchorIndex(candidateIndex, items, products) === targetAnchor
+    ) {
+      return sum + candidate.quantity;
+    }
+    return sum;
+  }, 0);
 }
 
 /**
@@ -102,7 +168,7 @@ export async function createCheckoutQuote(payload: unknown): Promise<CheckoutQuo
     
     const isGifts = isGiftsProduct(product);
     const isUvOnly = isUvOnlyProduct(product);
-    const groupQty = groupQuantity(item, items);
+    const groupQty = verifiedGroupQuantity(index, items, products);
     const customizationEnabled = !isGifts && groupQty >= CUSTOMIZATION_MIN_QTY && Boolean(customization?.enabled);
     const effectiveCustomization = customization
       ? {
@@ -123,7 +189,7 @@ export async function createCheckoutQuote(payload: unknown): Promise<CheckoutQuo
     });
 
     let setupFee = 0;
-    const isFirstInGroup = items.findIndex(i => (i.colourGroupId ?? i.productId) === (item.colourGroupId ?? item.productId)) === index;
+    const isFirstInGroup = resolveGroupAnchorIndex(index, items, products) === index;
     if (isFirstInGroup && customizationEnabled) {
       setupFee = BRANDING_SETUP_FEE;
     }

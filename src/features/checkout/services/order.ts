@@ -1,5 +1,13 @@
 import { woocommerceApi } from '@/lib/woocommerce/client';
 import type { CheckoutQuote } from '../types/quote';
+import {
+  getCheckoutSession,
+  updateCheckoutSession,
+  acquireCheckoutOrderLock,
+  releaseCheckoutOrderLock,
+} from './session';
+import { invalidateCustomerOrdersCache, findCustomerIdByEmail } from '@/features/account/services/orders';
+import { buildWooOrderLineItems } from '@/features/checkout/utils/woo-order-lines';
 
 export type WooCommerceOrderPayload = {
   customer_id?: number;
@@ -164,4 +172,240 @@ export async function createWooCommerceOrder(
   }
 
   return order;
+}
+
+export type SessionOrderAddress = {
+  name?: string;
+  email?: string;
+  address?: {
+    line1?: string;
+    line2?: string;
+    city?: string;
+    postal_code?: string;
+    country?: string;
+  };
+};
+
+export type CreateOrderFromSessionInput = {
+  sessionId: string;
+  paymentMethod: 'free' | 'bacs' | 'stripe';
+  billingDetails: SessionOrderAddress;
+  shippingDetails?: SessionOrderAddress;
+  vatNumber?: string;
+  authUserId?: number;
+  transactionId?: string;
+  extraMeta?: Array<{ key: string; value: string }>;
+  awaitCustomerSync?: boolean;
+};
+
+export type CreateOrderFromSessionResult =
+  | {
+      status: 'created';
+      orderId: number;
+      orderKey: string;
+      orderNumber?: string;
+      quoteLines: CheckoutQuote['lines'];
+    }
+  | { status: 'already_exists'; orderId: number; orderKey?: string }
+  | { status: 'locked'; orderId?: number; orderKey?: string }
+  | { status: 'not_found' }
+  | { status: 'requires_payment' };
+
+/**
+ * Shared locked order creator for Free, BACS, and Stripe webhook routes.
+ * Holds a per-session Redis mutex so concurrent requests cannot create duplicate orders
+ * or double-apply single-use coupons.
+ */
+export async function createOrderFromSession(
+  input: CreateOrderFromSessionInput,
+): Promise<CreateOrderFromSessionResult> {
+  const {
+    sessionId,
+    paymentMethod,
+    billingDetails,
+    shippingDetails,
+    vatNumber,
+    authUserId,
+    transactionId,
+    extraMeta = [],
+    awaitCustomerSync = false,
+  } = input;
+
+  const lockAcquired = await acquireCheckoutOrderLock(sessionId);
+  if (!lockAcquired) {
+    const existing = await getCheckoutSession(sessionId);
+    if (existing?.orderId) {
+      return { status: 'locked', orderId: existing.orderId, orderKey: existing.orderKey };
+    }
+    return { status: 'locked' };
+  }
+
+  try {
+    const session = await getCheckoutSession(sessionId);
+    if (!session) {
+      return { status: 'not_found' };
+    }
+
+    if (session.orderId) {
+      return {
+        status: 'already_exists',
+        orderId: session.orderId,
+        orderKey: session.orderKey,
+      };
+    }
+
+    if (paymentMethod === 'free' && session.quote.total > 0) {
+      return { status: 'requires_payment' };
+    }
+
+    let resolvedCustomerId = session.customerId || 0;
+    if (!resolvedCustomerId) {
+      if (authUserId) {
+        resolvedCustomerId = authUserId;
+      } else if (billingDetails.email) {
+        resolvedCustomerId = await findCustomerIdByEmail(billingDetails.email);
+      }
+    }
+
+    const nameParts = billingDetails.name?.trim().split(' ').filter(Boolean) || [];
+    const firstName = nameParts[0] || 'Customer';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    const shippingNameParts = shippingDetails?.name?.trim().split(' ').filter(Boolean) || [];
+    const shippingFirstName = shippingNameParts[0] || firstName;
+    const shippingLastName = shippingNameParts.slice(1).join(' ') || lastName;
+
+    const paymentMetaMap: Record<CreateOrderFromSessionInput['paymentMethod'], {
+      methodTitle: string;
+      setPaid: boolean;
+      orderStatus: string;
+    }> = {
+      free: { methodTitle: '100% Discount Coupon', setPaid: true, orderStatus: 'processing' },
+      bacs: { methodTitle: 'Direct bank transfer', setPaid: false, orderStatus: 'on-hold' },
+      stripe: { methodTitle: 'Credit/Debit Card (Stripe)', setPaid: true, orderStatus: 'processing' },
+    };
+    const meta = paymentMetaMap[paymentMethod];
+
+    const billing = {
+      first_name: firstName,
+      last_name: lastName,
+      address_1: billingDetails.address?.line1 || '',
+      address_2: billingDetails.address?.line2 || '',
+      city: billingDetails.address?.city || '',
+      postcode: billingDetails.address?.postal_code || '',
+      country: billingDetails.address?.country || '',
+      email: billingDetails.email || '',
+    };
+
+    const shipping = {
+      first_name: shippingFirstName,
+      last_name: shippingLastName,
+      address_1: shippingDetails?.address?.line1 || billingDetails.address?.line1 || '',
+      address_2: shippingDetails?.address?.line2 || billingDetails.address?.line2 || '',
+      city: shippingDetails?.address?.city || billingDetails.address?.city || '',
+      postcode: shippingDetails?.address?.postal_code || billingDetails.address?.postal_code || '',
+      country: shippingDetails?.address?.country || billingDetails.address?.country || '',
+    };
+
+    const effectiveVatNumber = vatNumber ?? session.vatNumber;
+
+    const wcOrderPayload: Record<string, unknown> = {
+      payment_method: paymentMethod,
+      payment_method_title: meta.methodTitle,
+      set_paid: meta.setPaid,
+      status: meta.orderStatus,
+      ...(transactionId ? { transaction_id: transactionId } : {}),
+      customer_id: resolvedCustomerId || 0,
+      billing,
+      shipping,
+      line_items: buildWooOrderLineItems(session.quote.lines, session.quote.discount),
+      shipping_lines:
+        paymentMethod === 'free'
+          ? [
+              {
+                method_id: 'free_shipping',
+                method_title: session.quote.shipping.label || 'Free Shipping',
+                total: '0.00',
+              },
+            ]
+          : [
+              {
+                method_id: 'flat_rate',
+                method_title: session.quote.shipping.label,
+                total: String(session.quote.shipping.cost),
+              },
+            ],
+      ...(paymentMethod === 'free' ? { total: '0.00' } : {}),
+      ...(session.quote.couponCode
+        ? {
+            coupon_lines: [
+              {
+                code: session.quote.couponCode,
+                discount: String(session.quote.discount),
+              },
+            ],
+          }
+        : {}),
+      meta_data: [
+        { key: '_wc_order_attribution_source_type', value: 'typein' },
+        { key: '_wc_order_attribution_utm_source', value: '(direct)' },
+        ...extraMeta,
+        ...(effectiveVatNumber ? [{ key: 'VAT Number', value: effectiveVatNumber }] : []),
+      ],
+    };
+
+    const orderRes = await woocommerceApi.request<{
+      id?: number;
+      order_key?: string;
+      number?: string;
+    }>('orders', {
+      method: 'POST',
+      body: wcOrderPayload,
+      timeoutMs: 45000,
+    });
+
+    const createdOrderId = orderRes?.id;
+    const createdOrderKey = orderRes?.order_key;
+
+    if (!createdOrderId || !createdOrderKey) {
+      throw new Error('WooCommerce order creation returned incomplete order details.');
+    }
+
+    await updateCheckoutSession(sessionId, {
+      status: 'completed',
+      orderId: createdOrderId,
+      orderKey: createdOrderKey,
+    }).catch((err) => console.error('Failed to update session with order details:', err));
+
+    if (resolvedCustomerId) {
+      const syncCustomer = async () => {
+        try {
+          await woocommerceApi.request(`customers/${resolvedCustomerId}`, {
+            method: 'PUT',
+            body: { billing, shipping },
+            timeoutMs: 15000,
+          });
+          await invalidateCustomerOrdersCache(resolvedCustomerId);
+        } catch (err) {
+          console.error('Failed to update customer addresses:', err);
+        }
+      };
+
+      if (awaitCustomerSync) {
+        await syncCustomer();
+      } else {
+        syncCustomer().catch((err) => console.error('Background customer address update error:', err));
+      }
+    }
+
+    return {
+      status: 'created',
+      orderId: createdOrderId,
+      orderKey: createdOrderKey,
+      orderNumber: orderRes?.number,
+      quoteLines: session.quote.lines,
+    };
+  } finally {
+    await releaseCheckoutOrderLock(sessionId);
+  }
 }

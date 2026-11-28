@@ -1,6 +1,7 @@
 'use server';
 
 import { getSession } from '@/features/auth/utils/session';
+import { getWooStoreUrl } from '@/lib/woocommerce/config';
 
 export type ActionState = {
   success: boolean;
@@ -18,7 +19,7 @@ export async function triggerLinkOrdersEmail(
       return { success: false, message: 'You must be logged in.' };
     }
 
-    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://dashboard.abbeygate-business.com';
+    const storeUrl = getWooStoreUrl();
 
     const response = await fetch(`${storeUrl}/wp-json/headless/v1/trigger-guest-link`, {
       method: 'POST',
@@ -56,7 +57,7 @@ export async function triggerLinkOrdersEmail(
 
 export async function processLinkOrdersToken(token: string): Promise<ActionState> {
   try {
-    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://dashboard.abbeygate-business.com';
+    const storeUrl = getWooStoreUrl();
 
     const response = await fetch(`${storeUrl}/wp-json/headless/v1/process-guest-link`, {
       method: 'POST',

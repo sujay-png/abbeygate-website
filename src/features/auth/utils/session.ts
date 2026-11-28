@@ -1,15 +1,25 @@
 import { jwtVerify, SignJWT } from 'jose';
 import { cookies } from 'next/headers';
 
-// In production, you should set a strong secret in your environment variables:
-// SESSION_SECRET="your-very-long-and-secure-random-string-here"
-const secretKey = process.env.SESSION_SECRET || 'abbeygate-england-fallback-secret-do-not-use-in-production';
-const encodedKey = new TextEncoder().encode(secretKey);
+// In production, SESSION_SECRET must be configured in environment variables.
+const DEV_FALLBACK_SECRET = 'abbeygate-england-fallback-secret-do-not-use-in-production';
 
-type SessionPayload = {
+function getEncodedKey(): Uint8Array {
+  const secretKey = process.env.SESSION_SECRET?.trim();
+  if (!secretKey) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('SESSION_SECRET is not configured in production.');
+    }
+    return new TextEncoder().encode(DEV_FALLBACK_SECRET);
+  }
+  return new TextEncoder().encode(secretKey);
+}
+
+export type SessionPayload = {
   userId: number;
   email: string;
   roles: string[];
+  emailVerified?: boolean;
   expiresAt: Date;
 };
 
@@ -18,13 +28,13 @@ export async function encrypt(payload: SessionPayload) {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('7d')
-    .sign(encodedKey);
+    .sign(getEncodedKey());
 }
 
 export async function decrypt(session: string | undefined = '') {
   try {
     if (!session) return null;
-    const { payload } = await jwtVerify(session, encodedKey, {
+    const { payload } = await jwtVerify(session, getEncodedKey(), {
       algorithms: ['HS256'],
     });
     return payload as SessionPayload;
@@ -34,9 +44,20 @@ export async function decrypt(session: string | undefined = '') {
   }
 }
 
-export async function createSession(userId: number, email: string, roles: string[]) {
+export async function createSession(
+  userId: number,
+  email: string,
+  roles: string[],
+  options?: { emailVerified?: boolean },
+) {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-  const session = await encrypt({ userId, email, roles, expiresAt });
+  const session = await encrypt({
+    userId,
+    email,
+    roles,
+    emailVerified: options?.emailVerified ?? true,
+    expiresAt,
+  });
 
   const cookieStore = await cookies();
   

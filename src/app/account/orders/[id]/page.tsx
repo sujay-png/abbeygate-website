@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Breadcrumb } from '@/components/content';
 import { Container } from '@/components/ui/Container';
 import { AccountSidebar } from '@/features/account/components/AccountSidebar';
-import { getOrderDetail, type WooCommerceOrderDetail } from '@/features/account/services/orders';
+import { getOrderDetail, canAccessOrder, type WooCommerceOrderDetail } from '@/features/account/services/orders';
 import { OrderMetaFileLink } from '@/features/account/components/OrderMetaFileLink';
 
 type OrderDetailsProps = {
@@ -29,14 +29,8 @@ export default async function OrderDetailsPage({ params }: OrderDetailsProps) {
   }
 
   // Ensure the order belongs to the logged-in user
-  const isOwner = Number(order.customer_id) === Number(session.userId);
-  const isEmailMatch = order.billing?.email?.toLowerCase() === session.email?.toLowerCase();
-  
-  if (!isOwner && !isEmailMatch) {
-    // TEMPORARY BYPASS FOR DEVELOPMENT TESTING
-    if (process.env.NODE_ENV !== 'development') {
-      redirect('/account/orders'); // Unauthorized
-    }
+  if (!canAccessOrder(order, session)) {
+    redirect('/account/orders'); // Unauthorized
   }
 
   const formattedDate = new Date(order.date_created).toLocaleDateString('en-US', {

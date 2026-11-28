@@ -140,4 +140,131 @@ describe('createCheckoutQuote', () => {
     expect(quote.lines[0].customization?.foilColor).toBeUndefined();
     expect(quote.lines[0].unitPrice).toBe(12);
   });
+
+  it('prevents colourGroupId bulk-pricing bypass across unrelated products', async () => {
+    vi.mocked(storeFetch).mockImplementation(async (path: string) => {
+      if (path === '/products/101') {
+        return {
+          id: 101,
+          name: 'Chelsea Leather A5 Diary, Black',
+          slug: 'chelsea-a5-black',
+          is_purchasable: true,
+          is_in_stock: true,
+          categories: [{ id: 164, name: 'A5 Diaries', slug: 'a5-diaries', link: '' }],
+          tags: [{ id: 500, name: 'Chelsea-A5-Diary', slug: 'chelsea-a5-diary' }],
+          attributes: [],
+          images: [],
+          prices: { price: '2400', regular_price: '2400', sale_price: '2400', currency_minor_unit: 2 },
+        } as any;
+      }
+      return {
+        id: 202,
+        name: 'Dorchester Keyring, Black',
+        slug: 'dorchester-keyring-black',
+        is_purchasable: true,
+        is_in_stock: true,
+        categories: [{ id: 176, name: 'Custom Gifts', slug: 'custom-gifts', link: '' }],
+        tags: [{ id: 600, name: 'Dorchester-Keyring', slug: 'dorchester-keyring' }],
+        attributes: [],
+        images: [],
+        prices: { price: '600', regular_price: '600', sale_price: '600', currency_minor_unit: 2 },
+      } as any;
+    });
+
+    vi.mocked(getProductPricingFromProduct).mockImplementation(async (product: any) => {
+      if (product.id === 101) {
+        return {
+          productId: 101,
+          basePrice: 20,
+          tiers: [
+            { min: 1, max: 24, price: 20 },
+            { min: 100, max: null, price: 10 },
+          ],
+        };
+      }
+      return {
+        productId: 202,
+        basePrice: 5,
+        tiers: [
+          { min: 1, max: 24, price: 5 },
+          { min: 100, max: null, price: 2 },
+        ],
+      };
+    });
+
+    const quote = await createCheckoutQuote({
+      items: [
+        {
+          productId: '101',
+          quantity: 1,
+          colourGroupId: 'fake-group',
+          customization: { enabled: true, choice: 'Foil blocked', foilColor: 'Gold' },
+        },
+        {
+          productId: '202',
+          quantity: 99,
+          colourGroupId: 'fake-group',
+        },
+      ],
+    });
+
+    // Unrelated items cannot pool quantities: diary stays at qty 1 tier (£20 + £48 setup = £68)
+    expect(quote.lines[0].unitPrice).toBe(20);
+    expect(quote.lines[0].lineTotal).toBe(68);
+    // Keyring stays at qty 99 tier (£5) rather than 100+ tier (£2)
+    expect(quote.lines[1].unitPrice).toBe(5);
+  });
+
+  it('still groups legitimate colour variants sharing a grouping tag for bulk pricing and single setup fee', async () => {
+    vi.mocked(storeFetch).mockImplementation(async (path: string) => {
+      const id = path.endsWith('101') ? 101 : 102;
+      return {
+        id,
+        name: id === 101 ? 'Richmond A5 Diary, Black' : 'Richmond A5 Diary, Blue',
+        slug: id === 101 ? 'richmond-a5-black' : 'richmond-a5-blue',
+        is_purchasable: true,
+        is_in_stock: true,
+        categories: [{ id: 164, name: 'A5 Diaries', slug: 'a5-diaries', link: '' }],
+        tags: [
+          { id: 203, name: '2027', slug: '2027' },
+          { id: 76, name: 'Richmond-A5-WTV', slug: 'richmond-a5-wtv' },
+        ],
+        attributes: [],
+        images: [],
+        prices: { price: '2400', regular_price: '2400', sale_price: '2400', currency_minor_unit: 2 },
+      } as any;
+    });
+
+    vi.mocked(getProductPricingFromProduct).mockResolvedValue({
+      productId: 101,
+      basePrice: 20,
+      tiers: [
+        { min: 1, max: 24, price: 20 },
+        { min: 25, max: 49, price: 15 },
+      ],
+    });
+
+    const quote = await createCheckoutQuote({
+      items: [
+        {
+          productId: '101',
+          quantity: 15,
+          colourGroupId: 'richmond-group',
+          customization: { enabled: true, choice: 'Foil blocked', foilColor: 'Gold' },
+        },
+        {
+          productId: '102',
+          quantity: 15,
+          colourGroupId: 'richmond-group',
+          customization: { enabled: true, choice: 'Foil blocked', foilColor: 'Gold' },
+        },
+      ],
+    });
+
+    // Combined qty = 30 hits the 25-49 tier (£15) and charges £48 setup fee once
+    expect(quote.lines[0].unitPrice).toBe(15);
+    expect(quote.lines[0].lineTotal).toBe(15 * 15 + 48);
+    expect(quote.lines[1].unitPrice).toBe(15);
+    expect(quote.lines[1].lineTotal).toBe(15 * 15);
+  });
 });

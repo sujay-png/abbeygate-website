@@ -4,6 +4,8 @@ import type { CheckoutQuote } from '@/features/checkout/types/quote';
 
 const SESSION_TTL_SECONDS = 10 * 60;
 const SESSION_PREFIX = 'checkout:session:';
+const ORDER_LOCK_PREFIX = 'checkout:order-lock:';
+const ORDER_LOCK_TTL_SECONDS = 60;
 
 export type CheckoutSession = {
   id: string;
@@ -57,4 +59,27 @@ export async function updateCheckoutSession(id: string, updates: Partial<Checkou
   
   await redis.set(key(id), updatedSession, { ex: SESSION_TTL_SECONDS });
   return updatedSession;
+}
+
+/**
+ * Acquires a short-lived Redis mutex for a checkout session so concurrent requests
+ * (double-clicks, Stripe retries) cannot create duplicate WooCommerce orders or
+ * redeem a single-use coupon twice.
+ */
+export async function acquireCheckoutOrderLock(sessionId: string): Promise<boolean> {
+  if (!/^[0-9a-f-]{36}$/i.test(sessionId)) return false;
+  const redis = getRedisClient();
+  if (!redis) return true;
+  const result = await redis.set(`${ORDER_LOCK_PREFIX}${sessionId}`, '1', {
+    nx: true,
+    ex: ORDER_LOCK_TTL_SECONDS,
+  });
+  return result === 'OK';
+}
+
+export async function releaseCheckoutOrderLock(sessionId: string): Promise<void> {
+  if (!/^[0-9a-f-]{36}$/i.test(sessionId)) return;
+  const redis = getRedisClient();
+  if (!redis) return;
+  await redis.del(`${ORDER_LOCK_PREFIX}${sessionId}`).catch(() => {});
 }

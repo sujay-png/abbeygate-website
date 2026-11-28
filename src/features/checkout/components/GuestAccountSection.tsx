@@ -10,10 +10,11 @@ type Props = {
   orderId?: string | number;
   orderKey?: string;
   stripeIntentId?: string;
+  stripeClientSecret?: string;
   className?: string;
 };
 
-export function GuestAccountSection({ email, orderId, orderKey, stripeIntentId, className = '' }: Props) {
+export function GuestAccountSection({ email, orderId, orderKey, stripeIntentId, stripeClientSecret, className = '' }: Props) {
   const [view, setView] = useState<'register' | 'login'>('register');
   const [password, setPassword] = useState('');
   const [loginEmail, setLoginEmail] = useState(email || '');
@@ -41,6 +42,7 @@ export function GuestAccountSection({ email, orderId, orderKey, stripeIntentId, 
           orderId: orderId ? String(orderId) : undefined,
           orderKey,
           stripeIntentId,
+          stripeClientSecret,
         }),
       });
 
@@ -79,6 +81,7 @@ export function GuestAccountSection({ email, orderId, orderKey, stripeIntentId, 
           orderId: orderId ? String(orderId) : undefined,
           orderKey,
           stripeIntentId,
+          stripeClientSecret,
         }),
       });
 

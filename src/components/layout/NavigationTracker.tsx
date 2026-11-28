@@ -14,7 +14,18 @@ export function NavigationTracker() {
       return;
     }
     if (typeof (window as any).gtag === 'function') {
-      const queryString = searchParams.toString();
+      const sanitizedParams = new URLSearchParams(searchParams.toString());
+      for (const sensitiveKey of [
+        'orderId',
+        'key',
+        'payment_intent',
+        'payment_intent_client_secret',
+        'sessionId',
+        'redirect_status',
+      ]) {
+        sanitizedParams.delete(sensitiveKey);
+      }
+      const queryString = sanitizedParams.toString();
       const url = queryString ? `${pathname}?${queryString}` : pathname;
       (window as any).gtag('config', 'G-9H299B89WM', {
         page_path: url,

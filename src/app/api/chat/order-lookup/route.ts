@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { woocommerceApi } from '@/lib/woocommerce/client';
 import { getSession } from '@/features/auth/utils/session';
 import { enquiryRateLimit } from '@/lib/rate-limit';
-import type { WooCommerceOrderDetail } from '@/features/account/services/orders';
+import { canAccessOrder, type WooCommerceOrderDetail } from '@/features/account/services/orders';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,11 +51,7 @@ export async function GET(req: NextRequest) {
     }
 
     const orderEmail = order.billing?.email?.trim().toLowerCase() || '';
-    const sessionOwnsOrder = Boolean(
-      session?.userId &&
-      (Number(order.customer_id) === Number(session.userId) ||
-        (session.email && orderEmail === session.email.toLowerCase()))
-    );
+    const sessionOwnsOrder = canAccessOrder(order, session);
     const guestEmailMatches = Boolean(providedEmail && orderEmail && providedEmail === orderEmail);
 
     if (!sessionOwnsOrder && !guestEmailMatches) {

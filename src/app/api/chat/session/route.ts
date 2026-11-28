@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '@/features/auth/utils/session';
-import { getCustomerOrders, type WooCommerceOrder } from '@/features/account/services/orders';
+import { canAccessOrder, getCustomerOrders, type WooCommerceOrder } from '@/features/account/services/orders';
 import { getAccountDetails } from '@/features/account/services/customer';
 import { woocommerceApi } from '@/lib/woocommerce/client';
 
@@ -35,9 +35,10 @@ export async function GET() {
 
     // 1. If user is logged in, prioritize their account orders
     if (session && session.userId) {
+      const allowEmailMatch = session.emailVerified !== false;
       const [details, accountOrders] = await Promise.all([
         getAccountDetails(Number(session.userId)).catch(() => null),
-        getCustomerOrders(session.userId).catch(() => []),
+        getCustomerOrders(session.userId, session.email, { allowEmailMatch }).catch(() => []),
       ]);
 
       const firstName = details?.first_name || '';
@@ -51,8 +52,8 @@ export async function GET() {
         ? accountOrders.map(sanitizeOrder)
         : [];
 
-      // Also check if any guest orders were placed with this exact email
-      if (session.email) {
+      // Also check if any guest orders were placed with this exact verified email
+      if (allowEmailMatch && session.email) {
         try {
           const emailOrders = await woocommerceApi.request<any[]>(
             `/orders?search=${encodeURIComponent(session.email)}&per_page=10`,
@@ -60,12 +61,8 @@ export async function GET() {
           );
           if (Array.isArray(emailOrders)) {
             const existingIds = new Set(combinedOrders.map((o) => o.id));
-            const normalizedEmail = session.email.toLowerCase();
             for (const eo of emailOrders) {
-              const belongsToUser =
-                Number(eo.customer_id) === Number(session.userId) ||
-                (typeof eo.billing?.email === 'string' &&
-                  eo.billing.email.toLowerCase() === normalizedEmail);
+              const belongsToUser = canAccessOrder(eo, session);
               if (belongsToUser && !existingIds.has(eo.id)) {
                 combinedOrders.push(sanitizeOrder(eo));
                 existingIds.add(eo.id);

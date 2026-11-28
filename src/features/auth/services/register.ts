@@ -1,6 +1,8 @@
 'use server';
 
 import { woocommerceApi } from '@/lib/woocommerce/client';
+import { headers } from 'next/headers';
+import { authRateLimit } from '@/lib/rate-limit';
 
 export type RegisterState = {
   success: boolean;
@@ -13,6 +15,13 @@ export async function registerCustomer(
   formData: FormData
 ): Promise<RegisterState> {
   try {
+    const requestHeaders = await headers();
+    const ip = requestHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';
+    const { success } = await authRateLimit.limit(`register:${ip}`);
+    if (!success) {
+      return { success: false, message: 'Too many registration attempts. Please try again shortly.' };
+    }
+
     const email = formData.get('email') as string;
     const userRole = formData.get('userRole') as string;
 

@@ -15,8 +15,10 @@ export default async function OrdersPage() {
     redirect('/account');
   }
 
-  // Fetch orders for this customer by ID and email so all placed orders reflect immediately
-  const orders = await getCustomerOrders(session.userId, session.email);
+  // Fetch orders for this customer by ID (and email only for verified sessions)
+  const orders = await getCustomerOrders(session.userId, session.email, {
+    allowEmailMatch: session.emailVerified !== false,
+  });
 
   return (
     <main className="flex flex-col min-h-screen bg-brand-cream">

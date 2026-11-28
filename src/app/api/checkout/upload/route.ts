@@ -9,6 +9,21 @@ const ALLOWED_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'image/jpg', 'ima
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const MAX_FILES = 40;
 
+const MIME_EXTENSION_MAP: Record<string, string> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
+};
+
+function sanitizeUploadFilename(rawName: string, mimeType: string): string {
+  const safeExt = MIME_EXTENSION_MAP[mimeType] || 'png';
+  const baseName = rawName
+    .replace(/\.[^.]+$/, '')
+    .replace(/[^a-zA-Z0-9\-_]/g, '_')
+    .slice(0, 80) || 'artwork';
+  return `${baseName}.${safeExt}`;
+}
+
 function hasValidRasterSignature(buffer: Buffer, mimeType: string): boolean {
   if (buffer.length < 12) return false;
   if (mimeType === 'image/png') {
@@ -70,7 +85,7 @@ export async function POST(req: NextRequest) {
       bufferedEntries.push({
         key,
         buffer,
-        fileName: value.name.replace(/[^a-zA-Z0-9.\-_]/g, '_'),
+        fileName: sanitizeUploadFilename(value.name || 'artwork', mimeType),
         mimeType,
       });
     }

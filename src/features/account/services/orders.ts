@@ -1,4 +1,5 @@
 import { woocommerceApi } from '@/lib/woocommerce/client';
+import { getWooStoreUrl } from '@/lib/woocommerce/config';
 import { getRedisClient } from '@/lib/redis';
 
 export type WooCommerceOrder = {
@@ -107,7 +108,7 @@ export async function findCustomerIdByEmail(email: string): Promise<number> {
 
   // 2. Try WordPress users API (supports admins, B2B users, etc.)
   try {
-    const storeUrl = process.env.WOOCOMMERCE_STORE_URL || 'https://dashboard.abbeygate-business.com';
+    const storeUrl = getWooStoreUrl();
     const wpUser = process.env.WP_APPLICATION_USERNAME;
     const wpPass = process.env.WP_APPLICATION_PASSWORD;
     if (wpUser && wpPass) {
@@ -136,14 +137,34 @@ export async function findCustomerIdByEmail(email: string): Promise<number> {
 }
 
 /**
+ * Single source of truth for whether a logged-in session may view an order.
+ * Matching by billing email is restricted to sessions whose email was verified
+ * (e.g. via WordPress password login) so unverified guest signups cannot read
+ * someone else's historical guest orders.
+ */
+export function canAccessOrder(
+  order: { customer_id?: number | string | null; billing?: { email?: string | null } | null },
+  session: { userId: number; email?: string | null; emailVerified?: boolean } | null | undefined,
+): boolean {
+  if (!session?.userId || !order) return false;
+  if (Number(order.customer_id) === Number(session.userId)) return true;
+  if (session.emailVerified === false) return false;
+  const sessionEmail = session.email?.trim().toLowerCase();
+  const billingEmail = order.billing?.email?.trim().toLowerCase();
+  return Boolean(sessionEmail && billingEmail && sessionEmail === billingEmail);
+}
+
+/**
  * Fetch a customer's orders with Redis cache.
- * Looks up by customer ID and customer email to ensure all orders (including guest/pre-registration orders)
- * appear immediately in their account. Automatically links any guest orders to their account.
+ * Looks up by customer ID and (when email is verified) customer email so guest orders
+ * placed prior to registration appear in verified accounts.
  */
 export async function getCustomerOrders(
   userId: number | string,
-  email?: string
+  email?: string,
+  options?: { allowEmailMatch?: boolean },
 ): Promise<WooCommerceOrder[]> {
+  const allowEmailMatch = options?.allowEmailMatch ?? true;
   const redis = getRedisClient();
   const cacheKey = getOrdersCacheKey(userId);
 
@@ -178,8 +199,8 @@ export async function getCustomerOrders(
       console.warn(`Failed fetching orders for customer ${userId}:`, err);
     }
 
-    // 2b. If email is provided, also search for orders placed with this email (e.g. guest or pre-registration)
-    if (email && email.includes('@')) {
+    // 2b. If email is verified and provided, also search for orders placed with this email (e.g. guest or pre-registration)
+    if (allowEmailMatch && email && email.includes('@')) {
       const cleanEmail = email.trim().toLowerCase();
       try {
         const emailOrders = await woocommerceApi.request<any[]>(

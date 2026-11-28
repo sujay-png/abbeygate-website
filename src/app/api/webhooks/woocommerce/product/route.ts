@@ -54,10 +54,14 @@ export async function POST(req: NextRequest) {
     const headerSecret = (req.headers.get('x-headless-secret') || '').trim();
 
     const isSignatureValid = secret && signature ? verifySignature(rawBody, signature, secret) : false;
-    const isTokenValid = (querySecret && querySecret === secret) || (headerSecret && headerSecret === secret);
+    const isTokenValid = Boolean(secret) && ((querySecret && querySecret === secret) || (headerSecret && headerSecret === secret));
 
-    // Enforce authorization if secret is configured
-    if (secret && !isSignatureValid && !isTokenValid) {
+    // Fail closed if no webhook secret is configured or neither signature nor token matches
+    if (!secret) {
+      console.error('WooCommerce webhook secret is not configured.');
+      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
+    }
+    if (!isSignatureValid && !isTokenValid) {
       console.warn('Unauthorized WooCommerce webhook attempt rejected.');
       return NextResponse.json({ error: 'Invalid webhook signature or secret' }, { status: 401 });
     }
@@ -82,9 +86,9 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Invalidate key catalog listing pages and sitemap
-    revalidatePath('/diaries');
-    revalidatePath('/notebooks');
-    revalidatePath('/custom-gifts');
+    revalidatePath('/collection/diaries');
+    revalidatePath('/collection/notebooks');
+    revalidatePath('/collection/custom-gifts');
     revalidatePath('/collection');
     revalidatePath('/');
 

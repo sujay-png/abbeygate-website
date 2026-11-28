@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { woocommerceApi } from '@/lib/woocommerce/client';
 import { createSession } from '@/features/auth/utils/session';
 import { getStripeClient } from '@/lib/stripe/client';
-import { updateCheckoutSession } from '@/features/checkout/services/session';
+import { getCheckoutSession, updateCheckoutSession } from '@/features/checkout/services/session';
 import { invalidateCustomerOrdersCache } from '@/features/account/services/orders';
 import { enquiryRateLimit } from '@/lib/rate-limit';
+import { getWooStoreUrl } from '@/lib/woocommerce/config';
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,13 +15,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Too many requests. Please try again shortly.' }, { status: 429 });
     }
 
-    const { username, password, orderId, orderKey, stripeIntentId } = await req.json();
+    const { username, password, orderId, orderKey, stripeIntentId, stripeClientSecret } = await req.json();
 
     if (!username || !password) {
       return NextResponse.json({ error: 'Username/Email and password are required' }, { status: 400 });
     }
 
-    const storeUrl = process.env.NEXT_PUBLIC_WOOCOMMERCE_STORE_URL?.replace(/\/$/, '') || 'https://dashboard.abbeygate-business.com';
+    const storeUrl = getWooStoreUrl();
 
     // 1. Authenticate with headless login endpoint
     const response = await fetch(`${storeUrl}/wp-json/headless/v1/login`, {
@@ -40,11 +41,12 @@ export async function POST(req: NextRequest) {
     }
 
     const customerId = data.user.id;
+    const userEmail = String(data.user.email || '').trim().toLowerCase();
 
     // 2. Log customer in to the Next.js session
-    await createSession(customerId, data.user.email, data.user.roles);
+    await createSession(customerId, data.user.email, data.user.roles, { emailVerified: true });
 
-    // 3. Link BACS or direct WooCommerce order
+    // 3. Link unassigned guest WooCommerce order only
     if (orderId) {
       try {
         const order = await woocommerceApi
@@ -54,7 +56,7 @@ export async function POST(req: NextRequest) {
           )
           .catch(() => null);
 
-        if (order && order.order_key === orderKey) {
+        if (order && typeof orderKey === 'string' && order.order_key === orderKey && Number(order.customer_id) === 0) {
           await woocommerceApi.request(`orders/${order.id}`, {
             method: 'PUT',
             body: { customer_id: customerId }
@@ -66,32 +68,39 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 4. Link Stripe order
-    if (stripeIntentId) {
+    // 4. Link Stripe order only with client_secret proof and unassigned ownership
+    if (stripeIntentId && typeof stripeClientSecret === 'string' && stripeClientSecret) {
       try {
         const stripe = getStripeClient();
-        const intent = await stripe.paymentIntents.retrieve(stripeIntentId);
-        const checkoutSessionId = intent.metadata?.checkoutSessionId;
+        const intent = await stripe.paymentIntents.retrieve(String(stripeIntentId));
+        if (intent.client_secret === stripeClientSecret) {
+          const checkoutSessionId = intent.metadata?.checkoutSessionId;
+          if (checkoutSessionId) {
+            const currentSession = await getCheckoutSession(checkoutSessionId);
+            if (currentSession && (!currentSession.customerId || Number(currentSession.customerId) === 0)) {
+              await updateCheckoutSession(checkoutSessionId, { customerId });
+            }
+          }
 
-        if (checkoutSessionId) {
-          await updateCheckoutSession(checkoutSessionId, { customerId });
-        }
-      } catch (err) {
-        console.error('Failed to update Checkout Session on claim-order:', err);
-      }
+          if (userEmail) {
+            const orders = await woocommerceApi.request<any[]>(
+              `orders?search=${encodeURIComponent(userEmail)}`,
+              { revalidate: false },
+            );
+            const matchingOrder = orders.find(
+              (o) =>
+                Number(o.customer_id) === 0 &&
+                o.meta_data?.some((m: any) => m.key === '_stripe_intent_id' && m.value === stripeIntentId),
+            );
 
-      try {
-        const orders = await woocommerceApi.request<any[]>(`orders?search=${encodeURIComponent(username)}`, { revalidate: false });
-        const matchingOrder = orders.find(o =>
-          o.meta_data?.some((m: any) => m.key === '_stripe_intent_id' && m.value === stripeIntentId)
-        );
-
-        if (matchingOrder && matchingOrder.customer_id === 0) {
-          await woocommerceApi.request(`orders/${matchingOrder.id}`, {
-            method: 'PUT',
-            body: { customer_id: customerId }
-          });
-          await invalidateCustomerOrdersCache(customerId);
+            if (matchingOrder) {
+              await woocommerceApi.request(`orders/${matchingOrder.id}`, {
+                method: 'PUT',
+                body: { customer_id: customerId },
+              });
+              await invalidateCustomerOrdersCache(customerId);
+            }
+          }
         }
       } catch (err) {
         console.error('Failed to link Stripe order to logged-in user:', err);

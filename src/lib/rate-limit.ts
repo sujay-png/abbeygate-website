@@ -27,3 +27,16 @@ export const enquiryRateLimit = redis
       prefix: '@upstash/ratelimit/enquiry',
     })
   : { limit: async () => ({ success: true }) };
+
+
+/**
+ * Auth rate limiter for login, registration, and password reset: 8 requests per 1 minute.
+ */
+export const authRateLimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(8, '1 m'),
+      analytics: true,
+      prefix: '@upstash/ratelimit/auth',
+    })
+  : { limit: async () => ({ success: true }) };

@@ -8,8 +8,8 @@ import { getOrderConfirmationData } from '@/features/checkout/services/order-con
 import { getSession } from '@/features/auth/utils/session';
 import { invalidateCustomerOrdersCache } from '@/features/account/services/orders';
 
-export default async function CheckoutSuccessPage({ searchParams }: { searchParams: Promise<{ payment_intent?: string; orderId?: string; key?: string; sessionId?: string }> }) {
-  const { payment_intent, orderId, key, sessionId } = await searchParams;
+export default async function CheckoutSuccessPage({ searchParams }: { searchParams: Promise<{ payment_intent?: string; payment_intent_client_secret?: string; orderId?: string; key?: string; sessionId?: string }> }) {
+  const { payment_intent, payment_intent_client_secret, orderId, key, sessionId } = await searchParams;
   const session = await getSession();
   const isGuest = !session;
 
@@ -87,6 +87,7 @@ export default async function CheckoutSuccessPage({ searchParams }: { searchPara
               <GuestAccountSection
                 email={orderData?.email}
                 stripeIntentId={payment_intent}
+                stripeClientSecret={payment_intent_client_secret}
                 orderId={orderId || orderData?.orderId}
                 orderKey={key || orderData?.orderKey}
               />
